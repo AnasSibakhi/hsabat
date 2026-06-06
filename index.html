@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a56db">
+<title>حسابات</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Cairo',sans-serif;background:#fff;color:var(--g9);display:flex;flex-direction:column;}
+.hidden{display:none!important;}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--g9);color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
+#toast.show{opacity:1;}
+/* ── AUTH ── */
+#auth-wrap{flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);}
+.auth-card{background:#fff;border-radius:20px;padding:2.25rem;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.auth-logo{text-align:center;margin-bottom:2rem;}
+.auth-icon{width:72px;height:72px;background:var(--p);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;box-shadow:0 8px 20px rgba(26,86,219,.3);}
+.auth-icon i{color:#fff;font-size:36px;}
+.auth-logo h1{font-size:26px;font-weight:900;}
+.auth-logo p{font-size:13px;color:var(--g5);margin-top:4px;}
+.fg{margin-bottom:.9rem;}
+.lbl{font-size:13px;font-weight:600;color:var(--g7);margin-bottom:5px;display:block;}
+.inp{width:100%;padding:12px 14px;border:1.5px solid var(--g2);border-radius:10px;font-size:15px;font-family:'Cairo',sans-serif;color:var(--g9);background:var(--g0);direction:rtl;transition:.15s;}
+.inp:focus{outline:none;border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.1);}
+.btn-p{width:100%;padding:13px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;}
+.btn-p:disabled{opacity:.6;}
+.amsg{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:.75rem;text-align:center;display:none;}
+.amsg.err{background:var(--dl);color:var(--d);}
+.amsg.ok{background:var(--sl);color:var(--s);}
+
+/* ── SUPER ADMIN ── */
+#superadmin-wrap{flex:1;display:none;flex-direction:column;overflow:hidden;background:#0f172a;}
+.sa-topbar{background:#1e293b;padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;flex-shrink:0;}
+.sa-brand{display:flex;align-items:center;gap:10px;}
+.sa-brand-icon{width:32px;height:32px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.sa-brand-icon i{color:#fff;font-size:16px;}
+.sa-brand-name{font-weight:900;font-size:16px;color:#f1f5f9;}
+.sa-badge{background:#7c3aed;color:#fff;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700;}
+.sa-layout{flex:1;display:flex;overflow:hidden;}
+.sa-sidebar{width:220px;min-width:220px;background:#1e293b;padding:.75rem;overflow-y:auto;border-left:1px solid #334155;}
+.sa-nl{font-size:10px;font-weight:700;color:#64748b;letter-spacing:.08em;padding:0 .5rem;margin:.8rem 0 .3rem;}
+.sa-nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;font-size:13px;color:#94a3b8;cursor:pointer;transition:.1s;margin-bottom:2px;}
+.sa-nav-item i{font-size:16px;width:18px;}
+.sa-nav-item:hover{background:#334155;color:#f1f5f9;}
+.sa-nav-item.active{background:#4f46e5;color:#fff;font-weight:700;}
+.sa-content{flex:1;overflow-y:auto;padding:1.5rem;background:#0f172a;}
+.sa-page{display:none;}.sa-page.active{display:block;}
+.sa-title{font-size:20px;font-weight:800;color:#f1f5f9;margin-bottom:1.25rem;}
+.sa-stat{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:1.25rem;}
+.sa-stat-label{font-size:12px;color:#64748b;margin-bottom:4px;}
+.sa-stat-value{font-size:24px;font-weight:800;color:#f1f5f9;}
+.sa-card{background:#1e293b;border:1px solid #334155;border-radius:12px;overflow:hidden;margin-bottom:1rem;}
+.sa-card-header{padding:.75rem 1.25rem;border-bottom:1px solid #334155;font-weight:700;color:#f1f5f9;font-size:14px;display:flex;align-items:center;justify-content:space-between;}
+table.sa-dt{width:100%;border-collapse:collapse;font-size:13px;}
+table.sa-dt th{background:#0f172a;padding:10px 14px;font-weight:700;font-size:11px;color:#64748b;border-bottom:1px solid #334155;text-align:right;white-space:nowrap;}
+table.sa-dt td{padding:10px 14px;border-bottom:.5px solid #1e293b;color:#cbd5e1;}
+table.sa-dt tr:hover td{background:#334155;}
+.sa-btn{padding:8px 16px;border-radius:8px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.sa-btn-p{background:#4f46e5;color:#fff;}
+.sa-btn-s{background:#059669;color:#fff;}
+.sa-btn-r{background:#dc2626;color:#fff;}
+.sa-btn-o{background:#334155;color:#cbd5e1;}
+
+/* ── APP ── */
+#app-wrap{flex:1;display:none;flex-direction:column;overflow:hidden;}
+.topbar{background:#fff;border-bottom:1px solid var(--br);padding:0 1rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50;}
+.tb-brand{display:flex;align-items:center;gap:8px;}
+.tb-icon{width:32px;height:32px;background:var(--p);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.tb-icon i{color:#fff;font-size:16px;}
+.tb-name{font-weight:900;font-size:16px;}
+.store-pill{background:var(--g0);border:1px solid var(--br);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--g7);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-out{background:var(--dl);color:var(--d);border:none;border-radius:8px;padding:6px 10px;font-size:13px;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:4px;}
+.app-body{flex:1;display:flex;overflow:hidden;}
+.sidebar{width:200px;min-width:200px;background:var(--g0);border-left:1px solid var(--br);padding:.6rem;overflow-y:auto;flex-shrink:0;}
+.nl{font-size:10px;font-weight:700;color:var(--g4);letter-spacing:.08em;padding:0 .5rem;margin:.8rem 0 .3rem;}
+.nl:first-child{margin-top:0;}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--g6);cursor:pointer;transition:.1s;margin-bottom:1px;}
+.ni i{font-size:16px;width:18px;text-align:center;}
+.ni:hover{background:#fff;color:var(--g9);}
+.ni.active{background:var(--pl);color:var(--p);font-weight:700;}
+.nbadge{margin-right:auto;background:var(--d);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;}
+.content{flex:1;overflow-y:auto;padding:1rem;-webkit-overflow-scrolling:touch;}
+.page{display:none;}.page.active{display:block;}
+.bottom-nav{display:none;background:#fff;border-top:1px solid var(--br);padding:6px 0 max(6px,env(safe-area-inset-bottom));flex-shrink:0;}
+.bnav-inner{display:flex;justify-content:space-around;}
+.bn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:10px;color:var(--g5);cursor:pointer;position:relative;min-width:48px;}
+.bn i{font-size:22px;}
+.bn.active{color:var(--p);}
+.bn-dot{position:absolute;top:4px;right:8px;width:7px;height:7px;background:var(--d);border-radius:50%;border:1.5px solid #fff;}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.pt{font-size:17px;font-weight:800;}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
+.sg.c4{grid-template-columns:repeat(4,1fr);}
+.sg.c3{grid-template-columns:repeat(3,1fr);}
+.sc{background:var(--g0);border:1px solid var(--br);border-radius:12px;padding:.9rem 1rem;}
+.sc-l{font-size:11px;color:var(--g5);margin-bottom:3px;}
+.sc-v{font-size:19px;font-weight:800;}
+.sc.blue{border-color:#bfdbfe;background:#eff6ff;}.sc.blue .sc-v{color:#1d4ed8;}
+.sc.red{border-color:#fecaca;background:#fef2f2;}.sc.red .sc-v{color:#b91c1c;}
+.sc.green{border-color:#bbf7d0;background:#f0fdf4;}.sc.green .sc-v{color:#15803d;}
+.sc.amber{border-color:#fde68a;background:#fffbeb;}.sc.amber .sc-v{color:#b45309;}
+.card{background:#fff;border:1px solid var(--br);border-radius:12px;overflow:hidden;margin-bottom:1rem;}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;}
+table.dt th{background:var(--g0);padding:9px 12px;font-weight:700;font-size:11px;color:var(--g6);border-bottom:1px solid var(--br);text-align:right;white-space:nowrap;}
+table.dt td{padding:9px 12px;border-bottom:.5px solid var(--g1);color:var(--g7);white-space:nowrap;}
+table.dt tr:last-child td{border-bottom:none;}
+table.dt tr:hover td{background:var(--g0);}
+.er td{text-align:center;color:var(--g4);padding:2rem!important;white-space:normal!important;}
+.br{background:var(--dl);color:var(--d);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;}
+.bg{background:var(--sl);color:var(--s);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;}
+.ba{background:var(--wl);color:var(--w);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;}
+.bb{background:var(--pl);color:var(--p);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;}
+.btn{padding:8px 14px;border-radius:9px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-s{background:var(--s);color:#fff;}
+.btn-o{background:#fff;color:var(--g6);border:1px solid var(--br);}
+.btn-p2{background:var(--p);color:#fff;border:none;}
+.ibg{background:var(--sl);color:var(--s);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
+.ibb{background:var(--pl);color:var(--p);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
+.ibr{background:var(--dl);color:var(--d);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px;margin-bottom:.75rem;line-height:1.5;}
+.alert i{flex-shrink:0;margin-top:1px;}
+.aw{background:var(--wl);color:var(--w);border:1px solid #fde68a;}
+.ad{background:var(--dl);color:var(--d);border:1px solid #fecaca;}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center;}
+.mo.open{display:flex;}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.mtitle{font-size:16px;font-weight:800;}
+.mclose{background:var(--g1);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;}
+select.inp{appearance:none;cursor:pointer;}
+.ptabs{display:flex;gap:3px;background:var(--g1);padding:3px;border-radius:8px;}
+.ptab{padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--g6);border:none;background:none;font-family:'Cairo',sans-serif;font-weight:600;}
+.ptab.active{background:#fff;color:var(--p);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.srch{padding:10px 14px;border:1.5px solid var(--br);border-radius:10px;font-size:14px;font-family:'Cairo',sans-serif;width:100%;margin-bottom:.75rem;direction:rtl;}
+.srch:focus{outline:none;border-color:var(--p);}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem;}
+.qab{display:flex;flex-direction:column;align-items:center;gap:6px;padding:.85rem .5rem;border-radius:12px;border:1px solid var(--br);background:#fff;cursor:pointer;font-family:'Cairo',sans-serif;}
+.qab:active{border-color:var(--p);background:var(--pl);}
+.qab i{font-size:22px;color:var(--p);}
+.qab span{font-size:11px;color:var(--g7);font-weight:600;text-align:center;line-height:1.3;}
+#exp-wrap{flex:1;display:none;align-items:center;justify-content:center;padding:2rem;}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+body.dark{background:#0f0f1a;color:#e5e7eb;}
+body.dark .topbar,body.dark .sidebar,body.dark .card,body.dark .modal{background:#1a1a2e;border-color:#2a2a3e;}
+body.dark .sc{background:#1a1a2e;border-color:#2a2a3e;}
+body.dark .inp{background:#2a2a3e;border-color:#3a3a4e;color:#e5e7eb;}
+body.dark table.dt th{background:#2a2a3e;}
+body.dark table.dt tr:hover td{background:#2a2a3e;}
+body.dark .ni:hover{background:#fff1;}
+body.dark .ni.active{background:#1e3a5f;}
+input[type="number"]{direction:ltr;text-align:right;}
+@media(max-width:640px){
+.sidebar{display:none;}.bottom-nav{display:block;}.content{padding:.75rem;}
+.sg.c4{grid-template-columns:repeat(2,1fr);}
+.sa-sidebar{display:none;}
+}
+@media(min-width:641px){
+.mo{align-items:center;padding:1rem;}
+.modal{border-radius:16px;max-height:85vh;}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- AUTH -->
+<div id="auth-wrap">
+ <div class="auth-card">
+  <div class="auth-logo">
+   <div class="auth-icon"><i class="ti ti-calculator"></i></div>
+   <h1>حسابات</h1><p>نظام إدارة المحل</p>
+  </div>
+  <div class="fg"><label class="lbl">اسم المستخدم</label><input class="inp" id="le" type="email" placeholder="example@mail.com" inputmode="email" autocomplete="username"></div>
+  <div class="fg"><label class="lbl">كلمة المرور</label><input class="inp" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+  <button class="btn-p" id="btn-li" onclick="doLogin()"><i class="ti ti-login" style="vertical-align:-2px;margin-left:5px;"></i> دخول</button>
+  <div class="amsg" id="lmsg"></div>
+ </div>
+</div>
+
+<!-- EXPIRED -->
+<div id="exp-wrap">
+ <div style="text-align:center;max-width:340px;">
+  <div style="font-size:60px;color:var(--d);margin-bottom:1rem;"><i class="ti ti-calendar-off"></i></div>
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:.5rem;">انتهى الاشتراك</h2>
+  <p style="font-size:14px;color:var(--g5);line-height:1.7;">بياناتك محفوظة. للتجديد تواصل مع المسؤول.</p>
+  <button class="btn btn-o" style="margin-top:1.5rem;width:100%;justify-content:center;" onclick="doLogout()">تسجيل الخروج</button>
+ </div>
+</div>
+
+<!-- ══ SUPER ADMIN ══ -->
+<div id="superadmin-wrap">
+ <div class="sa-topbar">
+  <div class="sa-brand">
+   <div class="sa-brand-icon"><i class="ti ti-shield-check"></i></div>
+   <span class="sa-brand-name">لوحة التحكم</span>
+   <span class="sa-badge">Super Admin</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+   <span style="font-size:13px;color:#94a3b8;" id="sa-admin-name">Admin</span>
+   <button onclick="doLogout()" style="background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-family:'Cairo',sans-serif;cursor:pointer;">خروج</button>
+  </div>
+ </div>
+ <div class="sa-layout">
+  <div class="sa-sidebar">
+   <div class="sa-nl">الرئيسية</div>
+   <div class="sa-nav-item active" onclick="showSAPage('sa-dashboard')"><i class="ti ti-dashboard"></i> Dashboard</div>
+   <div class="sa-nl">الإدارة</div>
+   <div class="sa-nav-item" onclick="showSAPage('sa-stores')"><i class="ti ti-building-store"></i> المحلات</div>
+   <div class="sa-nav-item" onclick="showSAPage('sa-subscriptions')"><i class="ti ti-credit-card"></i> الاشتراكات</div>
+   <div class="sa-nav-item" onclick="showSAPage('sa-users')"><i class="ti ti-users"></i> المستخدمين</div>
+   <div class="sa-nl">التواصل</div>
+   <div class="sa-nav-item" onclick="showSAPage('sa-notifications')"><i class="ti ti-bell"></i> الإشعارات</div>
+  </div>
+  <div class="sa-content">
+
+   <!-- DASHBOARD -->
+   <div class="sa-page active" id="sa-dashboard">
+    <div class="sa-title">📊 لوحة التحكم</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;">
+     <div class="sa-stat"><div class="sa-stat-label">إجمالي المحلات</div><div class="sa-stat-value" id="sa-stat-stores">-</div></div>
+     <div class="sa-stat"><div class="sa-stat-label">إجمالي المبيعات</div><div class="sa-stat-value" id="sa-stat-sales" style="color:#4ade80;">-</div></div>
+     <div class="sa-stat"><div class="sa-stat-label">محلات نشطة</div><div class="sa-stat-value" id="sa-stat-active" style="color:#4ade80;">-</div></div>
+     <div class="sa-stat"><div class="sa-stat-label">اشتراكات منتهية</div><div class="sa-stat-value" id="sa-stat-expired" style="color:#f87171;">-</div></div>
+    </div>
+    <div class="sa-card">
+     <div class="sa-card-header">
+      <span>آخر المحلات</span>
+      <button class="sa-btn sa-btn-p" onclick="openM('m-new-store')"><i class="ti ti-plus"></i> محل جديد</button>
+     </div>
+     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-stores-list"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748b;"><span class="spin">↻</span></td></tr></tbody></table></div>
+    </div>
+   </div>
+
+   <!-- STORES -->
+   <div class="sa-page" id="sa-stores">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+     <div class="sa-title" style="margin:0;">🏪 إدارة المحلات</div>
+     <button class="sa-btn sa-btn-p" onclick="openM('m-new-store')"><i class="ti ti-plus"></i> محل جديد</button>
+    </div>
+    <div class="sa-card">
+     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الجوال</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-all-stores"><tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;"><span class="spin">↻</span></td></tr></tbody></table></div>
+    </div>
+   </div>
+
+   <!-- SUBSCRIPTIONS -->
+   <div class="sa-page" id="sa-subscriptions">
+    <div class="sa-title">💳 الاشتراكات</div>
+    <div class="sa-card">
+     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الحالة</th><th>ينتهي</th><th>تجديد</th></tr></thead><tbody id="sa-subs-list"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748b;"><span class="spin">↻</span></td></tr></tbody></table></div>
+    </div>
+   </div>
+
+   <!-- USERS -->
+   <div class="sa-page" id="sa-users">
+    <div class="sa-title">👥 المستخدمين</div>
+    <div class="sa-card">
+     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="sa-users-list"><tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;"><span class="spin">↻</span></td></tr></tbody></table></div>
+    </div>
+   </div>
+
+   <!-- NOTIFICATIONS -->
+   <div class="sa-page" id="sa-notifications">
+    <div class="sa-title">🔔 إرسال إشعار</div>
+    <div class="sa-card">
+     <div style="padding:1.25rem;">
+      <div style="margin-bottom:1rem;"><label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">العنوان</label><input class="inp" id="notif-title" placeholder="عنوان الإشعار" style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
+      <div style="margin-bottom:1rem;"><label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">الرسالة</label><textarea class="inp" id="notif-msg" rows="4" placeholder="نص الإشعار..." style="background:#334155;border-color:#475569;color:#f1f5f9;resize:none;"></textarea></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;margin-bottom:1rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>
+      <button class="sa-btn sa-btn-p" onclick="sendNotification()"><i class="ti ti-send"></i> إرسال الإشعار</button>
+     </div>
+    </div>
+   </div>
+
+  </div>
+ </div>
+</div>
+
+<!-- ══ STORE APP ══ -->
+<div id="app-wrap">
+ <div class="topbar">
+  <div class="tb-brand">
+   <div class="tb-icon"><i class="ti ti-calculator"></i></div>
+   <span class="tb-name">حسابات</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+   <button class="btn btn-o" onclick="toggleDark()" style="padding:6px 8px;font-size:16px;"><i class="ti ti-moon" id="dark-icon"></i></button>
+   <span class="store-pill" id="store-pill">...</span>
+   <button class="btn-out" onclick="doLogout()"><i class="ti ti-logout" style="font-size:15px;"></i></button>
+  </div>
+ </div>
+ <div class="app-body">
+  <div class="sidebar">
+   <div class="nl">الرئيسية</div>
+   <div class="ni active" onclick="nav('home',this)"><i class="ti ti-home"></i> لوحة التحكم</div>
+   <div class="nl">المبيعات</div>
+   <div class="ni" onclick="nav('quicksale',this)"><i class="ti ti-bolt"></i> بيع سريع</div>
+   <div class="ni" onclick="nav('invoices',this)"><i class="ti ti-receipt"></i> الفواتير</div>
+   <div class="ni" onclick="nav('sales',this)"><i class="ti ti-chart-bar"></i> المبيعات</div>
+   <div class="nl">الزبائن</div>
+   <div class="ni" onclick="nav('customers',this)"><i class="ti ti-users"></i> الزبائن</div>
+   <div class="ni owner-only" id="nav-debts" onclick="nav('debts',this)"><i class="ti ti-credit-card-off"></i> الديون <span class="nbadge hidden" id="dbadge">0</span></div>
+   <div class="nl">المخزون</div>
+   <div class="ni" onclick="nav('inventory',this)"><i class="ti ti-box"></i> المخزون</div>
+   <div class="ni" onclick="nav('purchases',this)"><i class="ti ti-truck"></i> المشتريات</div>
+   <div class="ni" onclick="nav('netcards',this)"><i class="ti ti-wifi"></i> بطاقات نت</div>
+   <div class="nl owner-only">المالية</div>
+   <div class="ni owner-only" id="nav-expenses" onclick="nav('expenses',this)"><i class="ti ti-cash"></i> المصاريف</div>
+   <div class="ni owner-only" id="nav-reports" onclick="nav('reports',this)"><i class="ti ti-report"></i> التقارير</div>
+   <div class="nl">أخرى</div>
+   <div class="ni" onclick="nav('returns',this)"><i class="ti ti-arrow-back-up"></i> الإرجاعات</div>
+   <div class="ni" onclick="nav('settings',this)"><i class="ti ti-settings"></i> الإعدادات</div>
+  </div>
+  <div class="content">
+
+   <!-- HOME -->
+   <div class="page active" id="page-home">
+    <div class="ph"><div><div class="pt" id="hgreet">مرحباً</div><div style="font-size:12px;color:var(--g5);margin-top:2px;" id="hdate"></div></div></div>
+    <div id="halerts"></div>
+    <div class="sg c4">
+     <div class="sc blue"><div class="sc-l">مبيعات اليوم</div><div class="sc-v" id="hs1">-</div></div>
+     <div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="hs2">-</div></div>
+     <div class="sc green"><div class="sc-l">مبيعات الشهر</div><div class="sc-v" id="hs3">-</div></div>
+     <div class="sc amber"><div class="sc-l">قاربت النفاد</div><div class="sc-v" id="hs4">-</div></div>
+    </div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">إجراءات سريعة</div>
+    <div class="qa">
+     <div class="qab" onclick="nav('quicksale',null)"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
+     <div class="qab" onclick="openM('m-invoice')"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
+     <div class="qab" onclick="openM('m-debt')"><i class="ti ti-plus"></i><span>دين جديد</span></div>
+     <div class="qab" onclick="openM('m-customer')"><i class="ti ti-user-plus"></i><span>زبون</span></div>
+    </div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">الديون المتأخرة</div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الزبون</th><th>المبلغ</th><th>تأخر</th><th></th></tr></thead><tbody id="hoverdue"><tr class="er"><td colspan="4"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- QUICK SALE -->
+   <div class="page" id="page-quicksale">
+    <div class="ph" style="margin-bottom:.5rem;"><span class="pt">⚡ بيع سريع</span><button onclick="clearQS()" style="background:var(--g1);border:none;border-radius:8px;padding:7px 12px;font-size:13px;color:var(--g6);cursor:pointer;font-family:'Cairo',sans-serif;">🗑 مسح</button></div>
+    <div style="margin-bottom:.75rem;"><input class="inp" id="qs-cust-name" placeholder="👤 اسم الزبون (اختياري)" style="font-size:14px;"></div>
+    <div id="qs-items"></div>
+    <button onclick="addQSItem()" style="width:100%;background:none;border:1.5px dashed var(--p);border-radius:10px;padding:10px;font-size:14px;color:var(--p);cursor:pointer;margin-bottom:.75rem;font-family:'Cairo',sans-serif;font-weight:700;">+ منتج آخر</button>
+    <div style="background:var(--sl);border-radius:12px;padding:12px 16px;margin-bottom:.5rem;">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="color:var(--s);font-weight:700;font-size:15px;">المجموع:</span><strong style="color:var(--s);font-size:22px;" id="qs-total">₪ 0</strong></div>
+     <div style="display:flex;gap:8px;align-items:center;"><span style="font-size:13px;color:var(--s);">دفع:</span><input type="number" id="qs-paid-amt" class="inp" placeholder="0" inputmode="decimal" style="flex:1;font-size:14px;padding:6px 10px;background:#fff;" oninput="calcQSChange()"><span style="font-size:13px;color:var(--s);white-space:nowrap;">الباقي: <strong id="qs-change" style="color:var(--d);">-</strong></span></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:.75rem;"><span style="font-size:12px;color:var(--g5);align-self:center;">خصم:</span><button onclick="applyDiscount(5)" style="background:var(--wl);color:var(--w);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;">5%</button><button onclick="applyDiscount(10)" style="background:var(--wl);color:var(--w);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;">10%</button><button onclick="applyDiscount(0)" style="background:var(--g1);color:var(--g6);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:'Cairo',sans-serif;">إلغاء</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
+     <button class="btn btn-s" style="justify-content:center;padding:16px;font-size:16px;border-radius:12px;" onclick="saveQS('cash')">💵 نقدي</button>
+     <button class="btn btn-p2 btn" style="justify-content:center;padding:16px;font-size:16px;border-radius:12px;" onclick="saveQS('transfer')">🏦 تحويل</button>
+     <button class="btn" style="background:var(--dl);color:var(--d);justify-content:center;padding:16px;font-size:16px;border-radius:12px;" onclick="openQSDebt()">💳 دين</button>
+     <button class="btn btn-o" style="justify-content:center;padding:16px;font-size:16px;border-radius:12px;" onclick="openM('m-invoice')">📋 فاتورة</button>
+    </div>
+    <div style="font-size:13px;font-weight:800;color:var(--g7);margin-bottom:.5rem;">📊 ملخص اليوم</div>
+    <div id="qs-daily-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:1rem;"></div>
+    <div style="font-size:13px;font-weight:800;color:var(--g7);margin-bottom:.5rem;">🕐 آخر العمليات</div>
+    <div id="qs-recent" style="font-size:13px;color:var(--g5);">جاري التحميل...</div>
+   </div>
+
+   <!-- CUSTOMERS -->
+   <div class="page" id="page-customers">
+    <div class="ph"><span class="pt">الزبائن</span><button class="btn btn-s" onclick="openM('m-customer')"><i class="ti ti-plus"></i> إضافة</button></div>
+    <input class="srch" placeholder="🔍 بحث..." oninput="filterC(this.value)">
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>الدين</th><th></th><th></th></tr></thead><tbody id="clist"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- DEBTS -->
+   <div class="page" id="page-debts">
+    <div class="ph"><span class="pt">الديون</span><button class="btn btn-s" onclick="openM('m-debt')"><i class="ti ti-plus"></i> إضافة</button></div>
+    <div class="sg c3"><div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="dt1">-</div></div><div class="sc amber"><div class="sc-l">متأخرون +يومين</div><div class="sc-v" id="dt2">-</div></div><div class="sc green"><div class="sc-l">مسدَّد الشهر</div><div class="sc-v" id="dt3">-</div></div></div>
+    <div id="dalerts"></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الزبون</th><th>الدين</th><th>الباقي</th><th>التاريخ</th><th>تأخر</th><th></th><th></th></tr></thead><tbody id="dlist"><tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- INVOICES -->
+   <div class="page" id="page-invoices">
+    <div class="ph"><span class="pt">الفواتير</span><button class="btn btn-s" onclick="openM('m-invoice')"><i class="ti ti-plus"></i> جديدة</button></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>رقم</th><th>الزبون</th><th>الوقت</th><th>المجموع</th><th>الدفع</th><th></th></tr></thead><tbody id="ilist"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- SALES -->
+   <div class="page" id="page-sales">
+    <div class="ph"><span class="pt">المبيعات</span><div class="ptabs"><button class="ptab active" onclick="loadSales('day',this)">اليوم</button><button class="ptab" onclick="loadSales('week',this)">الأسبوع</button><button class="ptab" onclick="loadSales('month',this)">الشهر</button></div></div>
+    <div class="sg c4">
+     <div class="sc blue"><div class="sc-l">إجمالي</div><div class="sc-v" id="sv1">-</div></div>
+     <div class="sc green"><div class="sc-l">عدد الفواتير</div><div class="sc-v" id="sv2">-</div></div>
+     <div class="sc amber"><div class="sc-l">متوسط الفاتورة</div><div class="sc-v" id="sv3">-</div></div>
+     <div class="sc"><div class="sc-l">نقدي</div><div class="sc-v" id="sv4">-</div></div>
+     <div class="sc blue"><div class="sc-l">تحويل</div><div class="sc-v" id="sv5">-</div></div>
+     <div class="sc red"><div class="sc-l">دين/آجل</div><div class="sc-v" id="sv6">-</div></div>
+    </div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">تقرير نهاية اليوم</div>
+    <div class="card" id="daily-report" style="padding:1rem;"></div>
+   </div>
+
+   <!-- INVENTORY -->
+   <div class="page" id="page-inventory">
+    <div class="ph"><span class="pt">المخزون</span><button class="btn btn-s" onclick="openM('m-inv')"><i class="ti ti-plus"></i> إضافة</button></div>
+    <div id="invalerts"></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>سعر البيع</th><th>الحالة</th><th></th><th></th></tr></thead><tbody id="invlist"><tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- PURCHASES -->
+   <div class="page" id="page-purchases">
+    <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="openM('m-pur')"><i class="ti ti-plus"></i> تسجيل</button></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>المورد</th><th>البضاعة</th><th>الكمية</th><th>التكلفة</th><th>التاريخ</th><th></th></tr></thead><tbody id="purlist"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- NET CARDS -->
+   <div class="page" id="page-netcards">
+    <div class="ph"><span class="pt">بطاقات الإنترنت</span><div style="display:flex;gap:6px;"><button class="btn btn-o" onclick="openM('m-addstock')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="openM('m-netsale')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
+    <div id="ncalerts"></div>
+    <div class="sg c3" style="margin-bottom:.75rem;">
+     <div class="sc" id="ncs1"><div class="sc-l">1 شيكل</div><div class="sc-v">-</div></div>
+     <div class="sc" id="ncs2"><div class="sc-l">2 شيكل</div><div class="sc-v">-</div></div>
+     <div class="sc" id="ncs3"><div class="sc-l">3 شيكل</div><div class="sc-v">-</div></div>
+    </div>
+    <div class="ph" style="margin-bottom:.5rem;"><span style="font-size:14px;font-weight:800;">سجل المبيعات</span><div class="ptabs"><button class="ptab active" onclick="loadNS('day',this)">اليوم</button><button class="ptab" onclick="loadNS('week',this)">الأسبوع</button><button class="ptab" onclick="loadNS('month',this)">الشهر</button></div></div>
+    <div class="sg c3"><div class="sc blue"><div class="sc-l">المبيعات</div><div class="sc-v" id="ns1">-</div></div><div class="sc green"><div class="sc-l">بطاقات مباعة</div><div class="sc-v" id="ns2">-</div></div><div class="sc red"><div class="sc-l">متأخرون</div><div class="sc-v" id="ns3">-</div></div></div>
+    <div class="card" style="margin-top:.75rem;"><div class="tw"><table class="dt"><thead><tr><th>المشتري</th><th>النوع</th><th>العدد</th><th>السعر</th><th>الدفع</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead><tbody id="nslist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- EXPENSES -->
+   <div class="page" id="page-expenses">
+    <div class="ph"><span class="pt">المصاريف التشغيلية</span><button class="btn btn-s" onclick="openM('m-expense')"><i class="ti ti-plus"></i> إضافة مصروف</button></div>
+    <div class="sg c3"><div class="sc red"><div class="sc-l">مصاريف اليوم</div><div class="sc-v" id="exp-day">-</div></div><div class="sc amber"><div class="sc-l">مصاريف الأسبوع</div><div class="sc-v" id="exp-week">-</div></div><div class="sc red"><div class="sc-l">مصاريف الشهر</div><div class="sc-v" id="exp-month">-</div></div></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>النوع</th><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th><th></th></tr></thead><tbody id="exp-list"><tr class="er"><td colspan="5"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- REPORTS -->
+   <div class="page" id="page-reports">
+    <div class="ph"><span class="pt">التقارير المالية</span><div class="ptabs"><button class="ptab active" onclick="loadReports('day',this)">اليوم</button><button class="ptab" onclick="loadReports('week',this)">الأسبوع</button><button class="ptab" onclick="loadReports('month',this)">الشهر</button></div></div>
+    <div id="profit-banner" style="border-radius:14px;padding:1.25rem;margin-bottom:1rem;text-align:center;background:var(--sl);">
+     <div style="font-size:13px;margin-bottom:4px;" id="profit-label">صافي الربح</div>
+     <div style="font-size:36px;font-weight:900;" id="profit-main">-</div>
+     <div style="font-size:13px;margin-top:4px;" id="profit-margin-label">هامش الربح: -</div>
+    </div>
+    <div class="sg c3" style="margin-bottom:.75rem;">
+     <div class="sc blue"><div class="sc-l">إجمالي المبيعات</div><div class="sc-v" id="r-sales">-</div></div>
+     <div class="sc red"><div class="sc-l">تكلفة البضاعة (COGS)</div><div class="sc-v" id="r-cogs">-</div></div>
+     <div class="sc amber"><div class="sc-l">المصاريف التشغيلية</div><div class="sc-v" id="r-opex">-</div></div>
+    </div>
+    <div class="card" style="margin-bottom:.75rem;"><div style="padding:1rem;">
+     <div style="font-size:12px;font-weight:700;color:var(--g5);margin-bottom:.75rem;">📐 المعادلة</div>
+     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;">
+      <span style="background:var(--pl);color:var(--p);padding:4px 10px;border-radius:6px;font-weight:700;" id="eq-sales">-</span>
+      <span style="color:var(--g5);">−</span>
+      <span style="background:var(--dl);color:var(--d);padding:4px 10px;border-radius:6px;font-weight:700;" id="eq-cogs">-</span>
+      <span style="color:var(--g5);">−</span>
+      <span style="background:var(--wl);color:var(--w);padding:4px 10px;border-radius:6px;font-weight:700;" id="eq-opex">-</span>
+      <span style="color:var(--g5);">=</span>
+      <span style="background:var(--sl);color:var(--s);padding:4px 10px;border-radius:6px;font-weight:900;font-size:15px;" id="eq-profit">-</span>
+     </div>
+    </div></div>
+    <div style="font-size:14px;font-weight:800;margin-bottom:.5rem;">تفاصيل المصاريف</div>
+    <div class="card" style="margin-bottom:.75rem;"><div style="padding:1rem;" id="r-exp-detail">-</div></div>
+   </div>
+
+   <!-- RETURNS -->
+   <div class="page" id="page-returns">
+    <div class="ph"><span class="pt">الإرجاعات</span></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>المبلغ</th><th>النوع</th><th>ملاحظات</th></tr></thead><tbody id="ret-list"><tr class="er"><td colspan="5"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+   </div>
+
+   <!-- SETTINGS -->
+   <div class="page" id="page-settings">
+    <div class="pt" style="margin-bottom:1rem;">الإعدادات</div>
+    <div class="card" style="margin-bottom:.75rem;"><div style="padding:1.25rem;">
+     <div class="fg"><label class="lbl">اسم المحل</label><input class="inp" id="set1"></div>
+     <div class="fg"><label class="lbl">اسم صاحب المحل</label><input class="inp" id="set2"></div>
+     <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="set3" inputmode="tel"></div>
+     <div style="display:flex;justify-content:flex-end;"><button class="btn btn-s" onclick="saveSet()">حفظ</button></div>
+    </div></div>
+    <div class="card"><div style="padding:1.25rem;">
+     <div style="font-weight:800;margin-bottom:.6rem;">الاشتراك</div>
+     <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-size:13px;color:var(--g6);">ينتهي: <strong id="set-sub">-</strong></div><div style="font-size:11px;color:var(--g4);">بياناتك محمية دائماً</div></div>
+      <span class="bg">نشط</span>
+     </div>
+    </div></div>
+    <div class="card" id="admin-panel" style="display:none;"><div style="padding:1.25rem;">
+     <div style="font-weight:800;margin-bottom:.25rem;color:var(--d);">⛔ هذه الصفحة للـ Super Admin فقط</div>
+    </div></div>
+   </div>
+
+  </div>
+ </div>
+ <div class="bottom-nav">
+  <div class="bnav-inner">
+   <button class="bn active" id="bn-home" onclick="navTo('home')"><i class="ti ti-home"></i><span>الرئيسية</span></button>
+   <button class="bn" id="bn-quicksale" onclick="navTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></button>
+   <button class="bn" id="bn-debts" onclick="navTo('debts')"><i class="ti ti-credit-card-off"></i><span>الديون</span><span class="bn-dot hidden" id="bn-dot"></span></button>
+   <button class="bn" id="bn-invoices" onclick="navTo('invoices')"><i class="ti ti-receipt"></i><span>الفواتير</span></button>
+   <button class="bn" id="bn-more" onclick="navTo('customers')"><i class="ti ti-grid-dots"></i><span>المزيد</span></button>
+  </div>
+ </div>
+</div>
+
+<!-- MODALS -->
+<!-- New Store (Super Admin) -->
+<div class="mo" id="m-new-store"><div class="modal" style="background:#1e293b;">
+ <div class="mhdr"><span class="mtitle" style="color:#f1f5f9;">إنشاء محل جديد</span><button class="mclose" onclick="closeM('m-new-store')" style="background:#334155;color:#94a3b8;">✕</button></div>
+ <div class="fg"><label class="lbl" style="color:#94a3b8;">اسم المحل *</label><input class="inp" id="sa-new-store" style="background:#334155;border-color:#475569;color:#f1f5f9;" placeholder="بقالة أبو أحمد"></div>
+ <div class="fg"><label class="lbl" style="color:#94a3b8;">اسم صاحب المحل *</label><input class="inp" id="sa-new-owner" style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
+ <div class="fg"><label class="lbl" style="color:#94a3b8;">رقم الجوال</label><input class="inp" id="sa-new-phone" style="background:#334155;border-color:#475569;color:#f1f5f9;" inputmode="tel"></div>
+ <div class="fg"><label class="lbl" style="color:#94a3b8;">اسم المستخدم (البريد) *</label><input class="inp" id="sa-new-user" type="email" style="background:#334155;border-color:#475569;color:#f1f5f9;" placeholder="store@mail.com" inputmode="email"></div>
+ <div class="fg"><label class="lbl" style="color:#94a3b8;">كلمة المرور *</label><input class="inp" id="sa-new-pass" type="password" style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
+ <div class="fg"><label class="lbl" style="color:#94a3b8;">مدة الاشتراك (أشهر)</label><select class="inp" id="sa-new-months" style="background:#334155;border-color:#475569;color:#f1f5f9;"><option value="1">شهر</option><option value="3">3 أشهر</option><option value="6">6 أشهر</option><option value="12" selected>سنة كاملة</option><option value="24">سنتين</option></select></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-new-store')">إلغاء</button><button class="sa-btn sa-btn-p" onclick="createStore()" style="font-family:'Cairo',sans-serif;"><i class="ti ti-plus"></i> إنشاء المحل</button></div>
+</div></div>
+
+<!-- Customer -->
+<div class="mo" id="m-customer"><div class="modal">
+ <div class="mhdr"><span class="mtitle">إضافة زبون</span><button class="mclose" onclick="closeM('m-customer')">✕</button></div>
+ <div class="fg"><label class="lbl">الاسم *</label><input class="inp" id="cn" placeholder="اسم الزبون"></div>
+ <div class="fr"><div class="fg"><label class="lbl">الجوال</label><input class="inp" id="cph" inputmode="tel" placeholder="059-..."></div><div class="fg"><label class="lbl">العنوان</label><input class="inp" id="cad"></div></div>
+ <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="cno" placeholder="اختياري"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-customer')">إلغاء</button><button class="btn btn-s" onclick="saveC()">إضافة</button></div>
+</div></div>
+
+<!-- Debt -->
+<div class="mo" id="m-debt"><div class="modal">
+ <div class="mhdr"><span class="mtitle">إضافة دين</span><button class="mclose" onclick="closeM('m-debt')">✕</button></div>
+ <div class="fg"><label class="lbl">الزبون *</label><select class="inp" id="dc"><option value="">-- اختر الزبون --</option></select></div>
+ <div class="fr"><div class="fg"><label class="lbl">المبلغ (₪) *</label><input class="inp" type="number" id="da" inputmode="decimal"></div><div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="dd"></div></div>
+ <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="dn" placeholder="اختياري"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-debt')">إلغاء</button><button class="btn btn-s" onclick="saveD()">حفظ</button></div>
+</div></div>
+
+<!-- Pay -->
+<div class="mo" id="m-pay"><div class="modal">
+ <div class="mhdr"><span class="mtitle">تسديد دين</span><button class="mclose" onclick="closeM('m-pay')">✕</button></div>
+ <input type="hidden" id="pid">
+ <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;display:flex;justify-content:space-between;"><span>الزبون:</span><strong id="pname">-</strong></div>
+ <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;display:flex;justify-content:space-between;"><span>الباقي:</span><strong id="prem" style="color:var(--d);">-</strong></div>
+ <div class="fg"><label class="lbl">طريقة الدفع</label>
+  <div style="display:flex;gap:8px;">
+   <label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="pt" value="full" checked onchange="togglePA(this)"> كاملاً</label>
+   <label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="pt" value="partial" onchange="togglePA(this)"> جزئي</label>
+  </div>
+ </div>
+ <div class="fg hidden" id="pawrap"><label class="lbl">المبلغ (₪)</label><input class="inp" type="number" id="pamt" inputmode="decimal"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-pay')">إلغاء</button><button class="btn btn-s" onclick="savePay()">تأكيد</button></div>
+</div></div>
+
+<!-- Invoice -->
+<div class="mo" id="m-invoice"><div class="modal">
+ <div class="mhdr"><span class="mtitle">فاتورة جديدة</span><button class="mclose" onclick="closeM('m-invoice')">✕</button></div>
+ <div class="fg"><label class="lbl">الزبون (اختياري)</label>
+  <select class="inp" id="ic" onchange="toggleNewCust(this)"><option value="">-- زبون عادي --</option><option value="__new__">➕ زبون جديد...</option></select>
+ </div>
+ <div id="new-cust-wrap" class="hidden">
+  <div style="background:var(--pl);border-radius:8px;padding:10px;margin-bottom:.75rem;">
+   <div style="font-size:12px;font-weight:700;color:var(--p);margin-bottom:8px;">بيانات الزبون الجديد</div>
+   <div class="fr"><div class="fg" style="margin-bottom:0;"><label class="lbl">الاسم *</label><input class="inp" id="inv-new-name" style="font-size:13px;"></div><div class="fg" style="margin-bottom:0;"><label class="lbl">الجوال</label><input class="inp" id="inv-new-phone" inputmode="tel" style="font-size:13px;"></div></div>
+  </div>
+ </div>
+ <div id="iitems"></div>
+ <button onclick="addII()" style="width:100%;background:none;border:1px dashed var(--g3);border-radius:8px;padding:8px;font-size:13px;color:var(--p);cursor:pointer;margin-bottom:.75rem;font-family:'Cairo',sans-serif;">+ منتج آخر</button>
+ <div class="fr"><div class="fg"><label class="lbl">خصم (₪)</label><input class="inp" type="number" id="idiscount" value="0" oninput="calcI()" inputmode="decimal"></div><div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="inotes" placeholder="اختياري"></div></div>
+ <div style="display:flex;justify-content:space-between;background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:14px;"><span>المجموع:</span><strong id="itotal">₪ 0</strong></div>
+ <div class="fg"><label class="lbl">طريقة الدفع</label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="cash" checked> 💵 نقدي</label>
+   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="transfer"> 🏦 تحويل</label>
+   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="defer"> 📋 دين كامل</label>
+   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;" onclick="el('ipartialwrap').classList.remove('hidden')"><input type="radio" name="ip" value="partial"> 💳 جزئي</label>
+  </div>
+ </div>
+ <div class="fg hidden" id="ipartialwrap"><label class="lbl">المدفوع الآن (₪)</label><input class="inp" type="number" id="ipartial" inputmode="decimal"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-invoice')">إلغاء</button><button class="btn btn-s" onclick="saveInv()">حفظ الفاتورة</button></div>
+</div></div>
+
+<!-- QS Debt -->
+<div class="mo" id="m-qs-debt"><div class="modal">
+ <div class="mhdr"><span class="mtitle">بيع سريع — دين</span><button class="mclose" onclick="closeM('m-qs-debt')">✕</button></div>
+ <div class="fg"><label class="lbl">الزبون *</label><select class="inp" id="qs-cust"><option value="">-- اختر الزبون --</option></select></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-qs-debt')">إلغاء</button><button class="btn btn-s" onclick="saveQS('defer')">تأكيد</button></div>
+</div></div>
+
+<!-- Inventory -->
+<div class="mo" id="m-inv"><div class="modal">
+ <div class="mhdr"><span class="mtitle">إضافة صنف</span><button class="mclose" onclick="closeM('m-inv')">✕</button></div>
+ <div class="fg"><label class="lbl">اسم الصنف *</label><input class="inp" id="inn" placeholder="سكر، أرز..."></div>
+ <div class="fr"><div class="fg"><label class="lbl">الفئة</label><select class="inp" id="inc"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>عام</option></select></div><div class="fg"><label class="lbl">النوع</label><select class="inp" id="inu"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div></div>
+ <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="inq" value="0" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="insp" value="0" inputmode="decimal"></div></div>
+ <div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="ina" value="10" inputmode="decimal"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-inv')">إلغاء</button><button class="btn btn-s" onclick="saveInvItem()">إضافة</button></div>
+</div></div>
+
+<!-- Edit Inventory -->
+<div class="mo" id="m-editinv"><div class="modal">
+ <div class="mhdr"><span class="mtitle">تعديل الصنف</span><button class="mclose" onclick="closeM('m-editinv')">✕</button></div>
+ <input type="hidden" id="einvid">
+ <div class="fg"><label class="lbl">الصنف</label><input class="inp" id="einvname" readonly style="background:var(--g1);"></div>
+ <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="einvqty" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="einvprice" inputmode="decimal"></div></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-editinv')">إلغاء</button><button class="btn btn-s" onclick="updateInvQty()">تحديث</button></div>
+</div></div>
+
+<!-- Purchases -->
+<div class="mo" id="m-pur"><div class="modal">
+ <div class="mhdr"><span class="mtitle">تسجيل مشتريات</span><button class="mclose" onclick="closeM('m-pur')">✕</button></div>
+ <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="pus" placeholder="اسم المورد أو الشركة"></div>
+ <div class="fg"><label class="lbl">الصنف من المخزون *</label><select class="inp" id="pur-inv-sel" onchange="fillPurName(this)"><option value="">-- اختر من المخزون --</option></select></div>
+ <div class="fg"><label class="lbl">أو اكتب اسم صنف جديد</label><input class="inp" id="pup" placeholder="اتركه فارغاً لو اخترت من فوق"></div>
+ <div class="fg"><label class="lbl">النوع</label><select class="inp" id="pu-unit"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div>
+ <div class="fr"><div class="fg"><label class="lbl">الكمية المشتراة *</label><input class="inp" type="number" id="puq" value="1" inputmode="decimal"></div><div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="puc" inputmode="decimal"></div></div>
+ <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="pud"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-pur')">إلغاء</button><button class="btn btn-s" onclick="savePur()">حفظ وتحديث المخزون</button></div>
+</div></div>
+
+<!-- Net Sale -->
+<div class="mo" id="m-netsale"><div class="modal">
+ <div class="mhdr"><span class="mtitle">بيع بطاقة</span><button class="mclose" onclick="closeM('m-netsale')">✕</button></div>
+ <div class="fg"><label class="lbl">اسم المشتري *</label><input class="inp" id="nsb"></div>
+ <div class="fr"><div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="nst" onchange="calcNT()"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div><div class="fg"><label class="lbl">العدد</label><input class="inp" type="number" id="nsq" value="1" oninput="calcNT()" inputmode="numeric"></div></div>
+ <div style="display:flex;justify-content:space-between;background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:14px;"><span>المجموع:</span><strong id="nstotal">₪ 1</strong></div>
+ <div class="fg"><label class="lbl">الدفع</label><div style="display:flex;gap:8px;"><label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="nsp" value="full" checked> كلي</label><label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="nsp" value="partial"> جزئي</label></div></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-netsale')">إلغاء</button><button class="btn btn-s" onclick="saveNS()">تأكيد</button></div>
+</div></div>
+
+<!-- Add Net Stock -->
+<div class="mo" id="m-addstock"><div class="modal">
+ <div class="mhdr"><span class="mtitle">إضافة مخزون بطاقات</span><button class="mclose" onclick="closeM('m-addstock')">✕</button></div>
+ <div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="ast"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div>
+ <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="asq" value="50" inputmode="numeric"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-addstock')">إلغاء</button><button class="btn btn-s" onclick="addNStock()">إضافة</button></div>
+</div></div>
+
+<!-- Expense -->
+<div class="mo" id="m-expense"><div class="modal">
+ <div class="mhdr"><span class="mtitle">إضافة مصروف</span><button class="mclose" onclick="closeM('m-expense')">✕</button></div>
+ <div class="fg"><label class="lbl">نوع المصروف *</label><select class="inp" id="exp-type"><option>رواتب موظفين</option><option>كهرباء</option><option>إنترنت</option><option>إيجار</option><option>نقل وشحن</option><option>صيانة</option><option>تسويق وإعلان</option><option>مستلزمات مكتبية</option><option>أخرى</option></select></div>
+ <div class="fr"><div class="fg"><label class="lbl">المبلغ (₪) *</label><input class="inp" type="number" id="exp-amount" inputmode="decimal" placeholder="0.00"></div><div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="exp-date"></div></div>
+ <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="exp-notes" placeholder="اختياري"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-expense')">إلغاء</button><button class="btn btn-s" onclick="saveExpense()">حفظ</button></div>
+</div></div>
+
+<!-- Statement -->
+<div class="mo" id="m-stmt"><div class="modal" style="max-width:500px;">
+ <div class="mhdr"><span class="mtitle" id="stmttitle">كشف حساب</span><button class="mclose" onclick="closeM('m-stmt')">✕</button></div>
+ <div id="stmtbody"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-stmt')">إغلاق</button><button class="btn btn-p2 btn" onclick="printStmt()">🖨 طباعة</button></div>
+</div></div>
+
+<!-- Return -->
+<div class="mo" id="m-return"><div class="modal">
+ <div class="mhdr"><span class="mtitle">إرجاع بضاعة</span><button class="mclose" onclick="closeM('m-return')">✕</button></div>
+ <input type="hidden" id="ret-inv-id">
+ <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;color:var(--g6);" id="ret-inv-info"></div>
+ <div class="fg"><label class="lbl">مبلغ الإرجاع (₪)</label><input class="inp" type="number" id="ret-amount" inputmode="decimal"></div>
+ <div class="fg"><label class="lbl">طريقة الإرجاع</label>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+   <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="rtype" value="cash" checked> 💵 إرجاع نقدي</label>
+   <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="rtype" value="debt"> 📋 شطب من الدين</label>
+   <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="rtype" value="transfer"> 🏦 تحويل بنكي</label>
+  </div>
+ </div>
+ <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="ret-notes" placeholder="سبب الإرجاع..."></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="closeM('m-return')">إلغاء</button><button class="btn btn-s" onclick="saveReturn()">تأكيد</button></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// =============================================
+// حسابات - app.js - نظام RBAC كامل
+// =============================================
+const SUPABASE_URL = 'https://omtrbatypecsraettrbw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdHJiYXR5cGVjc3JhZXR0cmJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTUzNTIsImV4cCI6MjA5NjA5MTM1Mn0.71cyb5LBkCJTX1fcVNCuD8u28waSI4fWeai4ccW-asU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── STATE ──
+let CU = null; // current user account
+let ROLE = null; // superadmin / owner / employee
+let PERMS = {}; // employee permissions
+let AC = [], INV_LIST = [];
+let _isSaving = false;
+let _qsDiscount = 0;
+let currentPage = 'home';
+
+// ── ACCOUNTS (fallback محلي) ──
+const LOCAL_ACCOUNTS = [
+  { id:'superadmin-001', user:'admin@hesabat.com', pass:'anas12345!', store_name:'النظام', owner:'Super Admin', role:'superadmin' },
+];
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', async () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
+  const hdate = document.getElementById('hdate');
+  if(hdate) hdate.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const saved = localStorage.getItem('bs_session');
+  if(saved){
+    const all = await getAllAccounts();
+    const acc = all.find(a => a.id === saved);
+    if(acc){ await boot(acc); return; }
+  }
+  showAuth();
+});
+
+async function getAllAccounts(){
+  try {
+    const {data} = await sb.from('app_accounts').select('*');
+    if(data && data.length){
+      return data.map(a=>({id:a.id,user:a.username,pass:a.password,store_name:a.store_name,owner:a.owner_name,role:a.role,is_active:a.is_active,subscription_end:a.subscription_end}));
+    }
+  } catch(e){}
+  return LOCAL_ACCOUNTS;
+}
+
+// ── AUTH ──
+async function doLogin(){
+  const u=v('le'), p=v('lp');
+  if(!u||!p){showMsg('lmsg','يرجى تعبئة الحقول','err');return;}
+  const btn=el('btn-li');
+  btn.disabled=true; btn.textContent='جاري الدخول...';
+  const all = await getAllAccounts();
+  const acc = all.find(a=>a.user===u&&a.pass===p);
+  btn.disabled=false; btn.innerHTML='<i class="ti ti-login" style="vertical-align:-2px;margin-left:5px;"></i> دخول';
+  if(!acc){showMsg('lmsg','اسم المستخدم أو كلمة المرور غير صحيحة','err');return;}
+  if(acc.is_active===false){showMsg('lmsg','هذا الحساب موقوف. تواصل مع المسؤول','err');return;}
+  await boot(acc);
+}
+
+function doLogout(){
+  localStorage.removeItem('bs_session');
+  CU=null; ROLE=null; PERMS={}; AC=[]; INV_LIST=[];
+  document.getElementById('app-wrap').style.display='none';
+  document.getElementById('superadmin-wrap').style.display='none';
+  showAuth();
+}
+
+function showAuth(){
+  document.getElementById('app-wrap').style.display='none';
+  document.getElementById('superadmin-wrap').style.display='none';
+  document.getElementById('auth-wrap').classList.remove('hidden');
+}
+
+async function boot(acc){
+  CU = acc;
+  ROLE = acc.role || 'owner';
+  localStorage.setItem('bs_session', acc.id);
+  document.getElementById('auth-wrap').classList.add('hidden');
+
+  if(ROLE === 'superadmin'){
+    await bootSuperAdmin();
+  } else {
+    // تحقق الاشتراك
+    if(acc.subscription_end && new Date(acc.subscription_end) < new Date()){
+      document.getElementById('exp-wrap').style.display='flex';
+      return;
+    }
+    await bootStore(acc);
+  }
+}
+
+// ── SUPER ADMIN BOOT ──
+async function bootSuperAdmin(){
+  document.getElementById('superadmin-wrap').style.display='flex';
+  document.getElementById('sa-admin-name').textContent = CU.owner;
+  await loadSADashboard();
+  showSAPage('sa-dashboard');
+}
+
+async function loadSADashboard(){
+  const [r1,r2,r3] = await Promise.all([
+    sb.from('stores').select('id,store_name,owner_name,is_active,subscription_end,created_at'),
+    sb.from('invoices').select('total'),
+    sb.from('app_accounts').select('id,role')
+  ]);
+  const stores = r1.data||[];
+  const invoices = r2.data||[];
+  const accounts = r3.data||[];
+  const totalSales = invoices.reduce((s,r)=>s+r.total,0);
+  const activeStores = stores.filter(s=>s.is_active!==false).length;
+  const expiredStores = stores.filter(s=>s.subscription_end && new Date(s.subscription_end)<new Date()).length;
+
+  el('sa-stat-stores').textContent = stores.length;
+  el('sa-stat-sales').textContent = '₪'+totalSales.toLocaleString('en-US');
+  el('sa-stat-active').textContent = activeStores;
+  el('sa-stat-expired').textContent = expiredStores;
+
+  // جدول المحلات
+  const tbody = el('sa-stores-list');
+  if(tbody) tbody.innerHTML = stores.length ? stores.map(s=>{
+    const expired = s.subscription_end && new Date(s.subscription_end)<new Date();
+    const subDate = s.subscription_end ? new Date(s.subscription_end).toLocaleDateString('en-US') : '-';
+    return `<tr>
+      <td><strong>${s.store_name}</strong></td>
+      <td>${s.owner_name}</td>
+      <td>${expired?'<span class="br">منتهي</span>':s.is_active===false?'<span class="ba">موقوف</span>':'<span class="bg">نشط</span>'}</td>
+      <td>${subDate}</td>
+      <td>
+        <button class="ibb" onclick="editStore('${s.id}')">تعديل</button>
+        <button class="${s.is_active===false?'ibg':'ibr'}" onclick="toggleStore('${s.id}',${s.is_active!==false})" style="margin-right:4px;">
+          ${s.is_active===false?'تفعيل':'إيقاف'}
+        </button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr class="er"><td colspan="5">لا توجد محلات</td></tr>';
+}
+
+function showSAPage(id){
+  document.querySelectorAll('.sa-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sa-nav-item').forEach(n=>n.classList.remove('active'));
+  const page = el(id);
+  if(page) page.classList.add('active');
+  document.querySelectorAll('.sa-nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
+  });
+  if(id==='sa-stores') loadSAStores();
+  if(id==='sa-subscriptions') loadSASubscriptions();
+  if(id==='sa-users') loadSAUsers();
+  if(id==='sa-notifications') {};
+  if(id==='sa-dashboard') loadSADashboard();
+}
+
+async function loadSAStores(){
+  const {data} = await sb.from('stores').select('*').order('created_at',{ascending:false});
+  const list = data||[];
+  const tbody = el('sa-all-stores');
+  if(!tbody) return;
+  tbody.innerHTML = list.length ? list.map(s=>{
+    const expired = s.subscription_end && new Date(s.subscription_end)<new Date();
+    return `<tr>
+      <td><strong>${s.store_name}</strong></td>
+      <td>${s.owner_name||'-'}</td>
+      <td>${s.phone||'-'}</td>
+      <td>${expired?'<span class="br">منتهي</span>':s.is_active===false?'<span class="ba">موقوف</span>':'<span class="bg">نشط</span>'}</td>
+      <td>${s.subscription_end?new Date(s.subscription_end).toLocaleDateString('en-US'):'-'}</td>
+      <td>
+        <button class="ibb" onclick="editStore('${s.id}')">تعديل</button>
+        <button class="${s.is_active===false?'ibg':'ibr'}" onclick="toggleStore('${s.id}',${s.is_active!==false})">
+          ${s.is_active===false?'تفعيل':'إيقاف'}
+        </button>
+        <button class="ibr" onclick="delStore('${s.id}')" style="margin-right:4px;">حذف</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr class="er"><td colspan="6">لا توجد محلات</td></tr>';
+}
+
+async function loadSASubscriptions(){
+  const {data} = await sb.from('app_accounts').select('*').order('created_at',{ascending:false});
+  const list = (data||[]).filter(a=>a.role!=='superadmin');
+  const tbody = el('sa-subs-list');
+  if(!tbody) return;
+  tbody.innerHTML = list.length ? list.map(a=>{
+    const expired = a.subscription_end && new Date(a.subscription_end)<new Date();
+    return `<tr>
+      <td>${a.store_name}</td>
+      <td>${a.username}</td>
+      <td>${expired?'<span class="br">منتهي</span>':'<span class="bg">نشط</span>'}</td>
+      <td>${a.subscription_end?new Date(a.subscription_end).toLocaleDateString('en-US'):'-'}</td>
+      <td>
+        <button class="ibb" onclick="renewSub('${a.id}',365)">تجديد سنة</button>
+        <button class="ibg" onclick="renewSub('${a.id}',30)" style="margin-right:4px;">شهر</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr class="er"><td colspan="5">لا يوجد اشتراكات</td></tr>';
+}
+
+async function loadSAUsers(){
+  const {data} = await sb.from('app_accounts').select('*').order('created_at',{ascending:false});
+  const list = (data||[]).filter(a=>a.role!=='superadmin');
+  const tbody = el('sa-users-list');
+  if(!tbody) return;
+  tbody.innerHTML = list.length ? list.map(a=>`<tr>
+    <td>${a.store_name}</td>
+    <td>${a.username}</td>
+    <td>${a.owner_name}</td>
+    <td><span class="${a.role==='owner'?'bb':'ba'}">${a.role==='owner'?'صاحب محل':'موظف'}</span></td>
+    <td><span class="${a.is_active?'bg':'br'}">${a.is_active?'نشط':'موقوف'}</span></td>
+    <td>
+      <button class="${a.is_active?'ibr':'ibg'}" onclick="toggleAccount('${a.id}',${a.is_active})">
+        ${a.is_active?'إيقاف':'تفعيل'}
+      </button>
+    </td>
+  </tr>`).join('') : '<tr class="er"><td colspan="6">لا يوجد مستخدمين</td></tr>';
+}
+
+async function createStore(){
+  const store = v('sa-new-store');
+  const owner = v('sa-new-owner');
+  const phone = v('sa-new-phone');
+  const user  = v('sa-new-user');
+  const pass  = v('sa-new-pass');
+  const months= parseInt(v('sa-new-months'))||12;
+  if(!store||!owner||!user||!pass){toast('يرجى تعبئة الحقول المطلوبة');return;}
+
+  const storeId = 'store-'+Date.now().toString(36);
+  const subEnd = new Date(); subEnd.setMonth(subEnd.getMonth()+months);
+
+  const {error:e1} = await sb.from('stores').insert({
+    id:storeId, store_name:store, owner_name:owner, phone,
+    is_active:true, subscription_end:subEnd.toISOString().split('T')[0]
+  });
+  if(e1){toast('خطأ في إنشاء المحل: '+e1.message);return;}
+
+  const {error:e2} = await sb.from('app_accounts').insert({
+    id:storeId, username:user, password:pass,
+    store_name:store, owner_name:owner, role:'owner',
+    is_active:true, subscription_end:subEnd.toISOString().split('T')[0]
+  });
+  if(e2){toast('خطأ في إنشاء الحساب: '+e2.message);return;}
+
+  await sb.from('net_cards_stock').insert([
+    {store_id:storeId,card_type:'1',quantity:0},
+    {store_id:storeId,card_type:'2',quantity:0},
+    {store_id:storeId,card_type:'3',quantity:0}
+  ]);
+
+  toast('✅ تم إنشاء محل "'+store+'" بنجاح');
+  closeM('m-new-store');
+  clearF(['sa-new-store','sa-new-owner','sa-new-phone','sa-new-user','sa-new-pass']);
+  loadSADashboard(); loadSAStores(); loadSAUsers();
+}
+
+async function toggleStore(storeId, currentActive){
+  const newState = !currentActive;
+  await sb.from('stores').update({is_active:newState}).eq('id',storeId);
+  await sb.from('app_accounts').update({is_active:newState}).eq('id',storeId);
+  toast(newState?'✅ تم تفعيل المحل':'⛔ تم إيقاف المحل');
+  loadSAStores(); loadSADashboard();
+}
+
+async function delStore(storeId){
+  if(!confirm('حذف هذا المحل وجميع بياناته نهائياً؟')) return;
+  await sb.from('stores').delete().eq('id',storeId);
+  await sb.from('app_accounts').delete().eq('id',storeId);
+  toast('تم الحذف');
+  loadSAStores(); loadSADashboard();
+}
+
+async function renewSub(accId, days){
+  const subEnd = new Date(); subEnd.setDate(subEnd.getDate()+days);
+  const dateStr = subEnd.toISOString().split('T')[0];
+  await sb.from('app_accounts').update({subscription_end:dateStr,is_active:true}).eq('id',accId);
+  await sb.from('stores').update({subscription_end:dateStr,is_active:true}).eq('id',accId);
+  toast('✅ تم تجديد الاشتراك حتى '+dateStr);
+  loadSASubscriptions();
+}
+
+async function toggleAccount(accId, currentActive){
+  const newState = !currentActive;
+  await sb.from('app_accounts').update({is_active:newState}).eq('id',accId);
+  toast(newState?'✅ تم تفعيل الحساب':'⛔ تم إيقاف الحساب');
+  loadSAUsers();
+}
+
+function editStore(storeId){
+  toast('ميزة التعديل قريباً');
+}
+
+async function sendNotification(){
+  const title = v('notif-title');
+  const msg = v('notif-msg');
+  const toAll = document.getElementById('notif-all')?.checked;
+  if(!title||!msg){toast('أدخل العنوان والرسالة');return;}
+  await sb.from('notifications').insert({
+    from_id: CU.id, to_store_id: toAll?null:null,
+    title, message:msg
+  });
+  toast('✅ تم إرسال الإشعار');
+  clearF(['notif-title','notif-msg']);
+}
+
+// ── STORE BOOT ──
+async function bootStore(acc){
+  document.getElementById('exp-wrap').style.display='none';
+  document.getElementById('app-wrap').style.display='flex';
+  document.getElementById('store-pill').textContent = acc.store_name;
+  const hgreet = el('hgreet');
+  if(hgreet) hgreet.textContent = 'مرحباً، '+acc.owner+' 👋';
+  const set1=el('set1'),set2=el('set2'),set3=el('set3'),setsub=el('set-sub');
+  if(set1) set1.value=acc.store_name;
+  if(set2) set2.value=acc.owner;
+  if(set3) set3.value='';
+  if(setsub) setsub.textContent=acc.subscription_end?new Date(acc.subscription_end).toLocaleDateString('en-US'):'غير محدود';
+
+  // تطبيق صلاحيات حسب الدور
+  applyRoleUI(ROLE);
+
+  // تحميل البيانات
+  await loadInvList();
+  await Promise.all([loadAC(), loadBadge()]);
+  loadHome();
+  startRealtime();
+}
+
+function applyRoleUI(role){
+  // إخفاء عناصر حسب الدور
+  const ownerOnly = document.querySelectorAll('.owner-only');
+  const adminPanel = el('admin-panel');
+
+  ownerOnly.forEach(el2 => {
+    el2.style.display = (role==='owner'||role==='superadmin') ? '' : 'none';
+  });
+
+  if(adminPanel) adminPanel.style.display = 'none'; // مخفي دائماً في لوحة المحل
+
+  if(role==='employee'){
+    // موظف — إخفاء الديون والمصاريف والتقارير المالية
+    const empHide = ['nav-debts','nav-expenses','nav-reports'];
+    empHide.forEach(id=>{const e=el(id);if(e)e.style.display='none';});
+  }
+}
+
+// ── REALTIME ──
+let realtimeChannel=null, _rtTimers={};
+function _debounce(key,fn,ms=800){clearTimeout(_rtTimers[key]);_rtTimers[key]=setTimeout(fn,ms);}
+
+function startRealtime(){
+  if(!CU) return;
+  if(realtimeChannel) sb.removeChannel(realtimeChannel);
+  realtimeChannel = sb.channel('store-'+CU.id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'inventory'},
+      ()=>{if(_isSaving)return;_debounce('inv',()=>{loadInvList();if(currentPage==='inventory')loadInv();});})
+    .on('postgres_changes',{event:'*',schema:'public',table:'invoices'},
+      ()=>{if(_isSaving)return;_debounce('inv2',()=>{if(currentPage==='invoices')loadI();loadHome();showSyncToast('🔄 فاتورة جديدة');});})
+    .on('postgres_changes',{event:'*',schema:'public',table:'debts'},
+      ()=>{if(_isSaving)return;_debounce('dbt',()=>{loadBadge();if(currentPage==='debts')loadD();else loadHome();showSyncToast('🔄 تحديث الديون');});})
+    .on('postgres_changes',{event:'*',schema:'public',table:'customers'},
+      ()=>{if(_isSaving)return;_debounce('cst',()=>{loadAC();if(currentPage==='customers')loadC();});})
+    .on('postgres_changes',{event:'*',schema:'public',table:'purchases'},
+      ()=>{if(_isSaving)return;_debounce('pur',()=>{if(currentPage==='purchases')loadPur();showSyncToast('🔄 مشتريات جديدة');});})
+    .subscribe();
+}
+
+// ── NAV ──
+const PAGE_LOADERS={
+  home:loadHome,customers:loadC,debts:loadD,invoices:loadI,
+  quicksale:()=>initQS(),
+  sales:()=>{loadSales('day',null);loadDailyReport();},
+  inventory:async()=>await loadInv(),
+  purchases:loadPur,
+  netcards:()=>{loadNStock();loadNS('day',null);},
+  returns:loadReturns,
+  expenses:loadExpenses,
+  reports:()=>loadReports('month',null)
+};
+
+function nav(id,el2){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const page=el(('page-'+id));
+  if(page) page.classList.add('active');
+  if(el2) el2.classList.add('active');
+  currentPage=id;
+  if(PAGE_LOADERS[id]) PAGE_LOADERS[id]();
+}
+function navTo(id){
+  nav(id,null);
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  const bn=el('bn-'+id);if(bn)bn.classList.add('active');
+}
+
+// ── HOME ──
+async function loadHome(){
+  if(!CU) return;
+  const today=new Date().toISOString().split('T')[0];
+  const first=new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().split('T')[0];
+  const [r1,r2,r3,r4]=await Promise.all([
+    sb.from('invoices').select('total').eq('store_id',CU.id).eq('invoice_date',today),
+    sb.from('invoices').select('total').eq('store_id',CU.id).gte('invoice_date',first),
+    sb.from('debts').select('amount,paid').eq('store_id',CU.id),
+    sb.from('inventory').select('quantity,low_stock_alert').eq('store_id',CU.id)
+  ]);
+  const hs1=el('hs1'),hs2=el('hs2'),hs3=el('hs3'),hs4=el('hs4');
+  if(hs1) hs1.textContent=fmt(sum(r1.data,'total'));
+  if(hs2) hs2.textContent=fmt((r3.data||[]).reduce((s,d)=>s+(d.amount-d.paid),0));
+  if(hs3) hs3.textContent=fmt(sum(r2.data,'total'));
+  if(hs4) hs4.textContent=(r4.data||[]).filter(i=>i.quantity<=i.low_stock_alert).length;
+  const {data:debts}=await sb.from('debts').select('*,customers(name)').eq('store_id',CU.id);
+  const ov=(debts||[]).filter(d=>d.amount-d.paid>0&&ddays(d.debt_date)>=2);
+  const halerts=el('halerts');
+  if(halerts) halerts.innerHTML=ov.length?`<div class="alert ad"><i class="ti ti-alert-triangle"></i><span><strong>تنبيه:</strong> ${ov.length} زبون متأخر — ${ov.map(d=>d.customers?.name).join('، ')}</span></div>`:'';
+  const hoverdue=el('hoverdue');
+  if(hoverdue) hoverdue.innerHTML=ov.length
+    ?ov.map(d=>`<tr><td>${d.customers?.name||'-'}</td><td>₪${(d.amount-d.paid).toFixed(2)}</td><td><span class="${ddays(d.debt_date)>=2?'br':'ba'}">${ddays(d.debt_date)} يوم</span></td><td><button class="ibg" onclick="openPay('${d.id}','${d.customers?.name}',${d.amount-d.paid})">تسديد</button></td></tr>`).join('')
+    :'<tr class="er"><td colspan="4">✅ لا يوجد متأخرون</td></tr>';
+}
+
+// ── CUSTOMERS ──
+async function loadAC(){if(!CU)return;const {data}=await sb.from('customers').select('*').eq('store_id',CU.id).order('name');AC=data||[];fillSelects();}
+async function loadC(){if(!CU)return;const {data}=await sb.from('customers').select('*,debts(amount,paid)').eq('store_id',CU.id).order('name');renderC(data||[]);}
+function renderC(list){
+  const tbody=el('clist');if(!tbody)return;
+  tbody.innerHTML=list.length?list.map((c,i)=>{const debt=(c.debts||[]).reduce((s,d)=>s+(d.amount-d.paid),0);return`<tr><td>${i+1}</td><td>${c.name}</td><td>${c.phone||'-'}</td><td>${debt>0?`<span class="br">₪${debt.toFixed(2)}</span>`:'<span class="bg">₪0</span>'}</td><td><button class="ibb" onclick="showStmt('${c.id}','${c.name}')">كشف</button></td><td><button class="ibr" onclick="delC('${c.id}')">حذف</button></td></tr>`;}).join(''):'<tr class="er"><td colspan="6">لا يوجد زبائن</td></tr>';
+}
+function filterC(q){renderC(AC.filter(c=>c.name.includes(q)||(c.phone||'').includes(q)));}
+async function saveC(){
+  const name=v('cn');if(!name){toast('يرجى إدخال الاسم');return;}
+  _isSaving=true;
+  const {error}=await sb.from('customers').insert({store_id:CU.id,name,phone:v('cph'),address:v('cad'),notes:v('cno')});
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  toast('✅ تم إضافة الزبون');closeM('m-customer');clearF(['cn','cph','cad','cno']);await loadAC();loadC();setTimeout(()=>{_isSaving=false;},500);
+}
+async function delC(id){if(!confirm('حذف هذا الزبون؟'))return;_isSaving=true;await sb.from('customers').delete().eq('id',id);toast('تم الحذف');await loadAC();loadC();setTimeout(()=>{_isSaving=false;},500);}
+function fillSelects(){
+  const dc=el('dc'),ic=el('ic'),qsc=el('qs-cust');
+  const opts='<option value="">-- اختر الزبون --</option>'+AC.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(dc)dc.innerHTML=opts;
+  if(ic)ic.innerHTML='<option value="">-- زبون عادي --</option>'+AC.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')+'<option value="__new__">➕ زبون جديد...</option>';
+  if(qsc)qsc.innerHTML=opts;
+}
+function toggleNewCust(sel){const wrap=el('new-cust-wrap');if(wrap)wrap.classList.toggle('hidden',sel.value!=='__new__');}
+
+// ── DEBTS ──
+async function loadD(){
+  if(!CU)return;
+  const {data}=await sb.from('debts').select('*,customers(name)').eq('store_id',CU.id).order('debt_date',{ascending:false});
+  const list=data||[];
+  const total=list.reduce((s,d)=>s+(d.amount-d.paid),0);
+  const late=list.filter(d=>d.amount-d.paid>0&&ddays(d.debt_date)>=2).length;
+  const first=new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().split('T')[0];
+  const {data:pm}=await sb.from('debts').select('paid').eq('store_id',CU.id).gte('debt_date',first);
+  const dt1=el('dt1'),dt2=el('dt2'),dt3=el('dt3');
+  if(dt1)dt1.textContent=fmt(total);if(dt2)dt2.textContent=late;if(dt3)dt3.textContent=fmt((pm||[]).reduce((s,d)=>s+d.paid,0));
+  const ov=list.filter(d=>d.amount-d.paid>0&&ddays(d.debt_date)>=2);
+  const dalerts=el('dalerts');
+  if(dalerts)dalerts.innerHTML=ov.map(d=>`<div class="alert ad"><i class="ti ti-bell"></i><span><strong>${d.customers?.name}</strong> — متأخر ${ddays(d.debt_date)} يوم — ₪${(d.amount-d.paid).toFixed(2)}</span></div>`).join('');
+  const dlist=el('dlist');
+  if(dlist)dlist.innerHTML=list.filter(d=>d.amount-d.paid>0).length?list.filter(d=>d.amount-d.paid>0).map(d=>`<tr><td>${d.customers?.name||'-'}</td><td>₪${d.amount.toFixed(2)}</td><td><strong>₪${(d.amount-d.paid).toFixed(2)}</strong></td><td>${d.debt_date}</td><td><span class="${ddays(d.debt_date)>=2?'br':'bb'}">${ddays(d.debt_date)} يوم</span></td><td><button class="ibg" onclick="openPay('${d.id}','${d.customers?.name}',${d.amount-d.paid})">تسديد</button></td><td><button class="ibr" onclick="delD('${d.id}')">حذف</button></td></tr>`).join(''):'<tr class="er"><td colspan="7">لا توجد ديون</td></tr>';
+}
+async function saveD(){
+  const cid=v('dc'),amt=parseFloat(v('da')),date=v('dd');
+  if(!cid){toast('اختر الزبون');return;}if(!amt||amt<=0){toast('أدخل المبلغ');return;}
+  _isSaving=true;
+  const {error}=await sb.from('debts').insert({store_id:CU.id,customer_id:cid,amount:amt,debt_date:date,notes:v('dn')});
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  toast('✅ تم حفظ الدين');closeM('m-debt');clearF(['da','dn']);el('dc').value='';loadD();loadBadge();loadHome();setTimeout(()=>{_isSaving=false;},500);
+}
+async function delD(id){if(!confirm('حذف؟'))return;_isSaving=true;await sb.from('debts').delete().eq('id',id);toast('تم الحذف');loadD();loadBadge();setTimeout(()=>{_isSaving=false;},500);}
+function openPay(id,name,rem){
+  el('pid').value=id;el('pname').textContent=name;el('prem').textContent='₪'+parseFloat(rem).toFixed(2);
+  document.querySelector('input[name="pt"][value="full"]').checked=true;
+  el('pawrap').classList.add('hidden');openM('m-pay');
+}
+function togglePA(e){el('pawrap').classList.toggle('hidden',e.value==='full');}
+async function savePay(){
+  const id=v('pid');const type=document.querySelector('input[name="pt"]:checked').value;
+  const {data:d}=await sb.from('debts').select('amount,paid').eq('id',id).single();
+  const newPaid=type==='full'?d.amount:Math.min(d.paid+(parseFloat(v('pamt'))||0),d.amount);
+  if(type!=='full'&&!(parseFloat(v('pamt'))>0)){toast('أدخل المبلغ');return;}
+  _isSaving=true;
+  await sb.from('debts').update({paid:newPaid}).eq('id',id);
+  toast('✅ تم التسديد');closeM('m-pay');loadD();loadBadge();loadHome();setTimeout(()=>{_isSaving=false;},500);
+}
+async function loadBadge(){
+  if(!CU)return;
+  const {data}=await sb.from('debts').select('amount,paid,debt_date').eq('store_id',CU.id);
+  const late=(data||[]).filter(d=>d.amount-d.paid>0&&ddays(d.debt_date)>=2).length;
+  const b=el('dbadge'),dot=el('bn-dot');
+  if(b){if(late>0){b.textContent=late;b.classList.remove('hidden');}else b.classList.add('hidden');}
+  if(dot){if(late>0)dot.classList.remove('hidden');else dot.classList.add('hidden');}
+}
+
+// ── INVOICES ──
+async function loadI(){
+  if(!CU)return;
+  const {data}=await sb.from('invoices').select('*').eq('store_id',CU.id).order('created_at',{ascending:false});
+  const ilist=el('ilist');if(!ilist)return;
+  ilist.innerHTML=(data||[]).length?(data||[]).map(inv=>{
+    const pt=inv.payment_type==='cash'?'<span class="bg">نقدي</span>':inv.payment_type==='transfer'?'<span class="bb">تحويل</span>':inv.payment_type==='partial'?'<span class="ba">جزئي</span>':'<span class="br">دين</span>';
+    return`<tr><td><strong>${inv.invoice_number||'-'}</strong></td><td>${inv.customer_name||'عادي'}</td><td>${inv.invoice_date} <small style="color:var(--g4);">${inv.sale_time||''}</small></td><td>₪${inv.total.toFixed(2)}</td><td>${pt}</td><td><button class="ibb" onclick="openReturn('${inv.id}','${inv.customer_name||''}',${inv.total})" style="margin-left:4px;">إرجاع</button><button class="ibr" onclick="delI('${inv.id}')">حذف</button></td></tr>`;
+  }).join(''):'<tr class="er"><td colspan="6">لا توجد فواتير</td></tr>';
+}
+
+async function loadInvList(){
+  if(!CU)return;
+  const {data,error}=await sb.from('inventory').select('*').order('name');
+  if(!error)INV_LIST=data||[];
+}
+
+function invRow(){
+  const opts=INV_LIST.length?INV_LIST.map(i=>`<option value="${i.id}" data-price="${i.sale_price||0}" data-name="${i.name}">${i.name} (${i.quantity} ${i.unit||''})</option>`).join(''):'';
+  return `<div class="ii" style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
+    <select class="inp prod-sel" style="font-size:13px;" onchange="fillPrice(this)"><option value="">-- اختر المنتج --</option>${opts}</select>
+    <input class="inp qty-inp" type="number" value="1" oninput="calcI()" style="font-size:13px;" inputmode="decimal">
+    <input class="inp price-inp" type="number" placeholder="₪" oninput="calcI()" style="font-size:13px;" inputmode="decimal">
+    <button onclick="this.closest('.ii').remove();calcI()" style="background:var(--dl);color:var(--d);border:none;border-radius:6px;width:34px;height:38px;cursor:pointer;font-size:18px;">✕</button>
+  </div>`;
+}
+function fillPrice(sel){const opt=sel.options[sel.selectedIndex];const price=parseFloat(opt.getAttribute('data-price'))||0;if(price>0)sel.closest('.ii').querySelector('.price-inp').value=price;calcI();}
+function resetInvItems(){const e=el('iitems');if(e)e.innerHTML=invRow();const t=el('itotal');if(t)t.textContent='₪ 0';const d=el('idiscount');if(d)d.value='0';}
+function addII(){el('iitems').insertAdjacentHTML('beforeend',invRow());}
+function calcI(){
+  let t=0;
+  document.querySelectorAll('#iitems .ii').forEach(r=>{t+=(parseFloat(r.querySelector('.qty-inp')?.value)||0)*(parseFloat(r.querySelector('.price-inp')?.value)||0);});
+  const disc=parseFloat(v('idiscount'))||0;
+  const net=Math.max(0,t-disc);
+  const itotal=el('itotal');if(itotal)itotal.textContent='₪ '+net.toFixed(2);
+}
+
+async function saveInv(){
+  const items=[];let subtotal=0;
+  document.querySelectorAll('#iitems .ii').forEach(r=>{
+    const sel=r.querySelector('.prod-sel');
+    const q=parseFloat(r.querySelector('.qty-inp')?.value)||0;
+    const p=parseFloat(r.querySelector('.price-inp')?.value)||0;
+    const invId=sel?.value||'';
+    const name=sel?.options[sel?.selectedIndex]?.getAttribute('data-name')||'منتج';
+    if(q>0&&p>0){items.push({product_name:name,inventory_id:invId||null,quantity:q,price:p});subtotal+=q*p;}
+  });
+  if(!items.length||!subtotal){toast('أضف منتجاً وسعراً');return;}
+  const disc=parseFloat(v('idiscount'))||0;
+  const total=Math.max(0,subtotal-disc);
+  const pt=document.querySelector('input[name="ip"]:checked').value;
+  const partialAmt=pt==='partial'?parseFloat(v('ipartial'))||0:0;
+  const today=new Date().toISOString().split('T')[0];
+  const timeNow=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+  let cid=v('ic'),custName='زبون عادي',custPhone='';
+  if(cid==='__new__'){
+    const newName=v('inv-new-name');
+    if(!newName){toast('أدخل اسم الزبون الجديد');return;}
+    const {data:newC,error:ce}=await sb.from('customers').insert({store_id:CU.id,name:newName,phone:v('inv-new-phone')}).select().single();
+    if(ce){toast('خطأ في إنشاء الزبون');return;}
+    cid=newC.id;custName=newName;custPhone=v('inv-new-phone');await loadAC();
+  } else if(cid){
+    const cust=AC.find(c=>c.id===cid);
+    custName=cust?.name||'';custPhone=cust?.phone||'';
+  }
+  const {count}=await sb.from('invoices').select('*',{count:'exact',head:true}).eq('store_id',CU.id);
+  const invNum='INV-'+String((count||0)+1).padStart(4,'0');
+  _isSaving=true;
+  const {data:inv,error}=await sb.from('invoices').insert({
+    store_id:CU.id,customer_id:cid||null,customer_name:custName,customer_phone:custPhone,
+    total,subtotal,discount:disc,payment_type:pt,partial_paid:partialAmt,
+    invoice_date:today,sale_time:timeNow,invoice_number:invNum,notes:v('inotes')
+  }).select().single();
+  if(error){_isSaving=false;toast('خطأ في الفاتورة: '+error.message);return;}
+  await sb.from('invoice_items').insert(items.map(it=>({...it,invoice_id:inv.id})));
+  for(const it of items){
+    if(it.inventory_id){
+      const {data:iv}=await sb.from('inventory').select('quantity').eq('id',it.inventory_id).single();
+      if(iv)await sb.from('inventory').update({quantity:Math.max(0,iv.quantity-it.quantity)}).eq('id',it.inventory_id);
+    }
+  }
+  if((pt==='defer'||pt==='partial')&&cid){
+    const debtAmt=pt==='partial'?total-partialAmt:total;
+    if(debtAmt>0){await sb.from('debts').insert({store_id:CU.id,customer_id:cid,amount:debtAmt,paid:pt==='partial'?partialAmt:0,debt_date:today,notes:'فاتورة '+invNum});loadBadge();}
+  }
+  toast('✅ فاتورة '+invNum+' — '+fmt(total));
+  closeM('m-invoice');resetInvItems();
+  el('new-cust-wrap')?.classList.add('hidden');
+  clearF(['inv-new-name','inv-new-phone','inotes']);
+  el('idiscount').value='0';
+  await loadInvList();await loadInv();loadI();loadHome();loadC();
+  setTimeout(()=>{_isSaving=false;},500);
+}
+async function delI(id){if(!confirm('حذف؟'))return;_isSaving=true;await sb.from('invoices').delete().eq('id',id);toast('تم');loadI();setTimeout(()=>{_isSaving=false;},500);}
+
+// ── SALES ──
+async function loadSales(p,el2){
+  if(el2){document.querySelectorAll('#page-sales .ptab').forEach(t=>t.classList.remove('active'));el2.classList.add('active');}
+  if(!CU)return;
+  const from=pStart(p);
+  const {data}=await sb.from('invoices').select('total,payment_type').eq('store_id',CU.id).gte('invoice_date',from);
+  const list=data||[];
+  const total=sum(list,'total');
+  const cash=list.filter(r=>r.payment_type==='cash').reduce((s,r)=>s+r.total,0);
+  const transfer=list.filter(r=>r.payment_type==='transfer').reduce((s,r)=>s+r.total,0);
+  const defer=list.filter(r=>r.payment_type==='defer'||r.payment_type==='partial').reduce((s,r)=>s+r.total,0);
+  const sv1=el('sv1'),sv2=el('sv2'),sv3=el('sv3'),sv4=el('sv4'),sv5=el('sv5'),sv6=el('sv6');
+  if(sv1)sv1.textContent=fmt(total);if(sv2)sv2.textContent=list.length;
+  if(sv3)sv3.textContent=list.length?fmt(total/list.length):'₪0';
+  if(sv4)sv4.textContent=fmt(cash);if(sv5)sv5.textContent=fmt(transfer);if(sv6)sv6.textContent=fmt(defer);
+}
+async function loadDailyReport(){
+  if(!CU)return;
+  const today=new Date().toISOString().split('T')[0];
+  const {data:invs}=await sb.from('invoices').select('total,payment_type').eq('store_id',CU.id).eq('invoice_date',today);
+  const {data:purs}=await sb.from('purchases').select('cost').eq('store_id',CU.id).eq('purchase_date',today);
+  const list=invs||[];
+  const totalSales=list.reduce((s,r)=>s+r.total,0);
+  const totalCost=(purs||[]).reduce((s,r)=>s+r.cost,0);
+  const profit=totalSales-totalCost;
+  const cash=list.filter(r=>r.payment_type==='cash').reduce((s,r)=>s+r.total,0);
+  const transfer=list.filter(r=>r.payment_type==='transfer').reduce((s,r)=>s+r.total,0);
+  const defer=list.filter(r=>r.payment_type==='defer'||r.payment_type==='partial').reduce((s,r)=>s+r.total,0);
+  const dr=el('daily-report');
+  if(dr)dr.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="background:var(--sl);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--s);">إجمالي المبيعات</div><div style="font-size:18px;font-weight:800;color:var(--s);">${fmt(totalSales)}</div></div>
+    <div style="background:${profit>=0?'var(--sl)':'var(--dl)'};border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:${profit>=0?'var(--s)':'var(--d)'};">صافي الربح</div><div style="font-size:18px;font-weight:800;color:${profit>=0?'var(--s)':'var(--d)'};">${fmt(profit)}</div></div>
+    <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">نقدي</div><div style="font-size:16px;font-weight:700;">${fmt(cash)}</div></div>
+    <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">تحويل</div><div style="font-size:16px;font-weight:700;">${fmt(transfer)}</div></div>
+    <div style="background:var(--dl);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--d);">دين اليوم</div><div style="font-size:16px;font-weight:700;color:var(--d);">${fmt(defer)}</div></div>
+    <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">مشتريات اليوم</div><div style="font-size:16px;font-weight:700;">${fmt(totalCost)}</div></div>
+  </div>`;
+}
+
+// ── INVENTORY ──
+async function loadInv(){
+  if(!CU)return;
+  const tbody=el('invlist');if(tbody)tbody.innerHTML='<tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr>';
+  const {data,error}=await sb.from('inventory').select('*').eq('store_id',CU.id).order('name');
+  if(error){if(tbody)tbody.innerHTML='<tr class="er"><td colspan="7">خطأ في التحميل</td></tr>';return;}
+  const list=data||[];INV_LIST=[...list];
+  const low=list.filter(i=>i.quantity<=i.low_stock_alert);
+  const invalerts=el('invalerts');
+  if(invalerts)invalerts.innerHTML=low.map(i=>`<div class="alert aw"><i class="ti ti-alert-circle"></i><span><strong>${i.name}</strong> — المتبقي: ${i.quantity} ${i.unit}</span></div>`).join('');
+  if(tbody)tbody.innerHTML=list.length?list.map(i=>`<tr><td>${i.name}</td><td>${i.category}</td><td>${i.quantity} ${i.unit}</td><td>${i.sale_price?'₪'+i.sale_price:'-'}</td><td>${i.quantity<=i.low_stock_alert?'<span class="br">قارب النفاد</span>':'<span class="bg">متوفر</span>'}</td><td><button class="ibb" onclick="openEI('${i.id}','${i.name}',${i.quantity},${i.sale_price||0})">تعديل</button></td><td><button class="ibr" onclick="delInv('${i.id}')">حذف</button></td></tr>`).join(''):'<tr class="er"><td colspan="7">لا يوجد مخزون</td></tr>';
+}
+async function saveInvItem(){
+  const n=v('inn');if(!n){toast('أدخل اسم الصنف');return;}
+  _isSaving=true;
+  const {error}=await sb.from('inventory').insert({store_id:CU.id,name:n,category:v('inc'),unit:v('inu'),quantity:parseFloat(v('inq'))||0,low_stock_alert:parseFloat(v('ina'))||10,sale_price:parseFloat(v('insp'))||0});
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  toast('✅ تم إضافة الصنف');closeM('m-inv');clearF(['inn','insp']);await loadInv();await loadInvList();setTimeout(()=>{_isSaving=false;},500);
+}
+function openEI(id,name,qty,price){el('einvid').value=id;el('einvname').value=name;el('einvqty').value=qty;el('einvprice').value=price;openM('m-editinv');}
+async function updateInvQty(){
+  const id=v('einvid'),qty=parseFloat(v('einvqty')),price=parseFloat(v('einvprice'))||0;
+  await sb.from('inventory').update({quantity:qty,sale_price:price}).eq('id',id);
+  toast('✅ تم التحديث');closeM('m-editinv');loadInv();
+}
+async function delInv(id){if(!confirm('حذف؟'))return;await sb.from('inventory').delete().eq('id',id);toast('تم');loadInv();}
+
+// ── PURCHASES ──
+async function loadPur(){
+  if(!CU)return;
+  const {data}=await sb.from('purchases').select('*').eq('store_id',CU.id).order('purchase_date',{ascending:false});
+  const purlist=el('purlist');if(!purlist)return;
+  purlist.innerHTML=(data||[]).length?(data||[]).map(p=>`<tr><td>${p.supplier}</td><td>${p.product_name}</td><td>${p.quantity}</td><td>₪${p.cost.toFixed(2)}</td><td>${p.purchase_date}</td><td><button class="ibr" onclick="delPur('${p.id}')">حذف</button></td></tr>`).join(''):'<tr class="er"><td colspan="6">لا توجد مشتريات</td></tr>';
+}
+function fillPurSelect(){
+  const sel=el('pur-inv-sel');if(!sel)return;
+  if(INV_LIST&&INV_LIST.length>0){
+    let opts='<option value="">-- اختر من المخزون --</option>';
+    for(let i of INV_LIST)opts+=`<option value="${i.id}" data-name="${i.name}">${i.name} (${i.quantity||0} ${i.unit||''})</option>`;
+    sel.innerHTML=opts;
+  } else {
+    loadInvListAndFill(sel);
+  }
+}
+async function loadInvListAndFill(sel){
+  sel.innerHTML='<option value="">⏳...</option>';
+  const {data}=await sb.from('inventory').select('id,name,quantity,unit').order('name');
+  INV_LIST=data||[];
+  if(INV_LIST.length){
+    let opts='<option value="">-- اختر من المخزون --</option>';
+    for(let i of INV_LIST)opts+=`<option value="${i.id}" data-name="${i.name}">${i.name} (${i.quantity||0} ${i.unit||''})</option>`;
+    sel.innerHTML=opts;
+  } else sel.innerHTML='<option value="">لا يوجد مخزون</option>';
+}
+function fillPurName(sel){const name=sel.options[sel.selectedIndex]?.getAttribute('data-name')||'';el('pup').placeholder=name?'تم الاختيار: '+name:'اتركه فارغاً لو اخترت من فوق';}
+async function savePur(){
+  const s=v('pus');const invId=v('pur-inv-sel');const manualName=v('pup');
+  const c=parseFloat(v('puc')),q=parseFloat(v('puq'))||1;
+  if(!s){toast('أدخل اسم المورد');return;}if(!c||c<=0){toast('أدخل التكلفة');return;}
+  if(!invId&&!manualName){toast('اختر صنف من المخزون أو اكتب اسم جديد');return;}
+  let productName=manualName;
+  if(invId){productName=INV_LIST.find(i=>i.id===invId)?.name||manualName;}
+  _isSaving=true;
+  const {error}=await sb.from('purchases').insert({store_id:CU.id,supplier:s,product_name:productName,quantity:q,cost:c,purchase_date:v('pud')});
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  if(invId){
+    const {data:fresh}=await sb.from('inventory').select('quantity').eq('id',invId).single();
+    const newQty=(fresh?.quantity||0)+q;
+    await sb.from('inventory').update({quantity:newQty}).eq('id',invId);
+    toast('✅ أضيف '+q+' لـ "'+productName+'" — المجموع: '+newQty);
+  } else {
+    const purUnit=document.getElementById('pu-unit')?.value||'قطعة (pcs)';
+    await sb.from('inventory').insert({store_id:CU.id,name:productName,category:'عام',quantity:q,unit:purUnit,low_stock_alert:10,sale_price:0});
+    toast('✅ أُضيف "'+productName+'" للمخزون');
+  }
+  closeM('m-pur');clearF(['pus','pup','puc']);
+  el('pur-inv-sel').value='';el('pup').placeholder='اتركه فارغاً لو اخترت من فوق';
+  await loadInv();await loadInvList();loadPur();loadHome();setTimeout(()=>{_isSaving=false;},500);
+}
+async function delPur(id){if(!confirm('حذف؟'))return;await sb.from('purchases').delete().eq('id',id);toast('تم');loadPur();}
+
+// ── NET CARDS ──
+async function loadNStock(){
+  if(!CU)return;
+  const {data}=await sb.from('net_cards_stock').select('*').eq('store_id',CU.id);
+  const alerts=[];
+  [1,2,3].forEach(t=>{
+    const item=(data||[]).find(d=>d.card_type===String(t));
+    const qty=item?.quantity||0;
+    const sc=el('ncs'+t);if(!sc)return;
+    sc.querySelector('.sc-v').textContent=qty+' بطاقة';
+    if(qty<=20){sc.className='sc red';alerts.push(`<div class="alert aw"><i class="ti ti-wifi-off"></i><span><strong>تنبيه:</strong> بطاقة ${t} شيكل — المتبقي ${qty} فقط</span></div>`);}
+    else sc.className='sc green';
+  });
+  const ncalerts=el('ncalerts');if(ncalerts)ncalerts.innerHTML=alerts.join('');
+}
+async function loadNS(p,el2){
+  if(el2){document.querySelectorAll('#page-netcards .ptab').forEach(t=>t.classList.remove('active'));el2.classList.add('active');}
+  if(!CU)return;
+  const from=pStart(p);
+  const {data}=await sb.from('net_card_sales').select('*').eq('store_id',CU.id).gte('sale_date',from).order('created_at',{ascending:false});
+  const list=data||[];
+  const ns1=el('ns1'),ns2=el('ns2'),ns3=el('ns3');
+  if(ns1)ns1.textContent=fmt(list.reduce((s,r)=>s+r.total_price,0));
+  if(ns2)ns2.textContent=list.reduce((s,r)=>s+r.quantity,0);
+  if(ns3)ns3.textContent=list.filter(r=>r.total_price-r.paid>0&&ddays(r.sale_date)>=2).length;
+  const nslist=el('nslist');if(!nslist)return;
+  nslist.innerHTML=list.length?list.map(s=>{const rem=s.total_price-s.paid;const late=rem>0&&ddays(s.sale_date)>=2;return`<tr><td>${s.buyer_name}</td><td>${s.card_type}₪</td><td>${s.quantity}</td><td>₪${s.total_price.toFixed(2)}</td><td>${s.payment_type==='full'?'<span class="bg">كلي</span>':'<span class="ba">جزئي</span>'}</td><td>${s.sale_date}</td><td>${late?`<span class="br">متأخر ${ddays(s.sale_date)} يوم</span>`:rem>0?`<span class="ba">باقي ₪${rem.toFixed(2)}</span>`:'<span class="bg">مسدَّد</span>'}</td><td><button class="ibr" onclick="delNS('${s.id}')">حذف</button></td></tr>`;}).join(''):'<tr class="er"><td colspan="8">لا توجد مبيعات</td></tr>';
+}
+function calcNT(){const t=parseInt(el('nst').value),q=parseInt(el('nsq').value)||0;el('nstotal').textContent='₪ '+(t*q);}
+async function saveNS(){
+  const b=v('nsb'),ct=v('nst'),q=parseInt(v('nsq'))||0;
+  if(!b){toast('أدخل اسم المشتري');return;}if(q<1){toast('أدخل العدد');return;}
+  const {data:stock}=await sb.from('net_cards_stock').select('id,quantity').eq('store_id',CU.id).eq('card_type',ct).single();
+  if(!stock||stock.quantity<q){toast('المخزون غير كافٍ — المتبقي: '+(stock?.quantity||0));return;}
+  const total=parseInt(ct)*q,pt=document.querySelector('input[name="nsp"]:checked').value;
+  _isSaving=true;
+  const {error}=await sb.from('net_card_sales').insert({store_id:CU.id,buyer_name:b,card_type:ct,quantity:q,total_price:total,paid:pt==='full'?total:0,payment_type:pt,sale_date:new Date().toISOString().split('T')[0]});
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  await sb.from('net_cards_stock').update({quantity:stock.quantity-q,updated_at:new Date().toISOString()}).eq('id',stock.id);
+  toast('✅ تم تسجيل البيع');closeM('m-netsale');clearF(['nsb']);el('nsq').value=1;calcNT();loadNStock();loadNS('day',null);setTimeout(()=>{_isSaving=false;},500);
+}
+async function addNStock(){
+  const t=v('ast'),q=parseInt(v('asq'))||0;if(q<1){toast('أدخل الكمية');return;}
+  const {data:s}=await sb.from('net_cards_stock').select('id,quantity').eq('store_id',CU.id).eq('card_type',t).single();
+  if(s)await sb.from('net_cards_stock').update({quantity:s.quantity+q,updated_at:new Date().toISOString()}).eq('id',s.id);
+  else await sb.from('net_cards_stock').insert({store_id:CU.id,card_type:t,quantity:q});
+  toast('✅ تم إضافة المخزون');closeM('m-addstock');el('asq').value=50;loadNStock();
+}
+async function delNS(id){if(!confirm('حذف؟'))return;await sb.from('net_card_sales').delete().eq('id',id);toast('تم');loadNS('day',null);}
+
+// ── RETURNS ──
+function openReturn(invId,custName,total){el('ret-inv-id').value=invId;el('ret-inv-info').textContent='الزبون: '+(custName||'عادي')+' — المجموع: ₪'+total;el('ret-amount').value=total;openM('m-return');}
+async function saveReturn(){
+  const invId=v('ret-inv-id');const retType=document.querySelector('input[name="rtype"]:checked').value;const retAmt=parseFloat(v('ret-amount'))||0;
+  if(!retAmt){toast('أدخل المبلغ');return;}
+  const {data:inv}=await sb.from('invoices').select('*,invoice_items(*)').eq('id',invId).single();
+  if(!inv){toast('الفاتورة غير موجودة');return;}
+  for(const item of inv.invoice_items||[]){
+    if(item.inventory_id){
+      const ratio=retAmt/inv.total;const retQty=item.quantity*ratio;
+      const {data:iv}=await sb.from('inventory').select('quantity').eq('id',item.inventory_id).single();
+      if(iv)await sb.from('inventory').update({quantity:iv.quantity+retQty}).eq('id',item.inventory_id);
+    }
+  }
+  if(retType==='debt'&&inv.customer_id){
+    const {data:debts}=await sb.from('debts').select('*').eq('store_id',CU.id).eq('customer_id',inv.customer_id);
+    let rem=retAmt;
+    for(const d of debts||[]){if(rem<=0)break;const reduce=Math.min(rem,d.amount-d.paid);await sb.from('debts').update({paid:d.paid+reduce}).eq('id',d.id);rem-=reduce;}
+  }
+  try{await sb.from('returns').insert({store_id:CU.id,invoice_id:invId,amount:retAmt,return_type:retType,notes:v('ret-notes'),return_date:new Date().toISOString().split('T')[0]});}catch(e){}
+  toast('✅ تم تسجيل الإرجاع');closeM('m-return');loadI();loadInv();loadD();loadHome();
+}
+async function loadReturns(){
+  if(!CU)return;
+  try{
+    const {data}=await sb.from('returns').select('*').eq('store_id',CU.id).order('created_at',{ascending:false});
+    const retlist=el('ret-list');if(!retlist)return;
+    retlist.innerHTML=(data||[]).length?data.map(r=>`<tr><td>${r.return_date}</td><td>${r.invoice_id?.slice(-8)||'-'}</td><td>₪${r.amount.toFixed(2)}</td><td>${r.return_type==='cash'?'<span class="bg">نقدي</span>':r.return_type==='debt'?'<span class="ba">شطب دين</span>':'<span class="bb">تحويل</span>'}</td><td>${r.notes||'-'}</td></tr>`).join(''):'<tr class="er"><td colspan="5">لا توجد إرجاعات</td></tr>';
+  }catch(e){}
+}
+
+// ── EXPENSES ──
+async function loadExpenses(){
+  if(!CU)return;
+  const today=new Date().toISOString().split('T')[0];
+  const first=new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().split('T')[0];
+  const week=new Date();week.setDate(week.getDate()-7);const weekStr=week.toISOString().split('T')[0];
+  const {data}=await sb.from('expenses').select('*').eq('store_id',CU.id).order('exp_date',{ascending:false});
+  const list=data||[];
+  const expday=el('exp-day'),expweek=el('exp-week'),expmonth=el('exp-month');
+  if(expday)expday.textContent=fmt(list.filter(e=>e.exp_date===today).reduce((s,e)=>s+e.amount,0));
+  if(expweek)expweek.textContent=fmt(list.filter(e=>e.exp_date>=weekStr).reduce((s,e)=>s+e.amount,0));
+  if(expmonth)expmonth.textContent=fmt(list.filter(e=>e.exp_date>=first).reduce((s,e)=>s+e.amount,0));
+  const explist=el('exp-list');if(!explist)return;
+  explist.innerHTML=list.length?list.map(e=>`<tr><td><span class="bb">${e.exp_type}</span></td><td>₪${e.amount.toFixed(2)}</td><td>${e.exp_date}</td><td>${e.notes||'-'}</td><td><button class="ibr" onclick="delExpense('${e.id}')">حذف</button></td></tr>`).join(''):'<tr class="er"><td colspan="5">لا توجد مصاريف مسجّلة</td></tr>';
+}
+async function saveExpense(){
+  const type=document.getElementById('exp-type').value;const amount=parseFloat(v('exp-amount'));const date=v('exp-date');
+  if(!amount||amount<=0){toast('أدخل المبلغ');return;}
+  _isSaving=true;
+  const {error}=await sb.from('expenses').insert({store_id:CU.id,exp_type:type,amount,exp_date:date,notes:v('exp-notes')});
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  toast('✅ تم تسجيل المصروف');closeM('m-expense');clearF(['exp-amount','exp-notes']);loadExpenses();setTimeout(()=>{_isSaving=false;},500);
+}
+async function delExpense(id){if(!confirm('حذف هذا المصروف؟'))return;_isSaving=true;await sb.from('expenses').delete().eq('id',id);toast('تم الحذف');loadExpenses();setTimeout(()=>{_isSaving=false;},500);}
+
+// ── REPORTS ──
+async function loadReports(period,elBtn){
+  if(elBtn){document.querySelectorAll('#page-reports .ptab').forEach(t=>t.classList.remove('active'));elBtn.classList.add('active');}
+  if(!CU)return;
+  const from=pStart(period);
+  const {data:invData}=await sb.from('invoices').select('total').eq('store_id',CU.id).gte('invoice_date',from);
+  const {data:purData}=await sb.from('purchases').select('cost').eq('store_id',CU.id).gte('purchase_date',from);
+  const {data:expData}=await sb.from('expenses').select('amount,exp_type').eq('store_id',CU.id).gte('exp_date',from);
+  const totalSales=(invData||[]).reduce((s,r)=>s+r.total,0);
+  const totalCOGS=(purData||[]).reduce((s,r)=>s+r.cost,0);
+  const expList=expData||[];
+  const totalOpex=expList.reduce((s,e)=>s+e.amount,0);
+  const netProfit=totalSales-totalCOGS-totalOpex;
+  const margin=totalSales>0?((netProfit/totalSales)*100):0;
+  const banner=el('profit-banner');
+  if(banner){banner.style.background=netProfit>=0?'var(--sl)':'var(--dl)';}
+  const pm=el('profit-main');if(pm){pm.textContent=(netProfit>=0?'+ ':'- ')+'₪'+Math.abs(netProfit).toFixed(2);pm.style.color=netProfit>=0?'var(--s)':'var(--d)';}
+  const pl=el('profit-label');if(pl)pl.textContent='صافي الربح ('+(period==='day'?'اليوم':period==='week'?'الأسبوع':'الشهر')+')';
+  const pml=el('profit-margin-label');if(pml)pml.textContent='هامش الربح: '+margin.toFixed(1)+'%';
+  const rs=el('r-sales'),rc=el('r-cogs'),ro=el('r-opex');
+  if(rs)rs.textContent=fmt(totalSales);if(rc)rc.textContent=fmt(totalCOGS);if(ro)ro.textContent=fmt(totalOpex);
+  const eqs=el('eq-sales'),eqc=el('eq-cogs'),eqo=el('eq-opex'),eqp=el('eq-profit');
+  if(eqs)eqs.textContent=fmt(totalSales);if(eqc)eqc.textContent=fmt(totalCOGS);if(eqo)eqo.textContent=fmt(totalOpex);
+  if(eqp){eqp.textContent=fmt(netProfit);eqp.style.color=netProfit>=0?'var(--s)':'var(--d)';}
+  const byType={};expList.forEach(e=>{byType[e.exp_type]=(byType[e.exp_type]||0)+e.amount;});
+  const detail=el('r-exp-detail');
+  if(detail)detail.innerHTML=Object.keys(byType).length?Object.entries(byType).map(([t,a])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid var(--g1);font-size:13px;"><span>${t}</span><strong>₪${a.toFixed(2)}</strong></div>`).join(''):'<span style="color:var(--g4);">لا توجد مصاريف للفترة</span>';
+}
+
+// ── STATEMENT ──
+async function showStmt(cid,name){
+  el('stmttitle').textContent='كشف حساب — '+name;
+  el('stmtbody').innerHTML='<div style="text-align:center;padding:1.5rem;"><span class="spin">↻</span></div>';
+  openM('m-stmt');
+  const [r1,r2]=await Promise.all([sb.from('debts').select('*').eq('customer_id',cid).order('debt_date'),sb.from('invoices').select('*').eq('customer_id',cid).order('invoice_date')]);
+  const td=(r1.data||[]).reduce((s,d)=>s+(d.amount-d.paid),0);
+  let html=`<div style="display:flex;justify-content:space-between;background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px;"><span>إجمالي الدين:</span><strong style="color:var(--d);">₪${td.toFixed(2)}</strong></div>`;
+  if(!r1.data?.length&&!r2.data?.length)html+='<p style="text-align:center;color:var(--g4);padding:1rem;">لا توجد معاملات</p>';
+  else{
+    html+=`<table class="dt" style="font-size:12px;"><thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead><tbody>`;
+    (r2.data||[]).forEach(inv=>{html+=`<tr><td>${inv.invoice_date}</td><td>${inv.invoice_number||'فاتورة'}</td><td>₪${inv.total.toFixed(2)}</td><td>-</td></tr>`;});
+    (r1.data||[]).forEach(d=>{if(d.paid>0)html+=`<tr><td>${d.debt_date}</td><td>دفعة</td><td>-</td><td style="color:var(--s);">₪${d.paid.toFixed(2)}</td></tr>`;});
+    html+='</tbody></table>';
+  }
+  el('stmtbody').innerHTML=html;
+}
+function printStmt(){
+  const content=el('stmtbody').innerHTML;const title=el('stmttitle').textContent;
+  const w=window.open('','_blank');
+  w.document.write(`<html dir="rtl"><head><title>${title}</title><style>body{font-family:Arial;padding:20px;direction:rtl;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:right;}th{background:#f5f5f5;}</style></head><body><h2>${title}</h2>${content}</body></html>`);
+  w.document.close();w.print();
+}
+
+// ── QUICK SALE ──
+function qsRow(){
+  const opts=INV_LIST.length?INV_LIST.map(i=>`<option value="${i.id}" data-price="${i.sale_price||0}" data-name="${i.name}">${i.name} (${i.quantity} ${i.unit||''})</option>`).join(''):'';
+  return `<div class="qs-item" style="background:var(--g0);border-radius:10px;padding:10px;margin-bottom:8px;">
+    <select class="inp" style="font-size:14px;margin-bottom:6px;" onchange="fillQSPrice(this)"><option value="">-- اختر المنتج --</option>${opts}</select>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+        <div style="display:flex;gap:4px;">
+          <button onclick="qsQtyBtn(this,-1)" style="background:var(--g2);border:none;border-radius:6px;width:32px;height:32px;font-size:16px;cursor:pointer;">−</button>
+          <input class="inp qs-qty" type="number" value="1" min="0.1" step="0.5" oninput="calcQS()" style="font-size:15px;font-weight:700;text-align:center;width:60px;padding:4px;">
+          <button onclick="qsQtyBtn(this,1)" style="background:var(--g2);border:none;border-radius:6px;width:32px;height:32px;font-size:16px;cursor:pointer;">+</button>
+        </div>
+        <div style="display:flex;gap:3px;">
+          <button onclick="setQty(this,1)" style="background:var(--pl);color:var(--p);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;">1</button>
+          <button onclick="setQty(this,2)" style="background:var(--pl);color:var(--p);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;">2</button>
+          <button onclick="setQty(this,5)" style="background:var(--pl);color:var(--p);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;">5</button>
+          <button onclick="setQty(this,10)" style="background:var(--pl);color:var(--p);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;">10</button>
+        </div>
+      </div>
+      <input class="inp qs-price" type="number" placeholder="₪ السعر" oninput="calcQS()" style="font-size:14px;width:90px;text-align:center;">
+      <button onclick="this.closest('.qs-item').remove();calcQS()" style="background:var(--dl);color:var(--d);border:none;border-radius:6px;width:34px;height:34px;cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div class="qs-item-total" style="text-align:left;font-size:12px;color:var(--g5);margin-top:4px;"></div>
+  </div>`;
+}
+function qsQtyBtn(btn,delta){const inp=btn.closest('.qs-item').querySelector('.qs-qty');inp.value=Math.max(0.5,(parseFloat(inp.value)||1)+delta);calcQS();}
+function setQty(btn,qty){btn.closest('.qs-item').querySelector('.qs-qty').value=qty;calcQS();}
+function initQS(){const w=el('qs-items');if(w&&!w.children.length)w.innerHTML=qsRow();_qsDiscount=0;loadQSSummary();}
+function addQSItem(){el('qs-items').insertAdjacentHTML('beforeend',qsRow());}
+function fillQSPrice(sel){const opt=sel.options[sel.selectedIndex];const price=parseFloat(opt.getAttribute('data-price'))||0;if(price>0)sel.closest('.qs-item').querySelector('.qs-price').value=price;calcQS();}
+function calcQS(){
+  let sub=0;
+  document.querySelectorAll('.qs-item').forEach(r=>{
+    const q=parseFloat(r.querySelector('.qs-qty')?.value)||0;const p=parseFloat(r.querySelector('.qs-price')?.value)||0;
+    const lt=q*p;sub+=lt;const lbl=r.querySelector('.qs-item-total');if(lbl)lbl.textContent=lt>0?'= ₪ '+lt.toFixed(2):'';
+  });
+  const disc=_qsDiscount>0?sub*(_qsDiscount/100):0;const total=Math.max(0,sub-disc);
+  const qst=el('qs-total');if(qst)qst.textContent='₪ '+total.toFixed(2);
+  calcQSChange();
+}
+function calcQSChange(){
+  const paid=parseFloat(v('qs-paid-amt'))||0;
+  const totalStr=el('qs-total')?.textContent?.replace('₪','').trim()||'0';
+  const total=parseFloat(totalStr)||0;const change=paid-total;const el2=el('qs-change');if(!el2)return;
+  if(paid<=0){el2.textContent='-';el2.style.color='var(--g4)';return;}
+  if(change>=0){el2.textContent='₪ '+change.toFixed(2)+' (باقي للزبون)';el2.style.color='var(--s)';}
+  else{el2.textContent='₪ '+Math.abs(change).toFixed(2)+' (ناقص)';el2.style.color='var(--d)';}
+}
+function applyDiscount(pct){_qsDiscount=pct;calcQS();toast(pct>0?'تم تطبيق خصم '+pct+'%':'تم إلغاء الخصم');}
+function clearQS(){
+  const qsi=el('qs-items');if(qsi)qsi.innerHTML=qsRow();
+  const qst=el('qs-total');if(qst)qst.textContent='₪ 0';
+  const qsp=el('qs-paid-amt');if(qsp)qsp.value='';
+  const qsc=el('qs-change');if(qsc)qsc.textContent='-';
+  const qscn=el('qs-cust-name');if(qscn)qscn.value='';
+  _qsDiscount=0;toast('تم المسح');
+}
+function openQSDebt(){
+  const sel=el('qs-cust');if(sel)sel.innerHTML='<option value="">-- اختر الزبون --</option>'+AC.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  openM('m-qs-debt');
+}
+async function saveQS(pt){
+  const items=[];let subtotal=0;
+  document.querySelectorAll('.qs-item').forEach(r=>{
+    const sel=r.querySelector('select');const q=parseFloat(r.querySelector('.qs-qty')?.value)||0;const p=parseFloat(r.querySelector('.qs-price')?.value)||0;
+    const name=sel?.options[sel?.selectedIndex]?.getAttribute('data-name')||'';const invId=sel?.value||'';
+    if(q>0&&p>0){items.push({product_name:name,inventory_id:invId||null,quantity:q,price:p});subtotal+=q*p;}
+  });
+  if(!items.length||!subtotal){toast('أضف منتجاً بسعر');return;}
+  const disc=_qsDiscount>0?subtotal*(_qsDiscount/100):0;const total=Math.max(0,subtotal-disc);
+  const custName=v('qs-cust-name')||'زبون عادي';
+  let cid='';
+  if(pt==='defer'){cid=v('qs-cust');if(!cid){toast('اختر الزبون');return;}closeM('m-qs-debt');}
+  _isSaving=true;
+  const today=new Date().toISOString().split('T')[0];
+  const timeNow=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+  const {count}=await sb.from('invoices').select('*',{count:'exact',head:true}).eq('store_id',CU.id);
+  const invNum='INV-'+String((count||0)+1).padStart(4,'0');
+  const {data:inv,error}=await sb.from('invoices').insert({
+    store_id:CU.id,customer_id:cid||null,customer_name:cid?AC.find(c=>c.id===cid)?.name:custName,
+    total,subtotal,discount:disc,payment_type:pt,invoice_date:today,sale_time:timeNow,invoice_number:invNum
+  }).select().single();
+  if(error){_isSaving=false;toast('خطأ: '+error.message);return;}
+  await sb.from('invoice_items').insert(items.map(it=>({...it,invoice_id:inv.id})));
+  for(const it of items){
+    if(it.inventory_id){const {data:iv}=await sb.from('inventory').select('quantity').eq('id',it.inventory_id).single();if(iv)await sb.from('inventory').update({quantity:Math.max(0,iv.quantity-it.quantity)}).eq('id',it.inventory_id);}
+  }
+  if(pt==='defer'&&cid){await sb.from('debts').insert({store_id:CU.id,customer_id:cid,amount:total,paid:0,debt_date:today,notes:'بيع سريع '+invNum});loadBadge();}
+  if(navigator.vibrate)navigator.vibrate(50);
+  toast('✅ '+invNum+' — ₪'+total.toFixed(2));
+  clearQS();loadHome();loadInvList();loadQSSummary();setTimeout(()=>{_isSaving=false;},500);
+}
+async function loadQSSummary(){
+  if(!CU)return;
+  const today=new Date().toISOString().split('T')[0];
+  const {data}=await sb.from('invoices').select('total,payment_type,customer_name,sale_time,invoice_number').eq('store_id',CU.id).eq('invoice_date',today).order('created_at',{ascending:false});
+  const list=data||[];
+  const cash=list.filter(r=>r.payment_type==='cash').reduce((s,r)=>s+r.total,0);
+  const transfer=list.filter(r=>r.payment_type==='transfer').reduce((s,r)=>s+r.total,0);
+  const defer=list.filter(r=>r.payment_type==='defer'||r.payment_type==='partial').reduce((s,r)=>s+r.total,0);
+  const summary=el('qs-daily-summary');
+  if(summary)summary.innerHTML=`
+    <div style="background:var(--sl);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--s);">نقدي</div><div style="font-size:15px;font-weight:800;color:var(--s);">₪${cash.toFixed(0)}</div></div>
+    <div style="background:var(--pl);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--p);">تحويل</div><div style="font-size:15px;font-weight:800;color:var(--p);">₪${transfer.toFixed(0)}</div></div>
+    <div style="background:var(--dl);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--d);">دين</div><div style="font-size:15px;font-weight:800;color:var(--d);">₪${defer.toFixed(0)}</div></div>`;
+  const recent=el('qs-recent');
+  if(recent){if(!list.length){recent.textContent='لا توجد مبيعات اليوم';return;}recent.innerHTML=list.slice(0,5).map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--g0);border-radius:8px;margin-bottom:5px;"><div><span style="font-weight:700;font-size:13px;">${r.invoice_number||'-'}</span><span style="color:var(--g5);font-size:12px;margin-right:6px;">${r.customer_name||'عادي'}</span></div><div style="text-align:left;"><span style="font-weight:700;font-size:13px;">₪${r.total.toFixed(2)}</span><span style="color:var(--g4);font-size:11px;display:block;">${r.sale_time||''}</span></div></div>`).join('');}
+}
+
+// ── SETTINGS ──
+async function saveSet(){toast('✅ تم حفظ الإعدادات');const sp=el('store-pill');if(sp)sp.textContent=v('set1');}
+function createAccount(){toast('الإدارة متاحة فقط للـ Super Admin');}
+
+// ── MODALS ──
+function openM(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='m-debt'||id==='m-invoice')fillSelects();
+  if(id==='m-pur')fillPurSelect();
+}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ── DARK MODE ──
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('dark',document.body.classList.contains('dark'));
+  const di=el('dark-icon');if(di)di.className=document.body.classList.contains('dark')?'ti ti-sun':'ti ti-moon';
+}
+if(localStorage.getItem('dark')==='true'){document.body.classList.add('dark');setTimeout(()=>{const i=el('dark-icon');if(i)i.className='ti ti-sun';},100);}
+
+// ── UTILS ──
+const el=id=>document.getElementById(id);
+const v=id=>document.getElementById(id)?.value?.trim()||'';
+const fmt=n=>'₪ '+(Math.round(n*100)/100).toLocaleString('en-US');
+const sum=(arr,k)=>(arr||[]).reduce((s,r)=>s+(r[k]||0),0);
+const ddays=d=>Math.floor((new Date()-new Date(d))/86400000);
+function pStart(p){const d=new Date();if(p==='day')return d.toISOString().split('T')[0];if(p==='week'){d.setDate(d.getDate()-7);return d.toISOString().split('T')[0];}return new Date(d.getFullYear(),d.getMonth(),1).toISOString().split('T')[0];}
+function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function showMsg(id,msg,type){const e=document.getElementById(id);if(!e)return;e.textContent=msg;e.className='amsg '+type;e.style.display='block';}
+function clearF(ids){ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});}
+function showSyncToast(msg){toast(msg);}
+document.getElementById('lp')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+</script>
+</body>
+</html>
