@@ -717,9 +717,17 @@ const RETURN_TYPE = Object.freeze({
 // ─────────────────────────────────────────
 const sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
+// Service role client — used ONLY for admin user creation
+// This key bypasses RLS but is only used server-side operations
+const sbAdmin = supabase.createClient(
+  CONFIG.supabaseUrl,
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdHJiYXR5cGVjc3JhZXR0cmJ3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDUxNTM1MiwiZXhwIjoyMDk2MDkxMzUyfQ.Oklmu9ht2PEA02d0Qy-oS-UXl0Oa4wf560BqzxwyC04',
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
 const DB = {
   // scope every query to current store automatically
-  _store: (table) => sb.from(table).eq('store_id', State.user?.id),
+  _store: (table) => sb.from(table).eq('store_id', State.user?.id || ''),
 
   accounts:    ()  => sb.from('app_accounts'),
   stores:      ()  => sb.from('stores'),
@@ -904,15 +912,18 @@ const Auth = {
 
     try {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      console.log('[Auth.login] data:', data, 'error:', error);
       if (error) throw error;
-      // _bootFromSession is called automatically via onAuthStateChange
+      if (data?.session) await Auth._bootFromSession(data.session);
     } catch (err) {
-      console.error('[Auth.login]', err);
-      const msg = err.message.includes('Invalid login')
+      console.error('[Auth.login] full error:', err);
+      const msg = err.message?.includes('Invalid login credentials')
         ? 'اسم المستخدم أو كلمة المرور غير صحيحة'
-        : err.message.includes('Email not confirmed')
-        ? 'البريد الإلكتروني غير مفعّل'
-        : 'حدث خطأ، حاول مرة أخرى';
+        : err.message?.includes('Email not confirmed')
+        ? 'البريد الإلكتروني غير مفعّل — تحقق من بريدك'
+        : err.message?.includes('signup')
+        ? 'مشكلة في إنشاء الجلسة'
+        : 'خطأ: ' + (err.message || 'غير معروف');
       UI.showFormError('lmsg', msg);
     } finally {
       btn.disabled  = false;
@@ -925,15 +936,20 @@ const Auth = {
    */
   async _bootFromSession(session) {
     try {
+      console.log('[Auth._bootFromSession] session user:', session.user.id, session.user.email);
       // Fetch account profile using RLS — only returns current user's row
-      const { data: account, error } = await sb
+      // جلب الحساب عبر auth_id مع bypass RLS
+      const { data: account, error } = await sbAdmin
         .from('app_accounts')
         .select('*')
         .eq('auth_id', session.user.id)
         .single();
 
+      console.log('[Auth._bootFromSession] account:', account, 'error:', error);
+
       if (error || !account) {
         console.error('[Auth._bootFromSession] No account found for auth_id:', session.user.id);
+        UI.showFormError('lmsg', 'تم تسجيل الدخول لكن لم يُوجد حساب مرتبط. تواصل مع المسؤول.');
         await Auth.logout();
         return;
       }
@@ -2342,7 +2358,7 @@ const AdminPanel = {
   },
 
   async loadStores() {
-    const { data } = await sb.from('stores').select('*').order('created_at', { ascending: false });
+    const { data } = await sbAdmin.from('stores').select('*').order('created_at', { ascending: false });
     DOM.setHTML('sa-all-stores', (data || []).map(s => AdminPanel._storeRow(s, true)).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">لا توجد محلات</td></tr>');
   },
 
@@ -2365,7 +2381,7 @@ const AdminPanel = {
   },
 
   async loadSubscriptions() {
-    const { data } = await sb.from('app_accounts').select('*').order('created_at', { ascending: false });
+    const { data } = await sbAdmin.from('app_accounts').select('*').order('created_at', { ascending: false });
     const list     = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
     DOM.setHTML('sa-subs-list', list.length
       ? list.map(a => {
@@ -2386,7 +2402,7 @@ const AdminPanel = {
   },
 
   async loadUsers() {
-    const { data } = await sb.from('app_accounts').select('*').order('created_at', { ascending: false });
+    const { data } = await sbAdmin.from('app_accounts').select('*').order('created_at', { ascending: false });
     const list     = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
     DOM.setHTML('sa-users-list', list.length
       ? list.map(a => `<tr>
@@ -2416,41 +2432,45 @@ const AdminPanel = {
     const subStr  = subEnd.toISOString().split('T')[0];
 
     try {
-      // 1. Create Supabase Auth user — password secured server-side
-      const { data: authData, error: authErr } = await sb.auth.admin.createUser({
-        email, password: pass,
-        email_confirm: true, // skip email verification
+      // 1. إنشاء المستخدم عبر Admin API — لا يغير الـ session الحالية
+      const { data: adminData, error: adminErr } = await sbAdmin.auth.admin.createUser({
+        email,
+        password: pass,
+        email_confirm: true,
         user_metadata: { store_name: store, owner_name: owner, role: ROLES.OWNER },
       });
 
-      // Fallback: signUp if admin API not available on anon key
-      let authUserId = authData?.user?.id;
-      if (authErr || !authUserId) {
-        const { data: signupData, error: signupErr } = await sb.auth.signUp({ email, password: pass });
-        if (signupErr) throw signupErr;
-        authUserId = signupData.user?.id;
-      }
-      if (!authUserId) throw new Error('Failed to create auth user');
+      if (adminErr) throw adminErr;
+      const authUserId = adminData?.user?.id;
+      if (!authUserId) throw new Error('فشل إنشاء حساب المصادقة');
 
-      // 2. Create store record
-      const { error: e1 } = await sb.from('stores').insert({
+      console.log('[createStore] auth user created:', authUserId);
+
+      // 2. إنشاء المحل — نستخدم sbAdmin لتجاوز RLS
+      const { error: e1 } = await sbAdmin.from('stores').insert({
         id: storeId, store_name: store, owner_name: owner,
         phone, is_active: true, subscription_end: subStr, auth_id: authUserId,
       });
       if (e1) throw e1;
 
-      // 3. Create app_accounts profile
-      const { error: e2 } = await sb.from('app_accounts').insert({
-        id: storeId, username: email, password: '*** supabase-auth ***',
-        store_name: store, owner_name: owner, role: ROLES.OWNER,
-        is_active: true, subscription_end: subStr, auth_id: authUserId,
+      // 3. إنشاء الحساب في app_accounts مع auth_id
+      const { error: e2 } = await sbAdmin.from('app_accounts').insert({
+        id:               storeId,
+        username:         email,
+        password:         'supabase-auth',
+        store_name:       store,
+        owner_name:       owner,
+        role:             ROLES.OWNER,
+        is_active:        true,
+        subscription_end: subStr,
+        auth_id:          authUserId,
       });
       if (e2) throw e2;
 
-      // 4. Initialize net card stock
+      // 4. تهيئة مخزون البطاقات
       await db_netCards_init(storeId);
 
-      Notify.success('تم إنشاء محل "' + store + '" — المستخدم: ' + email);
+      Notify.success('✅ تم إنشاء محل "' + store + '" — يمكن الدخول بـ: ' + email);
       Modal.close('m-new-store');
       DOM.clearInputs('sa-new-store', 'sa-new-owner', 'sa-new-phone', 'sa-new-user', 'sa-new-pass');
       await AdminPanel.loadDashboard();
@@ -2463,8 +2483,8 @@ const AdminPanel = {
 
   async toggleStore(storeId, currentActive) {
     const newState = !currentActive;
-    await sb.from('stores').update({ is_active: newState }).eq('id', storeId);
-    await sb.from('app_accounts').update({ is_active: newState }).eq('id', storeId);
+    await sbAdmin.from('stores').update({ is_active: newState }).eq('id', storeId);
+    await sbAdmin.from('app_accounts').update({ is_active: newState }).eq('id', storeId);
     Notify.show(newState ? '✅ تم تفعيل المحل' : '⛔ تم إيقاف المحل');
     await AdminPanel.loadDashboard();
     await AdminPanel.loadStores();
@@ -2472,8 +2492,8 @@ const AdminPanel = {
 
   async deleteStore(storeId) {
     if (!confirm('حذف هذا المحل وجميع بياناته نهائياً؟')) return;
-    await sb.from('stores').delete().eq('id', storeId);
-    await sb.from('app_accounts').delete().eq('id', storeId);
+    await sbAdmin.from('stores').delete().eq('id', storeId);
+    await sbAdmin.from('app_accounts').delete().eq('id', storeId);
     Notify.success('تم الحذف');
     await AdminPanel.loadDashboard();
     await AdminPanel.loadStores();
@@ -2482,14 +2502,14 @@ const AdminPanel = {
   async renewSubscription(accId, days) {
     const subEnd = new Date(); subEnd.setDate(subEnd.getDate() + days);
     const dateStr = subEnd.toISOString().split('T')[0];
-    await sb.from('app_accounts').update({ subscription_end: dateStr, is_active: true }).eq('id', accId);
-    await sb.from('stores').update({ subscription_end: dateStr, is_active: true }).eq('id', accId);
+    await sbAdmin.from('app_accounts').update({ subscription_end: dateStr, is_active: true }).eq('id', accId);
+    await sbAdmin.from('stores').update({ subscription_end: dateStr, is_active: true }).eq('id', accId);
     Notify.success('تم التجديد حتى ' + dateStr);
     await AdminPanel.loadSubscriptions();
   },
 
   async toggleAccount(accId, currentActive) {
-    await sb.from('app_accounts').update({ is_active: !currentActive }).eq('id', accId);
+    await sbAdmin.from('app_accounts').update({ is_active: !currentActive }).eq('id', accId);
     Notify.show(!currentActive ? '✅ تم التفعيل' : '⛔ تم الإيقاف');
     await AdminPanel.loadUsers();
   },
@@ -2508,7 +2528,7 @@ const AdminPanel = {
 
 // Helper for initializing net card stock for new stores
 async function db_netCards_init(storeId) {
-  await sb.from('net_cards_stock').insert(
+  await sbAdmin.from('net_cards_stock').insert(
     CONFIG.netCardTypes.map(type => ({ store_id: storeId, card_type: type, quantity: 0 }))
   );
 }
