@@ -671,8 +671,10 @@ input[type="number"]{direction:ltr;text-align:right;}
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد</button></div>
 </div></div>
 
+<!-- v1780859548 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
+/* hesabat v1780859548 */
 /**
  * Hesabat — Point of Sale System
  * Architecture: Module Pattern with clear separation of concerns
@@ -957,21 +959,23 @@ const Auth = {
    */
   async _bootFromSession(session) {
     try {
-      // Use RPC function (SECURITY DEFINER) — bypasses RLS server-side
-      const { data: account, error } = await sb.rpc('get_my_account', {
-        p_auth_id: session.user.id,
-        p_email:   session.user.email,
-      });
+      // Use sbAdmin (service role) — bypasses RLS completely, most reliable
+      const { data: account, error } = await sbAdmin
+        .from('app_accounts')
+        .select('id, username, store_name, owner_name, role, is_active, subscription_end, auth_id')
+        .eq('auth_id', session.user.id)
+        .maybeSingle();
 
       if (error) {
-        console.error('[Auth._bootFromSession] RPC error:', error.message);
-        UI.showFormError('lmsg', 'خطأ: ' + error.message);
+        console.error('[Auth._bootFromSession] error:', error.message);
+        UI.showFormError('lmsg', 'خطأ في جلب بيانات الحساب: ' + error.message);
         await Auth.logout();
         return;
       }
 
       if (!account) {
-        UI.showFormError('lmsg', 'لم يُوجد حساب. تواصل مع المسؤول.');
+        console.error('[Auth._bootFromSession] No account for auth_id:', session.user.id);
+        UI.showFormError('lmsg', 'لم يُوجد حساب مرتبط. تواصل مع المسؤول.');
         await Auth.logout();
         return;
       }
