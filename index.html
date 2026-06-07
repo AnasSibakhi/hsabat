@@ -671,10 +671,8 @@ input[type="number"]{direction:ltr;text-align:right;}
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد</button></div>
 </div></div>
 
-<!-- v1780859548 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-/* hesabat v1780859548 */
 /**
  * Hesabat — Point of Sale System
  * Architecture: Module Pattern with clear separation of concerns
@@ -959,35 +957,48 @@ const Auth = {
    */
   async _bootFromSession(session) {
     try {
-      // Use sbAdmin (service role) — bypasses RLS completely, most reliable
+      // Step 1: fetch account using service role — no RLS
       const { data: account, error } = await sbAdmin
         .from('app_accounts')
-        .select('id, username, store_name, owner_name, role, is_active, subscription_end, auth_id')
+        .select('*')
         .eq('auth_id', session.user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('[Auth._bootFromSession] error:', error.message);
-        UI.showFormError('lmsg', 'خطأ في جلب بيانات الحساب: ' + error.message);
+      // Step 2: if not found by auth_id, try by email
+      let finalAccount = account;
+      if (!finalAccount) {
+        const { data: byEmail } = await sbAdmin
+          .from('app_accounts')
+          .select('*')
+          .eq('username', session.user.email)
+          .maybeSingle();
+
+        if (byEmail) {
+          // Fix missing auth_id link automatically
+          await sbAdmin.from('app_accounts').update({ auth_id: session.user.id }).eq('id', byEmail.id);
+          finalAccount = { ...byEmail, auth_id: session.user.id };
+        }
+      }
+
+      if (error && !finalAccount) {
+        UI.showFormError('lmsg', 'خطأ: ' + error.message);
+        return;
+      }
+
+      if (!finalAccount) {
+        UI.showFormError('lmsg', 'لم يُوجد حساب مرتبط بهذا البريد.');
         await Auth.logout();
         return;
       }
 
-      if (!account) {
-        console.error('[Auth._bootFromSession] No account for auth_id:', session.user.id);
-        UI.showFormError('lmsg', 'لم يُوجد حساب مرتبط. تواصل مع المسؤول.');
-        await Auth.logout();
-        return;
-      }
-
-      if (!account.is_active) {
+      if (!finalAccount.is_active) {
         UI.showFormError('lmsg', 'هذا الحساب موقوف. تواصل مع المسؤول');
         await Auth.logout();
         return;
       }
 
-      State.user = Auth._mapAccount(account);
-      State.role = account.role;
+      State.user = Auth._mapAccount(finalAccount);
+      State.role = finalAccount.role;
       DOM.get('auth-wrap')?.classList.add('hidden');
 
       if (State.isAdmin()) {
@@ -998,7 +1009,7 @@ const Auth = {
       }
     } catch (err) {
       console.error('[Auth._bootFromSession]', err);
-      UI.showAuth();
+      UI.showFormError('lmsg', 'خطأ غير متوقع: ' + err.message);
     }
   },
 
