@@ -18,19 +18,31 @@ import * as Modal   from '../nav/modal.js';
 // ─────────────────────────────────────────
 const Dashboard = {
   async load() {
-    const [todayInvoices, monthInvoices, debts, inventory] = await Promise.all([
-      DB.invoices().select('total').eq('invoice_date', Utils.today()),
-      DB.invoices().select('total').gte('invoice_date', Utils.monthStart()),
-      DB.debts().select('amount,paid'),
-      DB.inventory().select('quantity,low_stock_alert'),
-    ]);
+    try {
+      console.log('[Dashboard.load] State.user:', State.user?.id);
 
-    DOM.setText('hs1', Utils.currency(Utils.sumBy(todayInvoices.data, 'total')));
-    DOM.setText('hs2', Utils.currency((debts.data || []).reduce((s, d) => s + (d.amount - d.paid), 0)));
-    DOM.setText('hs3', Utils.currency(Utils.sumBy(monthInvoices.data, 'total')));
-    DOM.setText('hs4', (inventory.data || []).filter(i => i.quantity <= i.low_stock_alert).length);
+      const [todayInvoices, monthInvoices, debts, inventory] = await Promise.all([
+        DB.invoices().select('total').eq('invoice_date', Utils.today()),
+        DB.invoices().select('total').gte('invoice_date', Utils.monthStart()),
+        DB.debts().select('amount,paid'),
+        DB.inventory().select('quantity,low_stock_alert'),
+      ]);
 
-    await Dashboard._loadOverdueDebts();
+      console.log('[Dashboard.load] results:', {
+        todayInvoices: todayInvoices.error || todayInvoices.data?.length,
+        debts: debts.error || debts.data?.length,
+        inventory: inventory.error || inventory.data?.length,
+      });
+
+      DOM.setText('hs1', Utils.currency(Utils.sumBy(todayInvoices.data, 'total')));
+      DOM.setText('hs2', Utils.currency((debts.data || []).reduce((s, d) => s + (d.amount - d.paid), 0)));
+      DOM.setText('hs3', Utils.currency(Utils.sumBy(monthInvoices.data, 'total')));
+      DOM.setText('hs4', (inventory.data || []).filter(i => i.quantity <= i.low_stock_alert).length);
+
+      await Dashboard._loadOverdueDebts();
+    } catch(err) {
+      console.error('[Dashboard.load] ERROR:', err);
+    }
   },
 
   async _loadOverdueDebts() {
