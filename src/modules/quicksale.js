@@ -12,10 +12,13 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
-import { Dashboard } from './dashboard.js';
-import { Debts } from './debts.js';
-import { Invoices } from './invoices.js';
-import { Inventory } from './inventory.js';
+
+// Lazy cross-module references (prevents circular dependency)
+const getDashboard = () => import('./dashboard.js').then(m => m.Dashboard);
+const getDebts = () => import('./debts.js').then(m => m.Debts);
+const getInvoices = () => import('./invoices.js').then(m => m.Invoices);
+const getInventory = () => import('./inventory.js').then(m => m.Inventory);
+
 
 // ─────────────────────────────────────────
 // 24. QUICK SALE MODULE
@@ -146,7 +149,7 @@ const QuickSale = {
 
     State.isMutating = true;
     try {
-      const invoiceNumber = await Invoices._generateInvoiceNumber();
+      const invoiceNumber = await (await getInvoices())._generateInvoiceNumber();
       const { data: invoice, error } = await DB.invoices().insert({
         store_id: State.user.id, customer_id: customerId || null,
         customer_name: customerId ? State.customers.find(c => c.id === customerId)?.name : custName,
@@ -158,16 +161,16 @@ const QuickSale = {
       if (error) throw error;
 
       await sb.from('invoice_items').insert(items.map(it => ({ ...it, invoice_id: invoice.id })));
-      await Inventory.deductItems(items);
+      await (await getInventory()).deductItems(items);
 
       if (paymentType === PAYMENT.DEFER && customerId) {
-        await Debts.addFromInvoice(customerId, total, Utils.today(), invoiceNumber);
+        await (await getDebts()).addFromInvoice(customerId, total, Utils.today(), invoiceNumber);
       }
 
       if (navigator.vibrate) navigator.vibrate(50);
       Notify.success(invoiceNumber + ' — ' + Utils.currency(total));
       QuickSale.clear();
-      await Promise.all([Dashboard.load(), Inventory.loadList(), QuickSale.loadSummary()]);
+      await Promise.all([(await getDashboard()).load(), (await getInventory()).loadList(), QuickSale.loadSummary()]);
     } catch (err) { console.error('[QuickSale.sell]', err); Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },

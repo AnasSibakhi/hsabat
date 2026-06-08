@@ -12,8 +12,11 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
-import { Dashboard } from './dashboard.js';
-import { Inventory } from './inventory.js';
+
+// Lazy cross-module references (prevents circular dependency)
+const getDashboard = () => import('./dashboard.js').then(m => m.Dashboard);
+const getInventory = () => import('./inventory.js').then(m => m.Inventory);
+
 
 // ─────────────────────────────────────────
 // 19. PURCHASES MODULE
@@ -94,9 +97,9 @@ const Purchases = {
       Modal.close('m-pur');
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
-      await Inventory.load();
+      await (await getInventory()).load();
       await Purchases.load();
-      await Dashboard.load();
+      await (await getDashboard()).load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },

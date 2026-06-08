@@ -12,10 +12,13 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
-import { Dashboard } from './dashboard.js';
-import { Debts } from './debts.js';
-import { Invoices } from './invoices.js';
-import { Inventory } from './inventory.js';
+
+// Lazy cross-module references (prevents circular dependency)
+const getDashboard = () => import('./dashboard.js').then(m => m.Dashboard);
+const getDebts = () => import('./debts.js').then(m => m.Debts);
+const getInvoices = () => import('./invoices.js').then(m => m.Invoices);
+const getInventory = () => import('./inventory.js').then(m => m.Inventory);
+
 
 // ─────────────────────────────────────────
 // 21. RETURNS MODULE
@@ -78,7 +81,7 @@ const Returns = {
 
     Notify.success('تم تسجيل الإرجاع');
     Modal.close('m-return');
-    await Promise.all([Invoices.load(), Inventory.load(), Debts.load(), Dashboard.load()]);
+    await Promise.all([(await getInvoices()).load(), (await getInventory()).load(), (await getDebts()).load(), (await getDashboard()).load()]);
   },
 };
 
