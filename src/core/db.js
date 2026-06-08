@@ -1,17 +1,15 @@
 /**
  * db.js — Database Layer
- * Single place for all Supabase client interactions
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { CONFIG }       from '../config/constants.js';
 import { State }        from './state.js';
 
-// Public client — uses anon key + Supabase Auth session automatically
+// Public client — anon key
 export const sb = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
 // Admin client — service role, bypasses RLS
-// Used ONLY for admin operations
 export const sbAdmin = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
   auth: {
     autoRefreshToken:   false,
@@ -22,24 +20,37 @@ export const sbAdmin = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKe
 });
 
 /**
- * DB — auto-scoped query builder
- * Uses sbAdmin to bypass RLS for store queries
- * (since we handle auth ourselves via app_accounts)
+ * DB — scoped query builder
+ * Returns a function chain: sb.from(table).eq('store_id', id)
+ * Caller must add .select() / .insert() etc.
  */
 export const DB = {
-  // Use sbAdmin to bypass RLS — auth is handled via app_accounts
-  _store: (table) => sbAdmin.from(table).eq('store_id', State.user?.id ?? ''),
+  // Returns query scoped to current store
+  // Usage: DB.customers().select('*') — NOT DB.customers().eq(...)
+  _store: (table) => {
+    const storeId = State.user?.id ?? '';
+    return {
+      select:  (...args) => sbAdmin.from(table).eq('store_id', storeId).select(...args),
+      insert:  (data)    => sbAdmin.from(table).insert(data),
+      update:  (data)    => sbAdmin.from(table).eq('store_id', storeId).update(data),
+      delete:  ()        => sbAdmin.from(table).eq('store_id', storeId).delete(),
+      // Allow chaining filters
+      eq:      (col, val) => sbAdmin.from(table).eq('store_id', storeId).eq(col, val),
+      gte:     (col, val) => sbAdmin.from(table).eq('store_id', storeId).gte(col, val),
+      lte:     (col, val) => sbAdmin.from(table).eq('store_id', storeId).lte(col, val),
+    };
+  },
 
-  customers:    () => DB._store('customers'),
-  debts:        () => DB._store('debts'),
-  invoices:     () => DB._store('invoices'),
+  customers:    () => sbAdmin.from('customers').eq('store_id', State.user?.id ?? ''),
+  debts:        () => sbAdmin.from('debts').eq('store_id', State.user?.id ?? ''),
+  invoices:     () => sbAdmin.from('invoices').eq('store_id', State.user?.id ?? ''),
   invoiceItems: () => sbAdmin.from('invoice_items'),
-  inventory:    () => DB._store('inventory'),
-  purchases:    () => DB._store('purchases'),
-  netCardStock: () => DB._store('net_cards_stock'),
-  netCardSales: () => DB._store('net_card_sales'),
-  expenses:     () => DB._store('expenses'),
-  returns:      () => DB._store('returns'),
+  inventory:    () => sbAdmin.from('inventory').eq('store_id', State.user?.id ?? ''),
+  purchases:    () => sbAdmin.from('purchases').eq('store_id', State.user?.id ?? ''),
+  netCardStock: () => sbAdmin.from('net_cards_stock').eq('store_id', State.user?.id ?? ''),
+  netCardSales: () => sbAdmin.from('net_card_sales').eq('store_id', State.user?.id ?? ''),
+  expenses:     () => sbAdmin.from('expenses').eq('store_id', State.user?.id ?? ''),
+  returns:      () => sbAdmin.from('returns').eq('store_id', State.user?.id ?? ''),
 
   // Admin tables
   accounts:      () => sbAdmin.from('app_accounts'),
