@@ -68,14 +68,15 @@ const Purchases = {
     }
 
     suggestions.style.display = 'block';
-    suggestions.innerHTML = matches.slice(0, 8).map(p =>
-      '<div onclick="Purchases.selectInventoryItem(\'' + p.id + '\',\'' + p.name.replace(/'/g, "\\'") + '\',\'' + (p.unit || '') + '\')" '
-      + 'style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:.5px solid var(--g1);display:flex;justify-content:space-between;align-items:center;"'
-      + 'onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background='#fff'">'
-      + '<span>' + p.name + ' <small style="color:var(--g4);">(' + (p.unit || '') + ')</small></span>'
-      + '<span style="color:var(--g5);font-size:12px;">كمية: ' + p.quantity + '</span>'
-      + '</div>'
-    ).join('');
+    suggestions.innerHTML = matches.slice(0, 8).map(p => {
+      const id   = p.id;
+      const name = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const unit = (p.unit || '').replace(/'/g, "\\'");
+      return '<div class="pur-sugg-item" onclick="Purchases.selectInventoryItem(\'' + id + '\',\'' + name + '\',\'' + unit + '\')">'
+        + '<span>' + p.name + ' <small style="color:var(--g4);">(' + (p.unit || '') + ')</small></span>'
+        + '<span style="color:var(--g5);font-size:12px;">كمية: ' + p.quantity + '</span>'
+        + '</div>';
+    }).join('');
   },
 
   selectInventoryItem(id, name, unit) {
