@@ -12,18 +12,8 @@
 :root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
 /* ── BASE LAYOUT ── */
 *,*::before,*::after{box-sizing:border-box;}
-html{height:100%;height:-webkit-fill-available;}
-body{
-  font-family:'Cairo',sans-serif;
-  background:#fff;
-  color:var(--g9);
-  display:flex;
-  flex-direction:column;
-  height:100%;
-  height:-webkit-fill-available;
-  overflow:hidden;
-  margin:0;
-}
+html,body{margin:0;padding:0;}
+body{font-family:'Cairo',sans-serif;background:#fff;color:var(--g9);}
 .hidden{display:none!important;}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--g9);color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
 #toast.show{opacity:1;}
@@ -183,19 +173,9 @@ input[type="number"]{direction:ltr;text-align:right;}
   bottom:0;
   z-index:100;
 }
-.app-body  { display:flex; overflow:hidden; height:calc(100% - 52px); }
-#app-wrap  {
-  display:none;
-  flex-direction:column;
-  position:fixed;
-  top:0; left:0; right:0; bottom:0;
-}
-.content   {
-  overflow-y:auto;
-  padding:.75rem;
-  -webkit-overflow-scrolling:touch;
-  height:calc(100dvh - 52px - 70px);
-}
+.app-body{display:flex;}
+#app-wrap{display:none;flex-direction:column;}
+.content{padding:.75rem;overflow-y:auto;}
 .sg.c4     { grid-template-columns:repeat(2,1fr); }
 .sa-sidebar{ display:none; }
 
@@ -729,6 +709,26 @@ input[type="number"]{direction:ltr;text-align:right;}
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد</button></div>
 </div></div>
 
+<script>
+function fixLayout(){
+  const wrap = document.getElementById('app-wrap');
+  const topbar = document.querySelector('.topbar');
+  const bottomNav = document.querySelector('.bottom-nav');
+  const content = document.querySelector('.content');
+  if(!wrap || !content) return;
+  const topH = topbar ? topbar.offsetHeight : 52;
+  const botH = (bottomNav && getComputedStyle(bottomNav).display !== 'none') ? bottomNav.offsetHeight : 0;
+  const h = window.innerHeight - topH - botH;
+  content.style.height = h + 'px';
+  content.style.overflowY = 'auto';
+  content.style.webkitOverflowScrolling = 'touch';
+  wrap.style.height = window.innerHeight + 'px';
+  wrap.style.overflow = 'hidden';
+}
+window.addEventListener('resize', fixLayout);
+window.addEventListener('orientationchange', fixLayout);
+document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
+</script>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -83,6 +83,7 @@ export const Store = {
     await Dashboard.load();
 
     Realtime.start();
+    if (window.fixLayout) setTimeout(window.fixLayout, 200);
   },
 
   _applyPermissions(role) {
