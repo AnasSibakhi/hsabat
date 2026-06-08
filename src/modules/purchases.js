@@ -30,6 +30,8 @@ const Purchases = {
     DOM.setHTML('purlist', (data || []).length
       ? data.map(p => '<tr>'
           + '<td>' + Utils.escape(p.supplier) + '</td>'
+          + '<td>' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
+          + '<td>' + Utils.escape(p.invoice_ref || '-') + '</td>'
           + '<td>' + Utils.escape(p.product_name) + '</td>'
           + '<td>' + p.quantity + '</td>'
           + '<td>₪' + p.cost.toFixed(2) + '</td>'
@@ -91,11 +93,16 @@ const Purchases = {
 
     const productName = invId ? (State.inventory.find(i => i.id === invId)?.name || manual) : manual;
 
+    const supplierPhone   = DOM.val('pus-phone');
+    const invoiceNumber   = DOM.val('pus-invoice');
+
     State.isMutating = true;
     try {
       const { error } = await DB.purchases().insert({
         store_id: State.user.id, supplier, product_name: productName,
         quantity: qty, cost, purchase_date: DOM.val('pud'),
+        supplier_phone: supplierPhone || null,
+        invoice_ref:    invoiceNumber || null,
       });
       if (error) throw error;
 
@@ -115,7 +122,9 @@ const Purchases = {
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
       const puq = DOM.get('puq'); if (puq) puq.value = '1';
-      const puu = DOM.get('puu'); if (puu) puu.value = '';
+      const puu   = DOM.get('puu');       if (puu)   puu.value   = '';
+      const phone = DOM.get('pus-phone'); if (phone) phone.value = '';
+      const invno = DOM.get('pus-invoice');if (invno) invno.value = '';
       const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
       const inp = DOM.get('pup'); if (inp) inp.placeholder = 'اتركه فارغاً لو اخترت من فوق';
       await getInventory().load();
@@ -130,6 +139,8 @@ const Purchases = {
     if (!p) { Notify.error('لم يُوجد السجل'); return; }
     document.getElementById('edit-pur-id').value       = p.id;
     document.getElementById('edit-pur-supplier').value = p.supplier || '';
+    document.getElementById('edit-pur-phone').value    = p.supplier_phone || '';
+    document.getElementById('edit-pur-invoice').value  = p.invoice_ref || '';
     document.getElementById('edit-pur-product').value  = p.product_name || '';
     document.getElementById('edit-pur-qty').value      = p.quantity || 1;
     document.getElementById('edit-pur-cost').value     = p.cost || '';
@@ -149,8 +160,12 @@ const Purchases = {
     if (!cost || cost <= 0) { Notify.error('أدخل التكلفة'); return; }
 
     try {
+      const phone = document.getElementById('edit-pur-phone').value.trim();
+      const invno = document.getElementById('edit-pur-invoice').value.trim();
       const { error } = await DB.purchases().update({
         supplier, product_name: product, quantity: qty, cost, purchase_date: date,
+        supplier_phone: phone || null,
+        invoice_ref:    invno || null,
       }).eq('id', id);
       if (error) throw error;
       Notify.success('تم التعديل');
