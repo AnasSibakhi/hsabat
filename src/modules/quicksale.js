@@ -1,196 +1,389 @@
 /**
- * quicksale.js — QuickSale Module
- * Extracted from monolithic app.js into clean module
+ * quicksale.js — Professional POS Module
+ * Features: Product grid, search, barcode scanner, cart, quick checkout
  */
 
-import { DB }     from '../core/db.js';
-import { State }  from '../core/state.js';
-import { Notify } from '../core/notify.js';
-import * as DOM     from '../core/dom.js';
-import { sb }     from '../core/db.js';
-import * as Utils from '../core/utils.js';
-import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
-import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
-import * as Modal   from '../nav/modal.js';
+import { DB }          from '../core/db.js';
+import { State }       from '../core/state.js';
+import { Notify }      from '../core/notify.js';
+import * as DOM        from '../core/dom.js';
+import { sb }          from '../core/db.js';
+import * as Utils      from '../core/utils.js';
+import { escape, currency, today, invoiceNumber } from '../core/utils.js';
+import { PAYMENT, CONFIG } from '../config/constants.js';
+import * as Modal      from '../nav/modal.js';
 import { getDashboard, getDebts, getInvoices, getInventory } from '../core/registry.js';
 
+// ── Cart State ──
+let _cart    = [];   // [{ product, qty, price }]
+let _discount = 0;
+let _scanner  = null;
 
+export const QuickSale = {
 
-
-// ─────────────────────────────────────────
-// 24. QUICK SALE MODULE
-// ─────────────────────────────────────────
-const QuickSale = {
-  _discount: 0,
-
-  init() {
-    const wrap = DOM.get('qs-items');
-    if (wrap && !wrap.children.length) wrap.innerHTML = QuickSale._buildRow();
-    QuickSale._discount = 0;
-    QuickSale.loadSummary();
+  async init() {
+    _cart     = [];
+    _discount = 0;
+    QuickSale._renderCart();
+    await QuickSale._renderProductGrid();
+    QuickSale._renderSummary();
+    DOM.setHTML('qs-search-input', '');
+    const si = DOM.get('qs-search-input');
+    if (si) { si.value = ''; si.focus(); }
   },
 
-  _buildRow() {
-    const opts = State.inventory.map(i =>
-      `<option value="${i.id}" data-price="${i.sale_price || 0}" data-name="${Utils.escape(i.name)}">${Utils.escape(i.name)} (${i.quantity} ${i.unit || ''})</option>`
-    ).join('');
-    return `<div class="qs-item" style="background:var(--g0);border-radius:10px;padding:10px;margin-bottom:8px;">
-      <select class="inp" style="font-size:14px;margin-bottom:6px;" onchange="QuickSale._onProductSelect(this)"><option value="">-- اختر المنتج --</option>${opts}</select>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-          <div style="display:flex;gap:4px;">
-            <button onclick="QuickSale._stepQty(this,-1)" style="background:var(--g2);border:none;border-radius:6px;width:32px;height:32px;font-size:16px;cursor:pointer;">−</button>
-            <input class="inp qs-qty" type="number" value="1" min="0.1" step="0.5" oninput="QuickSale.calcTotal()" style="font-size:15px;font-weight:700;text-align:center;width:60px;padding:4px;">
-            <button onclick="QuickSale._stepQty(this,1)"  style="background:var(--g2);border:none;border-radius:6px;width:32px;height:32px;font-size:16px;cursor:pointer;">+</button>
-          </div>
-          <div style="display:flex;gap:3px;">
-            ${[1,2,5,10].map(n => `<button onclick="QuickSale._setQty(this,${n})" style="background:var(--pl);color:var(--p);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;">${n}</button>`).join('')}
-          </div>
-        </div>
-        <input class="inp qs-price" type="number" placeholder="₪" oninput="QuickSale.calcTotal()" style="font-size:14px;width:90px;text-align:center;">
-        <button onclick="this.closest('.qs-item').remove();QuickSale.calcTotal()" style="background:var(--dl);color:var(--d);border:none;border-radius:6px;width:34px;height:34px;cursor:pointer;font-size:18px;">✕</button>
-      </div>
-      <div class="qs-line-total" style="text-align:left;font-size:12px;color:var(--g5);margin-top:4px;"></div>
-    </div>`;
+  // ── Product Grid ──
+  async _renderProductGrid(filter = '') {
+    const grid = DOM.get('qs-product-grid');
+    if (!grid) return;
+
+    let products = State.inventory;
+    if (!products.length) {
+      await getInventory()?.loadList();
+      products = State.inventory;
+    }
+
+    const filtered = filter
+      ? products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
+      : products.filter(p => p.quantity > 0);
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--g4);font-size:14px;">
+        \${filter ? 'لا توجد نتائج لـ "' + escape(filter) + '"' : 'لا يوجد مخزون متاح'}
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.slice(0, 24).map(p => `
+      <button class="qs-product-btn" onclick="QuickSale.addToCart('\${p.id}')" \${p.quantity <= 0 ? 'disabled' : ''}>
+        <div class="qs-product-name">\${escape(p.name)}</div>
+        <div class="qs-product-price">₪\${p.sale_price ? p.sale_price.toFixed(2) : '—'}</div>
+        <div class="qs-product-qty \${p.quantity <= p.low_stock_alert ? 'low' : ''}">\${p.quantity} \${escape(p.unit || '')}</div>
+      </button>
+    `).join('');
   },
 
-  _onProductSelect(select) {
-    const price = parseFloat(select.options[select.selectedIndex]?.getAttribute('data-price')) || 0;
-    if (price > 0) select.closest('.qs-item').querySelector('.qs-price').value = price;
-    QuickSale.calcTotal();
+  search(val) {
+    QuickSale._renderProductGrid(val);
   },
 
-  _stepQty(btn, delta) {
-    const inp = btn.closest('.qs-item').querySelector('.qs-qty');
-    inp.value = Math.max(0.5, (parseFloat(inp.value) || 1) + delta);
-    QuickSale.calcTotal();
+  // ── Cart ──
+  addToCart(productId) {
+    const product = State.inventory.find(p => p.id === productId);
+    if (!product) return;
+    if (!product.sale_price || product.sale_price <= 0) {
+      Notify.warn('هذا المنتج ليس له سعر — عدّله أولاً');
+      return;
+    }
+
+    const existing = _cart.find(c => c.product.id === productId);
+    if (existing) {
+      if (existing.qty >= product.quantity) { Notify.error('لا يوجد مخزون كافٍ'); return; }
+      existing.qty++;
+    } else {
+      _cart.push({ product, qty: 1, price: product.sale_price });
+    }
+
+    if (navigator.vibrate) navigator.vibrate(30);
+    QuickSale._renderCart();
   },
 
-  _setQty(btn, qty) {
-    btn.closest('.qs-item').querySelector('.qs-qty').value = qty;
-    QuickSale.calcTotal();
+  removeFromCart(productId) {
+    _cart = _cart.filter(c => c.product.id !== productId);
+    QuickSale._renderCart();
   },
 
-  addRow() { DOM.get('qs-items')?.insertAdjacentHTML('beforeend', QuickSale._buildRow()); },
-
-  calcTotal() {
-    let subtotal = 0;
-    document.querySelectorAll('.qs-item').forEach(row => {
-      const qty = parseFloat(row.querySelector('.qs-qty')?.value) || 0;
-      const prc = parseFloat(row.querySelector('.qs-price')?.value) || 0;
-      const lt  = qty * prc;
-      subtotal += lt;
-      const label = row.querySelector('.qs-line-total');
-      if (label) label.textContent = lt > 0 ? '= ₪ ' + lt.toFixed(2) : '';
-    });
-    const discount = QuickSale._discount > 0 ? subtotal * (QuickSale._discount / 100) : 0;
-    DOM.setText('qs-total', '₪ ' + Math.max(0, subtotal - discount).toFixed(2));
-    QuickSale.calcChange();
+  changeQty(productId, delta) {
+    const item = _cart.find(c => c.product.id === productId);
+    if (!item) return;
+    item.qty = Math.max(1, item.qty + delta);
+    if (item.qty > item.product.quantity) {
+      item.qty = item.product.quantity;
+      Notify.error('لا يوجد مخزون كافٍ');
+    }
+    QuickSale._renderCart();
   },
 
-  calcChange() {
-    const paid  = parseFloat(DOM.val('qs-paid-amt')) || 0;
-    const total = parseFloat(DOM.get('qs-total')?.textContent?.replace('₪', '').trim()) || 0;
-    const el    = DOM.get('qs-change');
+  _renderCart() {
+    const el = DOM.get('qs-cart-items');
     if (!el) return;
-    if (paid <= 0) { el.textContent = '-'; el.style.color = 'var(--g4)'; return; }
-    const change = paid - total;
-    el.textContent = '₪ ' + Math.abs(change).toFixed(2) + (change >= 0 ? ' (باقي للزبون)' : ' (ناقص)');
-    el.style.color = change >= 0 ? 'var(--s)' : 'var(--d)';
+
+    if (!_cart.length) {
+      el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--g4);">
+        <i class="ti ti-shopping-cart" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+        السلة فارغة — اختر منتجاً
+      </div>`;
+      DOM.setText('qs-total-amount', '₪ 0.00');
+      DOM.setText('qs-items-count', '0 أصناف');
+      return;
+    }
+
+    let subtotal = 0;
+    el.innerHTML = _cart.map(item => {
+      const lineTotal = item.qty * item.price;
+      subtotal += lineTotal;
+      return `<div class="qs-cart-item">
+        <div class="qs-cart-item-info">
+          <div class="qs-cart-item-name">\${escape(item.product.name)}</div>
+          <div class="qs-cart-item-price">₪\${item.price.toFixed(2)} × \${item.qty} = <strong>₪\${lineTotal.toFixed(2)}</strong></div>
+        </div>
+        <div class="qs-cart-item-controls">
+          <button onclick="QuickSale.changeQty('\${item.product.id}',-1)" class="qs-qty-btn">−</button>
+          <span class="qs-qty-val">\${item.qty}</span>
+          <button onclick="QuickSale.changeQty('\${item.product.id}',1)"  class="qs-qty-btn">+</button>
+          <button onclick="QuickSale.removeFromCart('\${item.product.id}')" class="qs-remove-btn"><i class="ti ti-x"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+
+    const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
+    const total    = Math.max(0, subtotal - discount);
+
+    DOM.setText('qs-total-amount', '₪ ' + total.toFixed(2));
+    DOM.setText('qs-items-count',  _cart.length + ' ' + (_cart.length === 1 ? 'صنف' : 'أصناف'));
+
+    QuickSale._renderSummary(subtotal, discount, total);
+  },
+
+  _renderSummary(subtotal = 0, discount = 0, total = 0) {
+    const el = DOM.get('qs-summary');
+    if (!el) return;
+    if (!_cart.length) { el.innerHTML = ''; return; }
+
+    el.innerHTML = `
+      <div class="qs-summary-row"><span>المجموع الفرعي</span><span>₪\${subtotal.toFixed(2)}</span></div>
+      <div class="qs-summary-row total"><span>الإجمالي</span><span>₪\${total.toFixed(2)}</span></div>
+    `;
   },
 
   applyDiscount(pct) {
-    QuickSale._discount = pct;
-    QuickSale.calcTotal();
-    Notify.show(pct > 0 ? 'تم تطبيق خصم ' + pct + '%' : 'تم إلغاء الخصم');
+    _discount = pct;
+    QuickSale._renderCart();
+    Notify.show(pct > 0 ? 'خصم ' + pct + '%' : 'تم إلغاء الخصم');
   },
 
-  clear() {
-    DOM.setHTML('qs-items', QuickSale._buildRow());
-    DOM.setText('qs-total', '₪ 0');
-    DOM.clearInputs('qs-paid-amt', 'qs-cust-name');
-    const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '-'; ch.style.color = 'var(--g4)'; }
-    QuickSale._discount = 0;
-    Notify.show('تم المسح');
+  clearCart() {
+    _cart = [];
+    _discount = 0;
+    QuickSale._renderCart();
+    const si = DOM.get('qs-search-input');
+    if (si) si.value = '';
+    QuickSale._renderProductGrid();
+    Notify.show('تم مسح السلة');
+  },
+
+  calcChange() {
+    const total  = _cart.reduce((s, c) => s + c.qty * c.price, 0) * (1 - _discount / 100);
+    const paid   = parseFloat(DOM.val('qs-paid')) || 0;
+    const change = paid - total;
+    const el     = DOM.get('qs-change');
+    if (!el) return;
+    if (paid <= 0) { el.textContent = '—'; el.style.color = 'var(--g4)'; return; }
+    el.textContent = '₪ ' + Math.abs(change).toFixed(2) + (change >= 0 ? ' (باقي)' : ' (ناقص)');
+    el.style.color = change >= 0 ? 'var(--s)' : 'var(--d)';
   },
 
   openDebtModal() {
-    DOM.setHTML('qs-cust', '<option value="">-- اختر الزبون --</option>' +
-      State.customers.map(c => `<option value="${c.id}">${Utils.escape(c.name)}</option>`).join(''));
+    DOM.setHTML('qs-debt-cust', '<option value="">-- اختر الزبون --</option>' +
+      State.customers.map(c => `<option value="\${c.id}">\${escape(c.name)}</option>`).join(''));
     Modal.open('m-qs-debt');
   },
 
+  // ── Checkout ──
   async sell(paymentType) {
-    const items = [];
-    let subtotal = 0;
-    document.querySelectorAll('.qs-item').forEach(row => {
-      const select = row.querySelector('select');
-      const qty    = parseFloat(row.querySelector('.qs-qty')?.value) || 0;
-      const price  = parseFloat(row.querySelector('.qs-price')?.value) || 0;
-      const invId  = select?.value || '';
-      const name   = select?.options[select?.selectedIndex]?.getAttribute('data-name') || '';
-      if (qty > 0 && price > 0) { items.push({ product_name: name, inventory_id: invId || null, quantity: qty, price }); subtotal += qty * price; }
-    });
-    if (!items.length || !subtotal) { Notify.error('أضف منتجاً بسعر'); return; }
+    if (!_cart.length) { Notify.error('السلة فارغة'); return; }
 
-    const discount   = QuickSale._discount > 0 ? subtotal * (QuickSale._discount / 100) : 0;
-    const total      = Math.max(0, subtotal - discount);
-    const custName   = DOM.val('qs-cust-name') || 'زبون عادي';
-    let   customerId = '';
+    const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
+    const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
+    const total    = Math.max(0, subtotal - discount);
+    let customerId = '';
+    let customerName = 'زبون عادي';
 
     if (paymentType === PAYMENT.DEFER) {
-      customerId = DOM.val('qs-cust');
+      customerId = DOM.val('qs-debt-cust');
       if (!customerId) { Notify.error('اختر الزبون'); return; }
+      const c = State.customers.find(x => x.id === customerId);
+      customerName = c?.name || '';
       Modal.close('m-qs-debt');
     }
 
     State.isMutating = true;
     try {
-      const invoiceNumber = await getInvoices()._generateInvoiceNumber();
+      const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
+      const invNum = 'INV-' + String((count || 0) + 1).padStart(4, '0');
+
       const { data: invoice, error } = await DB.invoices().insert({
-        store_id: State.user.id, customer_id: customerId || null,
-        customer_name: customerId ? State.customers.find(c => c.id === customerId)?.name : custName,
-        total, subtotal, discount, payment_type: paymentType,
-        invoice_date: Utils.today(),
-        sale_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        invoice_number: invoiceNumber,
+        store_id:      State.user.id,
+        customer_id:   customerId || null,
+        customer_name: customerName,
+        total, subtotal, discount,
+        payment_type:  paymentType,
+        invoice_date:  today(),
+        sale_time:     new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        invoice_number: invNum,
       }).select().single();
+
       if (error) throw error;
 
-      await sb.from('invoice_items').insert(items.map(it => ({ ...it, invoice_id: invoice.id })));
-      await getInventory().deductItems(items);
+      // Save items + deduct inventory
+      await sb.from('invoice_items').insert(_cart.map(c => ({
+        invoice_id:   invoice.id,
+        product_name: c.product.name,
+        inventory_id: c.product.id,
+        quantity:     c.qty,
+        price:        c.price,
+      })));
 
-      if (paymentType === PAYMENT.DEFER && customerId) {
-        await getDebts().addFromInvoice(customerId, total, Utils.today(), invoiceNumber);
+      for (const item of _cart) {
+        const newQty = Math.max(0, item.product.quantity - item.qty);
+        await DB.inventory().update({ quantity: newQty }).eq('id', item.product.id);
+        item.product.quantity = newQty;
       }
 
-      if (navigator.vibrate) navigator.vibrate(50);
-      Notify.success(invoiceNumber + ' — ' + Utils.currency(total));
-      QuickSale.clear();
-      await Promise.all([getDashboard().load(), getInventory().loadList(), QuickSale.loadSummary()]);
-    } catch (err) { console.error('[QuickSale.sell]', err); Notify.error(err.message); }
-    finally { setTimeout(() => { State.isMutating = false; }, 500); }
+      if (paymentType === PAYMENT.DEFER && customerId) {
+        await DB.debts().insert({ store_id: State.user.id, customer_id: customerId, amount: total, paid: 0, debt_date: today(), notes: 'فاتورة ' + invNum });
+        await getDebts()?.loadBadge();
+      }
+
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+      Notify.success(invNum + ' — ₪' + total.toFixed(2));
+      QuickSale.clearCart();
+      await getDashboard()?.load();
+      await getInventory()?.loadList();
+
+    } catch (err) {
+      console.error('[QuickSale.sell]', err);
+      Notify.error(err.message);
+    } finally {
+      setTimeout(() => { State.isMutating = false; }, 500);
+    }
   },
 
-  async loadSummary() {
-    const { data } = await DB.invoices().select('total,payment_type,customer_name,sale_time,invoice_number').eq('invoice_date', Utils.today()).order('created_at', { ascending: false });
-    const list     = data || [];
+  // ── Barcode Scanner ──
+  async startScanner() {
+    const preview = DOM.get('qs-scanner-preview');
+    const overlay = DOM.get('qs-scanner-overlay');
+    if (!overlay) return;
 
-    const cash     = list.filter(r => r.payment_type === PAYMENT.CASH).reduce((s, r) => s + r.total, 0);
-    const transfer = list.filter(r => r.payment_type === PAYMENT.TRANSFER).reduce((s, r) => s + r.total, 0);
-    const defer    = list.filter(r => [PAYMENT.DEFER, PAYMENT.PARTIAL].includes(r.payment_type)).reduce((s, r) => s + r.total, 0);
+    overlay.style.display = 'flex';
 
-    DOM.setHTML('qs-daily-summary', `
-      <div style="background:var(--sl);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--s);">نقدي</div><div style="font-size:15px;font-weight:800;color:var(--s);">₪${cash.toFixed(0)}</div></div>
-      <div style="background:var(--pl);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--p);">تحويل</div><div style="font-size:15px;font-weight:800;color:var(--p);">₪${transfer.toFixed(0)}</div></div>
-      <div style="background:var(--dl);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--d);">دين</div><div style="font-size:15px;font-weight:800;color:var(--d);">₪${defer.toFixed(0)}</div></div>`
-    );
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
 
-    DOM.setHTML('qs-recent', list.length
-      ? list.slice(0, 5).map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--g0);border-radius:8px;margin-bottom:5px;"><div><span style="font-weight:700;font-size:13px;">${Utils.escape(r.invoice_number || '-')}</span><span style="color:var(--g5);font-size:12px;margin-right:6px;">${Utils.escape(r.customer_name || 'عادي')}</span></div><div style="text-align:left;"><span style="font-weight:700;font-size:13px;">₪${r.total.toFixed(2)}</span><span style="color:var(--g4);font-size:11px;display:block;">${r.sale_time || ''}</span></div></div>`).join('')
-      : '<div style="color:var(--g4);font-size:13px;">لا توجد مبيعات اليوم</div>'
-    );
+      if (preview) {
+        preview.srcObject = stream;
+        preview.play();
+      }
+
+      _scanner = stream;
+
+      // Load ZXing and scan
+      if (!window.ZXing) {
+        await QuickSale._loadZXing();
+      }
+
+      QuickSale._scanLoop(preview);
+
+    } catch (err) {
+      Notify.error('لا يمكن الوصول للكاميرا — تأكد من الصلاحيات');
+      QuickSale.stopScanner();
+    }
+  },
+
+  _loadZXing() {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js';
+      script.onload = resolve;
+      document.head.appendChild(script);
+    });
+  },
+
+  _scanLoop(video) {
+    if (!window.ZXing) return;
+    const hints = new Map();
+    const codeReader = new ZXing.BrowserMultiFormatReader(hints);
+
+    codeReader.decodeFromVideoElement(video, (result, err) => {
+      if (result) {
+        QuickSale.stopScanner();
+        QuickSale._onBarcodeDetected(result.getText());
+      }
+    });
+
+    // Store reader for cleanup
+    window._qs_codeReader = codeReader;
+  },
+
+  stopScanner() {
+    if (_scanner) {
+      _scanner.getTracks().forEach(t => t.stop());
+      _scanner = null;
+    }
+    if (window._qs_codeReader) {
+      try { window._qs_codeReader.reset(); } catch(e) {}
+      window._qs_codeReader = null;
+    }
+    const overlay = DOM.get('qs-scanner-overlay');
+    if (overlay) overlay.style.display = 'none';
+    const preview = DOM.get('qs-scanner-preview');
+    if (preview) preview.srcObject = null;
+  },
+
+  async _onBarcodeDetected(barcode) {
+    if (navigator.vibrate) navigator.vibrate(100);
+
+    // Search inventory by barcode
+    const { data } = await DB.inventory().select('*').eq('barcode', barcode);
+    const product  = data?.[0];
+
+    if (product) {
+      // Found — add to cart
+      State.inventory = State.inventory.map(p => p.id === product.id ? product : p);
+      QuickSale.addToCart(product.id);
+      Notify.success('تمت إضافة: ' + product.name);
+    } else {
+      // Not found — open add product modal
+      DOM.get('qs-new-barcode').value  = barcode;
+      DOM.get('qs-new-name').value     = '';
+      DOM.get('qs-new-price').value    = '';
+      DOM.get('qs-new-qty').value      = '1';
+      Modal.open('m-new-product');
+    }
+  },
+
+  // ── Add new product from scanner ──
+  async saveNewProduct() {
+    const barcode = DOM.val('qs-new-barcode');
+    const name    = DOM.val('qs-new-name');
+    const price   = parseFloat(DOM.val('qs-new-price'));
+    const qty     = parseFloat(DOM.val('qs-new-qty')) || 0;
+
+    if (!name)            { Notify.error('أدخل اسم المنتج'); return; }
+    if (!price || price <= 0) { Notify.error('أدخل السعر'); return; }
+
+    try {
+      const { data: product, error } = await DB.inventory().insert({
+        store_id:        State.user.id,
+        name, barcode,
+        sale_price:      price,
+        quantity:        qty,
+        category:        'عام',
+        unit:            'قطعة',
+        low_stock_alert: CONFIG.lowStockDefault,
+      }).select().single();
+
+      if (error) throw error;
+
+      State.inventory.push(product);
+      Modal.close('m-new-product');
+      QuickSale.addToCart(product.id);
+      Notify.success('تم إضافة المنتج وإضافته للسلة');
+      await QuickSale._renderProductGrid();
+    } catch (err) {
+      Notify.error(err.message);
+    }
   },
 };
-
-export { QuickSale };
