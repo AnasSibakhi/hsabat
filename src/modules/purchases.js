@@ -64,9 +64,11 @@ const Purchases = {
     const cost     = parseFloat(DOM.val('puc'));
     const qty      = parseFloat(DOM.val('puq')) || 1;
 
-    if (!supplier)          { Notify.error('أدخل اسم المورد'); return; }
-    if (!cost || cost <= 0) { Notify.error('أدخل التكلفة');   return; }
-    if (!manual)            { Notify.error('أدخل اسم الصنف'); return; }
+    const salePrice = parseFloat(DOM.val('pus-price'));
+    if (!manual)                      { Notify.error('أدخل اسم الصنف');       return; }
+    if (!cost || cost <= 0)           { Notify.error('أدخل التكلفة الإجمالية'); return; }
+    if (!salePrice || salePrice <= 0) { Notify.error('أدخل سعر البيع');        return; }
+    if (!supplier)                    { Notify.error('أدخل اسم المورد');        return; }
 
     const productName = manual;
     const invId = null;
@@ -89,9 +91,12 @@ const Purchases = {
       const { data: existing } = await DB.inventory().select('id,quantity').eq('name', productName).maybeSingle();
 
       if (existing) {
-        // صنف موجود — أضف الكمية
-        await DB.inventory().update({ quantity: existing.quantity + qty }).eq('id', existing.id);
-        Notify.success('تم — أضيف ' + qty + ' لـ "' + productName + '" — المجموع: ' + (existing.quantity + qty));
+        // صنف موجود — أضف الكمية وحدّث سعر البيع
+        await DB.inventory().update({
+          quantity:   existing.quantity + qty,
+          sale_price: salePrice,
+        }).eq('id', existing.id);
+        Notify.success('تم — المجموع: ' + (existing.quantity + qty) + ' — سعر البيع: ₪' + salePrice);
       } else {
         // صنف جديد — أنشئه في المخزون
         await DB.inventory().insert({
@@ -100,10 +105,10 @@ const Purchases = {
           category:        'عام',
           unit:            unit,
           quantity:        qty,
-          sale_price:      0,
+          sale_price:      salePrice,
           low_stock_alert: CONFIG.lowStockDefault,
         });
-        Notify.success('تم — أُضيف "' + productName + '" للمخزون بكمية ' + qty);
+        Notify.success('تم — أُضيف "' + productName + '" — سعر البيع: ₪' + salePrice);
       }
 
       // تحديث كاش المخزون
@@ -113,7 +118,8 @@ const Purchases = {
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
       const puq = DOM.get('puq'); if (puq) puq.value = '1';
-      const puu   = DOM.get('puu');       if (puu)   puu.value   = '';
+      const puu      = DOM.get('puu');      if (puu)      puu.value      = '';
+      const pusPrice = DOM.get('pus-price'); if (pusPrice) pusPrice.value = '';
       const phone = DOM.get('pus-phone'); if (phone) phone.value = '';
       const invno = DOM.get('pus-invoice');if (invno) invno.value = '';
       const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
