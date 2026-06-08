@@ -13,16 +13,21 @@ const SESSION_KEY = 'hesabat_account_id';
 export const Auth = {
 
   async init() {
-    // First try Supabase Auth session (persisted in localStorage automatically)
-    const { data: { session } } = await sb.auth.getSession();
+    try {
+      // First try Supabase Auth session (persisted in localStorage automatically)
+      const { data: { session } } = await sb.auth.getSession();
 
-    if (session) {
-      await Auth._bootFromSession(session);
-      return;
+      if (session) {
+        await Auth._bootFromSession(session);
+        return;
+      }
+
+      // No session — show login
+      Auth._showAuth();
+    } catch(err) {
+      console.error('[Auth.init] failed:', err);
+      Auth._showAuth(); // Always hide loading screen even on error
     }
-
-    // No session — show login
-    Auth._showAuth();
 
     // Listen for sign out
     sb.auth.onAuthStateChange((event) => {
@@ -130,6 +135,7 @@ export const Auth = {
 
     } catch (err) {
       console.error('[Auth._bootFromSession]', err);
+      Auth._showAuth(); // Always hide loading screen
       Auth._showError('خطأ: ' + err.message);
     }
   },
