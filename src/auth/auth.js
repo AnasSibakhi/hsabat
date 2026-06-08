@@ -110,7 +110,8 @@ export const Auth = {
       };
       State.role = account.role;
 
-      // Hide auth screen
+      // Hide loading screen and auth screen
+      DOM.show('loading-wrap', false);
       DOM.get('auth-wrap')?.classList.add('hidden');
 
       // Boot correct panel
@@ -144,6 +145,7 @@ export const Auth = {
   },
 
   _showAuth() {
+    DOM.show('loading-wrap', false);
     DOM.show('app-wrap', false);
     DOM.show('superadmin-wrap', false);
     DOM.get('auth-wrap')?.classList.remove('hidden');
