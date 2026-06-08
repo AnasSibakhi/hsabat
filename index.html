@@ -160,6 +160,9 @@ body.dark table.dt tr:hover td{background:#2a2a3e;}
 body.dark .ni:hover{background:#fff1;}
 body.dark .ni.active{background:#1e3a5f;}
 input[type="number"]{direction:ltr;text-align:right;}
+
+#mobile-drawer.open{transform:translateX(0);}
+
 /* ── MOBILE (default) ── */
 .sidebar    { display:none; }
 .bottom-nav {
@@ -194,6 +197,35 @@ input[type="number"]{direction:ltr;text-align:right;}
 </head>
 <body>
 <div id="toast"></div>
+
+<!-- Mobile Drawer -->
+<div id="mobile-drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;"></div>
+<div id="mobile-drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:260px;background:#fff;z-index:301;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,0.15);padding:.6rem;transform:translateX(100%);transition:transform .25s ease;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:.5rem;border-bottom:1px solid #e5e7eb;">
+    <span style="font-weight:800;font-size:16px;">القائمة</span>
+    <button onclick="closeDrawer()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">✕</button>
+  </div>
+  <div class="nl">الرئيسية</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('home',this)"><i class="ti ti-home"></i> لوحة التحكم</div>
+  <div class="nl">المبيعات</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('quicksale',this)"><i class="ti ti-bolt"></i> بيع سريع</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('invoices',this)"><i class="ti ti-receipt"></i> الفواتير</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('sales',this)"><i class="ti ti-chart-bar"></i> المبيعات</div>
+  <div class="nl">الزبائن</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('customers',this)"><i class="ti ti-users"></i> الزبائن</div>
+  <div class="ni owner-only" onclick="closeDrawer();Nav.go('debts',this)"><i class="ti ti-credit-card-off"></i> الديون</div>
+  <div class="nl">المخزون</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('inventory',this)"><i class="ti ti-box"></i> المخزون</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('purchases',this)"><i class="ti ti-truck"></i> المشتريات</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('netcards',this)"><i class="ti ti-wifi"></i> بطاقات نت</div>
+  <div class="nl owner-only">المالية</div>
+  <div class="ni owner-only" onclick="closeDrawer();Nav.go('expenses',this)"><i class="ti ti-cash"></i> المصاريف</div>
+  <div class="ni owner-only" onclick="closeDrawer();Nav.go('reports',this)"><i class="ti ti-report"></i> التقارير</div>
+  <div class="nl">أخرى</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('returns',this)"><i class="ti ti-arrow-back-up"></i> الإرجاعات</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('settings',this)"><i class="ti ti-settings"></i> الإعدادات</div>
+</div>
+
 
 <!-- LOADING SCREEN — shown while checking session -->
 <div id="loading-wrap" style="position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
@@ -540,7 +572,7 @@ input[type="number"]{direction:ltr;text-align:right;}
    <button class="bn" id="bn-quicksale" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></button>
    <button class="bn" id="bn-debts" onclick="Nav.goTo('debts')"><i class="ti ti-credit-card-off"></i><span>الديون</span><span class="bn-dot hidden" id="bn-dot"></span></button>
    <button class="bn" id="bn-invoices" onclick="Nav.goTo('invoices')"><i class="ti ti-receipt"></i><span>الفواتير</span></button>
-   <button class="bn" id="bn-more" onclick="Nav.goTo('customers')"><i class="ti ti-grid-dots"></i><span>المزيد</span></button>
+   <button class="bn" id="bn-more" onclick="openDrawer()"><i class="ti ti-grid-dots"></i><span>المزيد</span></button>
   </div>
  </div>
 </div>
@@ -725,6 +757,24 @@ function fixLayout(){
   wrap.style.height = window.innerHeight + 'px';
   wrap.style.overflow = 'hidden';
 }
+
+function openDrawer(){
+  const overlay = document.getElementById('mobile-drawer-overlay');
+  const drawer  = document.getElementById('mobile-drawer');
+  overlay.style.display = 'block';
+  drawer.style.display  = 'block';
+  setTimeout(() => drawer.classList.add('open'), 10);
+}
+function closeDrawer(){
+  const overlay = document.getElementById('mobile-drawer-overlay');
+  const drawer  = document.getElementById('mobile-drawer');
+  drawer.classList.remove('open');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    drawer.style.display  = 'none';
+  }, 250);
+}
+
 window.addEventListener('resize', fixLayout);
 window.addEventListener('orientationchange', fixLayout);
 document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
