@@ -323,6 +323,13 @@ body.dark .ni.active{background:#1e3a5f;}
 
 .pur-sugg-item{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:.5px solid var(--g1);display:flex;justify-content:space-between;align-items:center;}
 .pur-sugg-item:hover{background:var(--g0);}
+
+.d-sort-btn{padding:5px 10px;border:1px solid var(--g2);border-radius:8px;background:#fff;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;color:var(--g6);}
+.d-sort-btn.active{background:var(--p);color:#fff;border-color:var(--p);}
+.aging-bucket{margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:.5px solid var(--g1);}
+.aging-bucket:last-child{border-bottom:none;margin-bottom:0;}
+.aging-label{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.aging-names{font-size:12px;color:var(--g6);line-height:1.7;}
 </style>
 </head>
 <body>
@@ -857,10 +864,49 @@ body.dark .ni.active{background:#1e3a5f;}
 
    <!-- DEBTS -->
    <div class="page" id="page-debts">
-    <div class="ph"><span class="pt">الديون</span><button class="btn btn-s" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i> إضافة</button></div>
-    <div class="sg c3"><div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="dt1">-</div></div><div class="sc amber"><div class="sc-l">متأخرون +يومين</div><div class="sc-v" id="dt2">-</div></div><div class="sc green"><div class="sc-l">مسدَّد الشهر</div><div class="sc-v" id="dt3">-</div></div></div>
+    <!-- Header -->
+    <div class="ph">
+      <span class="pt">الديون</span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-o" id="d-archive-btn" onclick="Debts.toggleArchive()" style="font-size:12px;padding:7px 10px;">🗄 الأرشيف</button>
+        <button class="btn btn-o" onclick="Debts.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i> طباعة</button>
+        <button class="btn btn-s" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i> إضافة</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="sg c3">
+      <div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="dt1">-</div></div>
+      <div class="sc amber"><div class="sc-l">متأخرون +يومين</div><div class="sc-v" id="dt2">-</div></div>
+      <div class="sc green"><div class="sc-l">مسدَّد الشهر</div><div class="sc-v" id="dt3">-</div></div>
+    </div>
+
+    <!-- Alerts -->
     <div id="dalerts"></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الزبون</th><th>الدين</th><th>الباقي</th><th>التاريخ</th><th>تأخر</th><th></th><th></th></tr></thead><tbody id="dlist"><tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+
+    <!-- Sort Controls -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:.75rem;">
+      <span style="font-size:12px;color:var(--g5);">ترتيب:</span>
+      <button id="dsort-date"    class="d-sort-btn active" onclick="Debts.setSort('date')">التاريخ</button>
+      <button id="dsort-amount"  class="d-sort-btn"        onclick="Debts.setSort('amount')">المبلغ</button>
+      <button id="dsort-overdue" class="d-sort-btn"        onclick="Debts.setSort('overdue')">الأقدم</button>
+    </div>
+
+    <!-- Debts Table -->
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>الزبون</th><th>الدين</th><th>الباقي</th><th>التاريخ</th><th>تأخر</th><th></th><th></th></tr></thead>
+          <tbody id="dlist"><tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Aging Report -->
+    <div style="font-size:14px;font-weight:800;margin-bottom:.5rem;margin-top:.5rem;">📊 تقرير التأخر</div>
+    <div class="card" style="padding:1rem;" id="d-aging">
+      <span class="spin">↻</span>
+    </div>
    </div>
 
    <!-- INVOICES -->
