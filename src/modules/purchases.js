@@ -84,7 +84,30 @@ const Purchases = {
       });
       if (error) throw error;
 
-      Notify.success('تم تسجيل المشتريات');
+      // ربط المخزون — ابحث عن الصنف بالاسم وأضف الكمية
+      const unit = DOM.get('pu-unit')?.value || 'قطعة (pcs)';
+      const { data: existing } = await DB.inventory().select('id,quantity').eq('name', productName).maybeSingle();
+
+      if (existing) {
+        // صنف موجود — أضف الكمية
+        await DB.inventory().update({ quantity: existing.quantity + qty }).eq('id', existing.id);
+        Notify.success('تم — أضيف ' + qty + ' لـ "' + productName + '" — المجموع: ' + (existing.quantity + qty));
+      } else {
+        // صنف جديد — أنشئه في المخزون
+        await DB.inventory().insert({
+          store_id:        State.user.id,
+          name:            productName,
+          category:        'عام',
+          unit:            unit,
+          quantity:        qty,
+          sale_price:      0,
+          low_stock_alert: CONFIG.lowStockDefault,
+        });
+        Notify.success('تم — أُضيف "' + productName + '" للمخزون بكمية ' + qty);
+      }
+
+      // تحديث كاش المخزون
+      await getInventory()?.loadList();
 
       Modal.close('m-pur');
       DOM.clearInputs('pus', 'pup', 'puc');
