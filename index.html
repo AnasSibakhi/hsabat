@@ -145,9 +145,17 @@ table.sa-dt tr:hover td{background:#334155;}
 }
 .bnav-inner{display:flex;justify-content:space-around;}
 .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:11px;color:var(--g5);cursor:pointer;position:relative;min-width:56px;}
-.bn i{font-size:24px;}
+.bn i{font-size:22px;}
 .bn.active{color:var(--p);}
 .bn-dot{position:absolute;top:4px;right:8px;width:7px;height:7px;background:var(--d);border-radius:50%;border:1.5px solid #fff;}
+.bn-add{color:var(--p);}
+.bn-add-btn{width:46px;height:46px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:0 4px 12px rgba(26,86,219,.4);transition:transform .15s;}
+.bn-add-btn:active{transform:scale(.93);}
+.bn-add-btn i{font-size:22px;color:#fff;}
+.bn-add span{font-size:10px;}
+.add-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:14px;color:var(--g8);cursor:pointer;border-radius:10px;text-align:right;}
+.add-menu-item:hover{background:var(--g0);}
+.add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
 .page{display:none;}.page.active{display:block;}
@@ -436,9 +444,17 @@ table.sa-dt tr:hover td{background:#334155;}
 }
 .bnav-inner{display:flex;justify-content:space-around;}
 .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:11px;color:var(--g5);cursor:pointer;position:relative;min-width:56px;}
-.bn i{font-size:24px;}
+.bn i{font-size:22px;}
 .bn.active{color:var(--p);}
 .bn-dot{position:absolute;top:4px;right:8px;width:7px;height:7px;background:var(--d);border-radius:50%;border:1.5px solid #fff;}
+.bn-add{color:var(--p);}
+.bn-add-btn{width:46px;height:46px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:0 4px 12px rgba(26,86,219,.4);transition:transform .15s;}
+.bn-add-btn:active{transform:scale(.93);}
+.bn-add-btn i{font-size:22px;color:#fff;}
+.bn-add span{font-size:10px;}
+.add-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:14px;color:var(--g8);cursor:pointer;border-radius:10px;text-align:right;}
+.add-menu-item:hover{background:var(--g0);}
+.add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
 .page{display:none;}.page.active{display:block;}
@@ -870,13 +886,35 @@ body.dark .ni.active{background:#1e3a5f;}
  </div>
  <div class="bottom-nav">
   <div class="bnav-inner">
-   <button class="bn active" id="bn-home" onclick="Nav.goTo('home')"><i class="ti ti-home"></i><span>الرئيسية</span></button>
-   <button class="bn" id="bn-quicksale" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></button>
-   <button class="bn" id="bn-debts" onclick="Nav.goTo('debts')"><i class="ti ti-credit-card-off"></i><span>الديون</span><span class="bn-dot hidden" id="bn-dot"></span></button>
-   <button class="bn" id="bn-invoices" onclick="Nav.goTo('invoices')"><i class="ti ti-receipt"></i><span>الفواتير</span></button>
-   <button class="bn" id="bn-more" onclick="openDrawer()"><i class="ti ti-grid-dots"></i><span>المزيد</span></button>
+   <button class="bn active" id="bn-home" onclick="Nav.goTo('home')">
+     <i class="ti ti-home"></i><span>الرئيسية</span>
+   </button>
+   <button class="bn" id="bn-quicksale" onclick="Nav.goTo('quicksale')">
+     <i class="ti ti-bolt"></i><span>بيع سريع</span>
+   </button>
+   <button class="bn bn-add" onclick="openAddMenu()">
+     <div class="bn-add-btn"><i class="ti ti-plus"></i></div>
+     <span>إضافة</span>
+   </button>
+   <button class="bn" id="bn-debts" onclick="Nav.goTo('debts')">
+     <i class="ti ti-credit-card-off"></i><span>الديون</span>
+     <span class="bn-dot hidden" id="bn-dot"></span>
+   </button>
+   <button class="bn" onclick="openDrawer()">
+     <i class="ti ti-grid-dots"></i><span>المزيد</span>
+   </button>
   </div>
  </div>
+
+<!-- Add Menu -->
+<div id="add-menu-overlay" onclick="closeAddMenu()" style="display:none;position:fixed;inset:0;z-index:299;"></div>
+<div id="add-menu" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;min-width:220px;border:1px solid var(--br);">
+  <button onclick="closeAddMenu();Modal.open('m-invoice')" class="add-menu-item"><i class="ti ti-receipt" style="color:var(--p);"></i> فاتورة جديدة</button>
+  <button onclick="closeAddMenu();Modal.open('m-debt')" class="add-menu-item"><i class="ti ti-credit-card-off" style="color:var(--d);"></i> إضافة دين</button>
+  <button onclick="closeAddMenu();Modal.open('m-customer')" class="add-menu-item"><i class="ti ti-user-plus" style="color:var(--s);"></i> إضافة زبون</button>
+  <button onclick="closeAddMenu();Modal.open('m-inv')" class="add-menu-item"><i class="ti ti-box" style="color:var(--w);"></i> إضافة صنف</button>
+  <button onclick="closeAddMenu();Nav.goTo('quicksale')" class="add-menu-item"><i class="ti ti-bolt" style="color:#8b5cf6;"></i> بيع سريع</button>
+</div>
 </div>
 
 <!-- MODALS -->
@@ -1060,6 +1098,14 @@ function fixLayout(){
   wrap.style.overflow = 'hidden';
 }
 
+function openAddMenu(){
+  document.getElementById('add-menu-overlay').style.display='block';
+  document.getElementById('add-menu').style.display='block';
+}
+function closeAddMenu(){
+  document.getElementById('add-menu-overlay').style.display='none';
+  document.getElementById('add-menu').style.display='none';
+}
 function openDrawer(){
   const overlay = document.getElementById('mobile-drawer-overlay');
   const drawer  = document.getElementById('mobile-drawer');
