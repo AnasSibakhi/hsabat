@@ -313,7 +313,7 @@ input[type="number"]{direction:ltr;text-align:right;}
    <span class="tb-name">حسابات</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px;">
-   <button class="btn btn-o" onclick="UI.toggleDarkMode()" style="padding:6px 8px;font-size:16px;"><i class="ti ti-moon" id="dark-icon"></i></button>
+   <button class="btn btn-o" onclick="toggleDark()" style="padding:6px 8px;font-size:16px;"><i class="ti ti-moon" id="dark-icon"></i></button>
    <span class="store-pill" id="store-pill">...</span>
    <button class="btn-out" onclick="Auth.logout()"><i class="ti ti-logout" style="font-size:15px;"></i></button>
   </div>
@@ -354,7 +354,7 @@ input[type="number"]{direction:ltr;text-align:right;}
     </div>
     <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">إجراءات سريعة</div>
     <div class="qa">
-     <div class="qab" onclick="nav('quicksale',null)"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
+     <div class="qab" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
      <div class="qab" onclick="Modal.open('m-invoice')"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
      <div class="qab" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i><span>دين جديد</span></div>
      <div class="qab" onclick="Modal.open('m-customer')"><i class="ti ti-user-plus"></i><span>زبون</span></div>
@@ -593,7 +593,7 @@ input[type="number"]{direction:ltr;text-align:right;}
    <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="cash" checked> 💵 نقدي</label>
    <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="transfer"> 🏦 تحويل</label>
    <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="defer"> 📋 دين كامل</label>
-   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;" onclick="el('ipartialwrap').classList.remove('hidden')"><input type="radio" name="ip" value="partial"> 💳 جزئي</label>
+   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;" onclick="document.getElementById('ipartialwrap').classList.remove('hidden')"><input type="radio" name="ip" value="partial"> 💳 جزئي</label>
   </div>
  </div>
  <div class="fg hidden" id="ipartialwrap"><label class="lbl">المدفوع الآن (₪)</label><input class="inp" type="number" id="ipartial" inputmode="decimal"></div>

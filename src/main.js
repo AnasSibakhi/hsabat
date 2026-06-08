@@ -69,6 +69,9 @@ function toggleDark() {
 // Global bindings — required for onclick handlers in HTML
 // In a future refactor, replace with event delegation
 // ─────────────────────────────────────────
+// Backward compat — UI object
+window.UI = { toggleDarkMode: () => toggleDark() };
+
 Object.assign(window, {
   // Auth
   Auth, toggleDark,
