@@ -45,6 +45,59 @@ const Purchases = {
     );
   },
 
+  searchInventory(query) {
+    const suggestions = document.getElementById('pur-suggestions');
+    const badge       = document.getElementById('pur-match-badge');
+    const hiddenSel   = document.getElementById('pur-inv-sel');
+
+    if (!query || query.length < 1) {
+      suggestions.style.display = 'none';
+      badge.style.display = 'none';
+      if (hiddenSel) hiddenSel.value = '';
+      return;
+    }
+
+    const q       = query.toLowerCase();
+    const matches = State.inventory.filter(p => p.name.toLowerCase().includes(q));
+
+    if (!matches.length) {
+      suggestions.style.display = 'none';
+      badge.style.display = 'none';
+      if (hiddenSel) hiddenSel.value = '';
+      return;
+    }
+
+    suggestions.style.display = 'block';
+    suggestions.innerHTML = matches.slice(0, 8).map(p =>
+      '<div onclick="Purchases.selectInventoryItem(\'' + p.id + '\',\'' + p.name.replace(/'/g, "\\'") + '\',\'' + (p.unit || '') + '\')" '
+      + 'style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:.5px solid var(--g1);display:flex;justify-content:space-between;align-items:center;"'
+      + 'onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background='#fff'">'
+      + '<span>' + p.name + ' <small style="color:var(--g4);">(' + (p.unit || '') + ')</small></span>'
+      + '<span style="color:var(--g5);font-size:12px;">كمية: ' + p.quantity + '</span>'
+      + '</div>'
+    ).join('');
+  },
+
+  selectInventoryItem(id, name, unit) {
+    const input    = document.getElementById('pup');
+    const hidden   = document.getElementById('pur-inv-sel');
+    const badge    = document.getElementById('pur-match-badge');
+    const sugg     = document.getElementById('pur-suggestions');
+    const unitSel  = document.getElementById('pu-unit');
+
+    if (input)   input.value   = name;
+    if (hidden)  hidden.value  = id;
+    if (badge)   badge.style.display = 'inline';
+    if (sugg)    sugg.style.display  = 'none';
+
+    // Match unit if possible
+    if (unitSel && unit) {
+      const opts = Array.from(unitSel.options);
+      const match = opts.find(o => o.value.includes(unit) || unit.includes(o.value.split(' ')[0]));
+      if (match) unitSel.value = match.value;
+    }
+  },
+
   calcTotal() {
     const qty      = parseFloat(document.getElementById('puq')?.value) || 0;
     const unitCost = parseFloat(document.getElementById('puu')?.value) || 0;
@@ -71,7 +124,7 @@ const Purchases = {
     if (!supplier)                    { Notify.error('أدخل اسم المورد');        return; }
 
     const productName = manual;
-    const invId = null;
+    const invId = DOM.val('pur-inv-sel') || null;
 
     const supplierPhone   = DOM.val('pus-phone');
     const invoiceNumber   = DOM.val('pus-invoice');
@@ -88,7 +141,16 @@ const Purchases = {
 
       // ربط المخزون — ابحث عن الصنف بالاسم وأضف الكمية
       const unit = DOM.get('pu-unit')?.value || 'قطعة (pcs)';
-      const { data: existing } = await DB.inventory().select('id,quantity').eq('name', productName).maybeSingle();
+      // Use selected inventory ID or search by name
+      let existing = null;
+      if (invId) {
+        const { data } = await DB.inventory().select('id,quantity').eq('id', invId).maybeSingle();
+        existing = data;
+      }
+      if (!existing) {
+        const { data } = await DB.inventory().select('id,quantity').eq('name', productName).maybeSingle();
+        existing = data;
+      }
 
       if (existing) {
         // صنف موجود — أضف الكمية وحدّث سعر البيع
@@ -120,6 +182,9 @@ const Purchases = {
       const puq = DOM.get('puq'); if (puq) puq.value = '1';
       const puu      = DOM.get('puu');      if (puu)      puu.value      = '';
       const pusPrice = DOM.get('pus-price'); if (pusPrice) pusPrice.value = '';
+      const hidden   = DOM.get('pur-inv-sel'); if (hidden) hidden.value = '';
+      const badge    = document.getElementById('pur-match-badge'); if (badge) badge.style.display = 'none';
+      const sugg     = document.getElementById('pur-suggestions'); if (sugg) sugg.style.display = 'none';
       const phone = DOM.get('pus-phone'); if (phone) phone.value = '';
       const invno = DOM.get('pus-invoice');if (invno) invno.value = '';
       const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
