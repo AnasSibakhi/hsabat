@@ -43,6 +43,17 @@ const Purchases = {
     );
   },
 
+  calcTotal() {
+    const qty      = parseFloat(document.getElementById('puq')?.value) || 0;
+    const unitCost = parseFloat(document.getElementById('puu')?.value) || 0;
+    const totalEl  = document.getElementById('puc');
+    if (totalEl && qty > 0 && unitCost > 0) {
+      totalEl.value = (qty * unitCost).toFixed(2);
+      totalEl.style.background = 'var(--sl)';
+      totalEl.style.color      = 'var(--s)';
+    }
+  },
+
   fillInventorySelect() {
     const select = DOM.get('pur-inv-sel');
     if (!select) return;
@@ -104,6 +115,7 @@ const Purchases = {
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
       const puq = DOM.get('puq'); if (puq) puq.value = '1';
+      const puu = DOM.get('puu'); if (puu) puu.value = '';
       const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
       const inp = DOM.get('pup'); if (inp) inp.placeholder = 'اتركه فارغاً لو اخترت من فوق';
       await getInventory().load();
