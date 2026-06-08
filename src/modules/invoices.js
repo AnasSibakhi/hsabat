@@ -12,6 +12,8 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { getCustomers, getDebts, getInventory, getDashboard } from '../core/registry.js';
+
 
 
 
@@ -123,11 +125,11 @@ const Invoices = {
       if (customerId === '__new__') {
         const newName = DOM.val('inv-new-name');
         if (!newName) { Notify.error('أدخل اسم الزبون الجديد'); return; }
-        const newCustomer = await window.Customers.createInline(newName, DOM.val('inv-new-phone'));
+        const newCustomer = await getCustomers().createInline(newName, DOM.val('inv-new-phone'));
         customerId   = newCustomer.id;
         customerName = newName;
         customerPhone = DOM.val('inv-new-phone');
-        await window.Customers.loadAll();
+        await getCustomers().loadAll();
       } else if (customerId) {
         const found = State.customers.find(c => c.id === customerId);
         customerName  = found?.name  || '';
@@ -151,12 +153,12 @@ const Invoices = {
       await sb.from('invoice_items').insert(items.map(it => ({ ...it, invoice_id: invoice.id })));
 
       // Deduct inventory
-      await window.Inventory.deductItems(items);
+      await getInventory().deductItems(items);
 
       // Create debt if needed
       if ([PAYMENT.DEFER, PAYMENT.PARTIAL].includes(paymentType) && customerId) {
         const debtAmount = paymentType === PAYMENT.PARTIAL ? total - partialPaid : total;
-        if (debtAmount > 0) await window.Debts.addFromInvoice(customerId, debtAmount, today, invoiceNumber);
+        if (debtAmount > 0) await getDebts().addFromInvoice(customerId, debtAmount, today, invoiceNumber);
       }
 
       Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
@@ -166,8 +168,8 @@ const Invoices = {
       DOM.clearInputs('inv-new-name', 'inv-new-phone', 'inotes');
       DOM.get('idiscount').value = '0';
 
-      await window.Inventory.loadList();
-      await Promise.all([Invoices.load(), window.Dashboard.load(), window.Customers.loadTable()]);
+      await getInventory().loadList();
+      await Promise.all([Invoices.load(), getDashboard().load(), getCustomers().loadTable()]);
     } catch (err) {
       console.error('[Invoices.save]', err);
       Notify.error(err.message);

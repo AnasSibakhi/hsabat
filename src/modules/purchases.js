@@ -12,6 +12,8 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { getDashboard, getInventory } from '../core/registry.js';
+
 
 
 
@@ -94,9 +96,9 @@ const Purchases = {
       Modal.close('m-pur');
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
-      await window.Inventory.load();
+      await getInventory().load();
       await Purchases.load();
-      await window.Dashboard.load();
+      await getDashboard().load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },

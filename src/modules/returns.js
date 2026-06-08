@@ -12,6 +12,8 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { getDashboard, getDebts, getInvoices, getInventory } from '../core/registry.js';
+
 
 
 
@@ -76,7 +78,7 @@ const Returns = {
 
     Notify.success('تم تسجيل الإرجاع');
     Modal.close('m-return');
-    await Promise.all([window.Invoices.load(), window.Inventory.load(), window.Debts.load(), window.Dashboard.load()]);
+    await Promise.all([getInvoices().load(), getInventory().load(), getDebts().load(), getDashboard().load()]);
   },
 };
 

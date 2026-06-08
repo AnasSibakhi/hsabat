@@ -12,6 +12,8 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { getDashboard } from '../core/registry.js';
+
 
 
 
@@ -77,7 +79,7 @@ const Debts = {
       Modal.close('m-debt');
       DOM.clearInputs('da', 'dn');
       DOM.get('dc').value = '';
-      await Promise.all([Debts.load(), Debts.loadBadge(), window.Dashboard.load()]);
+      await Promise.all([Debts.load(), Debts.loadBadge(), getDashboard().load()]);
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
@@ -120,7 +122,7 @@ const Debts = {
       await DB.debts().update({ paid: newPaid }).eq('id', id);
       Notify.success('تم التسديد');
       Modal.close('m-pay');
-      await Promise.all([Debts.load(), Debts.loadBadge(), window.Dashboard.load()]);
+      await Promise.all([Debts.load(), Debts.loadBadge(), getDashboard().load()]);
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 

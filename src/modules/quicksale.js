@@ -12,6 +12,8 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { getDashboard, getDebts, getInvoices, getInventory } from '../core/registry.js';
+
 
 
 
@@ -144,7 +146,7 @@ const QuickSale = {
 
     State.isMutating = true;
     try {
-      const invoiceNumber = await window.Invoices._generateInvoiceNumber();
+      const invoiceNumber = await getInvoices()._generateInvoiceNumber();
       const { data: invoice, error } = await DB.invoices().insert({
         store_id: State.user.id, customer_id: customerId || null,
         customer_name: customerId ? State.customers.find(c => c.id === customerId)?.name : custName,
@@ -156,16 +158,16 @@ const QuickSale = {
       if (error) throw error;
 
       await sb.from('invoice_items').insert(items.map(it => ({ ...it, invoice_id: invoice.id })));
-      await window.Inventory.deductItems(items);
+      await getInventory().deductItems(items);
 
       if (paymentType === PAYMENT.DEFER && customerId) {
-        await window.Debts.addFromInvoice(customerId, total, Utils.today(), invoiceNumber);
+        await getDebts().addFromInvoice(customerId, total, Utils.today(), invoiceNumber);
       }
 
       if (navigator.vibrate) navigator.vibrate(50);
       Notify.success(invoiceNumber + ' — ' + Utils.currency(total));
       QuickSale.clear();
-      await Promise.all([window.Dashboard.load(), window.Inventory.loadList(), QuickSale.loadSummary()]);
+      await Promise.all([getDashboard().load(), getInventory().loadList(), QuickSale.loadSummary()]);
     } catch (err) { console.error('[QuickSale.sell]', err); Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },

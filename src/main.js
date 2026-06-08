@@ -23,6 +23,21 @@ import { Expenses }   from './modules/expenses.js';
 import { Reports }    from './modules/reports.js';
 import { QuickSale }  from './modules/quicksale.js';
 import { AdminPanel } from './admin/admin-panel.js';
+import { Registry }   from './core/registry.js';
+
+// ── Register modules in registry (breaks circular deps) ──
+Registry.register('Dashboard',  Dashboard);
+Registry.register('Customers',  Customers);
+Registry.register('Debts',      Debts);
+Registry.register('Invoices',   Invoices);
+Registry.register('Inventory',  Inventory);
+Registry.register('Purchases',  Purchases);
+Registry.register('NetCards',   NetCards);
+Registry.register('Returns',    Returns);
+Registry.register('Expenses',   Expenses);
+Registry.register('Reports',    Reports);
+Registry.register('QuickSale',  QuickSale);
+Registry.register('Sales',      Sales);
 
 // ── Initialize ──
 window.addEventListener('DOMContentLoaded', () => {
