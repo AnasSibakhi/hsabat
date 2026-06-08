@@ -1110,24 +1110,19 @@ body.dark .ni.active{background:#1e3a5f;}
 <!-- Purchases -->
 <div class="mo" id="m-pur"><div class="modal">
  <div class="mhdr"><span class="mtitle">تسجيل مشتريات</span><button class="mclose" onclick="Modal.close('m-pur')">✕</button></div>
- <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="pus" placeholder="اسم المورد أو الشركة"></div>
- <div class="fg"><label class="lbl">الصنف من المخزون *</label><select class="inp" id="pur-inv-sel" onchange="Purchases.onInventorySelect(this)"><option value="">-- اختر من المخزون --</option></select></div>
+ <div class="fr">
+   <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="pus" placeholder="اسم المورد أو الشركة"></div>
+   <div class="fg"><label class="lbl">جوال المورد</label><input class="inp" id="pus-phone" inputmode="tel" placeholder="05x-xxxxxxx"></div>
+ </div>
+ <div class="fg"><label class="lbl">رقم فاتورة المورد</label><input class="inp" id="pus-invoice" placeholder="INV-001 (اختياري)"></div>
+ <div class="fg"><label class="lbl">الصنف من المخزون</label><select class="inp" id="pur-inv-sel" onchange="Purchases.onInventorySelect(this)"><option value="">-- اختر من المخزون --</option></select></div>
  <div class="fg"><label class="lbl">أو اكتب اسم صنف جديد</label><input class="inp" id="pup" placeholder="اتركه فارغاً لو اخترت من فوق"></div>
  <div class="fg"><label class="lbl">النوع</label><select class="inp" id="pu-unit"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div>
  <div class="fr">
-   <div class="fg">
-     <label class="lbl">الكمية *</label>
-     <input class="inp" type="number" id="puq" value="1" inputmode="decimal" oninput="Purchases.calcTotal()">
-   </div>
-   <div class="fg">
-     <label class="lbl">تكلفة الوحدة (₪) *</label>
-     <input class="inp" type="number" id="puu" inputmode="decimal" placeholder="₪ سعر الوحدة" oninput="Purchases.calcTotal()">
-   </div>
+   <div class="fg"><label class="lbl">الكمية *</label><input class="inp" type="number" id="puq" value="1" inputmode="decimal" oninput="Purchases.calcTotal()"></div>
+   <div class="fg"><label class="lbl">تكلفة الوحدة (₪)</label><input class="inp" type="number" id="puu" inputmode="decimal" placeholder="سعر الوحدة" oninput="Purchases.calcTotal()"></div>
  </div>
- <div class="fg">
-   <label class="lbl">التكلفة الإجمالية (₪)</label>
-   <input class="inp" type="number" id="puc" inputmode="decimal" placeholder="يُحسب تلقائياً" oninput="Purchases.calcTotal()" style="background:var(--sl);font-weight:700;color:var(--s);">
- </div>
+ <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="puc" inputmode="decimal" placeholder="يُحسب تلقائياً أو أدخله يدوياً" oninput="Purchases.calcTotal()" style="background:var(--sl);font-weight:700;color:var(--s);"></div>
  <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="pud"></div>
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-pur')">إلغاء</button><button class="btn btn-s" onclick="Purchases.save()">حفظ وتحديث المخزون</button></div>
 </div></div>
@@ -1281,5 +1276,24 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
   </div>
 </div></div>
 
+  <div class="mo" id="m-edit-pur"><div class="modal">
+  <div class="mhdr"><span class="mtitle">تعديل مشتريات</span><button class="mclose" onclick="Modal.close('m-edit-pur')">✕</button></div>
+  <input type="hidden" id="edit-pur-id">
+  <div class="fr">
+    <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="edit-pur-supplier"></div>
+    <div class="fg"><label class="lbl">جوال المورد</label><input class="inp" id="edit-pur-phone" inputmode="tel"></div>
+  </div>
+  <div class="fg"><label class="lbl">رقم فاتورة المورد</label><input class="inp" id="edit-pur-invoice" placeholder="اختياري"></div>
+  <div class="fg"><label class="lbl">البضاعة *</label><input class="inp" id="edit-pur-product"></div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="edit-pur-qty" inputmode="decimal"></div>
+    <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="edit-pur-cost" inputmode="decimal"></div>
+  </div>
+  <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="edit-pur-date"></div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Modal.close('m-edit-pur')">إلغاء</button>
+    <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
+  </div>
+</div></div>
 </body>
 </html>
