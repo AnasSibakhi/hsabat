@@ -23,6 +23,10 @@ import { getDashboard, getInventory } from '../core/registry.js';
 const Purchases = {
   async load() {
     const { data } = await DB.purchases().select('*').order('purchase_date', { ascending: false });
+    // Cache for edit
+    Purchases._cache = {};
+    (data || []).forEach(p => { Purchases._cache[p.id] = p; });
+
     DOM.setHTML('purlist', (data || []).length
       ? data.map(p => '<tr>'
           + '<td>' + Utils.escape(p.supplier) + '</td>'
@@ -31,7 +35,7 @@ const Purchases = {
           + '<td>₪' + p.cost.toFixed(2) + '</td>'
           + '<td>' + p.purchase_date + '</td>'
           + '<td>'
-          + '<button class="ibb" onclick="Purchases.openEdit(' + JSON.stringify(p) + ')" style="margin-left:4px;">تعديل</button>'
+          + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')" style="margin-left:4px;">تعديل</button>'
           + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
           + '</td>'
           + '</tr>').join('')
@@ -109,15 +113,16 @@ const Purchases = {
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
-  openEdit(p) {
-    const Modal = window.Modal;
-    document.getElementById('edit-pur-id').value           = p.id;
-    document.getElementById('edit-pur-supplier').value     = p.supplier || '';
-    document.getElementById('edit-pur-product').value      = p.product_name || '';
-    document.getElementById('edit-pur-qty').value          = p.quantity || 1;
-    document.getElementById('edit-pur-cost').value         = p.cost || '';
-    document.getElementById('edit-pur-date').value         = p.purchase_date || '';
-    Modal.open('m-edit-pur');
+  openEdit(id) {
+    const p = Purchases._cache[id];
+    if (!p) { Notify.error('لم يُوجد السجل'); return; }
+    document.getElementById('edit-pur-id').value       = p.id;
+    document.getElementById('edit-pur-supplier').value = p.supplier || '';
+    document.getElementById('edit-pur-product').value  = p.product_name || '';
+    document.getElementById('edit-pur-qty').value      = p.quantity || 1;
+    document.getElementById('edit-pur-cost').value     = p.cost || '';
+    document.getElementById('edit-pur-date').value     = p.purchase_date || '';
+    window.Modal.open('m-edit-pur');
   },
 
   async updatePurchase() {
