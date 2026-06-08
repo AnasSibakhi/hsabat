@@ -309,6 +309,17 @@ body.dark .ni.active{background:#1e3a5f;}
   .qs-product-grid{grid-template-columns:repeat(5,1fr);}
 }
 
+
+#qs-scanner-container video,
+#qs-scanner-container canvas{
+  width:100%!important;
+  height:auto!important;
+  display:block;
+}
+#qs-scanner-container canvas.drawingBuffer{
+  position:absolute;
+  top:0;left:0;
+}
 </style>
 </head>
 <body>
@@ -1209,12 +1220,14 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 
 <!-- Scanner Overlay -->
 <div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;">
-  <div style="position:relative;width:100%;max-width:400px;">
-    <video id="qs-scanner-preview" style="width:100%;border-radius:12px;" autoplay playsinline muted></video>
-    <div style="position:absolute;inset:0;border:2px solid var(--p);border-radius:12px;pointer-events:none;"></div>
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:2px;background:var(--p);animation:scan-line 2s linear infinite;"></div>
+  <div style="position:relative;width:100%;max-width:500px;background:#000;">
+    <div id="qs-scanner-container" style="width:100%;position:relative;overflow:hidden;"></div>
+    <!-- Scan guide frame -->
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:120px;border:3px solid #1a56db;border-radius:8px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:2px;background:#1a56db;animation:scan-line 1.5s ease-in-out infinite;"></div>
   </div>
-  <p style="color:#fff;margin-top:1rem;font-size:14px;">وجّه الكاميرا على الباركود</p>
+  <p style="color:#fff;margin-top:1rem;font-size:14px;text-align:center;">وجّه الكاميرا على الباركود</p>
+  <p style="color:#94a3b8;font-size:12px;margin-top:4px;text-align:center;">سيتم المسح تلقائياً</p>
   <button onclick="QuickSale.stopScanner()" style="margin-top:1rem;background:var(--dl);color:var(--d);border:none;border-radius:10px;padding:12px 24px;font-size:15px;font-family:'Cairo',sans-serif;cursor:pointer;">إلغاء</button>
 </div>
 
@@ -1234,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </div></div>
 
 <style>
-@keyframes scan-line{0%{top:20%}50%{top:80%}100%{top:20%}}
+@keyframes scan-line{0%{opacity:1;top:calc(50% - 30px)}50%{opacity:.5;top:calc(50% + 28px)}100%{opacity:1;top:calc(50% - 30px)}}
 </style>
 
 </body>

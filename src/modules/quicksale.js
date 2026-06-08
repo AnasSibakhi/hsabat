@@ -259,77 +259,85 @@ export const QuickSale = {
     }
   },
 
-  // ── Barcode Scanner ──
+  // ── Barcode Scanner (Quagga2 — more accurate) ──
   async startScanner() {
-    const preview = DOM.get('qs-scanner-preview');
     const overlay = DOM.get('qs-scanner-overlay');
     if (!overlay) return;
-
     overlay.style.display = 'flex';
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      // Load Quagga2
+      if (!window.Quagga) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      Quagga.init({
+        inputStream: {
+          type: 'LiveStream',
+          target: document.getElementById('qs-scanner-container'),
+          constraints: {
+            facingMode: 'environment',
+            width:  { min: 640, ideal: 1280 },
+            height: { min: 480, ideal: 720 },
+          },
+        },
+        locator: { patchSize: 'medium', halfSample: true },
+        numOfWorkers: 2,
+        frequency: 10,
+        decoder: {
+          readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader'],
+        },
+        locate: true,
+      }, (err) => {
+        if (err) {
+          Notify.error('لا يمكن الوصول للكاميرا');
+          QuickSale.stopScanner();
+          return;
+        }
+        Quagga.start();
+        _scanner = true;
       });
 
-      if (preview) {
-        preview.srcObject = stream;
-        preview.play();
-      }
-
-      _scanner = stream;
-
-      // Load ZXing and scan
-      if (!window.ZXing) {
-        await QuickSale._loadZXing();
-      }
-
-      QuickSale._scanLoop(preview);
+      // Listen for successful scan
+      Quagga.offDetected();
+      const detectedCodes = {};
+      Quagga.onDetected((result) => {
+        const code = result?.codeResult?.code;
+        if (!code) return;
+        // Require 3 consistent reads for accuracy
+        detectedCodes[code] = (detectedCodes[code] || 0) + 1;
+        if (detectedCodes[code] >= 3) {
+          QuickSale.stopScanner();
+          QuickSale._onBarcodeDetected(code);
+        }
+      });
 
     } catch (err) {
+      console.error('[Scanner]', err);
       Notify.error('لا يمكن الوصول للكاميرا — تأكد من الصلاحيات');
       QuickSale.stopScanner();
     }
   },
 
-  _loadZXing() {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js';
-      script.onload = resolve;
-      document.head.appendChild(script);
-    });
-  },
-
-  _scanLoop(video) {
-    if (!window.ZXing) return;
-    const hints = new Map();
-    const codeReader = new ZXing.BrowserMultiFormatReader(hints);
-
-    codeReader.decodeFromVideoElement(video, (result, err) => {
-      if (result) {
-        QuickSale.stopScanner();
-        QuickSale._onBarcodeDetected(result.getText());
-      }
-    });
-
-    // Store reader for cleanup
-    window._qs_codeReader = codeReader;
-  },
-
   stopScanner() {
-    if (_scanner) {
-      _scanner.getTracks().forEach(t => t.stop());
-      _scanner = null;
-    }
-    if (window._qs_codeReader) {
-      try { window._qs_codeReader.reset(); } catch(e) {}
-      window._qs_codeReader = null;
-    }
+    try {
+      if (window.Quagga && _scanner) {
+        Quagga.offDetected();
+        Quagga.stop();
+      }
+    } catch(e) {}
+    _scanner = null;
     const overlay = DOM.get('qs-scanner-overlay');
     if (overlay) overlay.style.display = 'none';
-    const preview = DOM.get('qs-scanner-preview');
-    if (preview) preview.srcObject = null;
+    // Clear container
+    const container = DOM.get('qs-scanner-container');
+    if (container) container.innerHTML = '';
   },
 
   async _onBarcodeDetected(barcode) {
