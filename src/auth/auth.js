@@ -1,5 +1,12 @@
 /**
  * auth.js — Authentication Module
+ *
+ * Flow:
+ * 1. Page load → check session
+ *    - Session exists → show loading → boot → dashboard
+ *    - No session    → show login
+ * 2. Login → show loading → boot → dashboard
+ * 3. Logout → show login
  */
 
 import { sb, sbAdmin }  from '../core/db.js';
@@ -8,32 +15,41 @@ import { ROLES }        from '../config/constants.js';
 import * as DOM         from '../core/dom.js';
 import { Notify }       from '../core/notify.js';
 
-const SESSION_KEY = 'hesabat_account_id';
+const Loading = {
+  show() {
+    const el = document.getElementById('loading-wrap');
+    if (el) el.style.display = 'flex';
+  },
+  hide() {
+    const el = document.getElementById('loading-wrap');
+    if (el) el.style.display = 'none';
+  },
+};
 
 export const Auth = {
 
   async init() {
     try {
-      // First try Supabase Auth session (persisted in localStorage automatically)
       const { data: { session } } = await sb.auth.getSession();
-
       if (session) {
+        // Has session — show loading then boot
+        Loading.show();
         await Auth._bootFromSession(session);
-        return;
+      } else {
+        // No session — show login directly
+        Auth._showLogin();
       }
-
-      // No session — show login
-      Auth._showAuth();
     } catch(err) {
-      console.error('[Auth.init] failed:', err);
-      Auth._showAuth(); // Always hide loading screen even on error
+      console.error('[Auth.init]', err);
+      Loading.hide();
+      Auth._showLogin();
     }
 
-    // Listen for sign out
     sb.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         State.reset();
-        Auth._showAuth();
+        Loading.hide();
+        Auth._showLogin();
       }
     });
   },
@@ -50,8 +66,15 @@ export const Auth = {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (!data?.session) throw new Error('No session returned');
+
+      // Show loading screen before booting
+      Loading.show();
+      DOM.get('auth-wrap')?.classList.add('hidden');
+
       await Auth._bootFromSession(data.session);
     } catch (err) {
+      Loading.hide();
+      DOM.get('auth-wrap')?.classList.remove('hidden');
       const msg = err.message?.includes('Invalid login credentials')
         ? 'البريد أو كلمة المرور غير صحيحة'
         : err.message?.includes('Email not confirmed')
@@ -75,7 +98,7 @@ export const Auth = {
         .eq('auth_id', session.user.id)
         .maybeSingle();
 
-      // Fallback: match by email and auto-fix auth_id
+      // Fallback by email
       if (!account) {
         const { data: byEmail } = await sbAdmin
           .from('app_accounts')
@@ -92,12 +115,16 @@ export const Auth = {
       }
 
       if (!account) {
+        Loading.hide();
+        Auth._showLogin();
         Auth._showError('لم يُوجد حساب مرتبط. تواصل مع المسؤول.');
         await sb.auth.signOut();
         return;
       }
 
       if (!account.is_active) {
+        Loading.hide();
+        Auth._showLogin();
         Auth._showError('هذا الحساب موقوف.');
         await sb.auth.signOut();
         return;
@@ -115,43 +142,45 @@ export const Auth = {
       };
       State.role = account.role;
 
-      // Hide loading screen and auth screen
-      DOM.show('loading-wrap', false);
-      DOM.get('auth-wrap')?.classList.add('hidden');
-
-      // Boot correct panel
+      // Boot panel — hide loading after boot
       if (State.isAdmin()) {
         const { AdminPanel } = await import('../admin/admin-panel.js');
         await AdminPanel.boot();
       } else {
         const expiry = account.subscription_end;
         if (expiry && new Date(expiry) < new Date()) {
-          DOM.get('exp-wrap').style.display = 'flex';
+          Loading.hide();
+          document.getElementById('exp-wrap').style.display = 'flex';
           return;
         }
         const { Store } = await import('../nav/store-boot.js');
         await Store.boot(State.user);
       }
 
+      // Done — hide loading
+      Loading.hide();
+
     } catch (err) {
       console.error('[Auth._bootFromSession]', err);
-      Auth._showAuth(); // Always hide loading screen
-      Auth._showError('خطأ: ' + err.message);
+      Loading.hide();
+      Auth._showLogin();
+      Auth._showError('خطأ غير متوقع: ' + err.message);
     }
   },
 
   async logout() {
+    Loading.show();
     await sb.auth.signOut();
     State.reset();
     const { Realtime } = await import('../nav/realtime.js');
     Realtime.stop();
     DOM.show('app-wrap', false);
     DOM.show('superadmin-wrap', false);
-    Auth._showAuth();
+    Loading.hide();
+    Auth._showLogin();
   },
 
-  _showAuth() {
-    DOM.show('loading-wrap', false);
+  _showLogin() {
     DOM.show('app-wrap', false);
     DOM.show('superadmin-wrap', false);
     DOM.get('auth-wrap')?.classList.remove('hidden');
