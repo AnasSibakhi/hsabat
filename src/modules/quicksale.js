@@ -8,9 +8,14 @@ import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
 import * as DOM     from '../core/dom.js';
 import { sb }     from '../core/db.js';
+import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { Dashboard } from './dashboard.js';
+import { Debts } from './debts.js';
+import { Invoices } from './invoices.js';
+import { Inventory } from './inventory.js';
 
 // ─────────────────────────────────────────
 // 24. QUICK SALE MODULE

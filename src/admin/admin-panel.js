@@ -4,6 +4,7 @@
  */
 
 import { sbAdmin, sb } from '../core/db.js';
+import * as Utils from '../core/utils.js';
 import { State }       from '../core/state.js';
 import { Notify }      from '../core/notify.js';
 import * as DOM          from '../core/dom.js';
@@ -32,8 +33,8 @@ const AdminPanel = {
 
   async loadDashboard() {
     const [r1, r2] = await Promise.all([
-      sb.from('stores').select('id,store_name,owner_name,is_active,subscription_end'),
-      sb.from('invoices').select('total'),
+      sbAdmin.from('stores').select('id,store_name,owner_name,is_active,subscription_end'),
+      sbAdmin.from('invoices').select('total'),
     ]);
     const stores      = r1.data || [];
     const totalSales  = Utils.sumBy(r2.data, 'total');
