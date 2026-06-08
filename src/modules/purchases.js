@@ -96,6 +96,9 @@ const Purchases = {
       Modal.close('m-pur');
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
+      const puq = DOM.get('puq'); if (puq) puq.value = '1';
+      const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
+      const inp = DOM.get('pup'); if (inp) inp.placeholder = 'اتركه فارغاً لو اخترت من فوق';
       await getInventory().load();
       await Purchases.load();
       await getDashboard().load();
