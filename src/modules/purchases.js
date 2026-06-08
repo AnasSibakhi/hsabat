@@ -156,6 +156,9 @@ const Purchases = {
       Notify.success('تم التعديل');
       window.Modal.close('m-edit-pur');
       await Purchases.load();
+      // Scroll content area back to top
+      const contentEl = document.querySelector('.content');
+      if (contentEl) contentEl.scrollTop = 0;
     } catch(err) { Notify.error(err.message); }
   },
 
