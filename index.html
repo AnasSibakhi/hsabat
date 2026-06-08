@@ -1112,9 +1112,11 @@ body.dark .ni.active{background:#1e3a5f;}
  <div class="mhdr"><span class="mtitle">تسجيل مشتريات</span><button class="mclose" onclick="Modal.close('m-pur')">✕</button></div>
 
  <!-- 1. الصنف أولاً -->
- <div class="fg"><label class="lbl">الصنف من المخزون</label><select class="inp" id="pur-inv-sel" onchange="Purchases.onInventorySelect(this)"><option value="">-- اختر من المخزون --</option></select></div>
- <div class="fg"><label class="lbl">أو اكتب اسم صنف جديد</label><input class="inp" id="pup" placeholder="اتركه فارغاً لو اخترت من فوق"></div>
- <div class="fg"><label class="lbl">النوع</label><select class="inp" id="pu-unit"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div>
+ <div class="fr">
+   <div class="fg"><label class="lbl">اسم الصنف *</label><input class="inp" id="pup" placeholder="مثال: سكر، أرز..."></div>
+   <div class="fg"><label class="lbl">النوع</label><select class="inp" id="pu-unit"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div>
+ </div>
+ <input type="hidden" id="pur-inv-sel" value="">
 
  <!-- 2. الكمية والتكلفة -->
  <div class="fr">
