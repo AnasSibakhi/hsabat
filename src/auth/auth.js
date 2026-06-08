@@ -1,6 +1,5 @@
 /**
  * auth.js — Authentication Module
- * Handles login, logout, session management via Supabase Auth
  */
 
 import { sb, sbAdmin }  from '../core/db.js';
@@ -9,22 +8,23 @@ import { ROLES }        from '../config/constants.js';
 import * as DOM         from '../core/dom.js';
 import { Notify }       from '../core/notify.js';
 
-// Lazy imports to avoid circular dependencies
-let AdminPanel, Store;
-const getAdminPanel = async () => { if (!AdminPanel) ({ AdminPanel } = await import('../admin/admin-panel.js')); return AdminPanel; };
-const getStore      = async () => { if (!Store)      ({ Store }      = await import('../nav/store-boot.js')); return Store; };
+const SESSION_KEY = 'hesabat_account_id';
 
 export const Auth = {
-  /** Called on app load — restore session if exists */
+
   async init() {
+    // First try Supabase Auth session (persisted in localStorage automatically)
     const { data: { session } } = await sb.auth.getSession();
+
     if (session) {
       await Auth._bootFromSession(session);
-    } else {
-      Auth._showAuth();
+      return;
     }
 
-    // Handle SIGNED_OUT only — don't re-boot on SIGNED_IN (we do that manually)
+    // No session — show login
+    Auth._showAuth();
+
+    // Listen for sign out
     sb.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         State.reset();
@@ -33,7 +33,6 @@ export const Auth = {
     });
   },
 
-  /** Login with email + password via Supabase Auth */
   async login() {
     const email    = DOM.val('le');
     const password = DOM.val('lp');
@@ -62,17 +61,16 @@ export const Auth = {
     }
   },
 
-  /** Boot the app after a valid session */
   async _bootFromSession(session) {
     try {
-      // Try auth_id first
+      // Fetch account by auth_id
       let { data: account } = await sbAdmin
         .from('app_accounts')
         .select('*')
         .eq('auth_id', session.user.id)
         .maybeSingle();
 
-      // Fallback — try by email and auto-fix the missing auth_id
+      // Fallback: match by email and auto-fix auth_id
       if (!account) {
         const { data: byEmail } = await sbAdmin
           .from('app_accounts')
@@ -89,48 +87,51 @@ export const Auth = {
       }
 
       if (!account) {
-        Auth._showError('لم يُوجد حساب مرتبط بهذا البريد. تواصل مع المسؤول.');
-        await Auth.logout();
+        Auth._showError('لم يُوجد حساب مرتبط. تواصل مع المسؤول.');
+        await sb.auth.signOut();
         return;
       }
 
       if (!account.is_active) {
-        Auth._showError('هذا الحساب موقوف. تواصل مع المسؤول.');
-        await Auth.logout();
+        Auth._showError('هذا الحساب موقوف.');
+        await sb.auth.signOut();
         return;
       }
 
-      State.user = Auth._mapAccount(account);
+      // Set state
+      State.user = {
+        id:               account.id,
+        user:             account.username,
+        store_name:       account.store_name,
+        owner:            account.owner_name,
+        role:             account.role ?? ROLES.OWNER,
+        is_active:        account.is_active,
+        subscription_end: account.subscription_end,
+      };
       State.role = account.role;
+
+      // Hide auth screen
       DOM.get('auth-wrap')?.classList.add('hidden');
 
+      // Boot correct panel
       if (State.isAdmin()) {
-        const panel = await getAdminPanel();
-        await panel.boot();
+        const { AdminPanel } = await import('../admin/admin-panel.js');
+        await AdminPanel.boot();
       } else {
-        if (Auth._isExpired(State.user)) { DOM.get('exp-wrap').style.display = 'flex'; return; }
-        const store = await getStore();
-        await store.boot(State.user);
+        const expiry = account.subscription_end;
+        if (expiry && new Date(expiry) < new Date()) {
+          DOM.get('exp-wrap').style.display = 'flex';
+          return;
+        }
+        const { Store } = await import('../nav/store-boot.js');
+        await Store.boot(State.user);
       }
+
     } catch (err) {
       console.error('[Auth._bootFromSession]', err);
-      Auth._showError('خطأ غير متوقع: ' + err.message);
+      Auth._showError('خطأ: ' + err.message);
     }
   },
-
-  /** Map DB row to app account object */
-  _mapAccount: (a) => ({
-    id:               a.id,
-    user:             a.username,
-    store_name:       a.store_name,
-    owner:            a.owner_name,
-    role:             a.role ?? ROLES.OWNER,
-    is_active:        a.is_active,
-    subscription_end: a.subscription_end,
-  }),
-
-  _isExpired: (account) =>
-    account.subscription_end && new Date(account.subscription_end) < new Date(),
 
   async logout() {
     await sb.auth.signOut();
