@@ -24,14 +24,17 @@ const Purchases = {
   async load() {
     const { data } = await DB.purchases().select('*').order('purchase_date', { ascending: false });
     DOM.setHTML('purlist', (data || []).length
-      ? data.map(p => `<tr>
-          <td>${Utils.escape(p.supplier)}</td>
-          <td>${Utils.escape(p.product_name)}</td>
-          <td>${p.quantity}</td>
-          <td>₪${p.cost.toFixed(2)}</td>
-          <td>${p.purchase_date}</td>
-          <td><button class="ibr" onclick="Purchases.delete('${p.id}')">حذف</button></td>
-        </tr>`).join('')
+      ? data.map(p => '<tr>'
+          + '<td>' + Utils.escape(p.supplier) + '</td>'
+          + '<td>' + Utils.escape(p.product_name) + '</td>'
+          + '<td>' + p.quantity + '</td>'
+          + '<td>₪' + p.cost.toFixed(2) + '</td>'
+          + '<td>' + p.purchase_date + '</td>'
+          + '<td>'
+          + '<button class="ibb" onclick="Purchases.openEdit(' + JSON.stringify(p) + ')" style="margin-left:4px;">تعديل</button>'
+          + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
+          + '</td>'
+          + '</tr>').join('')
       : '<tr class="er"><td colspan="6">لا توجد مشتريات</td></tr>'
     );
   },
@@ -104,6 +107,39 @@ const Purchases = {
       await getDashboard().load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
+  },
+
+  openEdit(p) {
+    const Modal = window.Modal;
+    document.getElementById('edit-pur-id').value           = p.id;
+    document.getElementById('edit-pur-supplier').value     = p.supplier || '';
+    document.getElementById('edit-pur-product').value      = p.product_name || '';
+    document.getElementById('edit-pur-qty').value          = p.quantity || 1;
+    document.getElementById('edit-pur-cost').value         = p.cost || '';
+    document.getElementById('edit-pur-date').value         = p.purchase_date || '';
+    Modal.open('m-edit-pur');
+  },
+
+  async updatePurchase() {
+    const id       = document.getElementById('edit-pur-id').value;
+    const supplier = document.getElementById('edit-pur-supplier').value.trim();
+    const product  = document.getElementById('edit-pur-product').value.trim();
+    const qty      = parseFloat(document.getElementById('edit-pur-qty').value) || 1;
+    const cost     = parseFloat(document.getElementById('edit-pur-cost').value);
+    const date     = document.getElementById('edit-pur-date').value;
+
+    if (!supplier) { Notify.error('أدخل اسم المورد'); return; }
+    if (!cost || cost <= 0) { Notify.error('أدخل التكلفة'); return; }
+
+    try {
+      const { error } = await DB.purchases().update({
+        supplier, product_name: product, quantity: qty, cost, purchase_date: date,
+      }).eq('id', id);
+      if (error) throw error;
+      Notify.success('تم التعديل');
+      window.Modal.close('m-edit-pur');
+      await Purchases.load();
+    } catch(err) { Notify.error(err.message); }
   },
 
   async delete(id) {

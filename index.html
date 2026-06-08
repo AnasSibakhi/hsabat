@@ -1250,5 +1250,23 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 @keyframes scan-line{0%{opacity:1;top:calc(50% - 30px)}50%{opacity:.5;top:calc(50% + 28px)}100%{opacity:1;top:calc(50% - 30px)}}
 </style>
 
+
+<!-- Edit Purchase Modal -->
+<div class="mo" id="m-edit-pur"><div class="modal">
+  <div class="mhdr"><span class="mtitle">تعديل مشتريات</span><button class="mclose" onclick="Modal.close('m-edit-pur')">✕</button></div>
+  <input type="hidden" id="edit-pur-id">
+  <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="edit-pur-supplier"></div>
+  <div class="fg"><label class="lbl">البضاعة *</label><input class="inp" id="edit-pur-product"></div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="edit-pur-qty" inputmode="decimal"></div>
+    <div class="fg"><label class="lbl">التكلفة (₪) *</label><input class="inp" type="number" id="edit-pur-cost" inputmode="decimal"></div>
+  </div>
+  <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="edit-pur-date"></div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Modal.close('m-edit-pur')">إلغاء</button>
+    <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
+  </div>
+</div></div>
+
 </body>
 </html>
