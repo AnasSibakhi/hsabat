@@ -1,15 +1,20 @@
 /**
  * db.js — Database Layer
+ * 
+ * Supabase JS v2 API:
+ *   sb.from(table).select().eq()   ✅
+ *   sb.from(table).eq()            ❌ — eq must come AFTER select/insert/update/delete
+ *
+ * Solution: each DB method returns a scoped builder object
+ * that injects store_id filter into every operation.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { CONFIG }       from '../config/constants.js';
 import { State }        from './state.js';
 
-// Public client — anon key
 export const sb = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
-// Admin client — service role, bypasses RLS
 export const sbAdmin = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
   auth: {
     autoRefreshToken:   false,
@@ -19,40 +24,40 @@ export const sbAdmin = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKe
   },
 });
 
-/**
- * DB — scoped query builder
- * Returns a function chain: sb.from(table).eq('store_id', id)
- * Caller must add .select() / .insert() etc.
+/** 
+ * Scoped table helper — automatically adds store_id to every query
+ * Usage: DB.customers().select('*').order('name')
+ *        DB.customers().select('*,debts(amount,paid)').order('name')
+ *        DB.customers().insert({...})
+ *        DB.customers().update({...}).eq('id', id)
+ *        DB.customers().delete().eq('id', id)
  */
+function storeTable(table) {
+  const storeId = () => State.user?.id ?? '';
+  return {
+    select:  (...args) => sbAdmin.from(table).select(...args).eq('store_id', storeId()),
+    insert:  (data)    => sbAdmin.from(table).insert(data),
+    update:  (data)    => sbAdmin.from(table).update(data).eq('store_id', storeId()),
+    delete:  ()        => sbAdmin.from(table).delete().eq('store_id', storeId()),
+    // Shortcuts for common filter chains
+    eq:      (col, val) => sbAdmin.from(table).select().eq('store_id', storeId()).eq(col, val),
+    gte:     (col, val) => sbAdmin.from(table).select().eq('store_id', storeId()).gte(col, val),
+  };
+}
+
 export const DB = {
-  // Returns query scoped to current store
-  // Usage: DB.customers().select('*') — NOT DB.customers().eq(...)
-  _store: (table) => {
-    const storeId = State.user?.id ?? '';
-    return {
-      select:  (...args) => sbAdmin.from(table).eq('store_id', storeId).select(...args),
-      insert:  (data)    => sbAdmin.from(table).insert(data),
-      update:  (data)    => sbAdmin.from(table).eq('store_id', storeId).update(data),
-      delete:  ()        => sbAdmin.from(table).eq('store_id', storeId).delete(),
-      // Allow chaining filters
-      eq:      (col, val) => sbAdmin.from(table).eq('store_id', storeId).eq(col, val),
-      gte:     (col, val) => sbAdmin.from(table).eq('store_id', storeId).gte(col, val),
-      lte:     (col, val) => sbAdmin.from(table).eq('store_id', storeId).lte(col, val),
-    };
-  },
-
-  customers:    () => sbAdmin.from('customers').eq('store_id', State.user?.id ?? ''),
-  debts:        () => sbAdmin.from('debts').eq('store_id', State.user?.id ?? ''),
-  invoices:     () => sbAdmin.from('invoices').eq('store_id', State.user?.id ?? ''),
+  customers:    () => storeTable('customers'),
+  debts:        () => storeTable('debts'),
+  invoices:     () => storeTable('invoices'),
   invoiceItems: () => sbAdmin.from('invoice_items'),
-  inventory:    () => sbAdmin.from('inventory').eq('store_id', State.user?.id ?? ''),
-  purchases:    () => sbAdmin.from('purchases').eq('store_id', State.user?.id ?? ''),
-  netCardStock: () => sbAdmin.from('net_cards_stock').eq('store_id', State.user?.id ?? ''),
-  netCardSales: () => sbAdmin.from('net_card_sales').eq('store_id', State.user?.id ?? ''),
-  expenses:     () => sbAdmin.from('expenses').eq('store_id', State.user?.id ?? ''),
-  returns:      () => sbAdmin.from('returns').eq('store_id', State.user?.id ?? ''),
+  inventory:    () => storeTable('inventory'),
+  purchases:    () => storeTable('purchases'),
+  netCardStock: () => storeTable('net_cards_stock'),
+  netCardSales: () => storeTable('net_card_sales'),
+  expenses:     () => storeTable('expenses'),
+  returns:      () => storeTable('returns'),
 
-  // Admin tables
+  // Admin (no store scope)
   accounts:      () => sbAdmin.from('app_accounts'),
   stores:        () => sbAdmin.from('stores'),
   notifications: () => sbAdmin.from('notifications'),
