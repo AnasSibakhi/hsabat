@@ -13,8 +13,6 @@ import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodS
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 
-// Lazy cross-module references (prevents circular dependency)
-const getDashboard = () => import('./dashboard.js').then(m => m.Dashboard);
 
 
 // ─────────────────────────────────────────
@@ -79,7 +77,7 @@ const Debts = {
       Modal.close('m-debt');
       DOM.clearInputs('da', 'dn');
       DOM.get('dc').value = '';
-      await Promise.all([Debts.load(), Debts.loadBadge(), (await getDashboard()).load()]);
+      await Promise.all([Debts.load(), Debts.loadBadge(), window.Dashboard.load()]);
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
@@ -122,7 +120,7 @@ const Debts = {
       await DB.debts().update({ paid: newPaid }).eq('id', id);
       Notify.success('تم التسديد');
       Modal.close('m-pay');
-      await Promise.all([Debts.load(), Debts.loadBadge(), (await getDashboard()).load()]);
+      await Promise.all([Debts.load(), Debts.loadBadge(), window.Dashboard.load()]);
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 

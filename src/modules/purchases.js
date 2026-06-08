@@ -13,9 +13,6 @@ import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodS
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 
-// Lazy cross-module references (prevents circular dependency)
-const getDashboard = () => import('./dashboard.js').then(m => m.Dashboard);
-const getInventory = () => import('./inventory.js').then(m => m.Inventory);
 
 
 // ─────────────────────────────────────────
@@ -97,9 +94,9 @@ const Purchases = {
       Modal.close('m-pur');
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
-      await (await getInventory()).load();
+      await window.Inventory.load();
       await Purchases.load();
-      await (await getDashboard()).load();
+      await window.Dashboard.load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },

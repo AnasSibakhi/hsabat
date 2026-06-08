@@ -13,11 +13,6 @@ import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodS
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 
-// Lazy cross-module references (prevents circular dependency)
-const getDashboard = () => import('./dashboard.js').then(m => m.Dashboard);
-const getDebts = () => import('./debts.js').then(m => m.Debts);
-const getInvoices = () => import('./invoices.js').then(m => m.Invoices);
-const getInventory = () => import('./inventory.js').then(m => m.Inventory);
 
 
 // ─────────────────────────────────────────
@@ -81,7 +76,7 @@ const Returns = {
 
     Notify.success('تم تسجيل الإرجاع');
     Modal.close('m-return');
-    await Promise.all([(await getInvoices()).load(), (await getInventory()).load(), (await getDebts()).load(), (await getDashboard()).load()]);
+    await Promise.all([window.Invoices.load(), window.Inventory.load(), window.Debts.load(), window.Dashboard.load()]);
   },
 };
 
