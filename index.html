@@ -212,22 +212,31 @@ table.sa-dt tr:hover td{background:#334155;}
 
 /* ── PAGES ── */
 .page{display:none;}.page.active{display:block;}
+/* QuickSale: sibling of .content, fills app-body */
+#page-quicksale{
+  display:none;
+  position:absolute;
+  inset:0;
+  flex-direction:column;
+  background:#fff;
+  overflow:hidden;
+  z-index:10;
+}
 #page-quicksale.active{
   display:flex;
-  flex-direction:column;
-  height:100%;
-  overflow:hidden;
-  margin:-.75rem;
-  padding:0;
 }
-@media(min-width:769px){
-  #page-quicksale.active{margin:-1rem;}
-}
-#page-quicksale.active > div:nth-child(2){
+#page-quicksale .qs-scroll{
   flex:1;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
   padding:.75rem;
+}
+#page-quicksale .qs-footer{
+  flex-shrink:0;
+  padding:.5rem .75rem;
+  border-top:1px solid var(--br);
+  background:#fff;
 }
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
@@ -576,22 +585,31 @@ table.sa-dt tr:hover td{background:#334155;}
 
 /* ── PAGES ── */
 .page{display:none;}.page.active{display:block;}
+/* QuickSale: sibling of .content, fills app-body */
+#page-quicksale{
+  display:none;
+  position:absolute;
+  inset:0;
+  flex-direction:column;
+  background:#fff;
+  overflow:hidden;
+  z-index:10;
+}
 #page-quicksale.active{
   display:flex;
-  flex-direction:column;
-  height:100%;
-  overflow:hidden;
-  margin:-.75rem;
-  padding:0;
 }
-@media(min-width:769px){
-  #page-quicksale.active{margin:-1rem;}
-}
-#page-quicksale.active > div:nth-child(2){
+#page-quicksale .qs-scroll{
   flex:1;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
   padding:.75rem;
+}
+#page-quicksale .qs-footer{
+  flex-shrink:0;
+  padding:.5rem .75rem;
+  border-top:1px solid var(--br);
+  background:#fff;
 }
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
@@ -846,7 +864,21 @@ body.dark .ni.active{background:#1e3a5f;}
    <div class="ni" onclick="Nav.go('returns',this)"><i class="ti ti-arrow-back-up"></i> الإرجاعات</div>
    <div class="ni" onclick="Nav.go('settings',this)"><i class="ti ti-settings"></i> الإعدادات</div>
   </div>
-  <div class="content">
+   <!-- QUICK SALE -->
+   <div class="page" id="page-quicksale" style="display:none;">
+
+    <!-- TOP: Search + Scanner -->
+    <div class="qs-header" style="flex-shrink:0;">
+      <div class="qs-search-wrap">
+        <i class="ti ti-search qs-search-icon"></i>
+        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)" autocomplete="off">
+      </div>
+      <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
+        <i class="ti ti-barcode-off"></i>
+      </button>
+    </div>
+
+  <div class="content" id="main-content">
 
    <!-- HOME -->
    <div class="page active" id="page-home">
@@ -868,20 +900,6 @@ body.dark .ni.active{background:#1e3a5f;}
     <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">الديون المتأخرة</div>
     <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الزبون</th><th>المبلغ</th><th>تأخر</th><th></th></tr></thead><tbody id="hoverdue"><tr class="er"><td colspan="4"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
-
-   <!-- QUICK SALE -->
-   <div class="page" id="page-quicksale" style="display:none;">
-
-    <!-- TOP: Search + Scanner -->
-    <div class="qs-header" style="flex-shrink:0;">
-      <div class="qs-search-wrap">
-        <i class="ti ti-search qs-search-icon"></i>
-        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)" autocomplete="off">
-      </div>
-      <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
-        <i class="ti ti-barcode-off"></i>
-      </button>
-    </div>
 
     <!-- MIDDLE: Products + Cart (scrollable) -->
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.5rem .75rem;">
