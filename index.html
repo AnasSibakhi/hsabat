@@ -8,125 +8,20 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════
-   LAYOUT
-   ═══════════════════════════════════════ */
-html,body{margin:0;padding:0;background:#fff;font-family:'Cairo',sans-serif;color:var(--g9);}
-
-/* ── Desktop: flex column ── */
-#app-wrap{
-  display:none;
-  flex-direction:column;
-  height:100vh;
-  overflow:hidden;
-}
-.topbar{
-  height:52px;
-  min-height:52px;
-  flex-shrink:0;
-  background:#fff;
-  border-bottom:1px solid var(--br);
-  padding:0 1rem;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  z-index:50;
-}
-.app-body{
-  flex:1;
-  display:flex;
-  overflow:hidden;
-  min-height:0;
-}
-.sidebar{
-  width:200px;
-  min-width:200px;
-  background:var(--g0);
-  border-left:1px solid var(--br);
-  padding:.6rem;
-  overflow-y:auto;
-  flex-shrink:0;
-}
-.content{
-  flex:1;
-  min-height:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  padding:1rem;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;
-}
-.bottom-nav{
-  display:none;
-  flex-shrink:0;
-  background:#fff;
-  border-top:1px solid var(--br);
-  height:60px;
-  padding:4px 0;
-  padding-bottom:env(safe-area-inset-bottom,4px);
-}
-
-/* ── Mobile ── */
-@media(max-width:768px){
-  #app-wrap{
-    position:fixed;
-    inset:0;
-    height:auto;
-  }
-  .app-body{
-    position:absolute;
-    top:52px;
-    left:0;right:0;
-    bottom:60px;
-  }
-  .bottom-nav{
-    display:block;
-    position:absolute;
-    bottom:0;left:0;right:0;
-    height:60px;
-  }
-  .sidebar  { display:none!important; }
-  .content  { padding:.75rem; }
-  .sg.c4    { grid-template-columns:repeat(2,1fr); }
-  .sa-sidebar{ display:none; }
-  .mo       { align-items:flex-end;padding:0; }
-  .modal    { border-radius:20px 20px 0 0;max-height:88vh; }
-}
-
-/* ── Desktop overrides ── */
-@media(min-width:769px){
-  .bottom-nav { display:none!important; }
-  .content    { padding:1rem; }
-  .sg.c4      { grid-template-columns:repeat(4,1fr); }
-  .sa-sidebar { display:flex;flex-direction:column; }
-  .mo         { align-items:center;padding:1rem; }
-  .modal      { border-radius:16px;max-height:85vh; }
-}
-
-/* Desktop */
-@media(min-width:769px){
-  
-
-.sg.c4    { grid-template-columns:repeat(4,1fr); }
-  .sa-sidebar{ display:flex;flex-direction:column; }
-  .mo       { align-items:center;padding:1rem; }
-  .modal    { border-radius:16px;max-height:85vh; }
-}
-
-/* Mobile overrides */
-@media(max-width:768px){
-  
-
-.sg.c4    { grid-template-columns:repeat(2,1fr); }
-  .sa-sidebar{ display:none; }
-  .mo       { align-items:flex-end;padding:0; }
-  .modal    { border-radius:20px 20px 0 0;max-height:88vh; }
-}
-
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
 
 /* ── LAYOUT ── */
+html{height:100%;}
+body{
+  font-family:'Cairo',sans-serif;
+  background:#fff;
+  color:var(--g9);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
 
 .hidden{display:none!important;}
 
@@ -186,7 +81,25 @@ table.sa-dt tr:hover td{background:#334155;}
 .sa-btn-o{background:#334155;color:#cbd5e1;}
 
 /* ── APP SHELL ── */
-
+#app-wrap{
+  display:none;
+  flex-direction:column;
+  flex:1;
+  overflow:hidden;
+  height:100%;
+}
+.topbar{
+  background:#fff;
+  border-bottom:1px solid var(--br);
+  padding:0 1rem;
+  height:52px;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+  z-index:50;
+}
 .tb-brand{display:flex;align-items:center;gap:8px;}
 .tb-icon{width:32px;height:32px;background:var(--p);border-radius:8px;display:flex;align-items:center;justify-content:center;}
 .tb-icon i{color:#fff;font-size:16px;}
@@ -194,8 +107,42 @@ table.sa-dt tr:hover td{background:#334155;}
 .store-pill{background:var(--g0);border:1px solid var(--br);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--g7);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .btn-out{background:var(--dl);color:var(--d);border:none;border-radius:8px;padding:6px 10px;font-size:13px;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
-/* ── BOTTOM NAV ── */
+.app-body{
+  flex:1;
+  display:flex;
+  overflow:hidden;
+  min-height:0;
+}
 
+.sidebar{
+  width:200px;
+  min-width:200px;
+  background:var(--g0);
+  border-left:1px solid var(--br);
+  padding:.6rem;
+  overflow-y:auto;
+  flex-shrink:0;
+  display:none;
+}
+
+.content{
+  flex:1;
+  overflow-y:auto;
+  padding:1rem;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  min-height:0;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  display:none;
+  background:#fff;
+  border-top:1px solid var(--br);
+  flex-shrink:0;
+  padding:6px 0;
+  padding-bottom:env(safe-area-inset-bottom, 6px);
+}
 .bnav-inner{display:flex;justify-content:space-around;}
 .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:11px;color:var(--g5);cursor:pointer;position:relative;min-width:56px;}
 .bn i{font-size:22px;}
@@ -212,32 +159,6 @@ table.sa-dt tr:hover td{background:#334155;}
 
 /* ── PAGES ── */
 .page{display:none;}.page.active{display:block;}
-/* QuickSale: sibling of .content, fills app-body */
-#page-quicksale{
-  display:none;
-  position:absolute;
-  inset:0;
-  flex-direction:column;
-  background:#fff;
-  overflow:hidden;
-  z-index:10;
-}
-#page-quicksale.active{
-  display:flex;
-}
-#page-quicksale .qs-scroll{
-  flex:1;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;
-  padding:.75rem;
-}
-#page-quicksale .qs-footer{
-  flex-shrink:0;
-  padding:.5rem .75rem;
-  border-top:1px solid var(--br);
-  background:#fff;
-}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
@@ -318,17 +239,25 @@ body.dark .ni.active{background:#1e3a5f;}
 .ni.active{background:var(--pl);color:var(--p);font-weight:700;}
 
 /* ── MOBILE ── */
-
-  .sa-sidebar{display:none;}
-  .mo{align-items:flex-end;padding:0;}
-  .modal{border-radius:20px 20px 0 0;max-height:85vh;}
+/* ── MOBILE ── */
+@media(max-width:768px){
+  .sidebar      { display:none!important; }
+  .bottom-nav   { display:block; }
+  .content      { padding:.75rem; }
+  .sg.c4        { grid-template-columns:repeat(2,1fr); }
+  .sa-sidebar   { display:none; }
+  .mo           { align-items:flex-end;padding:0; }
+  .modal        { border-radius:20px 20px 0 0;max-height:88vh; }
 }
 
 /* ── DESKTOP ── */
-
-  .sa-sidebar{display:flex;flex-direction:column;}
-  .mo{align-items:center;padding:1rem;}
-  .modal{border-radius:16px;max-height:85vh;}
+@media(min-width:769px){
+  .sidebar      { display:flex;flex-direction:column; }
+  .bottom-nav   { display:none!important; }
+  .sg.c4        { grid-template-columns:repeat(4,1fr); }
+  .sa-sidebar   { display:flex;flex-direction:column; }
+  .mo           { align-items:center;padding:1rem; }
+  .modal        { border-radius:16px;max-height:85vh; }
 }
 
 /* ── DRAWER ── */
@@ -377,8 +306,10 @@ body.dark .ni.active{background:#1e3a5f;}
 .qs-pay-btn.transfer{background:var(--p);color:#fff;}
 .qs-pay-btn.debt{background:var(--dl);color:var(--d);}
 .qs-pay-btn.invoice{background:var(--g1);color:var(--g7);}
-
+@media(min-width:769px){
+  .qs-product-grid{grid-template-columns:repeat(5,1fr);}
 }
+
 
 #qs-scanner-container video,
 #qs-scanner-container canvas{
@@ -399,7 +330,8 @@ body.dark .ni.active{background:#1e3a5f;}
 .aging-bucket{margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:.5px solid var(--g1);}
 .aging-bucket:last-child{border-bottom:none;margin-bottom:0;}
 .aging-label{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
-.aging-names{font-size:12px;color:var(--g6);line-height:1.7;}</style>
+.aging-names{font-size:12px;color:var(--g6);line-height:1.7;}
+</style>
 </head>
 <body>
 <div id="toast"></div>
@@ -448,11 +380,15 @@ body.dark .ni.active{background:#1e3a5f;}
 :root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
 
 /* ── LAYOUT ── */
-html,body{
+html{height:100%;}
+body{
   font-family:'Cairo',sans-serif;
   background:#fff;
   color:var(--g9);
-  margin:0;padding:0;
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
 }
 
 .hidden{display:none!important;}
@@ -516,9 +452,9 @@ table.sa-dt tr:hover td{background:#334155;}
 #app-wrap{
   display:none;
   flex-direction:column;
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
+  flex:1;
   overflow:hidden;
+  height:100%;
 }
 .topbar{
   background:#fff;
@@ -540,12 +476,10 @@ table.sa-dt tr:hover td{background:#334155;}
 .btn-out{background:var(--dl);color:var(--d);border:none;border-radius:8px;padding:6px 10px;font-size:13px;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
 .app-body{
-  position:absolute;
-  top:52px;
-  left:0;right:0;
-  bottom:0;
+  flex:1;
   display:flex;
   overflow:hidden;
+  min-height:0;
 }
 
 .sidebar{
@@ -559,6 +493,14 @@ table.sa-dt tr:hover td{background:#334155;}
   display:none;
 }
 
+.content{
+  flex:1;
+  overflow-y:auto;
+  padding:1rem;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  min-height:0;
+}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{
@@ -585,32 +527,6 @@ table.sa-dt tr:hover td{background:#334155;}
 
 /* ── PAGES ── */
 .page{display:none;}.page.active{display:block;}
-/* QuickSale: sibling of .content, fills app-body */
-#page-quicksale{
-  display:none;
-  position:absolute;
-  inset:0;
-  flex-direction:column;
-  background:#fff;
-  overflow:hidden;
-  z-index:10;
-}
-#page-quicksale.active{
-  display:flex;
-}
-#page-quicksale .qs-scroll{
-  flex:1;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;
-  padding:.75rem;
-}
-#page-quicksale .qs-footer{
-  flex-shrink:0;
-  padding:.5rem .75rem;
-  border-top:1px solid var(--br);
-  background:#fff;
-}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
@@ -691,25 +607,25 @@ body.dark .ni.active{background:#1e3a5f;}
 .ni.active{background:var(--pl);color:var(--p);font-weight:700;}
 
 /* ── MOBILE ── */
+/* ── MOBILE ── */
 @media(max-width:768px){
-  .sidebar{display:none!important;}
-  .bottom-nav{display:block;}
-  .app-body{bottom:60px;}
-  .content{padding:.75rem;}
-  .sg.c4{grid-template-columns:repeat(2,1fr);}
-  .sa-sidebar{display:none;}
-  .mo{align-items:flex-end;padding:0;}
-  .modal{border-radius:20px 20px 0 0;max-height:85vh;}
+  .sidebar      { display:none!important; }
+  .bottom-nav   { display:block; }
+  .content      { padding:.75rem; }
+  .sg.c4        { grid-template-columns:repeat(2,1fr); }
+  .sa-sidebar   { display:none; }
+  .mo           { align-items:flex-end;padding:0; }
+  .modal        { border-radius:20px 20px 0 0;max-height:88vh; }
 }
 
 /* ── DESKTOP ── */
 @media(min-width:769px){
-  .sidebar{display:flex;flex-direction:column;}
-  .bottom-nav{display:none!important;}
-  .sg.c4{grid-template-columns:repeat(4,1fr);}
-  .sa-sidebar{display:flex;flex-direction:column;}
-  .mo{align-items:center;padding:1rem;}
-  .modal{border-radius:16px;max-height:85vh;}
+  .sidebar      { display:flex;flex-direction:column; }
+  .bottom-nav   { display:none!important; }
+  .sg.c4        { grid-template-columns:repeat(4,1fr); }
+  .sa-sidebar   { display:flex;flex-direction:column; }
+  .mo           { align-items:center;padding:1rem; }
+  .modal        { border-radius:16px;max-height:85vh; }
 }
 
 /* ── DRAWER ── */
@@ -864,21 +780,7 @@ body.dark .ni.active{background:#1e3a5f;}
    <div class="ni" onclick="Nav.go('returns',this)"><i class="ti ti-arrow-back-up"></i> الإرجاعات</div>
    <div class="ni" onclick="Nav.go('settings',this)"><i class="ti ti-settings"></i> الإعدادات</div>
   </div>
-   <!-- QUICK SALE -->
-   <div class="page" id="page-quicksale" style="display:none;">
-
-    <!-- TOP: Search + Scanner -->
-    <div class="qs-header" style="flex-shrink:0;">
-      <div class="qs-search-wrap">
-        <i class="ti ti-search qs-search-icon"></i>
-        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)" autocomplete="off">
-      </div>
-      <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
-        <i class="ti ti-barcode-off"></i>
-      </button>
-    </div>
-
-  <div class="content" id="main-content">
+  <div class="content">
 
    <!-- HOME -->
    <div class="page active" id="page-home">
@@ -901,47 +803,56 @@ body.dark .ni.active{background:#1e3a5f;}
     <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الزبون</th><th>المبلغ</th><th>تأخر</th><th></th></tr></thead><tbody id="hoverdue"><tr class="er"><td colspan="4"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
 
-    <!-- MIDDLE: Products + Cart (scrollable) -->
-    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.5rem .75rem;">
+   <!-- QUICK SALE -->
+   <div class="page" id="page-quicksale">
 
-      <!-- Product Grid -->
-      <div id="qs-product-grid" class="qs-product-grid"></div>
-
-      <!-- Cart Header -->
-      <div class="qs-cart-header">
-        <span><i class="ti ti-shopping-cart" style="vertical-align:-2px;margin-left:4px;"></i> السلة</span>
-        <span id="qs-items-count" style="font-size:12px;color:var(--g5);">0 أصناف</span>
-        <button onclick="QuickSale.clearCart()" class="qs-clear-btn">مسح</button>
+    <!-- Search + Scanner -->
+    <div class="qs-header">
+      <div class="qs-search-wrap">
+        <i class="ti ti-search qs-search-icon"></i>
+        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)">
       </div>
-      <div id="qs-cart-items" class="qs-cart-items"></div>
-      <div id="qs-summary" class="qs-summary"></div>
-
-      <!-- Discount -->
-      <div class="qs-discount-row">
-        <span style="font-size:12px;color:var(--g5);">خصم:</span>
-        <button onclick="QuickSale.applyDiscount(0)"  class="qs-disc-btn">بلا</button>
-        <button onclick="QuickSale.applyDiscount(5)"  class="qs-disc-btn">5%</button>
-        <button onclick="QuickSale.applyDiscount(10)" class="qs-disc-btn">10%</button>
-        <button onclick="QuickSale.applyDiscount(15)" class="qs-disc-btn">15%</button>
-      </div>
-
-      <!-- Change Calculator -->
-      <div class="qs-change-row">
-        <span style="font-size:13px;color:var(--g6);white-space:nowrap;">مبلغ الزبون:</span>
-        <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:100px;padding:8px 10px;font-size:15px;text-align:center;">
-        <span id="qs-change" style="font-size:13px;font-weight:700;color:var(--g4);">—</span>
-      </div>
-
+      <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
+        <i class="ti ti-barcode-off"></i>
+      </button>
     </div>
 
-    <!-- BOTTOM: Checkout buttons (always visible) -->
-    <div style="flex-shrink:0;padding:.5rem .75rem;border-top:1px solid var(--br);background:#fff;">
-      <div class="qs-checkout-grid">
-        <button class="qs-pay-btn cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
-        <button class="qs-pay-btn transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
-        <button class="qs-pay-btn debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
-        <button class="qs-pay-btn invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
-      </div>
+    <!-- Product Grid -->
+    <div id="qs-product-grid" class="qs-product-grid"></div>
+
+    <!-- Cart -->
+    <div class="qs-cart-header">
+      <span><i class="ti ti-shopping-cart" style="vertical-align:-2px;margin-left:4px;"></i> السلة</span>
+      <span id="qs-items-count" style="font-size:12px;color:var(--g5);">0 أصناف</span>
+      <button onclick="QuickSale.clearCart()" class="qs-clear-btn">مسح</button>
+    </div>
+    <div id="qs-cart-items" class="qs-cart-items"></div>
+
+    <!-- Summary -->
+    <div id="qs-summary" class="qs-summary"></div>
+
+    <!-- Discount -->
+    <div class="qs-discount-row">
+      <span style="font-size:12px;color:var(--g5);">خصم:</span>
+      <button onclick="QuickSale.applyDiscount(0)"  class="qs-disc-btn">بلا</button>
+      <button onclick="QuickSale.applyDiscount(5)"  class="qs-disc-btn">5%</button>
+      <button onclick="QuickSale.applyDiscount(10)" class="qs-disc-btn">10%</button>
+      <button onclick="QuickSale.applyDiscount(15)" class="qs-disc-btn">15%</button>
+    </div>
+
+    <!-- Change Calculator -->
+    <div class="qs-change-row">
+      <span style="font-size:13px;color:var(--g6);">مبلغ الزبون:</span>
+      <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:100px;padding:8px 10px;font-size:15px;text-align:center;">
+      <span id="qs-change" style="font-size:13px;font-weight:700;color:var(--g4);">—</span>
+    </div>
+
+    <!-- Checkout Buttons -->
+    <div class="qs-checkout-grid">
+      <button class="qs-pay-btn cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
+      <button class="qs-pay-btn transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
+      <button class="qs-pay-btn debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
+      <button class="qs-pay-btn invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
     </div>
 
    </div>
