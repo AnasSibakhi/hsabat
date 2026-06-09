@@ -1038,28 +1038,6 @@ body.dark .ni.active{background:#1e3a5f;}
 
     </div><!-- end qs-middle -->
 
-    <!-- Footer: flex-shrink:0, always visible -->
-    <div id="qs-footer">
-      <div class="qs-disc-row">
-        <span>خصم:</span>
-        <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(0)">بلا</button>
-        <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(5)">5%</button>
-        <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(10)">10%</button>
-        <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(15)">15%</button>
-        <div style="flex:1;display:flex;align-items:center;gap:5px;justify-content:flex-end;">
-          <span style="font-size:12px;color:var(--g6);white-space:nowrap;">مبلغ الزبون:</span>
-          <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:80px;padding:4px 8px;font-size:13px;text-align:center;">
-          <span id="qs-change" style="font-size:12px;font-weight:700;color:var(--g4);">—</span>
-        </div>
-      </div>
-      <div class="qs-checkout">
-        <button class="qs-pay cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
-        <button class="qs-pay transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
-        <button class="qs-pay debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
-        <button class="qs-pay invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
-      </div>
-    </div>
-
    </div><!-- end page-quicksale -->
 
 
@@ -1230,7 +1208,29 @@ body.dark .ni.active{background:#1e3a5f;}
 
   </div>
 
+
+ <!-- QS FOOTER: direct child of app-wrap, hidden by default -->
+ <div id="qs-footer" style="display:none;flex-shrink:0;background:#fff;border-top:2px solid var(--br);padding:.25rem .5rem .3rem;">
+  <div style="display:flex;align-items:center;gap:4px;padding:.15rem 0;">
+    <span style="font-size:11px;color:var(--g5);">خصم:</span>
+    <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(0)">بلا</button>
+    <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(5)">5%</button>
+    <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(10)">10%</button>
+    <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(15)">15%</button>
+    <div style="flex:1;display:flex;align-items:center;gap:5px;justify-content:flex-end;">
+      <span style="font-size:12px;color:var(--g6);white-space:nowrap;">مبلغ الزبون:</span>
+      <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:80px;padding:4px 8px;font-size:13px;text-align:center;">
+      <span id="qs-change" style="font-size:12px;font-weight:700;color:var(--g4);">—</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+    <button class="qs-pay cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
+    <button class="qs-pay transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
+    <button class="qs-pay debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
+    <button class="qs-pay invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
+  </div>
  </div>
+
  <div class="bottom-nav">
   <div class="bnav-inner">
    <button class="bn active" id="bn-home" onclick="Nav.goTo('home')">
