@@ -30,9 +30,12 @@ export const QuickSale = {
     QuickSale._renderGrid();
     QuickSale._loadStats();
     const si = DOM.get('qs-search-input');
-    if (si) { si.value = ''; si.focus(); }
+    if (si) si.value = '';
     // Physical barcode scanner support (keyboard input)
     QuickSale._initPhysicalScanner();
+    // Auto-focus barcode input for physical scanner
+    const bi = DOM.get('qs-barcode-input');
+    if (bi) setTimeout(() => bi.focus(), 200);
   },
 
   // ── Physical Scanner (USB/Bluetooth barcode reader) ──
@@ -55,12 +58,12 @@ export const QuickSale = {
     const grid = DOM.get('qs-product-grid');
     if (!grid) return;
 
-    let list = State.inventory.length ? State.inventory : await getInventory()?.loadList() || [];
-    if (!list.length) {
-      const inv = await getInventory();
+    // Always use State.inventory - loadList() populates it in place
+    if (!State.inventory.length) {
+      const inv = getInventory();
       if (inv) await inv.loadList();
-      list = State.inventory;
     }
+    let list = State.inventory;
 
     if (filter) {
       const q = filter.toLowerCase();
@@ -145,6 +148,9 @@ export const QuickSale = {
   changeQty(id, delta) {
     const item = _cart.find(c => c.id === id);
     if (!item) return;
+    // Sync maxQty from latest inventory
+    const inv = State.inventory.find(p => p.id === id);
+    if (inv) item.maxQty = inv.quantity;
     const newQty = item.qty + delta;
     if (newQty <= 0) { QuickSale.removeFromCart(id); return; }
     if (newQty > item.maxQty) { Notify.error('المخزون غير كافٍ — المتبقي: ' + item.maxQty); return; }
@@ -424,6 +430,9 @@ export const QuickSale = {
       QuickSale.clearCart();
       await getDashboard()?.load();
       await QuickSale._loadStats();
+      // Sync maxQty for cart after inventory update
+      const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
+      QuickSale._renderGrid();
     } catch (err) {
       Notify.error(err.message);
     } finally {
