@@ -274,49 +274,84 @@ export const QuickSale = {
 
   // ── Camera Scanner ──
   async startScanner() {
+    if (_scanner) return; // already running
+
     const overlay = DOM.get('qs-scanner-overlay');
     if (overlay) overlay.style.display = 'flex';
 
+    // Load Quagga2 if not loaded
     if (!window.Quagga) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
-        s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
+      try {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
+          s.onload = resolve;
+          s.onerror = () => reject(new Error('failed'));
+          document.head.appendChild(s);
+        });
+      } catch {
+        Notify.error('فشل تحميل مكتبة الباركود');
+        QuickSale.stopScanner();
+        return;
+      }
     }
 
     const container = DOM.get('qs-scanner-container');
     if (!container) return;
 
+    // Named handler so we can remove it correctly
     const counts = {};
-    Quagga.init({
-      inputStream: {
-        type: 'LiveStream', target: container,
-        constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      },
-      locator:  { patchSize: 'medium', halfSample: true },
-      frequency: 10,
-      decoder:  { readers: ['ean_reader','ean_8_reader','upc_reader','code_128_reader'] },
-      locate:   true,
-    }, (err) => {
-      if (err) { Notify.error('لا يمكن فتح الكاميرا'); QuickSale.stopScanner(); return; }
-      Quagga.start();
-      _scanner = true;
-      Quagga.onDetected((result) => {
-        const code = result?.codeResult?.code;
-        if (!code) return;
-        counts[code] = (counts[code] || 0) + 1;
-        if (counts[code] >= 3) {
+    const _handler = (result) => {
+      const code = result?.codeResult?.code;
+      if (!code || code.length < 4) return;
+      counts[code] = (counts[code] || 0) + 1;
+      if (counts[code] >= 3) {
+        QuickSale.stopScanner();
+        QuickSale._onBarcode(code);
+      }
+    };
+
+    await new Promise((resolve) => {
+      Quagga.init({
+        inputStream: {
+          type: 'LiveStream',
+          target: container,
+          constraints: {
+            facingMode: 'environment',
+            width:  { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        locator:   { patchSize: 'medium', halfSample: true },
+        frequency: 10,
+        decoder: {
+          readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
+        },
+        locate: true,
+      }, (err) => {
+        if (err) {
+          const msg = (err?.message || '').includes('ermission')
+            ? 'يرجى السماح بالوصول للكاميرا'
+            : 'لا يمكن فتح الكاميرا';
+          Notify.error(msg);
           QuickSale.stopScanner();
-          QuickSale._onBarcode(code);
+        } else {
+          Quagga.start();
+          _scanner = _handler; // store named handler reference
+          Quagga.onDetected(_handler);
         }
+        resolve();
       });
     });
   },
 
   stopScanner() {
-    try { if (_scanner && window.Quagga) { Quagga.offDetected(); Quagga.stop(); } } catch {}
+    try {
+      if (_scanner && window.Quagga) {
+        Quagga.offDetected(_scanner); // remove named handler
+        Quagga.stop();
+      }
+    } catch {}
     _scanner = null;
     const overlay = DOM.get('qs-scanner-overlay'); if (overlay) overlay.style.display = 'none';
     const container = DOM.get('qs-scanner-container'); if (container) container.innerHTML = '';

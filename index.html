@@ -133,6 +133,12 @@ table.sa-dt tr:hover td{background:#334155;}
   overscroll-behavior:contain;
   min-height:0;
 }
+.content.qs-mode{
+  overflow:hidden;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{
@@ -264,13 +270,13 @@ body.dark .ni.active{background:#1e3a5f;}
 #mobile-drawer.open{transform:translateX(0)!important;}
 
 /* ── POS / QUICK SALE ── */
-.qs-header{display:flex;gap:8px;margin-bottom:10px;}
+
 .qs-search-wrap{flex:1;position:relative;}
 .qs-search-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--g4);font-size:18px;}
 .qs-search{width:100%;padding:10px 38px 10px 12px;border:1.5px solid var(--g2);border-radius:12px;font-size:15px;font-family:'Cairo',sans-serif;direction:rtl;background:var(--g0);}
 .qs-search:focus{outline:none;border-color:var(--p);background:#fff;}
 .qs-scan-btn{width:46px;height:46px;background:var(--p);color:#fff;border:none;border-radius:12px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.qs-product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+
 .qs-product-btn{background:#fff;border:1.5px solid var(--g2);border-radius:12px;padding:10px 6px;cursor:pointer;text-align:center;transition:.1s;font-family:'Cairo',sans-serif;}
 .qs-product-btn:active{border-color:var(--p);background:var(--pl);transform:scale(.97);}
 .qs-product-btn:disabled{opacity:.4;cursor:not-allowed;}
@@ -299,7 +305,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .qs-disc-btn:active{background:var(--pl);border-color:var(--p);color:var(--p);}
 .qs-change-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .qs-change-row>span:first-child{font-size:13px;color:var(--g6);white-space:nowrap;}
-.qs-checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
 .qs-pay-btn{padding:14px;border-radius:12px;border:none;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
 .qs-pay-btn.cash{background:var(--s);color:#fff;}
 .qs-pay-btn.transfer{background:var(--p);color:#fff;}
