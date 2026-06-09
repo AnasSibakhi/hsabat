@@ -211,7 +211,7 @@ table.sa-dt tr:hover td{background:#334155;}
 .add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
-.page{display:none;}.page.active{display:block;}
+.page{display:none;}.page.active{display:block;}.page.active.qs-flex{display:flex!important;}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
@@ -558,7 +558,7 @@ table.sa-dt tr:hover td{background:#334155;}
 .add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
-.page{display:none;}.page.active{display:block;}
+.page{display:none;}.page.active{display:block;}.page.active.qs-flex{display:flex!important;}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
@@ -836,55 +836,60 @@ body.dark .ni.active{background:#1e3a5f;}
    </div>
 
    <!-- QUICK SALE -->
-   <div class="page" id="page-quicksale">
+   <div class="page" id="page-quicksale" style="display:none;flex-direction:column;height:100%;overflow:hidden;">
 
-    <!-- Search + Scanner -->
-    <div class="qs-header">
+    <!-- TOP: Search + Scanner -->
+    <div class="qs-header" style="flex-shrink:0;">
       <div class="qs-search-wrap">
         <i class="ti ti-search qs-search-icon"></i>
-        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)">
+        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)" autocomplete="off">
       </div>
       <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
         <i class="ti ti-barcode-off"></i>
       </button>
     </div>
 
-    <!-- Product Grid -->
-    <div id="qs-product-grid" class="qs-product-grid"></div>
+    <!-- MIDDLE: Products + Cart (scrollable) -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.5rem .75rem;">
 
-    <!-- Cart -->
-    <div class="qs-cart-header">
-      <span><i class="ti ti-shopping-cart" style="vertical-align:-2px;margin-left:4px;"></i> السلة</span>
-      <span id="qs-items-count" style="font-size:12px;color:var(--g5);">0 أصناف</span>
-      <button onclick="QuickSale.clearCart()" class="qs-clear-btn">مسح</button>
+      <!-- Product Grid -->
+      <div id="qs-product-grid" class="qs-product-grid"></div>
+
+      <!-- Cart Header -->
+      <div class="qs-cart-header">
+        <span><i class="ti ti-shopping-cart" style="vertical-align:-2px;margin-left:4px;"></i> السلة</span>
+        <span id="qs-items-count" style="font-size:12px;color:var(--g5);">0 أصناف</span>
+        <button onclick="QuickSale.clearCart()" class="qs-clear-btn">مسح</button>
+      </div>
+      <div id="qs-cart-items" class="qs-cart-items"></div>
+      <div id="qs-summary" class="qs-summary"></div>
+
+      <!-- Discount -->
+      <div class="qs-discount-row">
+        <span style="font-size:12px;color:var(--g5);">خصم:</span>
+        <button onclick="QuickSale.applyDiscount(0)"  class="qs-disc-btn">بلا</button>
+        <button onclick="QuickSale.applyDiscount(5)"  class="qs-disc-btn">5%</button>
+        <button onclick="QuickSale.applyDiscount(10)" class="qs-disc-btn">10%</button>
+        <button onclick="QuickSale.applyDiscount(15)" class="qs-disc-btn">15%</button>
+      </div>
+
+      <!-- Change Calculator -->
+      <div class="qs-change-row">
+        <span style="font-size:13px;color:var(--g6);white-space:nowrap;">مبلغ الزبون:</span>
+        <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:100px;padding:8px 10px;font-size:15px;text-align:center;">
+        <span id="qs-change" style="font-size:13px;font-weight:700;color:var(--g4);">—</span>
+      </div>
+
     </div>
-    <div id="qs-cart-items" class="qs-cart-items"></div>
 
-    <!-- Summary -->
-    <div id="qs-summary" class="qs-summary"></div>
-
-    <!-- Discount -->
-    <div class="qs-discount-row">
-      <span style="font-size:12px;color:var(--g5);">خصم:</span>
-      <button onclick="QuickSale.applyDiscount(0)"  class="qs-disc-btn">بلا</button>
-      <button onclick="QuickSale.applyDiscount(5)"  class="qs-disc-btn">5%</button>
-      <button onclick="QuickSale.applyDiscount(10)" class="qs-disc-btn">10%</button>
-      <button onclick="QuickSale.applyDiscount(15)" class="qs-disc-btn">15%</button>
-    </div>
-
-    <!-- Change Calculator -->
-    <div class="qs-change-row">
-      <span style="font-size:13px;color:var(--g6);">مبلغ الزبون:</span>
-      <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:100px;padding:8px 10px;font-size:15px;text-align:center;">
-      <span id="qs-change" style="font-size:13px;font-weight:700;color:var(--g4);">—</span>
-    </div>
-
-    <!-- Checkout Buttons -->
-    <div class="qs-checkout-grid">
-      <button class="qs-pay-btn cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
-      <button class="qs-pay-btn transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
-      <button class="qs-pay-btn debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
-      <button class="qs-pay-btn invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
+    <!-- BOTTOM: Checkout buttons (always visible) -->
+    <div style="flex-shrink:0;padding:.5rem .75rem;border-top:1px solid var(--br);background:#fff;">
+      <div class="qs-checkout-grid">
+        <button class="qs-pay-btn cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
+        <button class="qs-pay-btn transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
+        <button class="qs-pay-btn debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
+        <button class="qs-pay-btn invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
+      </div>
     </div>
 
    </div>

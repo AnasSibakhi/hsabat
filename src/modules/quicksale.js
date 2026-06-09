@@ -24,12 +24,14 @@ export const QuickSale = {
   async init() {
     _cart     = [];
     _discount = 0;
+    // Make page flex for proper layout
+    const page = DOM.get('page-quicksale');
+    if (page) page.classList.add('qs-flex');
     QuickSale._renderCart();
     await QuickSale._renderProductGrid();
     QuickSale._renderSummary();
-    DOM.setHTML('qs-search-input', '');
     const si = DOM.get('qs-search-input');
-    if (si) { si.value = ''; si.focus(); }
+    if (si) { si.value = ''; }
   },
 
   // ── Product Grid ──
