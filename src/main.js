@@ -25,6 +25,11 @@ import { QuickSale }  from './modules/quicksale.js';
 import { AdminPanel } from './admin/admin-panel.js';
 import { Registry }   from './core/registry.js';
 
+// ── Expose services globally ──
+import { BarcodeScanner }   from './services/BarcodeScanner.js';
+import { InventoryService } from './services/InventoryService.js';
+import { POSService }       from './services/POSService.js';
+
 // ── Register modules in registry (breaks circular deps) ──
 Registry.register('Dashboard',  Dashboard);
 Registry.register('Customers',  Customers);

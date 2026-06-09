@@ -806,53 +806,59 @@ body.dark .ni.active{background:#1e3a5f;}
    <!-- QUICK SALE -->
    <div class="page" id="page-quicksale">
 
-    <!-- Search + Scanner -->
-    <div class="qs-header">
+    <!-- Search + Scanner bar -->
+    <div class="qs-topbar">
       <div class="qs-search-wrap">
-        <i class="ti ti-search qs-search-icon"></i>
-        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)">
+        <i class="ti ti-search"></i>
+        <input id="qs-search-input" class="qs-search-inp"
+          placeholder="ابحث عن منتج أو باركود..."
+          oninput="QuickSale.search(this.value)"
+          autocomplete="off">
       </div>
-      <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
-        <i class="ti ti-barcode-off"></i>
+      <button class="qs-scan-btn" onclick="QuickSale.startScanner()" title="مسح باركود">
+        <i class="ti ti-scan"></i>
       </button>
     </div>
 
-    <!-- Product Grid -->
-    <div id="qs-product-grid" class="qs-product-grid"></div>
+    <!-- Product grid -->
+    <div id="qs-product-grid" class="qs-grid"></div>
 
-    <!-- Cart -->
-    <div class="qs-cart-header">
-      <span><i class="ti ti-shopping-cart" style="vertical-align:-2px;margin-left:4px;"></i> السلة</span>
-      <span id="qs-items-count" style="font-size:12px;color:var(--g5);">0 أصناف</span>
-      <button onclick="QuickSale.clearCart()" class="qs-clear-btn">مسح</button>
-    </div>
-    <div id="qs-cart-items" class="qs-cart-items"></div>
-
-    <!-- Summary -->
-    <div id="qs-summary" class="qs-summary"></div>
-
-    <!-- Discount -->
-    <div class="qs-discount-row">
-      <span style="font-size:12px;color:var(--g5);">خصم:</span>
-      <button onclick="QuickSale.applyDiscount(0)"  class="qs-disc-btn">بلا</button>
-      <button onclick="QuickSale.applyDiscount(5)"  class="qs-disc-btn">5%</button>
-      <button onclick="QuickSale.applyDiscount(10)" class="qs-disc-btn">10%</button>
-      <button onclick="QuickSale.applyDiscount(15)" class="qs-disc-btn">15%</button>
+    <!-- Cart section -->
+    <div class="qs-cart-section">
+      <div class="qs-cart-hdr">
+        <span class="qs-cart-title"><i class="ti ti-shopping-cart"></i> السلة</span>
+        <span id="qs-items-count" class="qs-count-badge">0 أصناف</span>
+        <span id="qs-total-display" class="qs-total-badge">₪ 0.00</span>
+        <button class="qs-clear-btn" onclick="QuickSale.clearCart()">🗑 مسح</button>
+      </div>
+      <div id="qs-cart-items"></div>
+      <div id="qs-summary"></div>
     </div>
 
-    <!-- Change Calculator -->
+    <!-- Discount row -->
+    <div class="qs-disc-row">
+      <span>خصم:</span>
+      <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(0)">بلا</button>
+      <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(5)">5%</button>
+      <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(10)">10%</button>
+      <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(15)">15%</button>
+    </div>
+
+    <!-- Change calculator -->
     <div class="qs-change-row">
-      <span style="font-size:13px;color:var(--g6);">مبلغ الزبون:</span>
-      <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:100px;padding:8px 10px;font-size:15px;text-align:center;">
-      <span id="qs-change" style="font-size:13px;font-weight:700;color:var(--g4);">—</span>
+      <span>مبلغ الزبون:</span>
+      <input type="number" id="qs-paid" class="inp qs-paid-inp"
+        placeholder="₪" inputmode="decimal"
+        oninput="QuickSale.calcChange()">
+      <span id="qs-change" class="qs-change-display">—</span>
     </div>
 
-    <!-- Checkout Buttons -->
-    <div class="qs-checkout-grid">
-      <button class="qs-pay-btn cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
-      <button class="qs-pay-btn transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
-      <button class="qs-pay-btn debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
-      <button class="qs-pay-btn invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
+    <!-- Checkout buttons -->
+    <div class="qs-checkout">
+      <button class="qs-pay cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
+      <button class="qs-pay transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
+      <button class="qs-pay debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
+      <button class="qs-pay invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
     </div>
 
    </div>
@@ -1293,33 +1299,6 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </script>
 <script type="module" src="/src/main.js"></script>
 
-<!-- Scanner Overlay -->
-<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;">
-  <div style="position:relative;width:100%;max-width:500px;background:#000;">
-    <div id="qs-scanner-container" style="width:100%;position:relative;overflow:hidden;"></div>
-    <!-- Scan guide frame -->
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:120px;border:3px solid #1a56db;border-radius:8px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);"></div>
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:2px;background:#1a56db;animation:scan-line 1.5s ease-in-out infinite;"></div>
-  </div>
-  <p style="color:#fff;margin-top:1rem;font-size:14px;text-align:center;">وجّه الكاميرا على الباركود</p>
-  <p style="color:#94a3b8;font-size:12px;margin-top:4px;text-align:center;">سيتم المسح تلقائياً</p>
-  <button onclick="QuickSale.stopScanner()" style="margin-top:1rem;background:var(--dl);color:var(--d);border:none;border-radius:10px;padding:12px 24px;font-size:15px;font-family:'Cairo',sans-serif;cursor:pointer;">إلغاء</button>
-</div>
-
-<!-- New Product Modal (from scanner) -->
-<div class="mo" id="m-new-product"><div class="modal">
-  <div class="mhdr"><span class="mtitle">تسجيل منتج جديد</span><button class="mclose" onclick="Modal.close('m-new-product')">✕</button></div>
-  <div class="fg"><label class="lbl">الباركود</label><input class="inp" id="qs-new-barcode" readonly style="background:var(--g1);direction:ltr;"></div>
-  <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="qs-new-name" placeholder="مثال: سكر 1kg"></div>
-  <div class="fr">
-    <div class="fg"><label class="lbl">سعر البيع (₪) *</label><input class="inp" type="number" id="qs-new-price" inputmode="decimal"></div>
-    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="qs-new-qty" value="1" inputmode="decimal"></div>
-  </div>
-  <div class="mfoot">
-    <button class="btn btn-o" onclick="Modal.close('m-new-product')">إلغاء</button>
-    <button class="btn btn-s" onclick="QuickSale.saveNewProduct()">حفظ وإضافة للسلة</button>
-  </div>
-</div></div>
 
 <style>
 @keyframes scan-line{0%{opacity:1;top:calc(50% - 30px)}50%{opacity:.5;top:calc(50% + 28px)}100%{opacity:1;top:calc(50% - 30px)}}
@@ -1362,5 +1341,112 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
   </div>
 </div></div>
+
+<!-- Scanner Overlay -->
+<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;">
+  <div style="position:relative;width:100%;max-width:480px;">
+    <div id="qs-scanner-container" style="width:100%;position:relative;overflow:hidden;min-height:280px;background:#111;"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:120px;border:3px solid #1a56db;border-radius:8px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.6);"></div>
+    <div style="position:absolute;top:calc(50% - 60px);left:calc(50% - 120px);width:240px;height:2px;background:#1a56db;animation:scan-anim 1.5s ease-in-out infinite;"></div>
+  </div>
+  <p style="color:#fff;margin-top:1rem;font-size:15px;">وجّه الكاميرا على الباركود</p>
+  <p style="color:#94a3b8;font-size:12px;margin-top:4px;">سيتم المسح تلقائياً عند قراءة واضحة</p>
+  <button onclick="QuickSale.stopScanner()" style="margin-top:1.25rem;background:#dc2626;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إلغاء المسح</button>
+</div>
+
+<!-- New Product Modal (from scanner) -->
+<div class="mo" id="m-new-product"><div class="modal">
+  <div class="mhdr">
+    <span class="mtitle">🆕 منتج جديد</span>
+    <button class="mclose" onclick="Modal.close('m-new-product')">✕</button>
+  </div>
+  <div class="fg">
+    <label class="lbl">الباركود</label>
+    <input class="inp" id="qs-new-barcode" readonly style="background:var(--g1);direction:ltr;font-family:monospace;letter-spacing:2px;">
+  </div>
+  <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="qs-new-name" placeholder="مثال: سكر 1kg"></div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">سعر البيع (₪) *</label><input class="inp" type="number" id="qs-new-sell" inputmode="decimal"></div>
+    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="qs-new-qty" value="1" inputmode="decimal"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">الفئة</label>
+      <select class="inp" id="qs-new-category">
+        <option>مواد غذائية</option><option>خضروات</option>
+        <option>منظفات</option><option>مشروبات</option><option>عام</option>
+      </select>
+    </div>
+    <div class="fg"><label class="lbl">الوحدة</label>
+      <select class="inp" id="qs-new-unit">
+        <option>قطعة (pcs)</option><option>كيلو (kg)</option>
+        <option>غرام (g)</option><option>لتر (L)</option>
+        <option>علبة (box)</option><option>كرتون (ctn)</option>
+      </select>
+    </div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Modal.close('m-new-product')">إلغاء</button>
+    <button class="btn btn-s" onclick="QuickSale.saveNewProduct()">✅ حفظ وإضافة للسلة</button>
+  </div>
+</div></div>
+
+<style>
+@keyframes scan-anim{0%{top:calc(50% - 58px)}50%{top:calc(50% + 56px)}100%{top:calc(50% - 58px)}}
+#qs-scanner-container video,#qs-scanner-container canvas{width:100%!important;display:block;}
+#qs-scanner-container canvas.drawingBuffer{position:absolute;top:0;left:0;}
+/* ── POS CSS ── */
+.qs-topbar{display:flex;gap:8px;padding:.5rem .75rem;border-bottom:1px solid var(--br);flex-shrink:0;}
+.qs-search-wrap{flex:1;position:relative;display:flex;align-items:center;}
+.qs-search-wrap i{position:absolute;right:10px;color:var(--g4);font-size:18px;}
+.qs-search-inp{width:100%;padding:10px 36px 10px 12px;border:1.5px solid var(--g2);border-radius:12px;font-size:14px;font-family:Cairo,sans-serif;direction:rtl;background:var(--g0);}
+.qs-search-inp:focus{outline:none;border-color:var(--p);background:#fff;}
+.qs-scan-btn{width:46px;height:46px;background:var(--p);color:#fff;border:none;border-radius:12px;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.qs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:.75rem;overflow-y:auto;max-height:260px;}
+.qs-product-btn{background:#fff;border:1.5px solid var(--g2);border-radius:12px;padding:10px 6px;cursor:pointer;text-align:center;font-family:Cairo,sans-serif;transition:.1s;}
+.qs-product-btn:active{border-color:var(--p);background:var(--pl);transform:scale(.97);}
+.qs-p-name{font-size:12px;font-weight:700;color:var(--g8);margin-bottom:4px;line-height:1.3;}
+.qs-p-price{font-size:13px;font-weight:800;color:var(--p);}
+.qs-p-qty{font-size:10px;color:var(--g4);margin-top:2px;}
+.qs-p-qty.low{color:var(--d);}
+.qs-empty{grid-column:1/-1;text-align:center;padding:2rem;color:var(--g4);font-size:13px;}
+.qs-cart-section{padding:.5rem .75rem;}
+.qs-cart-hdr{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.qs-cart-title{font-weight:800;font-size:14px;flex:1;}
+.qs-count-badge{font-size:11px;color:var(--g5);background:var(--g1);padding:2px 8px;border-radius:99px;}
+.qs-total-badge{font-size:14px;font-weight:800;color:var(--s);background:var(--sl);padding:3px 10px;border-radius:99px;}
+.qs-clear-btn{background:var(--dl);color:var(--d);border:none;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;}
+.qs-cart-empty{text-align:center;padding:1.5rem;color:var(--g4);}
+.qs-cart-empty i{font-size:32px;display:block;margin-bottom:8px;}
+.qs-cart-item{display:flex;align-items:center;gap:8px;padding:10px;background:var(--g0);border-radius:10px;margin-bottom:6px;}
+.qs-ci-info{flex:1;min-width:0;}
+.qs-ci-name{font-size:13px;font-weight:700;color:var(--g8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qs-ci-price{font-size:12px;color:var(--g5);margin-top:2px;}
+.qs-ci-controls{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.qs-qty-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--g2);background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.qs-qty-num{font-size:14px;font-weight:700;min-width:24px;text-align:center;}
+.qs-remove-btn{width:30px;height:30px;border-radius:8px;border:none;background:var(--dl);color:var(--d);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+#qs-summary{background:var(--g0);border-radius:10px;padding:10px 14px;margin-top:8px;}
+.qs-sum-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+.qs-sum-row.green span:last-child{color:var(--s);}
+.qs-sum-row.total{font-weight:800;font-size:16px;border-top:1px solid var(--g2);margin-top:6px;padding-top:6px;}
+.qs-disc-row{display:flex;align-items:center;gap:6px;padding:.5rem .75rem;}
+.qs-disc-row span{font-size:12px;color:var(--g5);}
+.qs-disc-btn{padding:5px 12px;border:1px solid var(--g2);border-radius:8px;background:#fff;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;}
+.qs-disc-btn:active{background:var(--pl);border-color:var(--p);color:var(--p);}
+.qs-change-row{display:flex;align-items:center;gap:8px;padding:.25rem .75rem .5rem;}
+.qs-change-row span:first-child{font-size:13px;color:var(--g6);white-space:nowrap;}
+.qs-paid-inp{width:110px;padding:8px 10px;font-size:15px;text-align:center;}
+.qs-change-display{font-size:13px;font-weight:700;color:var(--g4);}
+.qs-checkout{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:.5rem .75rem .75rem;}
+.qs-pay{padding:14px;border-radius:12px;border:none;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+.qs-pay.cash{background:var(--s);color:#fff;}
+.qs-pay.transfer{background:var(--p);color:#fff;}
+.qs-pay.debt{background:var(--dl);color:var(--d);}
+.qs-pay.invoice{background:var(--g1);color:var(--g7);}
+@media(min-width:769px){
+  .qs-grid{grid-template-columns:repeat(5,1fr);max-height:320px;}
+}
+</style>
+
 </body>
 </html>

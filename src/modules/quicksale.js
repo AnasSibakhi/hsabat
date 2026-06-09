@@ -1,366 +1,258 @@
 /**
  * quicksale.js — Professional POS Module
- * Features: Product grid, search, barcode scanner, cart, quick checkout
+ * Uses: BarcodeScanner, POSService, InventoryService
  */
 
-import { DB }          from '../core/db.js';
-import { State }       from '../core/state.js';
-import { Notify }      from '../core/notify.js';
-import * as DOM        from '../core/dom.js';
-import { sb }          from '../core/db.js';
-import * as Utils      from '../core/utils.js';
-import { escape, currency, today, invoiceNumber } from '../core/utils.js';
-import { PAYMENT, CONFIG } from '../config/constants.js';
-import * as Modal      from '../nav/modal.js';
-import { getDashboard, getDebts, getInvoices, getInventory } from '../core/registry.js';
-
-// ── Cart State ──
-let _cart    = [];   // [{ product, qty, price }]
-let _discount = 0;
-let _scanner  = null;
+import { State }            from '../core/state.js';
+import { Notify }           from '../core/notify.js';
+import * as DOM             from '../core/dom.js';
+import * as Modal           from '../nav/modal.js';
+import { escape }           from '../core/utils.js';
+import { CONFIG }           from '../config/constants.js';
+import { getDashboard, getDebts, getInventory } from '../core/registry.js';
+import { BarcodeScanner }   from '../services/BarcodeScanner.js';
+import { InventoryService } from '../services/InventoryService.js';
+import { POSService }       from '../services/POSService.js';
 
 export const QuickSale = {
 
   async init() {
-    _cart     = [];
-    _discount = 0;
-    // Make page flex for proper layout
-    const page = DOM.get('page-quicksale');
-    if (page) page.classList.add('qs-flex');
+    POSService.clearCart();
+    await InventoryService.getAll().then(data => { State.inventory = data; });
+    QuickSale._renderGrid();
     QuickSale._renderCart();
-    await QuickSale._renderProductGrid();
-    QuickSale._renderSummary();
     const si = DOM.get('qs-search-input');
-    if (si) { si.value = ''; }
+    if (si) si.value = '';
   },
 
   // ── Product Grid ──
-  async _renderProductGrid(filter = '') {
+  _renderGrid(filter = '') {
     const grid = DOM.get('qs-product-grid');
     if (!grid) return;
 
-    let products = State.inventory;
-    if (!products.length) {
-      await getInventory()?.loadList();
-      products = State.inventory;
+    let list = State.inventory;
+    if (filter) {
+      const q = filter.toLowerCase();
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.barcode || '').includes(q)
+      );
+    } else {
+      list = list.filter(p => p.quantity > 0);
     }
 
-    const filtered = filter
-      ? products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
-      : products.filter(p => p.quantity > 0);
-
-    if (!filtered.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--g4);font-size:14px;">' + (filter ? 'لا توجد نتائج' : 'لا يوجد مخزون') + '</div>';
+    if (!list.length) {
+      grid.innerHTML = '<div class="qs-empty">'
+        + (filter ? 'لا توجد نتائج لـ "' + escape(filter) + '"' : 'لا يوجد مخزون متاح')
+        + '</div>';
       return;
     }
 
-    grid.innerHTML = filtered.slice(0, 24).map(p => {
-      const disabled  = p.quantity <= 0 ? 'disabled' : '';
-      const lowClass  = p.quantity <= p.low_stock_alert ? 'low' : '';
-      const priceText = p.sale_price ? '&#x20AA;' + p.sale_price.toFixed(2) : '&mdash;';
-      return '<button class="qs-product-btn" onclick="QuickSale.addToCart(\'' + p.id + '\')" ' + disabled + '>'
-        + '<div class="qs-product-name">' + escape(p.name) + '</div>'
-        + '<div class="qs-product-price">' + priceText + '</div>'
-        + '<div class="qs-product-qty ' + lowClass + '">' + p.quantity + ' ' + escape(p.unit || '') + '</div>'
+    grid.innerHTML = list.slice(0, 30).map(p => {
+      const low   = p.quantity <= p.low_stock_alert;
+      const price = p.sale_price ? '&#x20AA;' + p.sale_price.toFixed(2) : '&mdash;';
+      return '<button class="qs-product-btn" onclick="QuickSale.addToCart(\'' + p.id + '\')">'
+        + '<div class="qs-p-name">' + escape(p.name) + '</div>'
+        + '<div class="qs-p-price">' + price + '</div>'
+        + '<div class="qs-p-qty ' + (low ? 'low' : '') + '">' + p.quantity + ' ' + escape(p.unit || '') + '</div>'
         + '</button>';
     }).join('');
   },
 
-  search(val) {
-    QuickSale._renderProductGrid(val);
-  },
+  search(val) { QuickSale._renderGrid(val); },
 
   // ── Cart ──
   addToCart(productId) {
     const product = State.inventory.find(p => p.id === productId);
     if (!product) return;
     if (!product.sale_price || product.sale_price <= 0) {
-      Notify.warn('هذا المنتج ليس له سعر — عدّله أولاً');
+      Notify.error('هذا المنتج ليس له سعر بيع');
       return;
     }
-
-    const existing = _cart.find(c => c.product.id === productId);
-    if (existing) {
-      if (existing.qty >= product.quantity) { Notify.error('لا يوجد مخزون كافٍ'); return; }
-      existing.qty++;
-    } else {
-      _cart.push({ product, qty: 1, price: product.sale_price });
+    try {
+      POSService.addItem(product);
+      if (navigator.vibrate) navigator.vibrate(30);
+      QuickSale._renderCart();
+    } catch (err) {
+      Notify.error(err.message);
     }
-
-    if (navigator.vibrate) navigator.vibrate(30);
-    QuickSale._renderCart();
   },
 
-  removeFromCart(productId) {
-    _cart = _cart.filter(c => c.product.id !== productId);
+  removeItem(productId) {
+    POSService.removeItem(productId);
     QuickSale._renderCart();
   },
 
   changeQty(productId, delta) {
-    const item = _cart.find(c => c.product.id === productId);
-    if (!item) return;
-    item.qty = Math.max(1, item.qty + delta);
-    if (item.qty > item.product.quantity) {
-      item.qty = item.product.quantity;
-      Notify.error('لا يوجد مخزون كافٍ');
+    try {
+      POSService.changeQty(productId, delta);
+      QuickSale._renderCart();
+    } catch (err) {
+      Notify.error(err.message);
     }
-    QuickSale._renderCart();
   },
 
   _renderCart() {
-    const el = DOM.get('qs-cart-items');
+    const cart = POSService.getCart();
+    const el   = DOM.get('qs-cart-items');
     if (!el) return;
 
-    if (!_cart.length) {
-      el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--g4);">
-        <i class="ti ti-shopping-cart" style="font-size:32px;display:block;margin-bottom:8px;"></i>
-        السلة فارغة — اختر منتجاً
-      </div>`;
-      DOM.setText('qs-total-amount', '₪ 0.00');
+    if (!cart.length) {
+      el.innerHTML = '<div class="qs-cart-empty"><i class="ti ti-shopping-cart"></i><p>السلة فارغة</p></div>';
       DOM.setText('qs-items-count', '0 أصناف');
+      DOM.setText('qs-total-display', '₪ 0.00');
+      const s = DOM.get('qs-summary'); if (s) s.innerHTML = '';
       return;
     }
 
-    let subtotal = 0;
-    el.innerHTML = _cart.map(item => {
+    el.innerHTML = cart.map(item => {
       const lineTotal = item.qty * item.price;
-      subtotal += lineTotal;
-      return `<div class="qs-cart-item">
-        <div class="qs-cart-item-info">
-          <div class="qs-cart-item-name">\${escape(item.product.name)}</div>
-          <div class="qs-cart-item-price">₪\${item.price.toFixed(2)} × \${item.qty} = <strong>₪\${lineTotal.toFixed(2)}</strong></div>
-        </div>
-        <div class="qs-cart-item-controls">
-          <button onclick="QuickSale.changeQty('\${item.product.id}',-1)" class="qs-qty-btn">−</button>
-          <span class="qs-qty-val">\${item.qty}</span>
-          <button onclick="QuickSale.changeQty('\${item.product.id}',1)"  class="qs-qty-btn">+</button>
-          <button onclick="QuickSale.removeFromCart('\${item.product.id}')" class="qs-remove-btn"><i class="ti ti-x"></i></button>
-        </div>
-      </div>`;
+      return '<div class="qs-cart-item">'
+        + '<div class="qs-ci-info">'
+        + '<div class="qs-ci-name">' + escape(item.name) + '</div>'
+        + '<div class="qs-ci-price">&#x20AA;' + item.price.toFixed(2) + ' × ' + item.qty
+        + ' = <strong>&#x20AA;' + lineTotal.toFixed(2) + '</strong></div>'
+        + '</div>'
+        + '<div class="qs-ci-controls">'
+        + '<button class="qs-qty-btn" onclick="QuickSale.changeQty(\'' + item.productId + '\',-1)">−</button>'
+        + '<span class="qs-qty-num">' + item.qty + '</span>'
+        + '<button class="qs-qty-btn" onclick="QuickSale.changeQty(\'' + item.productId + '\',1)">+</button>'
+        + '<button class="qs-remove-btn" onclick="QuickSale.removeItem(\'' + item.productId + '\')"><i class="ti ti-x"></i></button>'
+        + '</div>'
+        + '</div>';
     }).join('');
 
-    const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
-    const total    = Math.max(0, subtotal - discount);
+    DOM.setText('qs-items-count', cart.length + ' ' + (cart.length === 1 ? 'صنف' : 'أصناف'));
 
-    DOM.setText('qs-total-amount', '₪ ' + total.toFixed(2));
-    DOM.setText('qs-items-count',  _cart.length + ' ' + (_cart.length === 1 ? 'صنف' : 'أصناف'));
+    const { subtotal, discount, total } = POSService.getTotals();
+    DOM.setText('qs-total-display', '₪ ' + total.toFixed(2));
 
-    QuickSale._renderSummary(subtotal, discount, total);
-  },
+    const s = DOM.get('qs-summary');
+    if (s) {
+      let html = '<div class="qs-sum-row"><span>المجموع</span><span>₪' + subtotal.toFixed(2) + '</span></div>';
+      if (discount > 0) html += '<div class="qs-sum-row green"><span>خصم ' + POSService.getDiscount() + '%</span><span>−₪' + discount.toFixed(2) + '</span></div>';
+      html += '<div class="qs-sum-row total"><span>الإجمالي</span><span>₪' + total.toFixed(2) + '</span></div>';
+      s.innerHTML = html;
+    }
 
-  _renderSummary(subtotal = 0, discount = 0, total = 0) {
-    const el = DOM.get('qs-summary');
-    if (!el) return;
-    if (!_cart.length) { el.innerHTML = ''; return; }
-
-    el.innerHTML = `
-      <div class="qs-summary-row"><span>المجموع الفرعي</span><span>₪\${subtotal.toFixed(2)}</span></div>
-      <div class="qs-summary-row total"><span>الإجمالي</span><span>₪\${total.toFixed(2)}</span></div>
-    `;
+    QuickSale.calcChange();
   },
 
   applyDiscount(pct) {
-    _discount = pct;
+    POSService.setDiscount(pct);
     QuickSale._renderCart();
     Notify.show(pct > 0 ? 'خصم ' + pct + '%' : 'تم إلغاء الخصم');
   },
 
-  clearCart() {
-    _cart = [];
-    _discount = 0;
-    QuickSale._renderCart();
-    const si = DOM.get('qs-search-input');
-    if (si) si.value = '';
-    QuickSale._renderProductGrid();
-    Notify.show('تم مسح السلة');
-  },
-
   calcChange() {
-    const total  = _cart.reduce((s, c) => s + c.qty * c.price, 0) * (1 - _discount / 100);
-    const paid   = parseFloat(DOM.val('qs-paid')) || 0;
-    const change = paid - total;
-    const el     = DOM.get('qs-change');
+    const { total } = POSService.getTotals();
+    const paid      = parseFloat(DOM.val('qs-paid')) || 0;
+    const el        = DOM.get('qs-change');
     if (!el) return;
     if (paid <= 0) { el.textContent = '—'; el.style.color = 'var(--g4)'; return; }
+    const change = paid - total;
     el.textContent = '₪ ' + Math.abs(change).toFixed(2) + (change >= 0 ? ' (باقي)' : ' (ناقص)');
     el.style.color = change >= 0 ? 'var(--s)' : 'var(--d)';
   },
 
-  openDebtModal() {
-    DOM.setHTML('qs-debt-cust', '<option value="">-- اختر الزبون --</option>' +
-      State.customers.map(c => `<option value="\${c.id}">\${escape(c.name)}</option>`).join(''));
-    Modal.open('m-qs-debt');
+  clearCart() {
+    POSService.clearCart();
+    QuickSale._renderCart();
+    const si = DOM.get('qs-search-input');
+    if (si) si.value = '';
+    QuickSale._renderGrid();
+    Notify.show('تم مسح السلة');
   },
 
   // ── Checkout ──
+  openDebtModal() {
+    DOM.setHTML('qs-debt-cust',
+      '<option value="">-- اختر الزبون --</option>' +
+      State.customers.map(c => '<option value="' + c.id + '">' + escape(c.name) + '</option>').join('')
+    );
+    Modal.open('m-qs-debt');
+  },
+
   async sell(paymentType) {
-    if (!_cart.length) { Notify.error('السلة فارغة'); return; }
+    const cart = POSService.getCart();
+    if (!cart.length) { Notify.error('السلة فارغة'); return; }
 
-    const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
-    const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
-    const total    = Math.max(0, subtotal - discount);
-    let customerId = '';
-    let customerName = 'زبون عادي';
-
-    if (paymentType === PAYMENT.DEFER) {
+    let customerId = null;
+    if (paymentType === 'defer') {
       customerId = DOM.val('qs-debt-cust');
       if (!customerId) { Notify.error('اختر الزبون'); return; }
-      const c = State.customers.find(x => x.id === customerId);
-      customerName = c?.name || '';
       Modal.close('m-qs-debt');
     }
 
     State.isMutating = true;
     try {
-      const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
-      const invNum = 'INV-' + String((count || 0) + 1).padStart(4, '0');
-
-      const { data: invoice, error } = await DB.invoices().insert({
-        store_id:      State.user.id,
-        customer_id:   customerId || null,
-        customer_name: customerName,
-        total, subtotal, discount,
-        payment_type:  paymentType,
-        invoice_date:  today(),
-        sale_time:     new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        invoice_number: invNum,
-      }).select().single();
-
-      if (error) throw error;
-
-      // Save items + deduct inventory
-      await sb.from('invoice_items').insert(_cart.map(c => ({
-        invoice_id:   invoice.id,
-        product_name: c.product.name,
-        inventory_id: c.product.id,
-        quantity:     c.qty,
-        price:        c.price,
-      })));
-
-      for (const item of _cart) {
-        const newQty = Math.max(0, item.product.quantity - item.qty);
-        await DB.inventory().update({ quantity: newQty }).eq('id', item.product.id);
-        item.product.quantity = newQty;
-      }
-
-      if (paymentType === PAYMENT.DEFER && customerId) {
-        await DB.debts().insert({ store_id: State.user.id, customer_id: customerId, amount: total, paid: 0, debt_date: today(), notes: 'فاتورة ' + invNum });
-        await getDebts()?.loadBadge();
-      }
-
+      const { invNum, total } = await POSService.checkout(paymentType, customerId);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
       Notify.success(invNum + ' — ₪' + total.toFixed(2));
-      QuickSale.clearCart();
+      QuickSale._renderCart();
+      QuickSale._renderGrid();
+
+      // Refresh data
+      State.inventory = await InventoryService.getAll();
       await getDashboard()?.load();
-      await getInventory()?.loadList();
+      await getDebts()?.loadBadge();
+
+      // Clear paid input
+      const paid = DOM.get('qs-paid');
+      if (paid) paid.value = '';
+      const ch = DOM.get('qs-change');
+      if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
 
     } catch (err) {
-      console.error('[QuickSale.sell]', err);
       Notify.error(err.message);
     } finally {
       setTimeout(() => { State.isMutating = false; }, 500);
     }
   },
 
-  // ── Barcode Scanner (Quagga2 — more accurate) ──
+  // ── Barcode Scanner ──
   async startScanner() {
     const overlay = DOM.get('qs-scanner-overlay');
-    if (!overlay) return;
-    overlay.style.display = 'flex';
+    if (overlay) overlay.style.display = 'flex';
 
-    try {
-      // Load Quagga2
-      if (!window.Quagga) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
-          s.onload = resolve;
-          s.onerror = reject;
-          document.head.appendChild(s);
-        });
+    await BarcodeScanner.start(
+      'qs-scanner-container',
+      async (barcode) => {
+        QuickSale.stopScanner();
+        await QuickSale._onBarcode(barcode);
+      },
+      (err) => {
+        QuickSale.stopScanner();
+        Notify.error(err);
       }
-
-      Quagga.init({
-        inputStream: {
-          type: 'LiveStream',
-          target: document.getElementById('qs-scanner-container'),
-          constraints: {
-            facingMode: 'environment',
-            width:  { min: 640, ideal: 1280 },
-            height: { min: 480, ideal: 720 },
-          },
-        },
-        locator: { patchSize: 'medium', halfSample: true },
-        numOfWorkers: 2,
-        frequency: 10,
-        decoder: {
-          readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader'],
-        },
-        locate: true,
-      }, (err) => {
-        if (err) {
-          Notify.error('لا يمكن الوصول للكاميرا');
-          QuickSale.stopScanner();
-          return;
-        }
-        Quagga.start();
-        _scanner = true;
-      });
-
-      // Listen for successful scan
-      Quagga.offDetected();
-      const detectedCodes = {};
-      Quagga.onDetected((result) => {
-        const code = result?.codeResult?.code;
-        if (!code) return;
-        // Require 3 consistent reads for accuracy
-        detectedCodes[code] = (detectedCodes[code] || 0) + 1;
-        if (detectedCodes[code] >= 3) {
-          QuickSale.stopScanner();
-          QuickSale._onBarcodeDetected(code);
-        }
-      });
-
-    } catch (err) {
-      console.error('[Scanner]', err);
-      Notify.error('لا يمكن الوصول للكاميرا — تأكد من الصلاحيات');
-      QuickSale.stopScanner();
-    }
+    );
   },
 
   stopScanner() {
-    try {
-      if (window.Quagga && _scanner) {
-        Quagga.offDetected();
-        Quagga.stop();
-      }
-    } catch(e) {}
-    _scanner = null;
+    BarcodeScanner.stop();
     const overlay = DOM.get('qs-scanner-overlay');
     if (overlay) overlay.style.display = 'none';
-    // Clear container
     const container = DOM.get('qs-scanner-container');
     if (container) container.innerHTML = '';
   },
 
-  async _onBarcodeDetected(barcode) {
-    if (navigator.vibrate) navigator.vibrate(100);
-
-    // Search inventory by barcode
-    const { data } = await DB.inventory().select('*').eq('barcode', barcode);
-    const product  = data?.[0];
+  async _onBarcode(barcode) {
+    // Search in current inventory
+    const product = State.inventory.find(p => p.barcode === barcode)
+      || await InventoryService.findByBarcode(barcode);
 
     if (product) {
-      // Found — add to cart
-      State.inventory = State.inventory.map(p => p.id === product.id ? product : p);
+      // Update state cache
+      if (!State.inventory.find(p => p.id === product.id)) {
+        State.inventory.push(product);
+      }
       QuickSale.addToCart(product.id);
-      Notify.success('تمت إضافة: ' + product.name);
     } else {
-      // Not found — open add product modal
-      DOM.get('qs-new-barcode').value  = barcode;
-      DOM.get('qs-new-name').value     = '';
-      DOM.get('qs-new-price').value    = '';
-      DOM.get('qs-new-qty').value      = '1';
+      // Product not found — open add product modal
+      const bc = DOM.get('qs-new-barcode');
+      const nm = DOM.get('qs-new-name');
+      if (bc) bc.value = barcode;
+      if (nm) { nm.value = ''; setTimeout(() => nm.focus(), 300); }
       Modal.open('m-new-product');
     }
   },
@@ -369,30 +261,26 @@ export const QuickSale = {
   async saveNewProduct() {
     const barcode = DOM.val('qs-new-barcode');
     const name    = DOM.val('qs-new-name');
-    const price   = parseFloat(DOM.val('qs-new-price'));
+    const sell    = parseFloat(DOM.val('qs-new-sell'));
     const qty     = parseFloat(DOM.val('qs-new-qty')) || 0;
+    const cat     = DOM.get('qs-new-category')?.value || 'عام';
+    const unit    = DOM.get('qs-new-unit')?.value || 'قطعة (pcs)';
 
-    if (!name)            { Notify.error('أدخل اسم المنتج'); return; }
-    if (!price || price <= 0) { Notify.error('أدخل السعر'); return; }
+    if (!name)              { Notify.error('أدخل اسم المنتج'); return; }
+    if (!sell || sell <= 0) { Notify.error('أدخل سعر البيع');  return; }
 
     try {
-      const { data: product, error } = await DB.inventory().insert({
-        store_id:        State.user.id,
-        name, barcode,
-        sale_price:      price,
-        quantity:        qty,
-        category:        'عام',
-        unit:            'قطعة',
-        low_stock_alert: CONFIG.lowStockDefault,
-      }).select().single();
-
-      if (error) throw error;
+      const product = await InventoryService.addProduct({
+        name, barcode, sellPrice: sell, quantity: qty,
+        category: cat, unit, minStock: 10,
+      });
 
       State.inventory.push(product);
       Modal.close('m-new-product');
       QuickSale.addToCart(product.id);
-      Notify.success('تم إضافة المنتج وإضافته للسلة');
-      await QuickSale._renderProductGrid();
+      QuickSale._renderGrid();
+      Notify.success('تم إضافة "' + name + '" وإضافته للسلة');
+
     } catch (err) {
       Notify.error(err.message);
     }
