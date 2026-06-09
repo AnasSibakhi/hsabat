@@ -331,6 +331,24 @@ body.dark .ni.active{background:#1e3a5f;}
 .aging-bucket:last-child{border-bottom:none;margin-bottom:0;}
 .aging-label{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
 .aging-names{font-size:12px;color:var(--g6);line-height:1.7;}
+
+/* ══ POS LAYOUT FIX ══
+   When quicksale active: .content becomes flex container
+   .content stops scrolling, quicksale handles its own scroll
+*/
+.content.qs-active {
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+}
+#page-quicksale.active {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 </style>
 </head>
 <body>
@@ -1400,12 +1418,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 #qs-scanner-container video,#qs-scanner-container canvas{width:100%!important;display:block;}
 #qs-scanner-container canvas.drawingBuffer{position:absolute;top:0;left:0;}
 /* ── POS CSS ── */
-#page-quicksale.active{
-  display:flex !important;
-  flex-direction:column;
-  overflow:hidden;
-  height:100%;
-}
+
 .qs-topbar{display:flex;gap:8px;padding:.5rem .75rem;border-bottom:1px solid var(--br);flex-shrink:0;}
 .qs-search-wrap{flex:1;position:relative;display:flex;align-items:center;}
 .qs-search-wrap i{position:absolute;right:10px;color:var(--g4);font-size:18px;}
