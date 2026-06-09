@@ -7,6 +7,7 @@ const _loaders = {};
 export const register = (pageId, fn) => { _loaders[pageId] = fn; };
 
 export const go = (pageId, activeElement = null) => {
+  // Hide ALL pages including quicksale
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
 
@@ -14,15 +15,16 @@ export const go = (pageId, activeElement = null) => {
   const qsPage  = document.getElementById('page-quicksale');
 
   if (pageId === 'quicksale') {
-    // Stop content from scrolling, make it flex
+    // POS mode: flex layout
     if (content) {
       content.style.overflow      = 'hidden';
       content.style.padding       = '0';
       content.style.display       = 'flex';
       content.style.flexDirection = 'column';
     }
-    // Show quicksale as flex column filling content
+    // Show quicksale as flex
     if (qsPage) {
+      qsPage.classList.add('active');
       qsPage.style.display       = 'flex';
       qsPage.style.flexDirection = 'column';
       qsPage.style.flex          = '1';
@@ -30,14 +32,14 @@ export const go = (pageId, activeElement = null) => {
       qsPage.style.overflow      = 'hidden';
     }
   } else {
-    // Restore content
+    // Normal mode: restore content
     if (content) {
       content.style.overflow      = '';
       content.style.padding       = '';
       content.style.display       = '';
       content.style.flexDirection = '';
     }
-    if (qsPage) qsPage.style.display = 'none';
+    // quicksale hidden via .page (no active class)
     document.getElementById('page-' + pageId)?.classList.add('active');
   }
 
