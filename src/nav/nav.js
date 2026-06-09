@@ -10,24 +10,34 @@ export const go = (pageId, activeElement = null) => {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
 
-  const content  = document.getElementById('main-content');
-  const qsPage   = document.getElementById('page-quicksale');
-  const qsFooter = document.getElementById('qs-footer');
+  const content = document.getElementById('main-content');
+  const qsPage  = document.getElementById('page-quicksale');
 
   if (pageId === 'quicksale') {
-    // POS: content becomes flex, quicksale fills it, footer shows fixed
+    // Stop content from scrolling, make it flex
     if (content) {
       content.style.overflow      = 'hidden';
       content.style.padding       = '0';
       content.style.display       = 'flex';
       content.style.flexDirection = 'column';
     }
-    if (qsPage)   { qsPage.style.display = 'flex'; qsPage.style.flexDirection = 'column'; qsPage.style.flex = '1'; qsPage.style.minHeight = '0'; qsPage.style.overflow = 'hidden'; }
-    if (qsFooter) qsFooter.style.display = 'block';
+    // Show quicksale as flex column filling content
+    if (qsPage) {
+      qsPage.style.display       = 'flex';
+      qsPage.style.flexDirection = 'column';
+      qsPage.style.flex          = '1';
+      qsPage.style.minHeight     = '0';
+      qsPage.style.overflow      = 'hidden';
+    }
   } else {
-    if (content)  { content.style.overflow = ''; content.style.padding = ''; content.style.display = ''; content.style.flexDirection = ''; }
-    if (qsPage)   { qsPage.style.display = 'none'; }
-    if (qsFooter) qsFooter.style.display = 'none';
+    // Restore content
+    if (content) {
+      content.style.overflow      = '';
+      content.style.padding       = '';
+      content.style.display       = '';
+      content.style.flexDirection = '';
+    }
+    if (qsPage) qsPage.style.display = 'none';
     document.getElementById('page-' + pageId)?.classList.add('active');
   }
 
