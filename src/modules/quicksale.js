@@ -48,19 +48,20 @@ export const QuickSale = {
       : products.filter(p => p.quantity > 0);
 
     if (!filtered.length) {
-      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--g4);font-size:14px;">
-        \${filter ? 'لا توجد نتائج لـ "' + escape(filter) + '"' : 'لا يوجد مخزون متاح'}
-      </div>`;
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--g4);font-size:14px;">' + (filter ? 'لا توجد نتائج' : 'لا يوجد مخزون') + '</div>';
       return;
     }
 
-    grid.innerHTML = filtered.slice(0, 24).map(p => `
-      <button class="qs-product-btn" onclick="QuickSale.addToCart('\${p.id}')" \${p.quantity <= 0 ? 'disabled' : ''}>
-        <div class="qs-product-name">\${escape(p.name)}</div>
-        <div class="qs-product-price">₪\${p.sale_price ? p.sale_price.toFixed(2) : '—'}</div>
-        <div class="qs-product-qty \${p.quantity <= p.low_stock_alert ? 'low' : ''}">\${p.quantity} \${escape(p.unit || '')}</div>
-      </button>
-    `).join('');
+    grid.innerHTML = filtered.slice(0, 24).map(p => {
+      const disabled  = p.quantity <= 0 ? 'disabled' : '';
+      const lowClass  = p.quantity <= p.low_stock_alert ? 'low' : '';
+      const priceText = p.sale_price ? '&#x20AA;' + p.sale_price.toFixed(2) : '&mdash;';
+      return '<button class="qs-product-btn" onclick="QuickSale.addToCart(\'' + p.id + '\')" ' + disabled + '>'
+        + '<div class="qs-product-name">' + escape(p.name) + '</div>'
+        + '<div class="qs-product-price">' + priceText + '</div>'
+        + '<div class="qs-product-qty ' + lowClass + '">' + p.quantity + ' ' + escape(p.unit || '') + '</div>'
+        + '</button>';
+    }).join('');
   },
 
   search(val) {
