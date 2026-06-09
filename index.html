@@ -526,11 +526,8 @@ body.dark .ni.active{background:#1e3a5f;}
 @media(max-width:768px){
   #qs-footer { bottom: 60px; } /* above bottom nav */
 }
-/* When POS active: add padding to qs-middle to account for footer height */
-.qs-middle { padding-bottom: 110px; }
-@media(min-width:769px){
-  .qs-middle { padding-bottom: 95px; }
-}
+/* Padding bottom = footer height so content not hidden behind it */
+.qs-middle { padding-bottom: 0; }
 
 </style>
 </head>
@@ -1039,6 +1036,7 @@ body.dark .ni.active{background:#1e3a5f;}
       <div id="qs-summary"></div>
     </div>
 
+    <div id="qs-spacer" style="height:0px;flex-shrink:0;"></div>
     </div><!-- end qs-middle -->
    </div><!-- end page-quicksale -->
 

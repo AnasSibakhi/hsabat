@@ -23,6 +23,14 @@ export const QuickSale = {
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input');
     if (si) si.value = '';
+    // Set spacer height = footer height so scroll reaches content
+    setTimeout(() => {
+      const footer  = document.getElementById('qs-footer');
+      const spacer  = document.getElementById('qs-spacer');
+      if (footer && spacer) {
+        spacer.style.height = footer.offsetHeight + 'px';
+      }
+    }, 100);
   },
 
   // ── Product Grid ──
