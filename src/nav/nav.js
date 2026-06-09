@@ -1,28 +1,22 @@
 /**
  * nav.js — Navigation Module
- * Clean, simple, no hacks
+ * Manages page switching and loader registration
  */
+
 import { State } from '../core/state.js';
 
 const _loaders = {};
-export const register = (pageId, fn) => { _loaders[pageId] = fn; };
 
+/** Register a page loader function */
+export const register = (pageId, loaderFn) => {
+  _loaders[pageId] = loaderFn;
+};
+
+/** Navigate to a page */
 export const go = (pageId, activeElement = null) => {
-  // 1. Hide all pages
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
 
-  // 2. Toggle quicksale mode on content
-  const content = document.getElementById('main-content');
-  if (content) {
-    if (pageId === 'quicksale') {
-      content.classList.add('qs-active');
-    } else {
-      content.classList.remove('qs-active');
-    }
-  }
-
-  // 3. Show current page
   document.getElementById('page-' + pageId)?.classList.add('active');
   if (activeElement) activeElement.classList.add('active');
 
@@ -30,6 +24,7 @@ export const go = (pageId, activeElement = null) => {
   _loaders[pageId]?.();
 };
 
+/** Navigate via bottom nav */
 export const goTo = (pageId) => {
   go(pageId);
   document.querySelectorAll('.bn').forEach(b => b.classList.remove('active'));
