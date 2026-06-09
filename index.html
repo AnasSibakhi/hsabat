@@ -804,53 +804,71 @@ body.dark .ni.active{background:#1e3a5f;}
    <!-- QUICK SALE -->
    <div class="page" id="page-quicksale">
 
-    <!-- Search + Scanner -->
-    <div class="qs-header">
-      <div class="qs-search-wrap">
-        <i class="ti ti-search qs-search-icon"></i>
-        <input id="qs-search-input" class="qs-search" placeholder="ابحث عن منتج..." oninput="QuickSale.search(this.value)">
+    <!-- Row 1: Barcode + Search + Scanner -->
+    <div class="qs-topbar">
+      <input id="qs-barcode-input" class="qs-barcode-inp" placeholder="📷 امسح أو أدخل الباركود..." inputmode="text" autocomplete="off" style="flex:1.2;">
+      <div class="qs-search-wrap" style="flex:2;">
+        <i class="ti ti-search"></i>
+        <input id="qs-search-input" class="qs-search-inp" placeholder="ابحث بالاسم أو الفئة..." oninput="QuickSale.search(this.value)" autocomplete="off">
       </div>
-      <button class="qs-scan-btn" onclick="QuickSale.startScanner()">
-        <i class="ti ti-barcode-off"></i>
+      <button class="qs-scan-btn" onclick="QuickSale.startScanner()" title="كاميرا">
+        <i class="ti ti-scan"></i>
       </button>
     </div>
 
-    <!-- Product Grid -->
-    <div id="qs-product-grid" class="qs-product-grid"></div>
+    <!-- Row 2: Stats bar -->
+    <div id="qs-stats" class="qs-stats-bar"></div>
 
-    <!-- Cart -->
-    <div class="qs-cart-header">
-      <span><i class="ti ti-shopping-cart" style="vertical-align:-2px;margin-left:4px;"></i> السلة</span>
-      <span id="qs-items-count" style="font-size:12px;color:var(--g5);">0 أصناف</span>
-      <button onclick="QuickSale.clearCart()" class="qs-clear-btn">مسح</button>
-    </div>
-    <div id="qs-cart-items" class="qs-cart-items"></div>
+    <!-- Row 3: Product Grid (scrollable) + Cart -->
+    <div class="qs-body">
 
-    <!-- Summary -->
-    <div id="qs-summary" class="qs-summary"></div>
+      <!-- Products -->
+      <div class="qs-products-col">
+        <div id="qs-product-grid" class="qs-grid"></div>
+      </div>
 
-    <!-- Discount -->
-    <div class="qs-discount-row">
-      <span style="font-size:12px;color:var(--g5);">خصم:</span>
-      <button onclick="QuickSale.applyDiscount(0)"  class="qs-disc-btn">بلا</button>
-      <button onclick="QuickSale.applyDiscount(5)"  class="qs-disc-btn">5%</button>
-      <button onclick="QuickSale.applyDiscount(10)" class="qs-disc-btn">10%</button>
-      <button onclick="QuickSale.applyDiscount(15)" class="qs-disc-btn">15%</button>
-    </div>
+      <!-- Cart + Payment -->
+      <div class="qs-cart-col">
 
-    <!-- Change Calculator -->
-    <div class="qs-change-row">
-      <span style="font-size:13px;color:var(--g6);">مبلغ الزبون:</span>
-      <input type="number" id="qs-paid" class="inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()" style="width:100px;padding:8px 10px;font-size:15px;text-align:center;">
-      <span id="qs-change" style="font-size:13px;font-weight:700;color:var(--g4);">—</span>
-    </div>
+        <!-- Cart header -->
+        <div class="qs-cart-hdr">
+          <span><i class="ti ti-shopping-cart"></i> السلة</span>
+          <span id="qs-items-count" class="qs-badge">0</span>
+          <span id="qs-total-display" class="qs-total-badge">₪ 0.00</span>
+          <button class="qs-clear-btn" onclick="QuickSale.clearCart()"><i class="ti ti-trash"></i></button>
+        </div>
 
-    <!-- Checkout Buttons -->
-    <div class="qs-checkout-grid">
-      <button class="qs-pay-btn cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
-      <button class="qs-pay-btn transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
-      <button class="qs-pay-btn debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
-      <button class="qs-pay-btn invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
+        <!-- Cart items -->
+        <div id="qs-cart-items" class="qs-cart-list"></div>
+
+        <!-- Summary -->
+        <div id="qs-summary-box" class="qs-summary"></div>
+
+        <!-- Discount -->
+        <div class="qs-disc-row">
+          <span>خصم:</span>
+          <button class="qs-disc-btn" data-pct="0"  onclick="QuickSale.applyDiscount(0)">بلا</button>
+          <button class="qs-disc-btn" data-pct="5"  onclick="QuickSale.applyDiscount(5)">5%</button>
+          <button class="qs-disc-btn" data-pct="10" onclick="QuickSale.applyDiscount(10)">10%</button>
+          <button class="qs-disc-btn" data-pct="15" onclick="QuickSale.applyDiscount(15)">15%</button>
+        </div>
+
+        <!-- Change calculator -->
+        <div class="qs-change-row">
+          <span>مبلغ الزبون:</span>
+          <input type="number" id="qs-paid" class="inp qs-paid-inp" placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()">
+          <span id="qs-change" class="qs-change-val">—</span>
+        </div>
+
+        <!-- Checkout buttons -->
+        <div class="qs-checkout">
+          <button class="qs-pay cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
+          <button class="qs-pay transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
+          <button class="qs-pay debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
+          <button class="qs-pay invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
+        </div>
+
+      </div>
     </div>
 
    </div>
@@ -1360,5 +1378,148 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
   </div>
 </div></div>
+
+<!-- Scanner Overlay -->
+<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;">
+  <div style="position:relative;width:100%;max-width:480px;">
+    <div id="qs-scanner-container" style="width:100%;min-height:280px;background:#111;position:relative;overflow:hidden;"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:120px;border:3px solid #1a56db;border-radius:8px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.6);"></div>
+  </div>
+  <p style="color:#fff;margin-top:1rem;font-size:15px;">وجّه الكاميرا على الباركود</p>
+  <button onclick="QuickSale.stopScanner()" style="margin-top:1rem;background:#dc2626;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إلغاء</button>
+</div>
+
+<!-- New Product Modal -->
+<div class="mo" id="m-new-product"><div class="modal">
+  <div class="mhdr"><span class="mtitle">🆕 منتج جديد</span><button class="mclose" onclick="Modal.close('m-new-product')">✕</button></div>
+  <div class="fg"><label class="lbl">الباركود</label><input class="inp" id="qs-new-barcode" readonly style="background:var(--g1);direction:ltr;font-family:monospace;letter-spacing:2px;"></div>
+  <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="qs-new-name" placeholder="مثال: سكر 1kg"></div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">سعر البيع (₪) *</label><input class="inp" type="number" id="qs-new-sell" inputmode="decimal"></div>
+    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="qs-new-qty" value="1" inputmode="decimal"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">الفئة</label>
+      <select class="inp" id="qs-new-cat"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>مشروبات</option><option>عام</option></select>
+    </div>
+    <div class="fg"><label class="lbl">الوحدة</label>
+      <select class="inp" id="qs-new-unit"><option>قطعة (pcs)</option><option>كيلو (kg)</option><option>غرام (g)</option><option>لتر (L)</option><option>علبة (box)</option><option>كرتون (ctn)</option></select>
+    </div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Modal.close('m-new-product')">إلغاء</button>
+    <button class="btn btn-s" onclick="QuickSale.saveNewProduct()">✅ حفظ وإضافة للسلة</button>
+  </div>
+</div></div>
+
+<style>
+/* ════ POS / QUICK SALE ════ */
+#page-quicksale {
+  display:none;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+#page-quicksale.active {
+  display:flex !important;
+}
+
+/* Topbar */
+.qs-topbar{display:flex;gap:6px;padding:.5rem .75rem;border-bottom:1px solid var(--br);flex-shrink:0;background:#fff;align-items:center;}
+.qs-barcode-inp{padding:9px 12px;border:1.5px solid var(--p);border-radius:10px;font-size:14px;font-family:Cairo,sans-serif;direction:ltr;background:#fff;flex:1;}
+.qs-barcode-inp:focus{outline:none;box-shadow:0 0 0 3px rgba(26,86,219,.15);}
+.qs-search-wrap{position:relative;display:flex;align-items:center;flex:2;}
+.qs-search-wrap i{position:absolute;right:10px;color:var(--g4);font-size:16px;pointer-events:none;}
+.qs-search-inp{width:100%;padding:9px 32px 9px 12px;border:1.5px solid var(--g2);border-radius:10px;font-size:14px;font-family:Cairo,sans-serif;direction:rtl;background:var(--g0);}
+.qs-search-inp:focus{outline:none;border-color:var(--p);background:#fff;}
+.qs-scan-btn{width:42px;height:42px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+
+/* Stats bar */
+.qs-stats-bar{display:flex;gap:0;border-bottom:1px solid var(--br);flex-shrink:0;background:var(--g0);}
+.qs-stat{flex:1;padding:.35rem .75rem;text-align:center;border-left:1px solid var(--br);}
+.qs-stat:last-child{border-left:none;}
+.qs-stat span{display:block;font-size:10px;color:var(--g5);margin-bottom:2px;}
+.qs-stat strong{font-size:13px;font-weight:800;}
+.qs-stat strong.green{color:var(--s);}
+
+/* Body: split layout */
+.qs-body{flex:1;display:flex;overflow:hidden;min-height:0;}
+.qs-products-col{flex:1.5;overflow-y:auto;border-left:1px solid var(--br);padding:.5rem;-webkit-overflow-scrolling:touch;}
+.qs-cart-col{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+
+/* Product Grid */
+.qs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+@media(min-width:1200px){.qs-grid{grid-template-columns:repeat(4,1fr);}}
+.qs-product-btn{background:#fff;border:1.5px solid var(--g2);border-radius:10px;padding:8px 5px;cursor:pointer;text-align:center;font-family:Cairo,sans-serif;transition:.1s;}
+.qs-product-btn:active,.qs-product-btn:hover{border-color:var(--p);background:var(--pl);}
+.qs-product-btn.qs-out{opacity:.5;cursor:not-allowed;}
+.qs-p-name{font-size:11px;font-weight:700;color:var(--g8);margin-bottom:2px;line-height:1.2;}
+.qs-p-price{font-size:13px;font-weight:800;color:var(--p);}
+.qs-p-stock{font-size:10px;color:var(--g4);margin-top:1px;}
+.qs-p-stock.low{color:var(--w);}
+.qs-p-stock.out{color:var(--d);font-weight:700;}
+.qs-empty{grid-column:1/-1;text-align:center;padding:2rem;color:var(--g4);font-size:13px;}
+
+/* Cart column */
+.qs-cart-hdr{display:flex;align-items:center;gap:5px;padding:.4rem .6rem;border-bottom:1px solid var(--br);flex-shrink:0;background:#fff;}
+.qs-cart-hdr span:first-child{font-weight:800;font-size:13px;flex:1;}
+.qs-badge{background:var(--g1);color:var(--g6);font-size:11px;padding:2px 7px;border-radius:99px;}
+.qs-total-badge{background:var(--sl);color:var(--s);font-size:13px;font-weight:800;padding:3px 9px;border-radius:99px;}
+.qs-clear-btn{background:var(--dl);color:var(--d);border:none;border-radius:7px;padding:5px 8px;font-size:14px;cursor:pointer;display:flex;align-items:center;}
+.qs-cart-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
+.qs-cart-empty{text-align:center;padding:1.5rem .5rem;color:var(--g4);}
+.qs-cart-empty i{font-size:28px;display:block;margin-bottom:6px;}
+.qs-cart-empty p{font-size:12px;}
+.qs-cart-item{display:flex;align-items:center;gap:5px;padding:7px 8px;border-bottom:.5px solid var(--g1);}
+.qs-cart-item:hover{background:var(--g0);}
+.qs-ci-main{flex:1;min-width:0;}
+.qs-ci-name{font-size:12px;font-weight:700;color:var(--g8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qs-ci-meta{font-size:11px;color:var(--g5);margin-top:1px;}
+.qs-ci-ctrl{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.qs-qb{width:24px;height:24px;border-radius:6px;border:1px solid var(--g2);background:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.qs-qn{font-size:12px;font-weight:700;min-width:20px;text-align:center;}
+.qs-rm{width:24px;height:24px;border-radius:6px;border:none;background:var(--dl);color:var(--d);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* Summary */
+.qs-summary{padding:.4rem .6rem;border-bottom:1px solid var(--g1);flex-shrink:0;background:var(--g0);}
+.qs-sum-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.qs-sum-row.disc .green{color:var(--s);}
+.qs-sum-row.total{font-weight:800;font-size:14px;border-top:1px solid var(--g2);margin-top:4px;padding-top:4px;}
+
+/* Discount */
+.qs-disc-row{display:flex;align-items:center;gap:4px;padding:.3rem .6rem;border-bottom:1px solid var(--g1);flex-shrink:0;background:#fff;}
+.qs-disc-row span{font-size:11px;color:var(--g5);white-space:nowrap;}
+.qs-disc-btn{padding:3px 8px;border:1px solid var(--g2);border-radius:6px;background:#fff;font-family:Cairo,sans-serif;font-size:11px;cursor:pointer;}
+.qs-disc-btn.active{background:var(--p);color:#fff;border-color:var(--p);}
+
+/* Change calc */
+.qs-change-row{display:flex;align-items:center;gap:5px;padding:.3rem .6rem;border-bottom:1px solid var(--g1);flex-shrink:0;background:#fff;}
+.qs-change-row span:first-child{font-size:11px;color:var(--g6);white-space:nowrap;}
+.qs-paid-inp{width:80px;padding:5px 7px;font-size:13px;text-align:center;}
+.qs-change-val{font-size:12px;font-weight:700;color:var(--g4);}
+
+/* Checkout buttons */
+.qs-checkout{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:.4rem .6rem;flex-shrink:0;background:#fff;}
+.qs-pay{padding:10px 5px;border-radius:9px;border:none;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.qs-pay.cash{background:var(--s);color:#fff;}
+.qs-pay.transfer{background:var(--p);color:#fff;}
+.qs-pay.debt{background:var(--dl);color:var(--d);}
+.qs-pay.invoice{background:var(--g1);color:var(--g7);}
+
+/* Mobile: stack vertically */
+@media(max-width:768px){
+  .qs-body{flex-direction:column;}
+  .qs-products-col{flex:none;max-height:38vh;border-left:none;border-bottom:1px solid var(--br);}
+  .qs-cart-col{flex:1;}
+  .qs-grid{grid-template-columns:repeat(3,1fr);}
+  .qs-topbar{flex-wrap:wrap;}
+  .qs-topbar .qs-barcode-inp{flex:1 1 100%;}
+}
+
+/* Scanner */
+#qs-scanner-container video,#qs-scanner-container canvas{width:100%!important;display:block;}
+#qs-scanner-container canvas.drawingBuffer{position:absolute;top:0;left:0;}
+</style>
+
 </body>
 </html>
