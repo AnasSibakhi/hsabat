@@ -4,8 +4,7 @@
 import { State } from '../core/state.js';
 
 const _loaders = {};
-
-export const register = (pageId, loaderFn) => { _loaders[pageId] = loaderFn; };
+export const register = (pageId, fn) => { _loaders[pageId] = fn; };
 
 export const go = (pageId, activeElement = null) => {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -14,17 +13,22 @@ export const go = (pageId, activeElement = null) => {
   const content  = document.getElementById('main-content');
   const qsPage   = document.getElementById('page-quicksale');
   const qsFooter = document.getElementById('qs-footer');
+  const appBody  = document.querySelector('.app-body');
 
   if (pageId === 'quicksale') {
-    // POS mode
-    if (content)  { content.style.overflow = 'hidden'; content.style.padding = '0'; content.style.display = 'flex'; content.style.flexDirection = 'column'; }
-    if (qsPage)   { qsPage.style.display = 'flex'; qsPage.style.flexDirection = 'column'; qsPage.style.flex = '1'; qsPage.style.minHeight = '0'; qsPage.style.overflow = 'hidden'; }
-    if (qsFooter) { qsFooter.style.display = 'flex'; }
+    // POS mode: content = flex column, no padding/scroll
+    if (content) {
+      content.style.cssText = 'overflow:hidden;padding:0;display:flex;flex-direction:column;flex:1;min-height:0;';
+    }
+    if (qsPage) {
+      qsPage.style.cssText = 'display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;';
+    }
+    if (qsFooter) qsFooter.style.display = 'flex';
   } else {
     // Normal mode
-    if (content)  { content.style.overflow = ''; content.style.padding = ''; content.style.display = ''; content.style.flexDirection = ''; }
-    if (qsPage)   { qsPage.style.display = 'none'; }
-    if (qsFooter) { qsFooter.style.display = 'none'; }
+    if (content) content.style.cssText = '';
+    if (qsPage)  qsPage.style.cssText  = 'display:none;';
+    if (qsFooter) qsFooter.style.display = 'none';
     document.getElementById('page-' + pageId)?.classList.add('active');
   }
 
