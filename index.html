@@ -328,12 +328,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .aging-names{font-size:12px;color:var(--g6);line-height:1.7;}
 
 
-.content.qs-active {
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
-}
+
 #page-quicksale.active {
   display: flex !important;
   flex-direction: column;
@@ -347,12 +342,7 @@ body.dark .ni.active{background:#1e3a5f;}
    ════════════════════════════════ */
 
 /* When quicksale is active: content becomes flex */
-.content.qs-active {
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
-}
+
 
 /* Page fills content */
 #page-quicksale {
@@ -363,7 +353,7 @@ body.dark .ni.active{background:#1e3a5f;}
   overflow: hidden;
   background: #fff;
 }
-#page-quicksale.active { display: flex; }
+
 
 /* ── Fixed top bar ── */
 .qs-topbar {
@@ -487,14 +477,8 @@ body.dark .ni.active{background:#1e3a5f;}
 
 /* Mobile: account for bottom nav height */
 @media(max-width: 768px) {
-  .content.qs-active {
-    /* bottom nav is 60px */
-    height: calc(100% - 0px) !important;
-  }
-  #page-quicksale.active {
-    /* Ensure checkout buttons visible above bottom nav */
-    padding-bottom: 0;
-  }
+  
+  
   .qs-middle {
     /* Reduce grid max to show more of cart+buttons */
     flex: 1;
@@ -959,7 +943,7 @@ body.dark .ni.active{background:#1e3a5f;}
    <div class="ni" onclick="Nav.go('returns',this)"><i class="ti ti-arrow-back-up"></i> الإرجاعات</div>
    <div class="ni" onclick="Nav.go('settings',this)"><i class="ti ti-settings"></i> الإعدادات</div>
   </div>
-  <div class="content">
+  <div class="content" id="main-content">
 
    <!-- HOME -->
    <div class="page active" id="page-home">
