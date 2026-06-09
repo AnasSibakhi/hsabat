@@ -967,7 +967,7 @@ body.dark .ni.active{background:#1e3a5f;}
    </div>
 
    <!-- QUICK SALE -->
-   <div class="page" id="page-quicksale">
+   <div id="page-quicksale">
 
     <!-- Search + Scanner bar -->
     <div class="qs-topbar">
@@ -1002,33 +1002,29 @@ body.dark .ni.active{background:#1e3a5f;}
     </div>
 
     </div><!-- end qs-middle -->
+   </div><!-- end page-quicksale -->
 
-    <!-- Discount row -->
-    <div class="qs-disc-row" style="flex-shrink:0;background:#fff;">
+   <!-- QS FOOTER: sibling of page-quicksale, outside scroll -->
+   <div id="qs-footer" style="display:none;flex-direction:column;flex-shrink:0;background:#fff;border-top:2px solid var(--br);">
+    <div class="qs-disc-row">
       <span>خصم:</span>
       <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(0)">بلا</button>
       <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(5)">5%</button>
       <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(10)">10%</button>
       <button class="qs-disc-btn" onclick="QuickSale.applyDiscount(15)">15%</button>
     </div>
-
-    <!-- Change calculator -->
-    <div class="qs-change-row" style="flex-shrink:0;background:#fff;">
+    <div class="qs-change-row">
       <span>مبلغ الزبون:</span>
       <input type="number" id="qs-paid" class="inp qs-paid-inp"
-        placeholder="₪" inputmode="decimal"
-        oninput="QuickSale.calcChange()">
+        placeholder="₪" inputmode="decimal" oninput="QuickSale.calcChange()">
       <span id="qs-change" class="qs-change-display">—</span>
     </div>
-
-    <!-- Checkout buttons -->
     <div class="qs-checkout">
       <button class="qs-pay cash"     onclick="QuickSale.sell('cash')">💵 نقدي</button>
       <button class="qs-pay transfer" onclick="QuickSale.sell('transfer')">🏦 تحويل</button>
       <button class="qs-pay debt"     onclick="QuickSale.openDebtModal()">💳 دين</button>
       <button class="qs-pay invoice"  onclick="Modal.open('m-invoice')">📋 فاتورة</button>
     </div>
-
    </div>
 
 <!-- CUSTOMERS -->

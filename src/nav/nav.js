@@ -1,7 +1,6 @@
 /**
  * nav.js — Navigation Module
  */
-
 import { State } from '../core/state.js';
 
 const _loaders = {};
@@ -9,31 +8,23 @@ const _loaders = {};
 export const register = (pageId, loaderFn) => { _loaders[pageId] = loaderFn; };
 
 export const go = (pageId, activeElement = null) => {
-  // Hide all regular pages
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
 
-  const content = document.getElementById('main-content');
-  const qsPage  = document.getElementById('page-quicksale');
+  const content  = document.getElementById('main-content');
+  const qsPage   = document.getElementById('page-quicksale');
+  const qsFooter = document.getElementById('qs-footer');
 
   if (pageId === 'quicksale') {
-    // POS mode: hide .content scroll, show quicksale
-    if (content) {
-      content.style.overflow      = 'hidden';
-      content.style.display       = 'flex';
-      content.style.flexDirection = 'column';
-      content.style.padding       = '0';
-    }
-    if (qsPage) qsPage.classList.add('active');
+    // POS mode
+    if (content)  { content.style.overflow = 'hidden'; content.style.padding = '0'; content.style.display = 'flex'; content.style.flexDirection = 'column'; }
+    if (qsPage)   { qsPage.style.display = 'flex'; qsPage.style.flexDirection = 'column'; qsPage.style.flex = '1'; qsPage.style.minHeight = '0'; qsPage.style.overflow = 'hidden'; }
+    if (qsFooter) { qsFooter.style.display = 'flex'; }
   } else {
-    // Normal mode: restore .content
-    if (content) {
-      content.style.overflow      = '';
-      content.style.display       = '';
-      content.style.flexDirection = '';
-      content.style.padding       = '';
-    }
-    if (qsPage) qsPage.classList.remove('active');
+    // Normal mode
+    if (content)  { content.style.overflow = ''; content.style.padding = ''; content.style.display = ''; content.style.flexDirection = ''; }
+    if (qsPage)   { qsPage.style.display = 'none'; }
+    if (qsFooter) { qsFooter.style.display = 'none'; }
     document.getElementById('page-' + pageId)?.classList.add('active');
   }
 
