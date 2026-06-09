@@ -485,6 +485,31 @@ body.dark .ni.active{background:#1e3a5f;}
   .qs-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
+/* Mobile: account for bottom nav height */
+@media(max-width: 768px) {
+  .content.qs-active {
+    /* bottom nav is 60px */
+    height: calc(100% - 0px) !important;
+  }
+  #page-quicksale.active {
+    /* Ensure checkout buttons visible above bottom nav */
+    padding-bottom: 0;
+  }
+  .qs-middle {
+    /* Reduce grid max to show more of cart+buttons */
+    flex: 1;
+  }
+  .qs-grid {
+    /* Smaller on mobile */
+    max-height: 38vh;
+    overflow-y: auto;
+  }
+  .qs-pay { padding: 10px; font-size: 13px; }
+  .qs-checkout { padding: .3rem .5rem .4rem; gap: 5px; }
+  .qs-disc-row  { padding: .25rem .5rem; }
+  .qs-change-row{ padding: .2rem .5rem; }
+}
+
 </style>
 </head>
 <body>
