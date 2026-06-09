@@ -163,7 +163,7 @@ export const QuickSale = {
     if (!el) return;
 
     if (!_cart.length) {
-      el.innerHTML = '<div class="qs-cart-empty"><i class="ti ti-shopping-cart"></i><p>السلة فارغة — اختر منتجاً أو امسح باركود</p></div>';
+      el.innerHTML = '<div class="pos-cart-empty"><i class="ti ti-shopping-cart"></i><p>السلة فارغة<br>اختر منتجاً أو امسح باركود</p></div>';
       DOM.setText('qs-items-count', '0');
       DOM.setText('qs-total-display', '₪ 0.00');
       const s = DOM.get('qs-summary-box'); if (s) s.innerHTML = '';
@@ -196,9 +196,9 @@ export const QuickSale = {
 
     const s = DOM.get('qs-summary-box');
     if (s) {
-      let h = '<div class="qs-sum-row"><span>المجموع الفرعي</span><span>₪' + subtotal.toFixed(2) + '</span></div>';
-      if (discount > 0) h += '<div class="qs-sum-row disc"><span>خصم ' + _discount + '%</span><span class="green">−₪' + discount.toFixed(2) + '</span></div>';
-      h += '<div class="qs-sum-row total"><span>الإجمالي</span><span>₪' + total.toFixed(2) + '</span></div>';
+      let h = '<div class="pos-sum-row"><span>المجموع الفرعي</span><span>₪' + subtotal.toFixed(2) + '</span></div>';
+      if (discount > 0) h += '<div class="pos-sum-row"><span>خصم ' + _discount + '%</span><span class="disc">−₪' + discount.toFixed(2) + '</span></div>';
+      h += '<div class="pos-sum-row pos-total"><span>الإجمالي</span><span>₪' + total.toFixed(2) + '</span></div>';
       s.innerHTML = h;
     }
 
@@ -209,8 +209,8 @@ export const QuickSale = {
     _discount = pct;
     QuickSale._renderCart();
     Notify.show(pct > 0 ? 'خصم ' + pct + '%' : 'تم إلغاء الخصم');
-    document.querySelectorAll('.qs-disc-btn').forEach(b => b.classList.remove('active'));
-    const active = document.querySelector('.qs-disc-btn[data-pct="' + pct + '"]');
+    document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active'));
+    const active = document.querySelector('.pos-disc[data-pct="' + pct + '"]');
     if (active) active.classList.add('active');
   },
 
@@ -234,7 +234,7 @@ export const QuickSale = {
     const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); }
     const pi = DOM.get('qs-paid'); if (pi) pi.value = '';
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
-    document.querySelectorAll('.qs-disc-btn').forEach(b => b.classList.remove('active'));
+document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active'));
     QuickSale._renderGrid();
   },
 
@@ -486,9 +486,9 @@ export const QuickSale = {
       const cash   = list.filter(r => r.payment_type === 'cash').reduce((s, r) => s + r.total, 0);
       const count  = list.length;
       el.innerHTML =
-        '<div class="qs-stat"><span>مبيعات اليوم</span><strong class="green">₪' + total.toFixed(0) + '</strong></div>' +
-        '<div class="qs-stat"><span>نقدي</span><strong>₪' + cash.toFixed(0) + '</strong></div>' +
-        '<div class="qs-stat"><span>عدد الفواتير</span><strong>' + count + '</strong></div>';
+        '<div class="pos-stat-item"><span>مبيعات اليوم</span><strong class="green">₪' + total.toFixed(0) + '</strong></div>' +
+        '<div class="pos-stat-item"><span>نقدي</span><strong>₪' + cash.toFixed(0) + '</strong></div>' +
+        '<div class="pos-stat-item"><span>فواتير</span><strong>' + count + '</strong></div>';
     } catch {}
   },
 
