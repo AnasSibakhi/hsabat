@@ -29,6 +29,7 @@ const AdminPanel = {
     document.querySelectorAll('.sa-nav-item').forEach(n => {
       if (n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
     });
+    AdminPanel.closeDrawer();
     const loaders = { 'sa-stores': AdminPanel.loadStores, 'sa-subscriptions': AdminPanel.loadSubscriptions, 'sa-users': AdminPanel.loadUsers, 'sa-dashboard': AdminPanel.loadDashboard };
     loaders[id]?.();
   },
@@ -61,7 +62,7 @@ const AdminPanel = {
 
   _storeRow(s, extended = false) {
     const isExpired = s.subscription_end && new Date(s.subscription_end) < new Date();
-    const status    = isExpired ? '<span class="br">منتهي</span>' : s.is_active === false ? '<span class="ba">موقوف</span>' : '<span class="bg">نشط</span>';
+    const status    = isExpired ? '<span class="sa-badge-expired">منتهي</span>' : s.is_active === false ? '<span class="sa-badge-pending">موقوف</span>' : '<span class="sa-badge-active">نشط</span>';
     const subDate   = s.subscription_end ? new Date(s.subscription_end).toLocaleDateString('en-US') : '-';
     return `<tr>
       <td><strong>${Utils.escape(s.store_name)}</strong></td>
@@ -211,6 +212,28 @@ const AdminPanel = {
     await AdminPanel.loadUsers();
   },
 
+  toggleDrawer() {
+    const sidebar  = document.getElementById('sa-sidebar');
+    const overlay  = document.getElementById('sa-overlay');
+    const isOpen   = sidebar.classList.contains('open');
+    sidebar.classList.toggle('open', !isOpen);
+    overlay.classList.toggle('open', !isOpen);
+  },
+
+  closeDrawer() {
+    document.getElementById('sa-sidebar')?.classList.remove('open');
+    document.getElementById('sa-overlay')?.classList.remove('open');
+  },
+
+  resetTransferForm() {
+    DOM.get('te-edit-id').value = '';
+    DOM.get('te-name').value    = '';
+    DOM.get('te-details').value = '';
+    DOM.get('te-store-id').value = '';
+    const title = DOM.get('te-form-title');
+    if (title) title.textContent = 'إضافة جهة جديدة';
+  },
+
   editStore() { Notify.show('ميزة التعديل قريباً'); },
 
   async sendNotification() {
@@ -263,6 +286,8 @@ const AdminPanel = {
     DOM.get('te-edit-id').value  = id;
     DOM.get('te-name').value     = name;
     DOM.get('te-details').value  = details;
+    const title = DOM.get('te-form-title');
+    if (title) title.textContent = 'تعديل الجهة';
     DOM.get('te-name').focus();
   },
 
