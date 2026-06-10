@@ -407,7 +407,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   // ── Debt modal ──
   // ── Transfer Entity ──
   async loadTransferEntities() {
-    const { data } = await sb.from('transfer_entities')
+    const { data } = await sbAdmin.from('transfer_entities')
       .select('*').eq('store_id', State.user.id).eq('is_active', true).order('name');
     _transferEntities = data || [];
   },
@@ -418,9 +418,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const sel = DOM.get('qs-transfer-entity');
     sel.innerHTML = '<option value="">-- اختر --</option>'
       + _transferEntities.map(e => `<option value="${e.id}" data-name="${Utils.escape(e.name)}">${Utils.escape(e.name)}</option>`).join('');
-    // sync buyer name to receiver field
-    const buyerName = DOM.val('qs-buyer-name');
+    // show buyer fields
+    const row = DOM.get('qs-buyer-row'); if (row) row.style.display = 'grid';
     const rec = DOM.get('qs-transfer-receiver');
+    const buyerName = DOM.val('qs-buyer-name');
     if (rec && buyerName) rec.value = buyerName;
     Modal.open('m-qs-transfer');
   },
