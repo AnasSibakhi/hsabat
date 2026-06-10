@@ -280,24 +280,28 @@ const AdminPanel = {
   async saveTransferEntity() {
     const id      = DOM.val('te-edit-id');
     const storeId = DOM.val('te-store-id');
-    const name    = DOM.val('te-name').trim();
+    const raw     = DOM.val('te-name').trim();
     const details = DOM.val('te-details').trim();
     if (!storeId) { Notify.error('اختر المحل'); return; }
-    if (!name)    { Notify.error('أدخل اسم الجهة'); return; }
+    if (!raw)     { Notify.error('أدخل اسم الجهة'); return; }
 
     if (id) {
-      await sbAdmin.from('transfer_entities').update({ name, details: details || null }).eq('id', id);
+      await sbAdmin.from('transfer_entities').update({ name: raw, details: details || null }).eq('id', id);
       Notify.success('تم التعديل');
+      DOM.get('te-edit-id').value = '';
+      const title = DOM.get('te-form-title');
+      if (title) title.textContent = 'إضافة جهة';
     } else {
-      await sbAdmin.from('transfer_entities').insert({ store_id: storeId, name, details: details || null });
-      Notify.success('تمت الإضافة');
+      const names = raw.split('\n').map(n => n.trim()).filter(n => n);
+      await sbAdmin.from('transfer_entities').insert(
+        names.map(name => ({ store_id: storeId, name, details: details || null }))
+      );
+      Notify.success(`تمت إضافة ${names.length} جهة`);
     }
     DOM.get('te-name').value    = '';
     DOM.get('te-details').value = '';
-    DOM.get('te-edit-id').value = '';
-    const title = DOM.get('te-form-title');
-    if (title) title.textContent = 'إضافة جهة';
     DOM.get('te-name').focus();
+    // تحديث الجدول فقط بدون إعادة تحميل الـ dropdown
     await AdminPanel.loadTransferEntities();
   },
 
