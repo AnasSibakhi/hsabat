@@ -168,7 +168,7 @@
    RIGHT — Cart Panel
    ══════════════════════════ */
 .pos-right {
-  width: 300px; min-width: 260px;
+  width: 300px; min-width: 0;
   display: flex; flex-direction: column;
   overflow: hidden; min-height: 0;
   background: #fff;
