@@ -7,21 +7,16 @@
 <title>حسابات</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-<style>
-/* ══════════════════════════════════════
-   LAYOUT — Single source of truth
-   ══════════════════════════════════════ */
+<style>/* ══════════════════════════════════
+   LAYOUT — نظيف بدون تكرار
+   ══════════════════════════════════ */
 
-html {
-  height: 100%;
-}
+html, 
 
 body {
   font-family: 'Cairo', sans-serif;
   background: #fff;
   color: var(--g9);
-  margin: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -32,6 +27,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 #app-wrap.hidden { display: none; }
 
@@ -61,6 +57,7 @@ body {
   display: none;
 }
 
+/* الـ scroll container الرئيسي */
 .content {
   flex: 1;
   overflow-y: auto;
@@ -72,6 +69,7 @@ body {
   min-width: 0;
 }
 
+/* bottom nav — مخفي افتراضياً */
 .bottom-nav {
   display: none;
   background: #fff;
@@ -82,29 +80,44 @@ body {
   z-index: 100;
 }
 
-/* ── Mobile ── */
+/* ── موبايل ── */
 @media (max-width: 768px) {
-  .sidebar    { display: none !important; }
-  .bottom-nav { display: flex; }
-  .content    {
-    padding: .75rem;
-    padding-bottom: 80px;
-  }
-  .sg.c4  { grid-template-columns: repeat(2, 1fr); }
-  .sa-sidebar { display: none; }
-  .mo     { align-items: flex-end; padding: 0; }
-  .modal  { border-radius: 20px 20px 0 0; max-height: 85vh; }
+  .sidebar      { display: none !important; }
+  
+  
+  .sg.c4        { grid-template-columns: repeat(2, 1fr); }
+  .sa-sidebar   { display: none; }
+  .mo           { align-items: flex-end; padding: 0; }
+  .modal        { border-radius: 20px 20px 0 0; max-height: 85vh; }
 }
 
-/* ── Desktop ── */
+/* ── ديسكتوب ── */
 @media (min-width: 769px) {
-  .sidebar    { display: flex; flex-direction: column; }
-  .bottom-nav { display: none !important; }
-  .sg.c4  { grid-template-columns: repeat(4, 1fr); }
-  .sa-sidebar { display: flex; flex-direction: column; }
-  .mo     { align-items: center; padding: 1rem; }
-  .modal  { border-radius: 16px; max-height: 85vh; }
+  .sidebar      { display: flex; flex-direction: column; }
+  
+  .sg.c4        { grid-template-columns: repeat(4, 1fr); }
+  .sa-sidebar   { display: flex; flex-direction: column; }
+  .mo           { align-items: center; padding: 1rem; }
+  .modal        { border-radius: 16px; max-height: 85vh; }
 }
+
+
+/* ══════════════════════════════════════
+   LAYOUT — Single source of truth
+   ══════════════════════════════════════ */
+
+
+
+
+
+.app-
+
+
+
+
+/* ── Mobile ── */
+
+/* ── Desktop ── */
 
 
 /* ══ LAYOUT FOUNDATION ══ */
