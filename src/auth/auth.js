@@ -18,7 +18,7 @@ import { Notify }       from '../core/notify.js';
 const Loading = {
   show() {
     const el = document.getElementById('loading-wrap');
-    if (el) { el.classList.remove('hidden'); }
+    if (el) { el.style.display = 'flex'; }
   },
   hide() {
     const el = document.getElementById('loading-wrap');
