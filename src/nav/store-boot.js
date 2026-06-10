@@ -29,6 +29,20 @@ export const Store = {
     DOM.get('app-wrap').style.display    = 'flex';
     DOM.get('auth-wrap')?.classList.add('hidden');
 
+    // Force layout recalc AFTER browser paints the flex container
+    // This fixes mobile scroll calculated on empty/wrong container height
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const content = document.getElementById('main-content');
+        if (!content) return;
+        // Read → forces reflow with correct dimensions
+        const h = content.offsetHeight;
+        // Write → scroll recalculates with actual height
+        content.style.overflowY = 'hidden';
+        content.style.overflowY = 'auto';
+      });
+    });
+
     // Set UI labels
     DOM.setText('store-pill', account.store_name);
     DOM.setText('hgreet',     'مرحباً، ' + account.owner + ' 👋');
