@@ -88,9 +88,6 @@ export const BarcodeScanner = {
     _lastCode   = code;
     _readCounts = {};
 
-    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-    BarcodeScanner._beep();
-
     clearTimeout(_debounceTimer);
     _debounceTimer = setTimeout(() => { _lastCode = null; }, DEBOUNCE_MS);
 

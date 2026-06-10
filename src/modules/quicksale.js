@@ -261,12 +261,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     if (product) {
       QuickSale.addToCart(product.id);
+      QuickSale._beep('success');
     } else {
       // Open add product modal
       const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
       const nm = DOM.get('qs-new-name');   if (nm) { nm.value = ''; setTimeout(() => nm.focus(), 200); }
       Modal.open('m-new-product');
       Notify.error('المنتج غير موجود — أضفه الآن');
+      QuickSale._beep('error');
     }
 
     const bi = DOM.get('qs-barcode-input'); if (bi) setTimeout(() => bi.focus(), 200);
@@ -492,16 +494,23 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     } catch {}
   },
 
-  _beep() {
+  _beep(type = 'success') {
     try {
       const ctx  = new (window.AudioContext || window.webkitAudioContext)();
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = 1200; osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+      if (type === 'success') {
+        osc.frequency.value = 1200; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.7, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
+      } else {
+        osc.frequency.value = 300; osc.type = 'square';
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+      }
     } catch {}
   },
 };
