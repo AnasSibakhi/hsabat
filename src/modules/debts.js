@@ -11,16 +11,19 @@ import { escape, currency, sumBy, daysSince, today, monthStart } from '../core/u
 import { CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getDashboard } from '../core/registry.js';
+import { Customers }    from './customers.js';
 
 // ── State ──
 let _allDebts    = [];
-let _sortMode    = 'date';   // 'date' | 'amount' | 'overdue'
+let _sortMode    = 'date';
 let _showArchive = false;
+let _remindDays  = 0;
+let _newCustName = null;
 
 const Debts = {
 
   async load() {
-    const { data } = await DB.debts().select('*,customers(name)').order('debt_date', { ascending: false });
+    const { data } = await DB.debts().select('*,customers(name,phone)').order('debt_date', { ascending: false });
     _allDebts = data || [];
     Debts._renderStats();
     Debts._renderList();
@@ -85,6 +88,7 @@ const Debts = {
         + (!d.archived
           ? '<button class="ibg" onclick="Debts.openPayModal(\'' + id + '\',\'' + name + '\',' + remaining + ')">تسديد</button> '
             + '<button class="iba" onclick="Debts.archive(\'' + id + '\')" style="background:var(--wl);color:var(--w);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:600;">أرشفة</button>'
+            + (remindReady ? ' <button class="ibw" onclick="Debts.sendWhatsapp(\'' + id + '\')">📲 واتساب</button>' : '')
           : '<button class="ibb" onclick="Debts.unarchive(\'' + id + '\')">إلغاء أرشفة</button>')
         + '</td>'
         + '<td><button class="ibr" onclick="Debts.delete(\'' + id + '\')">حذف</button></td>'
@@ -118,6 +122,69 @@ const Debts = {
 
     const agingEl = DOM.get('d-aging');
     if (agingEl) agingEl.innerHTML = html || '<p style="color:var(--g4);font-size:13px;">لا يوجد متأخرون</p>';
+  },
+
+  // ── Customer Search ──
+  searchCustomer(val) {
+    const dd = DOM.get('dc-dropdown');
+    const newWrap = DOM.get('dc-new-wrap');
+    DOM.get('dc').value = '';
+    _newCustName = null;
+    if (!val.trim()) { dd.style.display = 'none'; newWrap.style.display = 'none'; return; }
+
+    const q = val.trim().toLowerCase();
+    const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
+
+    let html = matches.map(c =>
+      `<div class="dc-opt" onclick="Debts.selectCustomer('${c.id}','${Utils.escape(c.name)}')">
+        ${Utils.escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
+      </div>`
+    ).join('');
+
+    html += `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}'))">+ إضافة &quot;${Utils.escape(val.trim())}&quot; كزبون جديد</div>`;
+
+    dd.innerHTML = html;
+    dd.style.display = 'block';
+    newWrap.style.display = 'none';
+  },
+
+  selectCustomer(id, name) {
+    DOM.get('dc').value = id;
+    DOM.get('dc-search').value = name;
+    DOM.get('dc-dropdown').style.display = 'none';
+    DOM.get('dc-new-wrap').style.display = 'none';
+    _newCustName = null;
+  },
+
+  selectNew(name) {
+    DOM.get('dc').value = '';
+    DOM.get('dc-search').value = name;
+    DOM.get('dc-dropdown').style.display = 'none';
+    DOM.get('dc-new-wrap').style.display = 'block';
+    _newCustName = name;
+  },
+
+  setRemind(days) {
+    _remindDays = days;
+    document.querySelectorAll('.debt-remind-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.days) === days);
+    });
+  },
+
+  sendWhatsapp(debtId) {
+    const debt = _allDebts.find(d => d.id === debtId);
+    if (!debt) return;
+    const phone = debt.cust_phone || debt.customers?.phone || '';
+    const name  = debt.customers?.name || '';
+    const amt   = (debt.amount - debt.paid).toFixed(2);
+    const date  = debt.debt_date;
+    const store = State.user?.store_name || 'حسابات';
+    const msg   = encodeURIComponent(`السلام عليكم ${name}،
+نذكركم بدين بمبلغ ₪${amt} بتاريخ ${date}.
+شكراً - ${store}`);
+    const num   = phone.replace(/[^0-9]/g, '');
+    if (!num) { Notify.error('لا يوجد رقم هاتف لهذا الزبون'); return; }
+    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
   },
 
   setSort(mode) {
@@ -201,20 +268,45 @@ const Debts = {
   },
 
   async save() {
-    const customerId = DOM.val('dc');
-    const amount     = parseFloat(DOM.val('da'));
-    const date       = DOM.val('dd');
-    if (!customerId) { Notify.error('اختر الزبون'); return; }
+    let customerId = DOM.val('dc');
+    const amount   = parseFloat(DOM.val('da'));
+    const date     = DOM.val('dd');
+    const phone    = DOM.val('dc-new-phone');
+
+    // إذا زبون جديد — أضفه أولاً
+    if (!customerId && _newCustName) {
+      const newC = await Customers.createInline(_newCustName, phone);
+      if (!newC?.id) { Notify.error('فشل إضافة الزبون'); return; }
+      customerId = newC.id;
+    }
+
+    if (!customerId) { Notify.error('اختر الزبون أو أدخل اسماً جديداً'); return; }
     if (!amount || amount <= 0) { Notify.error('أدخل المبلغ'); return; }
+
+    // حساب تاريخ التذكير
+    const remindDate = _remindDays > 0
+      ? new Date(Date.now() + _remindDays * 86400000).toISOString().split('T')[0]
+      : null;
 
     State.isMutating = true;
     try {
-      const { error } = await DB.debts().insert({ store_id: State.user.id, customer_id: customerId, amount, debt_date: date, notes: DOM.val('dn') });
+      const { error } = await DB.debts().insert({
+        store_id:    State.user.id,
+        customer_id: customerId,
+        amount,
+        debt_date:   date,
+        notes:       DOM.val('dn'),
+        remind_date: remindDate,
+        cust_phone:  phone || null,
+      });
       if (error) throw error;
-      Notify.success('تم حفظ الدين');
+      Notify.success('تم حفظ الدين' + (remindDate ? ' — تذكير: ' + remindDate : ''));
       Modal.close('m-debt');
-      DOM.clearInputs('da', 'dn');
+      DOM.clearInputs('da', 'dn', 'dc-search', 'dc-new-phone');
       DOM.get('dc').value = '';
+      DOM.get('dc-new-wrap').style.display = 'none';
+      _newCustName = null; _remindDays = 0;
+      document.querySelectorAll('.debt-remind-btn').forEach((b,i) => b.classList.toggle('active', i===0));
       await Promise.all([Debts.load(), Debts.loadBadge(), getDashboard().load()]);
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }

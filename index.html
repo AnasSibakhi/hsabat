@@ -207,6 +207,13 @@ table.dt tr:hover td{background:var(--g0);}
 .ibg{background:var(--sl);color:var(--s);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
 .ibb{background:var(--pl);color:var(--p);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
 .ibr{background:var(--dl);color:var(--d);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
+.ibw{background:#25d366;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;}
+.debt-remind-btn{background:var(--g1);color:var(--g7);border:1px solid var(--br);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;transition:all .15s;}
+.debt-remind-btn.active{background:var(--p);color:#fff;border-color:var(--p);}
+.dc-opt{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--g1);}
+.dc-opt:last-child{border-bottom:none;}
+.dc-opt:hover{background:var(--g0);}
+.dc-opt.new{color:var(--p);font-weight:700;}
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px;margin-bottom:.75rem;line-height:1.5;}
 .alert i{flex-shrink:0;margin-top:1px;}
 .aw{background:var(--wl);color:var(--w);border:1px solid #fde68a;}
@@ -809,9 +816,31 @@ body.dark .ni.active{background:#1e3a5f;}
 <!-- Debt -->
 <div class="mo" id="m-debt"><div class="modal">
  <div class="mhdr"><span class="mtitle">إضافة دين</span><button class="mclose" onclick="Modal.close('m-debt')">✕</button></div>
- <div class="fg"><label class="lbl">الزبون *</label><select class="inp" id="dc"><option value="">-- اختر الزبون --</option></select></div>
- <div class="fr"><div class="fg"><label class="lbl">المبلغ (₪) *</label><input class="inp" type="number" id="da" inputmode="decimal"></div><div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="dd"></div></div>
+ <div class="fg" style="position:relative;">
+  <label class="lbl">الزبون *</label>
+  <input class="inp" id="dc-search" placeholder="ابحث أو أدخل اسم جديد..." autocomplete="off" oninput="Debts.searchCustomer(this.value)">
+  <input type="hidden" id="dc">
+  <div id="dc-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:180px;overflow-y:auto;"></div>
+ </div>
+ <div id="dc-new-wrap" style="display:none;background:var(--g0);border-radius:10px;padding:10px;margin-top:4px;">
+  <div style="font-size:12px;color:var(--g5);margin-bottom:8px;">زبون جديد — سيُضاف تلقائياً</div>
+  <input class="inp" id="dc-new-phone" placeholder="رقم الهاتف (اختياري)" inputmode="tel">
+ </div>
+ <div class="fr">
+  <div class="fg"><label class="lbl">المبلغ (₪) *</label><input class="inp" type="number" id="da" inputmode="decimal"></div>
+  <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="dd"></div>
+ </div>
  <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="dn" placeholder="اختياري"></div>
+ <div class="fg">
+  <label class="lbl">تذكير واتساب (اختياري)</label>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+   <button type="button" class="debt-remind-btn active" data-days="0" onclick="Debts.setRemind(0)">بلا</button>
+   <button type="button" class="debt-remind-btn" data-days="1" onclick="Debts.setRemind(1)">يوم</button>
+   <button type="button" class="debt-remind-btn" data-days="2" onclick="Debts.setRemind(2)">يومان</button>
+   <button type="button" class="debt-remind-btn" data-days="3" onclick="Debts.setRemind(3)">٣ أيام</button>
+   <button type="button" class="debt-remind-btn" data-days="7" onclick="Debts.setRemind(7)">أسبوع</button>
+  </div>
+ </div>
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-debt')">إلغاء</button><button class="btn btn-s" onclick="Debts.save()">حفظ</button></div>
 </div></div>
 
