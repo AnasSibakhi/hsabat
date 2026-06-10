@@ -9,8 +9,8 @@ let _callback      = null;
 let _lastCode      = null;
 let _readCounts    = {};
 let _debounceTimer = null;
-const REQUIRED_READS = 3;
-const DEBOUNCE_MS    = 1500;
+const REQUIRED_READS = 1;
+const DEBOUNCE_MS    = 800;
 
 export const BarcodeScanner = {
 
@@ -53,9 +53,9 @@ export const BarcodeScanner = {
               height: { ideal: 720 },
             },
           },
-          locator:      { patchSize: 'medium', halfSample: true },
-          numOfWorkers: 2,
-          frequency:    10,
+          locator:      { patchSize: 'large', halfSample: false },
+          numOfWorkers: 4,
+          frequency:    20,
           decoder: {
             readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader',
                       'code_128_reader','code_39_reader'],
@@ -117,9 +117,9 @@ export const BarcodeScanner = {
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.frequency.value = 1200; osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.7, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
     } catch {}
   },
 };
