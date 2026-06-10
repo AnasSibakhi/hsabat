@@ -541,23 +541,31 @@ body.dark .ni.active{background:#1e3a5f;}
 
    <!-- TRANSFER ENTITIES -->
    <div class="sa-page" id="sa-transfer-entities">
-    <div class="sa-title">🏦 جهات التحويل</div>
-    <div class="sa-card" style="margin-bottom:1rem;">
-     <div style="padding:1.25rem;">
-      <input type="hidden" id="te-edit-id">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-       <div><label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">المحل *</label><select class="inp" id="te-store-id" style="background:#334155;border-color:#475569;color:#f1f5f9;"><option value="">-- اختر المحل --</option></select></div>
-       <div><label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">اسم الجهة *</label><input class="inp" id="te-name" placeholder="مثال: بنك فلسطين" style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
-      </div>
-      <div style="margin-bottom:10px;"><label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">تفاصيل (اختياري)</label><input class="inp" id="te-details" placeholder="ملاحظات إضافية..." style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
-      <div style="display:flex;gap:8px;">
-       <button class="sa-btn sa-btn-p" onclick="AdminPanel.saveTransferEntity()"><i class="ti ti-device-floppy"></i> حفظ</button>
-       <button class="sa-btn" onclick="AdminPanel.loadTransferEntities()" style="background:#334155;color:#94a3b8;"><i class="ti ti-refresh"></i> تحديث</button>
+    <div class="sa-page-header">
+     <div><div class="sa-title">🏦 جهات التحويل</div><div class="sa-title-sub">إدارة جهات التحويل لكل محل</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+     <div class="sa-card">
+      <div class="sa-card-header"><span id="te-form-title">إضافة جهات</span></div>
+      <div class="sa-card-body">
+       <input type="hidden" id="te-edit-id">
+       <div class="sa-form-group"><label class="sa-label">المحل *</label><select class="sa-select" id="te-store-id"><option value="">-- اختر المحل --</option></select></div>
+       <div class="sa-form-group">
+        <label class="sa-label">أسماء الجهات *</label>
+        <textarea class="sa-input" id="te-name" rows="4" placeholder="بنك فلسطين&#10;جوال بي&#10;PalPay&#10;(كل جهة في سطر)" style="resize:none;"></textarea>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">اكتب كل جهة في سطر منفصل — سيتم حفظهم جميعاً</div>
+       </div>
+       <div class="sa-form-group"><label class="sa-label">تفاصيل (اختياري — تنطبق على الكل)</label><input class="sa-input" id="te-details" placeholder="ملاحظات إضافية..."></div>
+       <div style="display:flex;gap:8px;">
+        <button class="sa-btn sa-btn-p" onclick="AdminPanel.saveTransferEntity()"><i class="ti ti-device-floppy"></i> حفظ</button>
+        <button class="sa-btn sa-btn-o" onclick="AdminPanel.resetTransferForm()"><i class="ti ti-x"></i> إلغاء</button>
+       </div>
       </div>
      </div>
-    </div>
-    <div class="sa-card">
-     <div class="tw"><table class="dt" style="color:#f1f5f9;"><thead><tr><th>المحل</th><th>الاسم</th><th>التفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr class="er"><td colspan="5">اضغط تحديث للتحميل</td></tr></tbody></table></div>
+     <div class="sa-card">
+      <div class="sa-card-header"><span>قائمة جهات التحويل</span><button class="sa-btn sa-btn-o" style="padding:5px 10px;font-size:12px;" onclick="AdminPanel.loadTransferEntities()"><i class="ti ti-refresh"></i></button></div>
+      <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الاسم</th><th>التفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#94a3b8;">اضغط تحديث للتحميل</td></tr></tbody></table></div>
+     </div>
     </div>
    </div>
 

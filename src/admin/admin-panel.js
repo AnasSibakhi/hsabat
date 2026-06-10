@@ -226,12 +226,13 @@ const AdminPanel = {
   },
 
   resetTransferForm() {
-    DOM.get('te-edit-id').value = '';
-    DOM.get('te-name').value    = '';
-    DOM.get('te-details').value = '';
+    DOM.get('te-edit-id').value  = '';
+    DOM.get('te-name').value     = '';
+    DOM.get('te-details').value  = '';
     DOM.get('te-store-id').value = '';
+    DOM.get('te-name').rows = 4;
     const title = DOM.get('te-form-title');
-    if (title) title.textContent = 'إضافة جهة جديدة';
+    if (title) title.textContent = 'إضافة جهات';
   },
 
   editStore() { Notify.show('ميزة التعديل قريباً'); },
@@ -282,15 +283,24 @@ const AdminPanel = {
   async saveTransferEntity() {
     const id      = DOM.val('te-edit-id');
     const storeId = DOM.val('te-store-id');
-    const name    = DOM.val('te-name');
+    const raw     = DOM.val('te-name');
     const details = DOM.val('te-details');
-    if (!storeId || !name) { Notify.error('اختر المحل وأدخل الاسم'); return; }
+    if (!storeId || !raw.trim()) { Notify.error('اختر المحل وأدخل الاسم'); return; }
+
     if (id) {
+      // تعديل — سطر واحد فقط
+      const name = raw.trim();
       await sbAdmin.from('transfer_entities').update({ name, details }).eq('id', id);
+      Notify.success('تم التعديل');
     } else {
-      await sbAdmin.from('transfer_entities').insert({ store_id: storeId, name, details });
+      // إضافة — كل سطر record منفصل
+      const names = raw.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+      if (!names.length) { Notify.error('أدخل اسماً واحداً على الأقل'); return; }
+      await sbAdmin.from('transfer_entities').insert(
+        names.map(name => ({ store_id: storeId, name, details: details || null }))
+      );
+      Notify.success(`تم حفظ ${names.length} جهة`);
     }
-    Notify.success('تم الحفظ');
     DOM.clearInputs('te-name', 'te-details', 'te-edit-id');
     await AdminPanel.loadTransferEntities();
   },
@@ -303,6 +313,7 @@ const AdminPanel = {
     const title = DOM.get('te-form-title');
     if (title) title.textContent = 'تعديل الجهة';
     DOM.get('te-name').focus();
+    DOM.get('te-name').rows = 2;
   },
 
   async deleteTransferEntity(id) {
