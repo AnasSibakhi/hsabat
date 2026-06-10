@@ -280,25 +280,24 @@ const AdminPanel = {
   async saveTransferEntity() {
     const id      = DOM.val('te-edit-id');
     const storeId = DOM.val('te-store-id');
-    const raw     = DOM.val('te-name');
-    const details = DOM.val('te-details');
-    if (!storeId || !raw.trim()) { Notify.error('اختر المحل وأدخل الاسم'); return; }
+    const name    = DOM.val('te-name').trim();
+    const details = DOM.val('te-details').trim();
+    if (!storeId) { Notify.error('اختر المحل'); return; }
+    if (!name)    { Notify.error('أدخل اسم الجهة'); return; }
 
     if (id) {
-      // تعديل — سطر واحد فقط
-      const name = raw.trim();
-      await sbAdmin.from('transfer_entities').update({ name, details }).eq('id', id);
+      await sbAdmin.from('transfer_entities').update({ name, details: details || null }).eq('id', id);
       Notify.success('تم التعديل');
     } else {
-      // إضافة — كل سطر record منفصل
-      const names = raw.split('\n').map(n => n.trim()).filter(n => n.length > 0);
-      if (!names.length) { Notify.error('أدخل اسماً واحداً على الأقل'); return; }
-      await sbAdmin.from('transfer_entities').insert(
-        names.map(name => ({ store_id: storeId, name, details: details || null }))
-      );
-      Notify.success(`تم حفظ ${names.length} جهة`);
+      await sbAdmin.from('transfer_entities').insert({ store_id: storeId, name, details: details || null });
+      Notify.success('تمت الإضافة');
     }
-    DOM.clearInputs('te-name', 'te-details', 'te-edit-id');
+    DOM.get('te-name').value    = '';
+    DOM.get('te-details').value = '';
+    DOM.get('te-edit-id').value = '';
+    const title = DOM.get('te-form-title');
+    if (title) title.textContent = 'إضافة جهة';
+    DOM.get('te-name').focus();
     await AdminPanel.loadTransferEntities();
   },
 
