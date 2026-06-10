@@ -25,10 +25,12 @@ export const setHTML = (id, html) => {
 export const show = (id, visible = true) => {
   const el = document.getElementById(id);
   if (!el) return;
-  // Use class-based hiding for elements that need specific display values
-  // app-wrap needs display:flex, others use display:block
   if (id === 'app-wrap') {
-    visible ? el.classList.remove('hidden') : el.classList.add('hidden');
+    if (visible) {
+      el.classList.add('ready');
+    } else {
+      el.classList.remove('ready');
+    }
   } else {
     el.style.display = visible ? '' : 'none';
   }
