@@ -259,19 +259,23 @@ const AdminPanel = {
   async loadTransferEntities() {
     // Load stores into dropdown first
     await AdminPanel._fillStoresDropdown('te-store-id');
-    const { data } = await sbAdmin.from('transfer_entities').select('*, app_accounts(store_name)').order('name');
+    const [{ data }, { data: stores }] = await Promise.all([
+      sbAdmin.from('transfer_entities').select('*').order('name'),
+      sbAdmin.from('app_accounts').select('id, store_name'),
+    ]);
+    const storeMap = Object.fromEntries((stores || []).map(s => [s.id, s.store_name]));
     DOM.setHTML('te-list', (data || []).length
       ? data.map(e => `<tr>
-          <td>${Utils.escape(e.app_accounts?.store_name || e.store_id)}</td>
+          <td>${Utils.escape(storeMap[e.store_id] || e.store_id)}</td>
           <td><strong>${Utils.escape(e.name)}</strong></td>
           <td>${Utils.escape(e.details || '-')}</td>
-          <td><span class="${e.is_active ? 'bg' : 'br'}">${e.is_active ? 'فعّال' : 'معطّل'}</span></td>
+          <td><span class="${e.is_active ? 'sa-badge-active' : 'sa-badge-expired'}">${e.is_active ? 'فعّال' : 'معطّل'}</span></td>
           <td>
-            <button class="ibb" onclick="AdminPanel.editTransferEntity('${e.id}','${Utils.escape(e.name)}','${Utils.escape(e.details||'')}')">تعديل</button>
+            <button class="ibb" onclick="AdminPanel.editTransferEntity('${e.id}','${Utils.escape(e.name)}','${Utils.escape(e.details||'')}','${e.store_id}')">تعديل</button>
             <button class="ibr" onclick="AdminPanel.deleteTransferEntity('${e.id}')">حذف</button>
           </td>
         </tr>`).join('')
-      : '<tr class="er"><td colspan="5">لا توجد جهات تحويل</td></tr>'
+      : '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#94a3b8;">لا توجد جهات تحويل</td></tr>'
     );
   },
 
@@ -291,10 +295,11 @@ const AdminPanel = {
     await AdminPanel.loadTransferEntities();
   },
 
-  editTransferEntity(id, name, details) {
+  editTransferEntity(id, name, details, storeId) {
     DOM.get('te-edit-id').value  = id;
     DOM.get('te-name').value     = name;
     DOM.get('te-details').value  = details;
+    DOM.get('te-store-id').value = storeId || '';
     const title = DOM.get('te-form-title');
     if (title) title.textContent = 'تعديل الجهة';
     DOM.get('te-name').focus();
