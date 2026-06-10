@@ -7,134 +7,22 @@
 <title>حسابات</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-<style>/* ══════════════════════════════════
-   LAYOUT — نظيف بدون تكرار
-   ══════════════════════════════════ */
-
-html, 
-
-body {
-  font-family: 'Cairo', sans-serif;
-  background: #fff;
-  color: var(--g9);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#app-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-#app-wrap.hidden { display: none; }
-
-.topbar {
-  background: #fff;
-  border-bottom: 1px solid var(--br);
-  padding: 0 1rem;
-  height: 52px;
-  min-height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  z-index: 50;
-}
-
-.app-
-
-.sidebar {
-  width: 200px;
-  min-width: 200px;
-  background: var(--g0);
-  border-left: 1px solid var(--br);
-  padding: .6rem;
-  overflow-y: auto;
-  flex-shrink: 0;
-  display: none;
-}
-
-/* الـ scroll container الرئيسي */
-.content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1rem;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  min-height: 0;
-  min-width: 0;
-}
-
-/* bottom nav — مخفي افتراضياً */
-.bottom-nav {
-  display: none;
-  background: #fff;
-  border-top: 1px solid var(--br);
-  flex-shrink: 0;
-  padding: 6px 0;
-  padding-bottom: env(safe-area-inset-bottom, 6px);
-  z-index: 100;
-}
-
-/* ── موبايل ── */
-@media (max-width: 768px) {
-  .sidebar      { display: none !important; }
-  .bottom-nav   { display: flex; }
-  .content      { padding: .75rem; padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px)); }
-  .sg.c4        { grid-template-columns: repeat(2, 1fr); }
-  .sa-sidebar   { display: none; }
-  .mo           { align-items: flex-end; padding: 0; }
-  .modal        { border-radius: 20px 20px 0 0; max-height: 85vh; }
-}
-
-/* ── ديسكتوب ── */
-@media (min-width: 769px) {
-  .sidebar      { display: flex; flex-direction: column; }
-  
-  .sg.c4        { grid-template-columns: repeat(4, 1fr); }
-  .sa-sidebar   { display: flex; flex-direction: column; }
-  .mo           { align-items: center; padding: 1rem; }
-  .modal        { border-radius: 16px; max-height: 85vh; }
-}
-
-
-/* ══════════════════════════════════════
-   LAYOUT — Single source of truth
-   ══════════════════════════════════════ */
-
-
-
-
-
-.app-
-
-
-
-
-/* ── Mobile ── */
-
-/* ── Desktop ── */
-
-
-/* ══ LAYOUT FOUNDATION ══ */
-
-
-
-
-
-
-
-.app-
-
-
+<style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
 
 /* ── LAYOUT ── */
+html,body{height:100%;margin:0;}
+body{
+  font-family:'Cairo',sans-serif;
+  background:#fff;
+  color:var(--g9);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+
 .hidden{display:none!important;}
 
 /* ── TOAST ── */
@@ -193,9 +81,26 @@ table.sa-dt tr:hover td{background:#334155;}
 .sa-btn-o{background:#334155;color:#cbd5e1;}
 
 /* ── APP SHELL ── */
-
-
-
+#app-wrap{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  overflow:hidden;
+  height:100%;
+}
+#app-wrap.hidden{display:none;}
+.topbar{
+  background:#fff;
+  border-bottom:1px solid var(--br);
+  padding:0 1rem;
+  height:52px;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+  z-index:50;
+}
 .tb-brand{display:flex;align-items:center;gap:8px;}
 .tb-icon{width:32px;height:32px;background:var(--p);border-radius:8px;display:flex;align-items:center;justify-content:center;}
 .tb-icon i{color:#fff;font-size:16px;}
@@ -203,13 +108,33 @@ table.sa-dt tr:hover td{background:#334155;}
 .store-pill{background:var(--g0);border:1px solid var(--br);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--g7);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .btn-out{background:var(--dl);color:var(--d);border:none;border-radius:8px;padding:6px 10px;font-size:13px;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
-.app-
+.app-body{
+  flex:1;
+  display:flex;
+  overflow:hidden;
+  min-height:0;
+}
 
+.sidebar{
+  width:200px;
+  min-width:200px;
+  background:var(--g0);
+  border-left:1px solid var(--br);
+  padding:.6rem;
+  overflow-y:auto;
+  flex-shrink:0;
+  display:none;
+}
 
-
-
-.app-
-
+.content{
+  flex:1;
+  overflow-y:auto;
+  padding:1rem;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  min-height:0;
+  min-width:0;
+}
 .content.qs-mode{
   overflow:hidden!important;
   padding:0!important;
@@ -220,8 +145,17 @@ table.sa-dt tr:hover td{background:#334155;}
 }
 
 /* ── BOTTOM NAV ── */
-
-
+.bottom-nav{
+  display:none;
+  background:#fff;
+  border-top:1px solid var(--br);
+  flex-shrink:0;
+  padding:6px 0;
+  padding-bottom:env(safe-area-inset-bottom, 6px);
+  position:relative;
+  z-index:100;
+}
+.bnav-inner{display:flex;justify-content:space-around;}
 .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:11px;color:var(--g5);cursor:pointer;position:relative;min-width:56px;}
 .bn i{font-size:22px;}
 .bn.active{color:var(--p);}
@@ -317,10 +251,56 @@ body.dark .ni.active{background:#1e3a5f;}
 .ni.active{background:var(--pl);color:var(--p);font-weight:700;}
 
 /* ── MOBILE ── */
-
+@media(max-width:768px){
+  .sidebar{display:none!important;}
+  .bottom-nav{display:block;}
+  .content{padding:.75rem .75rem calc(.75rem + 64px);}
+  .sg.c4{grid-template-columns:repeat(2,1fr);}
+  .sa-sidebar{display:none;}
+  .mo{align-items:flex-end;padding:0;}
+  .modal{border-radius:20px 20px 0 0;max-height:85vh;}
+}
 
 /* ── DESKTOP ── */
+@media(min-width:769px){
+  .sidebar{display:flex;flex-direction:column;}
+  .bottom-nav{display:none!important;}
+  .sg.c4{grid-template-columns:repeat(4,1fr);}
+  .sa-sidebar{display:flex;flex-direction:column;}
+  .mo{align-items:center;padding:1rem;}
+  .modal{border-radius:16px;max-height:85vh;}
+}
 
+/* ── DRAWER ── */
+#mobile-drawer{transition:transform .25s ease;}
+#mobile-drawer.open{transform:translateX(0)!important;}
+
+/* ── POS / QUICK SALE ── */
+
+
+}
+
+
+#qs-scanner-container video,
+#qs-scanner-container canvas{
+  width:100%!important;
+  height:auto!important;
+  display:block;
+}
+#qs-scanner-container canvas.drawingBuffer{
+  position:absolute;
+  top:0;left:0;
+}
+
+.pur-sugg-item{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:.5px solid var(--g1);display:flex;justify-content:space-between;align-items:center;}
+.pur-sugg-item:hover{background:var(--g0);}
+
+.d-sort-btn{padding:5px 10px;border:1px solid var(--g2);border-radius:8px;background:#fff;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;color:var(--g6);}
+.d-sort-btn.active{background:var(--p);color:#fff;border-color:var(--p);}
+.aging-bucket{margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:.5px solid var(--g1);}
+.aging-bucket:last-child{border-bottom:none;margin-bottom:0;}
+.aging-label{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.aging-names{font-size:12px;color:var(--g6);line-height:1.7;}
 </style>
 <link rel="stylesheet" href="/pos.css">
 </head>
