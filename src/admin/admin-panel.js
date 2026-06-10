@@ -15,6 +15,8 @@ import { escape, formatDate } from '../core/utils.js';
 const AdminPanel = {
   async boot() {
     DOM.get('superadmin-wrap').style.display = 'flex';
+    DOM.get('app-wrap').style.display = 'none';
+    DOM.get('auth-wrap')?.classList.add('hidden');
     DOM.setText('sa-admin-name', State.user.owner);
     await AdminPanel.loadDashboard();
     AdminPanel.showPage('sa-dashboard');
