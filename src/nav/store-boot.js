@@ -26,7 +26,7 @@ import { QuickSale }  from '../modules/quicksale.js';
 export const Store = {
   async boot(account) {
     DOM.get('exp-wrap').style.display    = 'none';
-    DOM.get('app-wrap').style.display    = 'flex';
+    DOM.get('app-wrap').classList.remove('hidden');
     DOM.get('auth-wrap')?.classList.add('hidden');
 
     // Set UI labels
