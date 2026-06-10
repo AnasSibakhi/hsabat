@@ -551,8 +551,12 @@ body.dark .ni.active{background:#1e3a5f;}
        <input type="hidden" id="te-edit-id">
        <div class="sa-form-group"><label class="sa-label">المحل *</label><select class="sa-select" id="te-store-id"><option value="">-- اختر المحل --</option></select></div>
        <div class="sa-form-group">
+        <label class="sa-label">اسم المجموعة * <span style="font-size:11px;color:#94a3b8;font-weight:400;">(اسم مرجعي)</span></label>
+        <input class="sa-input" id="te-name" placeholder="مثال: طرق الدفع">
+       </div>
+       <div class="sa-form-group">
         <label class="sa-label">الجهات * <span style="font-size:11px;color:#94a3b8;font-weight:400;">(كل جهة في سطر)</span></label>
-        <textarea class="sa-input" id="te-name" rows="4" placeholder="بنك فلسطين
+        <textarea class="sa-input" id="te-names" rows="4" placeholder="بنك فلسطين
 جوال بي
 PalPay" style="resize:none;"></textarea>
        </div>
@@ -565,7 +569,7 @@ PalPay" style="resize:none;"></textarea>
      </div>
      <div class="sa-card">
       <div class="sa-card-header"><span>قائمة جهات التحويل</span><button class="sa-btn sa-btn-o" style="padding:5px 10px;font-size:12px;" onclick="AdminPanel.loadTransferEntities()"><i class="ti ti-refresh"></i></button></div>
-      <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الاسم</th><th>التفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#94a3b8;">اضغط تحديث للتحميل</td></tr></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الاسم</th><th>الجهات</th><th>تفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#94a3b8;">اضغط تحديث للتحميل</td></tr></tbody></table></div>
      </div>
     </div>
    </div>

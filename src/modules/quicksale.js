@@ -416,10 +416,17 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!_cart.length) { Notify.error('السلة فارغة'); return; }
     if (!_transferEntities.length) await QuickSale.loadTransferEntities();
     const sel = DOM.get('qs-transfer-entity');
-    sel.innerHTML = '<option value="">-- اختر --</option>'
-      + _transferEntities.map(e => `<option value="${e.id}" data-name="${Utils.escape(e.name)}">${Utils.escape(e.name)}</option>`).join('');
-    // show buyer fields
-    const row = DOM.get('qs-buyer-row'); if (row) row.style.display = 'grid';
+    sel.innerHTML = '<option value="">-- اختر --</option>';
+    _transferEntities.forEach(e => {
+      const names = e.names && e.names.length ? e.names : [e.name];
+      names.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = e.id + '::' + n;
+        opt.setAttribute('data-name', n);
+        opt.textContent = n;
+        sel.appendChild(opt);
+      });
+    });
     const rec = DOM.get('qs-transfer-receiver');
     const buyerName = DOM.val('qs-buyer-name');
     if (rec && buyerName) rec.value = buyerName;
@@ -429,11 +436,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   confirmTransfer() {
     const sel = DOM.get('qs-transfer-entity');
     if (!sel.value) { Notify.error('اختر جهة التحويل'); return; }
+    const [entityId, entityName] = sel.value.split('::');
     _selectedTransferEntity = {
-      id:   sel.value,
-      name: sel.options[sel.selectedIndex]?.getAttribute('data-name') || '',
+      id:   entityId,
+      name: entityName || sel.options[sel.selectedIndex]?.getAttribute('data-name') || '',
     };
-    // sync receiver name back to buyer field
     const rec = DOM.val('qs-transfer-receiver');
     if (rec) DOM.get('qs-buyer-name').value = rec;
     Modal.close('m-qs-transfer');

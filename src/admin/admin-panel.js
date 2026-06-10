@@ -228,11 +228,11 @@ const AdminPanel = {
   resetTransferForm() {
     DOM.get('te-edit-id').value  = '';
     DOM.get('te-name').value     = '';
+    DOM.get('te-names').value    = '';
     DOM.get('te-details').value  = '';
     DOM.get('te-store-id').value = '';
-    DOM.get('te-name').rows = 4;
     const title = DOM.get('te-form-title');
-    if (title) title.textContent = 'إضافة جهات';
+    if (title) title.textContent = 'إضافة جهة';
   },
 
   editStore() { Notify.show('ميزة التعديل قريباً'); },
@@ -266,54 +266,56 @@ const AdminPanel = {
       ? data.map(e => `<tr>
           <td>${Utils.escape(storeMap[e.store_id] || e.store_id)}</td>
           <td><strong>${Utils.escape(e.name)}</strong></td>
+          <td>${(e.names || []).map(n => `<span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${Utils.escape(n)}</span>`).join('')}</td>
           <td>${Utils.escape(e.details || '-')}</td>
           <td><span class="${e.is_active ? 'sa-badge-active' : 'sa-badge-expired'}">${e.is_active ? 'فعّال' : 'معطّل'}</span></td>
           <td>
-            <button class="ibb" onclick="AdminPanel.editTransferEntity('${e.id}','${Utils.escape(e.name)}','${Utils.escape(e.details||'')}','${e.store_id}')">تعديل</button>
+            <button class="ibb" onclick="AdminPanel.editTransferEntity('${e.id}','${Utils.escape(e.name)}','${Utils.escape((e.names||[]).join('\n'))}','${Utils.escape(e.details||'')}','${e.store_id}')">تعديل</button>
             <button class="ibr" onclick="AdminPanel.deleteTransferEntity('${e.id}')">حذف</button>
           </td>
         </tr>`).join('')
-      : '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#94a3b8;">لا توجد جهات تحويل</td></tr>'
+      : '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#94a3b8;">لا توجد جهات تحويل</td></tr>'
     );
   },
 
   async saveTransferEntity() {
     const id      = DOM.val('te-edit-id');
     const storeId = DOM.val('te-store-id');
-    const raw     = DOM.val('te-name').trim();
+    const name    = DOM.val('te-name').trim();
+    const raw     = DOM.val('te-names').trim();
     const details = DOM.val('te-details').trim();
     if (!storeId) { Notify.error('اختر المحل'); return; }
-    if (!raw)     { Notify.error('أدخل اسم الجهة'); return; }
+    if (!name)    { Notify.error('أدخل اسم المجموعة'); return; }
+    if (!raw)     { Notify.error('أدخل الجهات'); return; }
+
+    const names = raw.split('\n').map(n => n.trim()).filter(n => n);
 
     if (id) {
-      await sbAdmin.from('transfer_entities').update({ name: raw, details: details || null }).eq('id', id);
+      await sbAdmin.from('transfer_entities').update({ name, names, details: details || null }).eq('id', id);
       Notify.success('تم التعديل');
       DOM.get('te-edit-id').value = '';
       const title = DOM.get('te-form-title');
       if (title) title.textContent = 'إضافة جهة';
     } else {
-      const names = raw.split('\n').map(n => n.trim()).filter(n => n);
-      await sbAdmin.from('transfer_entities').insert(
-        names.map(name => ({ store_id: storeId, name, details: details || null }))
-      );
-      Notify.success(`تمت إضافة ${names.length} جهة`);
+      await sbAdmin.from('transfer_entities').insert({ store_id: storeId, name, names, details: details || null });
+      Notify.success(`تمت الإضافة — ${names.length} جهة`);
     }
     DOM.get('te-name').value    = '';
+    DOM.get('te-names').value   = '';
     DOM.get('te-details').value = '';
     DOM.get('te-name').focus();
-    // تحديث الجدول فقط بدون إعادة تحميل الـ dropdown
     await AdminPanel.loadTransferEntities();
   },
 
-  editTransferEntity(id, name, details, storeId) {
-    DOM.get('te-edit-id').value  = id;
-    DOM.get('te-name').value     = name;
-    DOM.get('te-details').value  = details;
-    DOM.get('te-store-id').value = storeId || '';
+  editTransferEntity(id, name, namesRaw, details, storeId) {
+    DOM.get('te-edit-id').value   = id;
+    DOM.get('te-name').value      = name;
+    DOM.get('te-names').value     = namesRaw;
+    DOM.get('te-details').value   = details;
+    DOM.get('te-store-id').value  = storeId || '';
     const title = DOM.get('te-form-title');
-    if (title) title.textContent = 'تعديل الجهة';
+    if (title) title.textContent  = 'تعديل الجهة';
     DOM.get('te-name').focus();
-    DOM.get('te-name').rows = 2;
   },
 
   async deleteTransferEntity(id) {
