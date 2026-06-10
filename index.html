@@ -82,12 +82,13 @@ table.sa-dt tr:hover td{background:#334155;}
 
 /* ── APP SHELL ── */
 #app-wrap{
-  display:none;
+  display:flex;
   flex-direction:column;
   flex:1;
   overflow:hidden;
   height:100%;
 }
+#app-wrap.hidden{display:none;}
 .topbar{
   background:#fff;
   border-bottom:1px solid var(--br);
