@@ -72,11 +72,12 @@ const Debts = {
     }
 
     DOM.setHTML('dlist', list.map(d => {
-      const remaining = d.amount - d.paid;
-      const days      = Utils.daysSince(d.debt_date);
-      const isLate    = days >= CONFIG.debtLateDays;
-      const id        = d.id;
-      const name      = Utils.escape(d.customers?.name || '-');
+      const remaining   = d.amount - d.paid;
+      const days        = Utils.daysSince(d.debt_date);
+      const isLate      = days >= CONFIG.debtLateDays;
+      const id          = d.id;
+      const name        = Utils.escape(d.customers?.name || '-');
+      const remindReady = d.remind_date && (d.cust_phone || d.customers?.phone) && d.remind_date <= new Date().toISOString().split('T')[0];
 
       return '<tr>'
         + '<td>' + name + '</td>'
