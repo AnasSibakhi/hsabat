@@ -245,12 +245,21 @@ const AdminPanel = {
     DOM.clearInputs('notif-title', 'notif-msg');
   },
 
+  async _fillStoresDropdown(selectId) {
+    const { data } = await sbAdmin.from('app_accounts').select('id, store_name').order('store_name');
+    const sel = DOM.get(selectId);
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- اختر المحل --</option>'
+      + (data || []).map(s => `<option value="${s.id}">${Utils.escape(s.store_name)}</option>`).join('');
+    if (current) sel.value = current;
+  },
+
   // ── Transfer Entities Management ──
   async loadTransferEntities() {
-    const storeId = DOM.val('te-store-filter');
-    let query = sbAdmin.from('transfer_entities').select('*, app_accounts(store_name)').order('name');
-    if (storeId) query = query.eq('store_id', storeId);
-    const { data } = await query;
+    // Load stores into dropdown first
+    await AdminPanel._fillStoresDropdown('te-store-id');
+    const { data } = await sbAdmin.from('transfer_entities').select('*, app_accounts(store_name)').order('name');
     DOM.setHTML('te-list', (data || []).length
       ? data.map(e => `<tr>
           <td>${Utils.escape(e.app_accounts?.store_name || e.store_id)}</td>
