@@ -48,14 +48,14 @@ body{
 .amsg.ok{background:var(--sl);color:var(--s);}
 
 /* ── SUPER ADMIN ── */
-#superadmin-wrap{flex:1;display:none;flex-direction:column;overflow:hidden;background:#0f172a;}
+#superadmin-wrap{flex:1;display:none;flex-direction:column;overflow:hidden;background:#0f172a;height:100%;}
 .sa-topbar{background:#1e293b;padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;flex-shrink:0;}
 .sa-brand{display:flex;align-items:center;gap:10px;}
 .sa-brand-icon{width:32px;height:32px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
 .sa-brand-icon i{color:#fff;font-size:16px;}
 .sa-brand-name{font-weight:900;font-size:16px;color:#f1f5f9;}
 .sa-badge{background:#7c3aed;color:#fff;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700;}
-.sa-layout{flex:1;display:flex;overflow:hidden;}
+.sa-layout{flex:1;display:flex;overflow:hidden;min-height:0;}
 .sa-sidebar{width:220px;min-width:220px;background:#1e293b;padding:.75rem;overflow-y:auto;border-left:1px solid #334155;}
 .sa-nl{font-size:10px;font-weight:700;color:#64748b;letter-spacing:.08em;padding:0 .5rem;margin:.8rem 0 .3rem;}
 .sa-nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;font-size:13px;color:#94a3b8;cursor:pointer;transition:.1s;margin-bottom:2px;}
@@ -606,8 +606,8 @@ body.dark .ni.active{background:#1e3a5f;}
             <span>الإجمالي</span>
             <span id="qs-total-display" class="pos-grand-total">₪ 0.00</span>
           </div>
-          <div class="pos-buyer-row">
-            <input class="inp" id="qs-buyer-name" placeholder="اسم المشتري (اختياري)" autocomplete="off">
+          <div class="pos-buyer-row" id="qs-buyer-row" style="display:none;">
+            <input class="inp" id="qs-buyer-name" placeholder="اسم المستلم (اختياري)" autocomplete="off">
             <input class="inp" id="qs-buyer-phone" placeholder="رقم الجوال" inputmode="tel">
           </div>
           <div class="pos-pay-grid">
