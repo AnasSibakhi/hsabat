@@ -261,6 +261,12 @@
 /* Bottom panel — NEVER SCROLLS */
 .pos-bottom { flex-shrink: 0; background: #fff; border-top: 1px solid #e2e8f0; }
 
+.pos-buyer-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  padding: 8px 10px 0;
+}
+.pos-buyer-row .inp { font-size: 12px; padding: 7px 10px; height: 34px; }
+
 .pos-disc-row {
   display: flex; align-items: center; gap: 5px;
   padding: .3rem .7rem; border-bottom: 1px solid #f1f5f9;

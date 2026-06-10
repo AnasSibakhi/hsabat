@@ -214,6 +214,9 @@ table.dt tr:hover td{background:var(--g0);}
 .dc-opt:last-child{border-bottom:none;}
 .dc-opt:hover{background:var(--g0);}
 .dc-opt.new{color:var(--p);font-weight:700;}
+.inv-det-row{background:var(--g0);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;}
+.inv-det-row span{font-size:11px;color:var(--g5);}
+.inv-det-row strong{font-size:13px;}
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px;margin-bottom:.75rem;line-height:1.5;}
 .alert i{flex-shrink:0;margin-top:1px;}
 .aw{background:var(--wl);color:var(--w);border:1px solid #fde68a;}
@@ -407,6 +410,7 @@ body.dark .ni.active{background:#1e3a5f;}
    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-users')"><i class="ti ti-users"></i> المستخدمين</div>
    <div class="sa-nl">التواصل</div>
    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-notifications')"><i class="ti ti-bell"></i> الإشعارات</div>
+   <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-transfer-entities');AdminPanel.loadTransferEntities()"><i class="ti ti-building-bank"></i> جهات التحويل</div>
   </div>
   <div class="sa-content">
 
@@ -465,6 +469,28 @@ body.dark .ni.active{background:#1e3a5f;}
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;margin-bottom:1rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>
       <button class="sa-btn sa-btn-p" onclick="AdminPanel.sendNotification()"><i class="ti ti-send"></i> إرسال الإشعار</button>
      </div>
+    </div>
+   </div>
+
+   <!-- TRANSFER ENTITIES -->
+   <div class="sa-page" id="sa-transfer-entities">
+    <div class="sa-title">🏦 جهات التحويل</div>
+    <div class="sa-card" style="margin-bottom:1rem;">
+     <div style="padding:1.25rem;">
+      <input type="hidden" id="te-edit-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+       <div><label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">المحل (store_id)</label><input class="inp" id="te-store-id" placeholder="store_id" style="background:#334155;border-color:#475569;color:#f1f5f9;font-size:12px;"></div>
+       <div><label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">اسم الجهة *</label><input class="inp" id="te-name" placeholder="مثال: بنك فلسطين" style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
+      </div>
+      <div style="margin-bottom:10px;"><label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">تفاصيل (اختياري)</label><input class="inp" id="te-details" placeholder="رقم حساب، IBAN..." style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
+      <div style="display:flex;gap:8px;">
+       <button class="sa-btn sa-btn-p" onclick="AdminPanel.saveTransferEntity()"><i class="ti ti-device-floppy"></i> حفظ</button>
+       <button class="sa-btn" onclick="AdminPanel.loadTransferEntities()" style="background:#334155;color:#94a3b8;"><i class="ti ti-refresh"></i> تحديث</button>
+      </div>
+     </div>
+    </div>
+    <div class="sa-card">
+     <div class="tw"><table class="dt" style="color:#f1f5f9;"><thead><tr><th>المحل</th><th>الاسم</th><th>التفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr class="er"><td colspan="5">اضغط تحديث للتحميل</td></tr></tbody></table></div>
     </div>
    </div>
 
@@ -580,9 +606,13 @@ body.dark .ni.active{background:#1e3a5f;}
             <span>الإجمالي</span>
             <span id="qs-total-display" class="pos-grand-total">₪ 0.00</span>
           </div>
+          <div class="pos-buyer-row">
+            <input class="inp" id="qs-buyer-name" placeholder="اسم المشتري (اختياري)" autocomplete="off">
+            <input class="inp" id="qs-buyer-phone" placeholder="رقم الجوال" inputmode="tel">
+          </div>
           <div class="pos-pay-grid">
             <button class="pos-pay pos-cash"     onclick="QuickSale.sell('cash')"><i class="ti ti-cash"></i> نقدي</button>
-            <button class="pos-pay pos-transfer" onclick="QuickSale.sell('transfer')"><i class="ti ti-building-bank"></i> تحويل</button>
+            <button class="pos-pay pos-transfer" onclick="QuickSale.openTransferModal()"><i class="ti ti-building-bank"></i> تحويل</button>
             <button class="pos-pay pos-debt"     onclick="QuickSale.openDebtModal()"><i class="ti ti-credit-card"></i> دين</button>
             <button class="pos-pay pos-invoice"  onclick="Modal.open('m-invoice')"><i class="ti ti-file-invoice"></i> فاتورة</button>
           </div>
@@ -648,7 +678,7 @@ body.dark .ni.active{background:#1e3a5f;}
    <!-- INVOICES -->
    <div class="page" id="page-invoices">
     <div class="ph"><span class="pt">الفواتير</span><button class="btn btn-s" onclick="Modal.open('m-invoice')"><i class="ti ti-plus"></i> جديدة</button></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>رقم</th><th>الزبون</th><th>الوقت</th><th>المجموع</th><th>الدفع</th><th></th></tr></thead><tbody id="ilist"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>رقم</th><th>المشتري</th><th>الوقت</th><th>المجموع</th><th>الدفع</th><th></th></tr></thead><tbody id="ilist"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
 
    <!-- SALES -->
@@ -1160,6 +1190,30 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </div></div>
 
 
+
+<!-- Transfer Modal -->
+<div class="mo" id="m-qs-transfer"><div class="modal">
+ <div class="mhdr"><span class="mtitle">تحويل — اختر الجهة</span><button class="mclose" onclick="Modal.close('m-qs-transfer')">✕</button></div>
+ <div class="fg">
+  <label class="lbl">جهة التحويل *</label>
+  <select class="inp" id="qs-transfer-entity"><option value="">-- اختر --</option></select>
+ </div>
+ <div class="fg">
+  <label class="lbl">اسم المستلم</label>
+  <input class="inp" id="qs-transfer-receiver" placeholder="اختياري">
+ </div>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-transfer')">إلغاء</button>
+  <button class="btn btn-s" onclick="QuickSale.confirmTransfer()">تأكيد التحويل</button>
+ </div>
+</div></div>
+
+<!-- Invoice Details Modal -->
+<div class="mo" id="m-inv-details"><div class="modal" style="max-width:520px;">
+ <div class="mhdr"><span class="mtitle">تفاصيل الفاتورة</span><button class="mclose" onclick="Modal.close('m-inv-details')">✕</button></div>
+ <div id="inv-details-body" style="padding:0 .25rem;"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv-details')">إغلاق</button></div>
+</div></div>
 
 </body>
 </html>

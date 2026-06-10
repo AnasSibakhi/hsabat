@@ -20,6 +20,8 @@ let _discount = 0;
 let _scanner  = null;
 let _lastScan = null;
 let _scanTimer = null;
+let _transferEntities = [];
+let _selectedTransferEntity = null;
 
 export const QuickSale = {
 
@@ -230,11 +232,14 @@ export const QuickSale = {
 
   clearCart() {
     _cart = []; _discount = 0;
+    _selectedTransferEntity = null;
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input'); if (si) { si.value = ''; }
     const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); }
     const pi = DOM.get('qs-paid'); if (pi) pi.value = '';
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
+    const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
+    const bp = DOM.get('qs-buyer-phone'); if (bp) bp.value = '';
 document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active'));
     QuickSale._renderGrid();
   },
@@ -400,6 +405,40 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Debt modal ──
+  // ── Transfer Entity ──
+  async loadTransferEntities() {
+    const { data } = await sb.from('transfer_entities')
+      .select('*').eq('store_id', State.user.id).eq('is_active', true).order('name');
+    _transferEntities = data || [];
+  },
+
+  async openTransferModal() {
+    if (!_cart.length) { Notify.error('السلة فارغة'); return; }
+    if (!_transferEntities.length) await QuickSale.loadTransferEntities();
+    const sel = DOM.get('qs-transfer-entity');
+    sel.innerHTML = '<option value="">-- اختر --</option>'
+      + _transferEntities.map(e => `<option value="${e.id}" data-name="${Utils.escape(e.name)}">${Utils.escape(e.name)}</option>`).join('');
+    // sync buyer name to receiver field
+    const buyerName = DOM.val('qs-buyer-name');
+    const rec = DOM.get('qs-transfer-receiver');
+    if (rec && buyerName) rec.value = buyerName;
+    Modal.open('m-qs-transfer');
+  },
+
+  confirmTransfer() {
+    const sel = DOM.get('qs-transfer-entity');
+    if (!sel.value) { Notify.error('اختر جهة التحويل'); return; }
+    _selectedTransferEntity = {
+      id:   sel.value,
+      name: sel.options[sel.selectedIndex]?.getAttribute('data-name') || '',
+    };
+    // sync receiver name back to buyer field
+    const rec = DOM.val('qs-transfer-receiver');
+    if (rec) DOM.get('qs-buyer-name').value = rec;
+    Modal.close('m-qs-transfer');
+    QuickSale.sell('transfer');
+  },
+
   async openDebtModal() {
     if (!State.customers?.length) await Customers.loadAll();
     // reset
@@ -476,13 +515,21 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
       const invNum = 'INV-' + String((count || 0) + 1).padStart(4, '0');
 
+      // Buyer info
+      const buyerName  = DOM.val('qs-buyer-name')  || custName || 'زبون عادي';
+      const buyerPhone = DOM.val('qs-buyer-phone') || '';
+
       const { data: inv, error } = await DB.invoices().insert({
         store_id: State.user.id, customer_id: custId || null,
-        customer_name: custName, total, subtotal, discount,
+        customer_name: buyerName, total, subtotal, discount,
         payment_type: paymentType,
         invoice_date: Utils.today(),
         sale_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
         invoice_number: invNum,
+        buyer_name:  buyerName,
+        buyer_phone: buyerPhone,
+        transfer_entity_id:   _selectedTransferEntity?.id   || null,
+        transfer_entity_name: _selectedTransferEntity?.name || null,
       }).select().single();
       if (error) throw error;
 

@@ -26,13 +26,15 @@ const Invoices = {
     DOM.setHTML('ilist', (data || []).length
       ? data.map(inv => {
           const payBadge = { cash: '<span class="bg">نقدي</span>', transfer: '<span class="bb">تحويل</span>', partial: '<span class="ba">جزئي</span>', defer: '<span class="br">دين</span>' }[inv.payment_type] || '';
+          const buyer = Utils.escape(inv.buyer_name || inv.customer_name || 'عادي');
           return `<tr>
             <td><strong>${Utils.escape(inv.invoice_number || '-')}</strong></td>
-            <td>${Utils.escape(inv.customer_name || 'عادي')}</td>
+            <td>${buyer}</td>
             <td>${inv.invoice_date} <small style="color:var(--g4);">${inv.sale_time || ''}</small></td>
             <td>₪${inv.total.toFixed(2)}</td>
             <td>${payBadge}</td>
             <td>
+              <button class="ibb" onclick="Invoices.openDetails('${inv.id}')" style="margin-left:4px;">تفاصيل</button>
               <button class="ibb" onclick="Returns.openModal('${inv.id}','${Utils.escape(inv.customer_name || '')}',${inv.total})" style="margin-left:4px;">إرجاع</button>
               <button class="ibr" onclick="Invoices.delete('${inv.id}')">حذف</button>
             </td>
@@ -40,6 +42,42 @@ const Invoices = {
         }).join('')
       : '<tr class="er"><td colspan="6">لا توجد فواتير</td></tr>'
     );
+  },
+
+  async openDetails(invId) {
+    const { data: inv } = await sb.from('invoices').select('*').eq('id', invId).single();
+    const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', invId);
+    if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
+
+    const payLabel = { cash: 'نقدي', transfer: 'تحويل', partial: 'جزئي', defer: 'دين' }[inv.payment_type] || inv.payment_type;
+    const itemsHtml = (items || []).map(it =>
+      `<tr>
+        <td>${Utils.escape(it.product_name || '-')}</td>
+        <td style="text-align:center;">${it.quantity}</td>
+        <td style="text-align:left;">₪${parseFloat(it.price).toFixed(2)}</td>
+        <td style="text-align:left;font-weight:700;">₪${(it.quantity * it.price).toFixed(2)}</td>
+      </tr>`
+    ).join('') || '<tr><td colspan="4" style="color:var(--g4);">لا توجد منتجات</td></tr>';
+
+    DOM.setHTML('inv-details-body', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
+        <div class="inv-det-row"><span>رقم الفاتورة</span><strong>${Utils.escape(inv.invoice_number || '-')}</strong></div>
+        <div class="inv-det-row"><span>التاريخ والوقت</span><strong>${inv.invoice_date} ${inv.sale_time || ''}</strong></div>
+        <div class="inv-det-row"><span>اسم المشتري</span><strong>${Utils.escape(inv.buyer_name || inv.customer_name || '-')}</strong></div>
+        <div class="inv-det-row"><span>رقم الجوال</span><strong>${Utils.escape(inv.buyer_phone || '-')}</strong></div>
+        <div class="inv-det-row"><span>طريقة الدفع</span><strong>${payLabel}</strong></div>
+        ${inv.transfer_entity_name ? `<div class="inv-det-row"><span>جهة التحويل</span><strong>${Utils.escape(inv.transfer_entity_name)}</strong></div>` : ''}
+      </div>
+      <table class="dt" style="margin-bottom:.75rem;">
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+      <div style="text-align:left;font-size:15px;">
+        ${inv.discount > 0 ? `<div style="color:var(--g5);margin-bottom:4px;">خصم: ₪${inv.discount.toFixed(2)}</div>` : ''}
+        <strong style="font-size:18px;">الإجمالي: ₪${inv.total.toFixed(2)}</strong>
+      </div>
+    `);
+    Modal.open('m-inv-details');
   },
 
   _buildItemRow() {

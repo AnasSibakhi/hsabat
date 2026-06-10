@@ -219,6 +219,57 @@ const AdminPanel = {
     Notify.success('تم إرسال الإشعار');
     DOM.clearInputs('notif-title', 'notif-msg');
   },
+
+  // ── Transfer Entities Management ──
+  async loadTransferEntities() {
+    const storeId = DOM.val('te-store-filter');
+    let query = sbAdmin.from('transfer_entities').select('*, app_accounts(store_name)').order('name');
+    if (storeId) query = query.eq('store_id', storeId);
+    const { data } = await query;
+    DOM.setHTML('te-list', (data || []).length
+      ? data.map(e => `<tr>
+          <td>${Utils.escape(e.app_accounts?.store_name || e.store_id)}</td>
+          <td><strong>${Utils.escape(e.name)}</strong></td>
+          <td>${Utils.escape(e.details || '-')}</td>
+          <td><span class="${e.is_active ? 'bg' : 'br'}">${e.is_active ? 'فعّال' : 'معطّل'}</span></td>
+          <td>
+            <button class="ibb" onclick="AdminPanel.editTransferEntity('${e.id}','${Utils.escape(e.name)}','${Utils.escape(e.details||'')}')">تعديل</button>
+            <button class="ibr" onclick="AdminPanel.deleteTransferEntity('${e.id}')">حذف</button>
+          </td>
+        </tr>`).join('')
+      : '<tr class="er"><td colspan="5">لا توجد جهات تحويل</td></tr>'
+    );
+  },
+
+  async saveTransferEntity() {
+    const id      = DOM.val('te-edit-id');
+    const storeId = DOM.val('te-store-id');
+    const name    = DOM.val('te-name');
+    const details = DOM.val('te-details');
+    if (!storeId || !name) { Notify.error('اختر المحل وأدخل الاسم'); return; }
+    if (id) {
+      await sbAdmin.from('transfer_entities').update({ name, details }).eq('id', id);
+    } else {
+      await sbAdmin.from('transfer_entities').insert({ store_id: storeId, name, details });
+    }
+    Notify.success('تم الحفظ');
+    DOM.clearInputs('te-name', 'te-details', 'te-edit-id');
+    await AdminPanel.loadTransferEntities();
+  },
+
+  editTransferEntity(id, name, details) {
+    DOM.get('te-edit-id').value  = id;
+    DOM.get('te-name').value     = name;
+    DOM.get('te-details').value  = details;
+    DOM.get('te-name').focus();
+  },
+
+  async deleteTransferEntity(id) {
+    if (!confirm('حذف جهة التحويل؟')) return;
+    await sbAdmin.from('transfer_entities').delete().eq('id', id);
+    Notify.success('تم الحذف');
+    await AdminPanel.loadTransferEntities();
+  },
 };
 
 // Helper for initializing net card stock for new stores
