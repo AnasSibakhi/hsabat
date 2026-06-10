@@ -12,6 +12,7 @@ import { escape, today }   from '../core/utils.js';
 import { CONFIG, PAYMENT } from '../config/constants.js';
 import * as Modal          from '../nav/modal.js';
 import { getDashboard, getDebts, getInventory } from '../core/registry.js';
+import { Customers }       from './customers.js';
 
 // ── State ──
 let _cart     = [];   // [{id, name, barcode, unit, price, cost, qty, maxQty}]
@@ -399,7 +400,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Debt modal ──
-  openDebtModal() {
+  async openDebtModal() {
+    if (!State.customers?.length) await Customers.loadAll();
     DOM.setHTML('qs-debt-cust',
       '<option value="">-- اختر الزبون --</option>' +
       State.customers.map(c => '<option value="' + c.id + '">' + escape(c.name) + '</option>').join('')
