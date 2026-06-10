@@ -402,11 +402,47 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   // ── Debt modal ──
   async openDebtModal() {
     if (!State.customers?.length) await Customers.loadAll();
-    DOM.setHTML('qs-debt-cust',
-      '<option value="">-- اختر الزبون --</option>' +
-      State.customers.map(c => '<option value="' + c.id + '">' + escape(c.name) + '</option>').join('')
-    );
+    // reset
+    const s = DOM.get('qs-debt-search'); if (s) s.value = '';
+    DOM.get('qs-debt-cust').value = '';
+    const dd = DOM.get('qs-debt-dropdown'); if (dd) dd.style.display = 'none';
+    const nw = DOM.get('qs-debt-new-wrap'); if (nw) nw.style.display = 'none';
+    const ph = DOM.get('qs-debt-new-phone'); if (ph) ph.value = '';
+    QuickSale._debtNewCust = null;
     Modal.open('m-qs-debt');
+  },
+
+  searchDebtCustomer(val) {
+    const dd = DOM.get('qs-debt-dropdown');
+    const nw = DOM.get('qs-debt-new-wrap');
+    DOM.get('qs-debt-cust').value = '';
+    QuickSale._debtNewCust = null;
+    if (!val.trim()) { dd.style.display = 'none'; nw.style.display = 'none'; return; }
+    const q = val.trim().toLowerCase();
+    const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
+    let html = matches.map(c =>
+      `<div class="dc-opt" onclick="QuickSale.selectDebtCustomer('${c.id}','${escape(c.name)}')">${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}</div>`
+    ).join('');
+    html += `<div class="dc-opt new" onclick="QuickSale.selectDebtNew('${escape(val.trim())}')">+ إضافة &quot;${escape(val.trim())}&quot; كزبون جديد</div>`;
+    dd.innerHTML = html;
+    dd.style.display = 'block';
+    nw.style.display = 'none';
+  },
+
+  selectDebtCustomer(id, name) {
+    DOM.get('qs-debt-cust').value = id;
+    DOM.get('qs-debt-search').value = name;
+    DOM.get('qs-debt-dropdown').style.display = 'none';
+    DOM.get('qs-debt-new-wrap').style.display = 'none';
+    QuickSale._debtNewCust = null;
+  },
+
+  selectDebtNew(name) {
+    DOM.get('qs-debt-cust').value = '';
+    DOM.get('qs-debt-search').value = name;
+    DOM.get('qs-debt-dropdown').style.display = 'none';
+    DOM.get('qs-debt-new-wrap').style.display = 'block';
+    QuickSale._debtNewCust = name;
   },
 
   // ── Checkout ──
@@ -420,10 +456,19 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     if (paymentType === PAYMENT.DEFER) {
       custId = DOM.val('qs-debt-cust');
-      if (!custId) { Notify.error('اختر الزبون'); return; }
+      // إذا زبون جديد
+      if (!custId && QuickSale._debtNewCust) {
+        const phone = DOM.val('qs-debt-new-phone');
+        const newC  = await Customers.createInline(QuickSale._debtNewCust, phone);
+        if (!newC?.id) { Notify.error('فشل إضافة الزبون'); return; }
+        custId   = newC.id;
+        custName = newC.name;
+      }
+      if (!custId) { Notify.error('اختر الزبون أو أدخل اسماً جديداً'); return; }
       const c = State.customers.find(x => x.id === custId);
-      custName = c?.name || '';
+      custName = c?.name || custName;
       Modal.close('m-qs-debt');
+      QuickSale._debtNewCust = null;
     }
 
     State.isMutating = true;
