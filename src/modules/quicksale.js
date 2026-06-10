@@ -362,9 +362,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Add new product from scanner ──
   async saveNewProduct() {
+    const toNum = s => parseFloat((s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
     const name  = DOM.val('qs-new-name');
-    const sell  = parseFloat(DOM.val('qs-new-sell'));
-    const qty   = parseFloat(DOM.val('qs-new-qty'))  || 0;
+    const sell  = toNum(DOM.val('qs-new-sell'));
+    const qty   = toNum(DOM.val('qs-new-qty'))  || 0;
     const bc    = DOM.val('qs-new-barcode');
 
     if (!name)              { Notify.error('أدخل اسم المنتج'); return; }
