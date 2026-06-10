@@ -1,58 +1,199 @@
 /**
- * invoices.js — Invoices Module
- * Extracted from monolithic app.js into clean module
+ * invoices.js — Invoice Management Dashboard
  */
 
 import { DB }     from '../core/db.js';
 import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
-import * as DOM     from '../core/dom.js';
+import * as DOM   from '../core/dom.js';
 import { sb }     from '../core/db.js';
 import * as Utils from '../core/utils.js';
-import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
+import { escape, currency } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
-import * as Modal   from '../nav/modal.js';
+import * as Modal from '../nav/modal.js';
 import { getCustomers, getDebts, getInventory, getDashboard } from '../core/registry.js';
 
+// ── State ──
+let _allInvoices  = [];
+let _filtered     = [];
+let _period       = 'all';
+let _page         = 1;
+const PAGE_SIZE   = 20;
 
+const PAY_LABELS  = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
+const PAY_CLASS   = { cash: 'inv-pay-cash', transfer: 'inv-pay-transfer', defer: 'inv-pay-defer', partial: 'inv-pay-partial' };
 
-
-// ─────────────────────────────────────────
-// 16. INVOICES MODULE
-// ─────────────────────────────────────────
 const Invoices = {
+
+  // ── Load all invoices ──
   async load() {
     const { data } = await DB.invoices().select('*').order('created_at', { ascending: false });
-    DOM.setHTML('ilist', (data || []).length
-      ? data.map(inv => {
-          const payBadge = { cash: '<span class="bg">نقدي</span>', transfer: '<span class="bb">تحويل</span>', partial: '<span class="ba">جزئي</span>', defer: '<span class="br">دين</span>' }[inv.payment_type] || '';
-          const buyer = Utils.escape(inv.buyer_name || inv.customer_name || 'عادي');
+    _allInvoices = data || [];
+    Invoices.applyFilters();
+  },
+
+  // ── Period filter ──
+  setFilter(period, btn) {
+    _period = period;
+    _page   = 1;
+    document.querySelectorAll('.inv-tab').forEach(b => b.classList.remove('active'));
+    btn?.classList.add('active');
+    Invoices.applyFilters();
+  },
+
+  // ── Apply all filters + sort + render ──
+  applyFilters() {
+    const q       = (DOM.val('inv-search') || '').toLowerCase().trim();
+    const payF    = DOM.val('inv-filter-pay') || '';
+    const sortV   = DOM.val('inv-sort') || 'date_desc';
+    const today   = Utils.today();
+    const weekAgo = Utils.daysAgo(7);
+    const monAgo  = Utils.daysAgo(30);
+
+    let list = _allInvoices.filter(inv => {
+      // Period
+      if (_period === 'today' && inv.invoice_date !== today) return false;
+      if (_period === 'week'  && inv.invoice_date < weekAgo) return false;
+      if (_period === 'month' && inv.invoice_date < monAgo)  return false;
+      // Payment
+      if (payF && inv.payment_type !== payF) return false;
+      // Search
+      if (q) {
+        const num   = (inv.invoice_number || '').toLowerCase();
+        const buyer = (inv.buyer_name || inv.customer_name || '').toLowerCase();
+        const phone = (inv.buyer_phone || '').toLowerCase();
+        if (!num.includes(q) && !buyer.includes(q) && !phone.includes(q)) return false;
+      }
+      return true;
+    });
+
+    // Sort
+    list.sort((a, b) => {
+      if (sortV === 'date_desc')  return new Date(b.created_at) - new Date(a.created_at);
+      if (sortV === 'date_asc')   return new Date(a.created_at) - new Date(b.created_at);
+      if (sortV === 'total_desc') return b.total - a.total;
+      if (sortV === 'total_asc')  return a.total - b.total;
+      return 0;
+    });
+
+    _filtered = list;
+    Invoices._renderKPI(list);
+    Invoices._renderTable();
+  },
+
+  // ── KPI Cards ──
+  _renderKPI(list) {
+    const total = list.reduce((s, i) => s + (i.total || 0), 0);
+    const count = list.length;
+    const avg   = count ? total / count : 0;
+    const defer = list.filter(i => i.payment_type === 'defer').length;
+    DOM.setText('inv-kpi-total', '₪' + total.toFixed(2));
+    DOM.setText('inv-kpi-count', count);
+    DOM.setText('inv-kpi-avg',   '₪' + avg.toFixed(2));
+    DOM.setText('inv-kpi-defer', defer);
+  },
+
+  // ── Render table with pagination ──
+  _renderTable() {
+    const start  = (_page - 1) * PAGE_SIZE;
+    const page   = _filtered.slice(start, start + PAGE_SIZE);
+    const total  = _filtered.length;
+    const pages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+    DOM.setHTML('ilist', page.length
+      ? page.map(inv => {
+          const buyer    = escape(inv.buyer_name || inv.customer_name || 'عادي');
+          const payClass = PAY_CLASS[inv.payment_type] || '';
+          const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
+          const discount = inv.discount > 0 ? `<span style="color:var(--d);font-size:11px;">-₪${inv.discount.toFixed(2)}</span>` : '<span style="color:var(--g4);">—</span>';
+          const itemsCount = inv._items_count ?? '...';
           return `<tr>
-            <td><strong>${Utils.escape(inv.invoice_number || '-')}</strong></td>
-            <td>${buyer}</td>
-            <td>${inv.invoice_date} <small style="color:var(--g4);">${inv.sale_time || ''}</small></td>
-            <td>₪${inv.total.toFixed(2)}</td>
-            <td>${payBadge}</td>
+            <td><strong style="color:var(--p);">${escape(inv.invoice_number || '-')}</strong></td>
             <td>
-              <button class="ibb" onclick="Invoices.openDetails('${inv.id}')" style="margin-left:4px;">تفاصيل</button>
-              <button class="ibb" onclick="Returns.openModal('${inv.id}','${Utils.escape(inv.customer_name || '')}',${inv.total})" style="margin-left:4px;">إرجاع</button>
-              <button class="ibr" onclick="Invoices.delete('${inv.id}')">حذف</button>
+              <div style="font-weight:600;">${buyer}</div>
+              ${inv.buyer_phone ? `<div style="font-size:11px;color:var(--g5);">${escape(inv.buyer_phone)}</div>` : ''}
+            </td>
+            <td>
+              <div>${inv.invoice_date}</div>
+              <div style="font-size:11px;color:var(--g4);">${inv.sale_time || ''}</div>
+            </td>
+            <td><span class="inv-items-badge" id="ic-${inv.id}">—</span></td>
+            <td>${discount}</td>
+            <td><strong>₪${inv.total.toFixed(2)}</strong></td>
+            <td><span class="inv-pay-badge ${payClass}">${payLabel}</span></td>
+            <td>
+              <div class="inv-actions">
+                <button class="inv-action-btn" onclick="Invoices.openDetails('${inv.id}')"><i class="ti ti-eye"></i> عرض</button>
+                <button class="ibb" onclick="Returns.openModal('${inv.id}','${escape(inv.customer_name || '')}',${inv.total})" style="padding:4px 7px;font-size:11px;">إرجاع</button>
+                <button class="inv-del-btn" onclick="Invoices.delete('${inv.id}')"><i class="ti ti-trash"></i></button>
+              </div>
             </td>
           </tr>`;
         }).join('')
-      : '<tr class="er"><td colspan="6">لا توجد فواتير</td></tr>'
+      : '<tr class="er"><td colspan="8">لا توجد فواتير</td></tr>'
     );
+
+    // Pagination
+    const pag = DOM.get('inv-pagination');
+    if (pag) {
+      const from = total ? start + 1 : 0;
+      const to   = Math.min(start + PAGE_SIZE, total);
+      pag.innerHTML = `
+        <span>${from}–${to} من ${total} فاتورة</span>
+        <div class="inv-page-btns">
+          <button class="inv-page-btn" onclick="Invoices.goPage(${_page-1})" ${_page<=1?'disabled':''}>‹</button>
+          ${Array.from({length:Math.min(pages,5)},(_,i)=>{
+            const p = Math.max(1,Math.min(_page-2,pages-4))+i;
+            return `<button class="inv-page-btn${p===_page?' active':''}" onclick="Invoices.goPage(${p})">${p}</button>`;
+          }).join('')}
+          <button class="inv-page-btn" onclick="Invoices.goPage(${_page+1})" ${_page>=pages?'disabled':''}>›</button>
+        </div>`;
+    }
+
+    // Load items count in background
+    Invoices._loadItemsCounts(page.map(i => i.id));
   },
 
+  goPage(p) {
+    const pages = Math.ceil(_filtered.length / PAGE_SIZE);
+    if (p < 1 || p > pages) return;
+    _page = p;
+    Invoices._renderTable();
+  },
+
+  // ── Load items counts ──
+  async _loadItemsCounts(ids) {
+    if (!ids.length) return;
+    const { data } = await sb.from('invoice_items')
+      .select('invoice_id, quantity')
+      .in('invoice_id', ids);
+    const counts = {};
+    (data || []).forEach(it => {
+      if (!counts[it.invoice_id]) counts[it.invoice_id] = { items: 0, qty: 0 };
+      counts[it.invoice_id].items++;
+      counts[it.invoice_id].qty += it.quantity;
+    });
+    ids.forEach(id => {
+      const el = DOM.get('ic-' + id);
+      if (el) {
+        const c = counts[id] || { items: 0, qty: 0 };
+        el.textContent = `${c.items} صنف · ${c.qty} قطعة`;
+      }
+    });
+  },
+
+  // ── Invoice Details Modal ──
   async openDetails(invId) {
-    const { data: inv } = await sb.from('invoices').select('*').eq('id', invId).single();
+    const { data: inv }   = await sb.from('invoices').select('*').eq('id', invId).single();
     const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', invId);
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
 
-    const payLabel = { cash: 'نقدي', transfer: 'تحويل', partial: 'جزئي', defer: 'دين' }[inv.payment_type] || inv.payment_type;
+    const payLabel  = PAY_LABELS[inv.payment_type] || inv.payment_type;
+    const payClass  = PAY_CLASS[inv.payment_type]  || '';
+    const totalQty  = (items || []).reduce((s, i) => s + i.quantity, 0);
     const itemsHtml = (items || []).map(it =>
       `<tr>
-        <td>${Utils.escape(it.product_name || '-')}</td>
+        <td>${escape(it.product_name || '-')}</td>
         <td style="text-align:center;">${it.quantity}</td>
         <td style="text-align:left;">₪${parseFloat(it.price).toFixed(2)}</td>
         <td style="text-align:left;font-weight:700;">₪${(it.quantity * it.price).toFixed(2)}</td>
@@ -61,28 +202,60 @@ const Invoices = {
 
     DOM.setHTML('inv-details-body', `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
-        <div class="inv-det-row"><span>رقم الفاتورة</span><strong>${Utils.escape(inv.invoice_number || '-')}</strong></div>
+        <div class="inv-det-row"><span>رقم الفاتورة</span><strong>${escape(inv.invoice_number || '-')}</strong></div>
         <div class="inv-det-row"><span>التاريخ والوقت</span><strong>${inv.invoice_date} ${inv.sale_time || ''}</strong></div>
-        <div class="inv-det-row"><span>اسم المشتري</span><strong>${Utils.escape(inv.buyer_name || inv.customer_name || '-')}</strong></div>
-        <div class="inv-det-row"><span>رقم الجوال</span><strong>${Utils.escape(inv.buyer_phone || '-')}</strong></div>
-        <div class="inv-det-row"><span>طريقة الدفع</span><strong>${payLabel}</strong></div>
-        ${inv.transfer_entity_name ? `<div class="inv-det-row"><span>جهة التحويل</span><strong>${Utils.escape(inv.transfer_entity_name)}</strong></div>` : ''}
+        <div class="inv-det-row"><span>اسم المشتري</span><strong>${escape(inv.buyer_name || inv.customer_name || '-')}</strong></div>
+        <div class="inv-det-row"><span>رقم الجوال</span><strong>${escape(inv.buyer_phone || '-')}</strong></div>
+        <div class="inv-det-row"><span>طريقة الدفع</span><strong><span class="inv-pay-badge ${payClass}">${payLabel}</span></strong></div>
+        ${inv.transfer_entity_name ? `<div class="inv-det-row"><span>جهة التحويل</span><strong>${escape(inv.transfer_entity_name)}</strong></div>` : ''}
       </div>
       <table class="dt" style="margin-bottom:.75rem;">
         <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
-      <div style="text-align:left;font-size:15px;">
-        ${inv.discount > 0 ? `<div style="color:var(--g5);margin-bottom:4px;">خصم: ₪${inv.discount.toFixed(2)}</div>` : ''}
-        <strong style="font-size:18px;">الإجمالي: ₪${inv.total.toFixed(2)}</strong>
+      <div style="background:var(--g0);border-radius:10px;padding:12px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--g5);">
+          <span>إجمالي الأصناف</span><span>${(items||[]).length} صنف · ${totalQty} قطعة</span>
+        </div>
+        ${inv.discount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--d);"><span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px;margin-top:6px;padding-top:6px;border-top:1px solid var(--br);">
+          <span>الإجمالي النهائي</span><span>₪${inv.total.toFixed(2)}</span>
+        </div>
       </div>
     `);
     Modal.open('m-inv-details');
   },
 
+  // ── Export Excel ──
+  async exportExcel() {
+    const list = _filtered.length ? _filtered : _allInvoices;
+    if (!list.length) { Notify.error('لا توجد فواتير للتصدير'); return; }
+    Notify.show('جارٍ التصدير...');
+    const rows = [['رقم الفاتورة','المشتري','الجوال','التاريخ','الوقت','طريقة الدفع','الإجمالي','الخصم']];
+    list.forEach(inv => {
+      rows.push([
+        inv.invoice_number || '',
+        inv.buyer_name || inv.customer_name || '',
+        inv.buyer_phone || '',
+        inv.invoice_date || '',
+        inv.sale_time || '',
+        PAY_LABELS[inv.payment_type] || '',
+        inv.total?.toFixed(2) || '',
+        inv.discount?.toFixed(2) || '0',
+      ]);
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'invoices.csv'; a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  // ── Form helpers ──
   _buildItemRow() {
     const opts = State.inventory
-      .map(i => `<option value="${i.id}" data-price="${i.sale_price || 0}" data-name="${Utils.escape(i.name)}">${Utils.escape(i.name)} (${i.quantity} ${i.unit || ''})</option>`)
+      .map(i => `<option value="${i.id}" data-price="${i.sale_price||0}" data-name="${escape(i.name)}">${escape(i.name)} (${i.quantity} ${i.unit||''})</option>`)
       .join('');
     return `<div class="ii" style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
       <select class="inp prod-sel" style="font-size:13px;" onchange="Invoices._onProductSelect(this)">
@@ -101,99 +274,79 @@ const Invoices = {
   },
 
   resetForm() {
-    const wrap = DOM.get('iitems');
-    if (wrap) wrap.innerHTML = Invoices._buildItemRow();
+    const wrap = DOM.get('iitems'); if (wrap) wrap.innerHTML = Invoices._buildItemRow();
     DOM.setText('itotal', '₪ 0');
     const disc = DOM.get('idiscount'); if (disc) disc.value = '0';
   },
 
-  addItem() {
-    DOM.get('iitems')?.insertAdjacentHTML('beforeend', Invoices._buildItemRow());
-  },
+  addItem() { DOM.get('iitems')?.insertAdjacentHTML('beforeend', Invoices._buildItemRow()); },
 
   calcTotal() {
     let subtotal = 0;
     document.querySelectorAll('#iitems .ii').forEach(row => {
-      subtotal += (parseFloat(row.querySelector('.qty-inp')?.value) || 0) * (parseFloat(row.querySelector('.price-inp')?.value) || 0);
+      subtotal += (parseFloat(row.querySelector('.qty-inp')?.value)||0) * (parseFloat(row.querySelector('.price-inp')?.value)||0);
     });
     const discount = parseFloat(DOM.val('idiscount')) || 0;
     DOM.setText('itotal', '₪ ' + Math.max(0, subtotal - discount).toFixed(2));
   },
 
   _collectItems() {
-    const items = [];
-    let subtotal = 0;
+    const items = []; let subtotal = 0;
     document.querySelectorAll('#iitems .ii').forEach(row => {
       const select = row.querySelector('.prod-sel');
       const qty    = parseFloat(row.querySelector('.qty-inp')?.value) || 0;
       const price  = parseFloat(row.querySelector('.price-inp')?.value) || 0;
       const invId  = select?.value || '';
       const name   = select?.options[select?.selectedIndex]?.getAttribute('data-name') || 'منتج';
-      if (qty > 0 && price > 0) {
-        items.push({ product_name: name, inventory_id: invId || null, quantity: qty, price });
-        subtotal += qty * price;
-      }
+      if (qty > 0 && price > 0) { items.push({ product_name: name, inventory_id: invId||null, quantity: qty, price }); subtotal += qty * price; }
     });
     return { items, subtotal };
   },
 
   async _generateInvoiceNumber() {
     const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
-    return 'INV-' + String((count || 0) + 1).padStart(4, '0');
+    return 'INV-' + String((count||0)+1).padStart(4,'0');
   },
 
   async save() {
     const { items, subtotal } = Invoices._collectItems();
     if (!items.length || !subtotal) { Notify.error('أضف منتجاً وسعراً'); return; }
 
-    const discount     = parseFloat(DOM.val('idiscount')) || 0;
-    const total        = Math.max(0, subtotal - discount);
-    const paymentType  = document.querySelector('input[name="ip"]:checked').value;
-    const partialPaid  = paymentType === PAYMENT.PARTIAL ? (parseFloat(DOM.val('ipartial')) || 0) : 0;
-    const today        = Utils.today();
-    const timeNow      = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const discount    = parseFloat(DOM.val('idiscount')) || 0;
+    const total       = Math.max(0, subtotal - discount);
+    const paymentType = document.querySelector('input[name="ip"]:checked').value;
+    const partialPaid = paymentType === PAYMENT.PARTIAL ? (parseFloat(DOM.val('ipartial'))||0) : 0;
+    const today       = Utils.today();
+    const timeNow     = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
 
-    // Resolve customer
-    let customerId = DOM.val('ic');
-    let customerName = 'زبون عادي';
-    let customerPhone = '';
-
+    let customerId = DOM.val('ic'), customerName = 'زبون عادي', customerPhone = '';
     State.isMutating = true;
     try {
       if (customerId === '__new__') {
         const newName = DOM.val('inv-new-name');
         if (!newName) { Notify.error('أدخل اسم الزبون الجديد'); return; }
         const newCustomer = await getCustomers().createInline(newName, DOM.val('inv-new-phone'));
-        customerId   = newCustomer.id;
-        customerName = newName;
-        customerPhone = DOM.val('inv-new-phone');
+        customerId = newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone');
         await getCustomers().loadAll();
       } else if (customerId) {
         const found = State.customers.find(c => c.id === customerId);
-        customerName  = found?.name  || '';
-        customerPhone = found?.phone || '';
+        customerName = found?.name || ''; customerPhone = found?.phone || '';
       }
 
       const invoiceNumber = await Invoices._generateInvoiceNumber();
-
       const { data: invoice, error } = await DB.invoices().insert({
-        store_id: State.user.id, customer_id: customerId || null,
+        store_id: State.user.id, customer_id: customerId||null,
         customer_name: customerName, customer_phone: customerPhone,
         total, subtotal, discount, payment_type: paymentType,
         partial_paid: partialPaid, invoice_date: today,
         sale_time: timeNow, invoice_number: invoiceNumber,
         notes: DOM.val('inotes'),
       }).select().single();
-
       if (error) throw error;
 
-      // Save line items
       await sb.from('invoice_items').insert(items.map(it => ({ ...it, invoice_id: invoice.id })));
-
-      // Deduct inventory
       await getInventory().deductItems(items);
 
-      // Create debt if needed
       if ([PAYMENT.DEFER, PAYMENT.PARTIAL].includes(paymentType) && customerId) {
         const debtAmount = paymentType === PAYMENT.PARTIAL ? total - partialPaid : total;
         if (debtAmount > 0) await getDebts().addFromInvoice(customerId, debtAmount, today, invoiceNumber);
@@ -205,21 +358,18 @@ const Invoices = {
       DOM.get('new-cust-wrap')?.classList.add('hidden');
       DOM.clearInputs('inv-new-name', 'inv-new-phone', 'inotes');
       DOM.get('idiscount').value = '0';
-
       await getInventory().loadList();
       await Promise.all([Invoices.load(), getDashboard().load(), getCustomers().loadTable()]);
     } catch (err) {
       console.error('[Invoices.save]', err);
       Notify.error(err.message);
-    } finally {
-      setTimeout(() => { State.isMutating = false; }, 500);
-    }
+    } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
   async delete(id) {
-    if (!confirm('حذف؟')) return;
+    if (!confirm('حذف الفاتورة؟')) return;
     State.isMutating = true;
-    try { await DB.invoices().delete().eq('id', id); Notify.success('تم'); Invoices.load(); }
+    try { await DB.invoices().delete().eq('id', id); Notify.success('تم الحذف'); Invoices.load(); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 };
