@@ -12,7 +12,7 @@
 :root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
 
 /* ── LAYOUT ── */
-html,body{height:100%;margin:0;}
+html,body{height:100%;height:calc(var(--vh,1vh)*100);margin:0;}
 body{
   font-family:'Cairo',sans-serif;
   background:#fff;
@@ -20,6 +20,7 @@ body{
   display:flex;
   flex-direction:column;
   height:100%;
+  height:100dvh;
   overflow:hidden;
 }
 
@@ -87,6 +88,7 @@ table.sa-dt tr:hover td{background:#334155;}
   flex:1;
   overflow:hidden;
   height:100%;
+  height:calc(var(--vh,1vh)*100);
 }
 #app-wrap.hidden{display:none;}
 .topbar{
@@ -151,7 +153,7 @@ table.sa-dt tr:hover td{background:#334155;}
   border-top:1px solid var(--br);
   flex-shrink:0;
   padding:6px 0;
-  padding-bottom:env(safe-area-inset-bottom, 6px);
+  padding-bottom:max(6px, env(safe-area-inset-bottom, 6px));
   position:relative;
   z-index:100;
 }
@@ -254,7 +256,7 @@ body.dark .ni.active{background:#1e3a5f;}
 @media(max-width:768px){
   .sidebar{display:none!important;}
   .bottom-nav{display:block;}
-  .content{padding:.75rem .75rem calc(.75rem + 64px);}
+  .content{padding:.75rem .75rem calc(.75rem + 64px + env(safe-area-inset-bottom, 0px));}
   .sg.c4{grid-template-columns:repeat(2,1fr);}
   .sa-sidebar{display:none;}
   .mo{align-items:flex-end;padding:0;}
@@ -1118,5 +1120,20 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 
 
 
+<script>
+// Fix iOS viewport height bug - 100vh includes browser chrome on iOS
+(function(){
+  function setVh(){
+    // --vh = actual visible height / 100
+    var vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', vh + 'px');
+  }
+  setVh();
+  window.addEventListener('resize', setVh);
+  window.addEventListener('orientationchange', function(){
+    setTimeout(setVh, 150);
+  });
+})();
+</script>
 </body>
 </html>
