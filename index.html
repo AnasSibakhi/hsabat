@@ -337,11 +337,7 @@ body.dark .ni.active{background:#1e3a5f;}
   .bottom-nav{display:block;}
   .content{padding:.75rem .75rem calc(.75rem + 64px);}
   .sg.c4{grid-template-columns:repeat(2,1fr);}
-  .sa-sidebar{display:none;}
-  .sa-mobile-nav{display:flex;background:#1e293b;border-top:1px solid #334155;flex-shrink:0;padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));}
-  .sa-mobile-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:#94a3b8;font-family:'Cairo',sans-serif;font-size:10px;cursor:pointer;padding:4px 0;}
-  .sa-mobile-nav button i{font-size:18px;}
-  .sa-content{padding:1rem;padding-bottom:calc(1rem + 80px);}
+  .sa-content{padding:1rem;}
   .mo{align-items:flex-end;padding:0;}
   .modal{border-radius:20px 20px 0 0;max-height:85vh;}
 }
@@ -471,13 +467,6 @@ body.dark .ni.active{background:#1e3a5f;}
   </div>
  </div>
  <!-- Mobile Admin Nav -->
- <div class="sa-mobile-nav">
-  <button onclick="AdminPanel.showPage('sa-dashboard')"><i class="ti ti-dashboard"></i><span>الرئيسية</span></button>
-  <button onclick="AdminPanel.showPage('sa-stores')"><i class="ti ti-building-store"></i><span>المحلات</span></button>
-  <button onclick="AdminPanel.showPage('sa-users')"><i class="ti ti-users"></i><span>المستخدمين</span></button>
-  <button onclick="AdminPanel.showPage('sa-notifications')"><i class="ti ti-bell"></i><span>إشعار</span></button>
-  <button onclick="AdminPanel.showPage('sa-transfer-entities');AdminPanel.loadTransferEntities()"><i class="ti ti-building-bank"></i><span>تحويل</span></button>
- </div>
  <div class="sa-layout">
   <div class="sa-sidebar">
    <div class="sa-nl">الرئيسية</div>
