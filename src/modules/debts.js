@@ -141,7 +141,7 @@ const Debts = {
       </div>`
     ).join('');
 
-    html += `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}'))">+ إضافة &quot;${Utils.escape(val.trim())}&quot; كزبون جديد</div>`;
+    html += `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}')">+ إضافة &quot;${Utils.escape(val.trim())}&quot; كزبون جديد</div>`;
 
     dd.innerHTML = html;
     dd.style.display = 'block';
