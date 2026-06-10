@@ -30,7 +30,7 @@ const AdminPanel = {
       if (n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
     });
     AdminPanel.closeDrawer();
-    const loaders = { 'sa-stores': AdminPanel.loadStores, 'sa-subscriptions': AdminPanel.loadSubscriptions, 'sa-users': AdminPanel.loadUsers, 'sa-dashboard': AdminPanel.loadDashboard };
+    const loaders = { 'sa-stores': AdminPanel.loadStores, 'sa-subscriptions': AdminPanel.loadSubscriptions, 'sa-users': AdminPanel.loadUsers, 'sa-dashboard': AdminPanel.loadDashboard, 'sa-transfer-entities': async () => { await AdminPanel._fillStoresDropdown('te-store-id'); await AdminPanel.loadTransferEntities(); } };
     loaders[id]?.();
   },
 
@@ -252,14 +252,11 @@ const AdminPanel = {
     if (!sel) return;
     const current = sel.value;
     sel.innerHTML = '<option value="">-- اختر المحل --</option>'
-      + (data || []).map(s => `<option value="${s.id}">${Utils.escape(s.store_name)}</option>`).join('');
-    if (current) sel.value = current;
+      + (data || []).map(s => `<option value="${s.id}"${s.id === current ? ' selected' : ''}>${Utils.escape(s.store_name)}</option>`).join('');
   },
 
   // ── Transfer Entities Management ──
   async loadTransferEntities() {
-    // Load stores into dropdown first
-    await AdminPanel._fillStoresDropdown('te-store-id');
     const [{ data }, { data: stores }] = await Promise.all([
       sbAdmin.from('transfer_entities').select('*').order('name'),
       sbAdmin.from('app_accounts').select('id, store_name'),
