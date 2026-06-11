@@ -299,18 +299,27 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   async startScanner() {
     if (_scanner) return;
 
-    DOM.get('qs-scanner-overlay').style.display = 'flex';
-
-    if (!window.Quagga) {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
-      document.head.appendChild(s);
-      await new Promise((res, rej) => { s.onload = res; s.onerror = rej; }).catch(() => {
-        Notify.error('فشل تحميل الباركود'); QuickSale.stopScanner(); return;
-      });
-    }
+    const overlay = DOM.get('qs-scanner-overlay');
+    if (overlay) overlay.style.display = 'flex';
 
     const el = DOM.get('qs-scanner-container');
+    if (!el) { Notify.error('خطأ في الكاميرا'); return; }
+
+    if (!window.Quagga) {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      } catch {
+        Notify.error('فشل تحميل الباركود');
+        QuickSale.stopScanner();
+        return;
+      }
+    }
+
     el.innerHTML = '';
 
     const seen = {};
