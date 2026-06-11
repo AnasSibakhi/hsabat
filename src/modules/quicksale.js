@@ -285,33 +285,83 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Camera Scanner ──
   async toggleFlash() {
-    await BarcodeScanner.toggleFlash();
+    try {
+      const video = document.querySelector('#qs-scanner-container video');
+      const track = video?.srcObject?.getVideoTracks?.()?.[0];
+      if (!track) { Notify.error('الفلاش غير متاح'); return; }
+      QuickSale._flashOn = !QuickSale._flashOn;
+      await track.applyConstraints({ advanced: [{ torch: QuickSale._flashOn }] });
+      const btn = DOM.get('qs-flash-btn');
+      if (btn) { btn.style.background = QuickSale._flashOn ? '#fbbf24' : 'rgba(0,0,0,0.6)'; btn.style.color = QuickSale._flashOn ? '#000' : '#fff'; }
+    } catch { Notify.error('الفلاش غير مدعوم'); }
   },
 
   async startScanner() {
-    if (BarcodeScanner.isActive()) return;
+    if (_scanner) return;
 
-    const overlay = DOM.get('qs-scanner-overlay');
-    if (overlay) overlay.style.display = 'flex';
+    DOM.get('qs-scanner-overlay').style.display = 'flex';
 
-    const container = DOM.get('qs-scanner-container');
-    if (!container) return;
-    container.innerHTML = '';
+    if (!window.Quagga) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
+      document.head.appendChild(s);
+      await new Promise((res, rej) => { s.onload = res; s.onerror = rej; }).catch(() => {
+        Notify.error('فشل تحميل الباركود'); QuickSale.stopScanner(); return;
+      });
+    }
 
-    await BarcodeScanner.start(
-      'qs-scanner-container',
-      (code) => { QuickSale.stopScanner(); QuickSale._onBarcode(code); },
-      (err)  => { Notify.error(err || 'لا يمكن فتح الكاميرا'); QuickSale.stopScanner(); }
-    );
-    _scanner = BarcodeScanner.isActive() ? true : null;
+    const el = DOM.get('qs-scanner-container');
+    el.innerHTML = '';
+
+    const seen = {};
+    _scanner = (result) => {
+      const code  = result?.codeResult?.code;
+      const err   = result?.codeResult?.startInfo?.error ?? 0;
+      if (!code || code.length < 4 || err > 0.3) return;
+      seen[code] = (seen[code] || 0) + 1;
+      if (seen[code] >= 1) { QuickSale.stopScanner(); QuickSale._onBarcode(code); }
+    };
+
+    Quagga.init({
+      inputStream: {
+        type: 'LiveStream', target: el,
+        constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      },
+      locator: { patchSize: 'medium', halfSample: true },
+      numOfWorkers: 2, frequency: 10,
+      decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'], multiple: false },
+      locate: true,
+    }, (err) => {
+      if (err) {
+        Notify.error((err?.message||'').includes('ermission') ? 'يرجى السماح بالوصول للكاميرا' : 'لا يمكن فتح الكاميرا');
+        QuickSale.stopScanner();
+      } else {
+        Quagga.start();
+        Quagga.onDetected(_scanner);
+        // تحسين الكاميرا
+        setTimeout(async () => {
+          try {
+            const track = el.querySelector('video')?.srcObject?.getVideoTracks?.()?.[0];
+            if (!track) return;
+            const caps = track.getCapabilities?.() || {};
+            const s = {};
+            if (caps.focusMode?.includes('continuous'))    s.focusMode = 'continuous';
+            if (caps.exposureMode?.includes('continuous')) s.exposureMode = 'continuous';
+            if (caps.sharpness) s.sharpness = caps.sharpness.max;
+            if (Object.keys(s).length) await track.applyConstraints({ advanced: [s] });
+          } catch {}
+        }, 800);
+      }
+    });
   },
 
   stopScanner() {
-    BarcodeScanner.stop();
+    try { if (_scanner) { Quagga.offDetected(_scanner); Quagga.stop(); } } catch {}
     _scanner = null;
-    const overlay = DOM.get('qs-scanner-overlay'); if (overlay) overlay.style.display = 'none';
-    const container = DOM.get('qs-scanner-container'); if (container) container.innerHTML = '';
-    const bi = DOM.get('qs-barcode-input'); if (bi) bi.focus();
+    QuickSale._flashOn = false;
+    DOM.get('qs-scanner-overlay').style.display = 'none';
+    DOM.get('qs-scanner-container').innerHTML = '';
+    DOM.get('qs-barcode-input')?.focus();
   },
 
   // ── Add new product from scanner ──
