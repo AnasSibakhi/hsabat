@@ -219,33 +219,35 @@
 .pos-cart-empty p { font-size: 12px; color: #94a3b8; text-align: center; line-height: 1.7; margin: 0; }
 
 .pos-cart-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 10px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 12px;
   border-bottom: 1px solid #f1f5f9;
   transition: background .1s;
 }
 .pos-cart-item:hover { background: #f8fafc; }
 .pos-ci-info { flex: 1; min-width: 0; }
-.pos-ci-name { font-size: 12px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pos-ci-sub  { font-size: 11px; color: #64748b; margin-top: 2px; }
-.pos-ci-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.pos-ci-name { font-size: 13px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-ci-sub  { font-size: 12px; color: #64748b; margin-top: 3px; }
+.pos-ci-ctrl { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .pos-qb {
-  width: 26px; height: 26px; border-radius: 7px;
+  width: 34px; height: 34px; border-radius: 8px;
   border: 1.5px solid #e2e8f0; background: #f8fafc;
-  font-size: 16px; font-weight: 800; color: #475569;
+  font-size: 20px; font-weight: 800; color: #475569;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   padding: 0; transition: .1s;
 }
 .pos-qb:hover { border-color: #1a56db; color: #1a56db; background: #eff6ff; }
-.pos-qn { font-size: 13px; font-weight: 800; min-width: 22px; text-align: center; color: #0f172a; }
+.pos-qb:active { transform: scale(.92); }
+.pos-qn { font-size: 15px; font-weight: 900; min-width: 28px; text-align: center; color: #0f172a; }
 .pos-rm {
-  width: 26px; height: 26px; border-radius: 7px;
+  width: 34px; height: 34px; border-radius: 8px;
   border: none; background: #fee2e2; color: #ef4444;
-  font-size: 13px; cursor: pointer;
+  font-size: 16px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: .1s;
 }
 .pos-rm:hover { background: #fecaca; }
+.pos-rm:active { transform: scale(.92); }
 
 /* Summary */
 .pos-summary {
