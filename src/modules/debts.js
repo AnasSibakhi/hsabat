@@ -81,8 +81,10 @@ const Debts = {
       const name        = Utils.escape(d.customers?.name || '-');
       const remindReady = d.remind_date && (d.cust_phone || d.customers?.phone) && d.remind_date <= new Date().toISOString().split('T')[0];
 
+      const desc = d.notes && !d.notes.startsWith('فاتورة') ? `<div style="font-size:11px;color:var(--g5);margin-top:2px;">${escape(d.notes)}</div>` : '';
+
       return '<tr>'
-        + '<td>' + name + '</td>'
+        + '<td>' + name + desc + '</td>'
         + '<td>₪' + d.amount.toFixed(2) + '</td>'
         + '<td><strong>₪' + remaining.toFixed(2) + '</strong></td>'
         + '<td>' + d.debt_date + '</td>'
@@ -334,34 +336,15 @@ const Debts = {
 
     State.isMutating = true;
     try {
-      // إنشاء فاتورة تلقائية للدين
-      const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
-      const invNum  = 'INV-' + String((count||0)+1).padStart(4,'0');
-      const cust    = State.customers?.find(c => c.id === customerId);
-      const { data: inv } = await DB.invoices().insert({
-        store_id:      State.user.id,
-        customer_id:   customerId,
-        customer_name: cust?.name || '',
-        buyer_name:    cust?.name || '',
-        buyer_phone:   cust?.phone || phone || '',
-        total:         amount,
-        subtotal:      amount,
-        discount:      0,
-        payment_type:  'defer',
-        invoice_date:  date || Utils.today(),
-        sale_time:     new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true }),
-        invoice_number: invNum,
-        notes:         DOM.val('dn') || '',
-      }).select().single();
-
+      const cust = State.customers?.find(c => c.id === customerId);
       const { error } = await DB.debts().insert({
         store_id:    State.user.id,
         customer_id: customerId,
         amount,
-        debt_date:   date,
-        notes:       inv ? 'فاتورة ' + invNum : DOM.val('dn'),
+        debt_date:   date || Utils.today(),
+        notes:       DOM.val('dn') || '',
         remind_date: remindDate,
-        cust_phone:  phone || cust?.phone || null,
+        cust_phone:  cust?.phone || phone || null,
       });
       if (error) throw error;
       Notify.success('تم حفظ الدين' + (remindDate ? ' — تذكير: ' + remindDate : ''));
