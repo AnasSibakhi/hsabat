@@ -242,6 +242,7 @@ export const QuickSale = {
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
     const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
     const bp = DOM.get('qs-buyer-phone'); if (bp) bp.value = '';
+    const bdd = DOM.get('qs-buyer-dropdown'); if (bdd) bdd.style.display = 'none';
 document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active'));
     QuickSale._renderGrid();
   },
@@ -407,6 +408,28 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Debt modal ──
+  searchBuyer(val) {
+    const dd = DOM.get('qs-buyer-dropdown');
+    if (!val.trim()) { dd.style.display = 'none'; return; }
+    const q = val.trim().toLowerCase();
+    const matches = (State.customers || []).filter(c =>
+      c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { dd.style.display = 'none'; return; }
+    dd.innerHTML = matches.map(c =>
+      `<div class="dc-opt" onclick="QuickSale.selectBuyer('${c.id}','${escape(c.name)}','${c.phone||''}')">
+        ${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
+      </div>`
+    ).join('');
+    dd.style.display = 'block';
+  },
+
+  selectBuyer(id, name, phone) {
+    DOM.get('qs-buyer-name').value  = name;
+    DOM.get('qs-buyer-phone').value = phone;
+    DOM.get('qs-buyer-dropdown').style.display = 'none';
+  },
+
   // ── Transfer Entity ──
   async loadTransferEntities() {
     const { data } = await sbAdmin.from('transfer_entities')
