@@ -1519,18 +1519,18 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <!-- Full width scan guide -->
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
       <!-- Dark overlay top -->
-      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:20%;background:rgba(0,0,0,0.5);"></div>
       <!-- Dark overlay bottom -->
-      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Scan frame -->
-      <div style="position:absolute;top:25%;left:5%;right:5%;bottom:25%;border:3px solid #6366f1;border-radius:12px;">
+      <div style="position:absolute;bottom:0;left:0;right:0;height:20%;background:rgba(0,0,0,0.5);"></div>
+      <!-- Scan frame — 95% wide, 60% tall -->
+      <div style="position:absolute;top:20%;left:2%;right:2%;bottom:20%;border:2px solid rgba(99,102,241,0.8);border-radius:10px;">
         <!-- Corner marks -->
-        <div style="position:absolute;top:-3px;left:-3px;width:28px;height:28px;border-top:5px solid #6366f1;border-left:5px solid #6366f1;border-radius:8px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:28px;height:28px;border-top:5px solid #6366f1;border-right:5px solid #6366f1;border-radius:0 8px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:28px;height:28px;border-bottom:5px solid #6366f1;border-left:5px solid #6366f1;border-radius:0 0 0 8px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:28px;height:28px;border-bottom:5px solid #6366f1;border-right:5px solid #6366f1;border-radius:0 0 8px 0;"></div>
+        <div style="position:absolute;top:-3px;left:-3px;width:24px;height:24px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:6px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:24px;height:24px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 6px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:24px;height:24px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 6px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:24px;height:24px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 6px 0;"></div>
         <!-- Scan line animation -->
-        <div style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#6366f1,transparent);animation:scan-line 1.5s ease-in-out infinite;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.8s ease-in-out infinite;"></div>
       </div>
     </div>
     <!-- Flash button -->

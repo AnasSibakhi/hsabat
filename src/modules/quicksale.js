@@ -375,31 +375,46 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const format = result?.codeResult?.format;
       const err    = result?.codeResult?.startInfo?.error ?? 1;
       if (!code || code.length < 4) return;
-      if (err > 0.25) return;
+      if (err > 0.15) return;  // دقيق جداً
 
-      // EAN/UPC مع checksum صح — قراءة واحدة كافية لو موجود بالمخزون
       const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(format);
       const inInventory = State.inventory.some(p => p.barcode === code);
 
+      // EAN موجود + checksum = فوري 100%
       if (isEAN && validateChecksum(code) && inInventory) {
         QuickSale._beepAndAdd(code);
         return;
       }
 
-      // غير موجود أو format ثاني — نحتاج قراءتين
+      // EAN checksum صح بس مش موجود = قراءتين
+      if (isEAN && validateChecksum(code)) {
+        seen[code] = (seen[code] || 0) + 1;
+        if (seen[code] >= 2) { seen[code] = 0; QuickSale._beepAndAdd(code); }
+        return;
+      }
+
+      // باقي = 3 قراءات
       seen[code] = (seen[code] || 0) + 1;
-      if (seen[code] >= 2) { seen[code] = 0; QuickSale._beepAndAdd(code); }
+      if (seen[code] >= 3) { seen[code] = 0; QuickSale._beepAndAdd(code); }
     };
 
     Quagga.init({
       inputStream: {
         type: 'LiveStream', target: el,
-        constraints: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+        constraints: {
+          facingMode: 'environment',
+          width:  { ideal: 1280, min: 640 },
+          height: { ideal: 720,  min: 480 },
+          frameRate: { ideal: 30 },
+        },
       },
-      locator: { patchSize: 'small', halfSample: true },
-      numOfWorkers: 1,
-      frequency: 30,
-      decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'], multiple: false },
+      locator: { patchSize: 'medium', halfSample: false },
+      numOfWorkers: 2,
+      frequency: 15,
+      decoder: {
+        readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
+        multiple: false,
+      },
       locate: true,
     }, (err) => {
       if (err) {
