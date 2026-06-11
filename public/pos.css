@@ -325,8 +325,10 @@
   .pos-wrap   { flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .pos-left   { flex: none; height: auto; min-height: 50vh; border-left: none; border-bottom: 1px solid #e2e8f0; overflow: visible; }
   .pos-right  { flex: none; width: 100%; min-width: unset; box-shadow: none; }
-  .pos-grid   { grid-template-columns: repeat(3, 1fr); gap: 6px; padding: .4rem .5rem; overflow: visible; max-height: none; }
-  .pos-prod   { padding: 9px 5px 8px; border-radius: 11px; }
+  .pos-grid   { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: .5rem; overflow: visible; max-height: none; }
+  .pos-prod   { padding: 12px 8px; border-radius: 12px; }
+  .pos-prod-name  { font-size: 12px; }
+  .pos-prod-price { font-size: 16px; }
   .pos-pay    { padding: 11px 4px; font-size: 12px; }
   .pos-grand-total { font-size: 18px; }
 }
