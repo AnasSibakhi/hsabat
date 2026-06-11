@@ -249,7 +249,19 @@
 .pos-rm:hover { background: #fecaca; }
 .pos-rm:active { transform: scale(.92); }
 
-/* Summary */
+/* ── QS Cart Items ── */
+.qs-cart-item{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid #f1f5f9;}
+.qs-ci-main{flex:1;min-width:0;}
+.qs-ci-name{font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qs-ci-meta{font-size:12px;color:#64748b;margin-top:3px;}
+.qs-ci-ctrl{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.qs-qb{width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#f8fafc;font-size:20px;font-weight:800;color:#475569;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.1s;}
+.qs-qb:hover{border-color:#1a56db;color:#1a56db;background:#eff6ff;}
+.qs-qb:active{transform:scale(.9);}
+.qs-qn{font-size:16px;font-weight:900;min-width:28px;text-align:center;color:#0f172a;}
+.qs-rm{width:36px;height:36px;border-radius:8px;border:none;background:#fee2e2;color:#ef4444;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;}
+.qs-rm:hover{background:#fecaca;}
+.qs-rm:active{transform:scale(.9);}
 .pos-summary {
   padding: .45rem .8rem;
   background: #f8fafc;
