@@ -373,29 +373,19 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     _scanner = (result) => {
       const code   = result?.codeResult?.code;
       const format = result?.codeResult?.format;
-      const err    = result?.codeResult?.startInfo?.error ?? 1;
       if (!code || code.length < 4) return;
-      if (err > 0.35) return;
 
       const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(format);
-      const inInventory = State.inventory.some(p => p.barcode === code);
 
-      // EAN موجود + checksum = فوري 100%
-      if (isEAN && validateChecksum(code) && inInventory) {
+      // EAN/UPC checksum يضمن الصحة — فوري
+      if (isEAN && validateChecksum(code)) {
         QuickSale._beepAndAdd(code);
         return;
       }
 
-      // EAN checksum صح بس مش موجود = قراءتين
-      if (isEAN && validateChecksum(code)) {
-        seen[code] = (seen[code] || 0) + 1;
-        if (seen[code] >= 2) { seen[code] = 0; QuickSale._beepAndAdd(code); }
-        return;
-      }
-
-      // باقي = 3 قراءات
+      // باقي الأنواع — قراءتين
       seen[code] = (seen[code] || 0) + 1;
-      if (seen[code] >= 3) { seen[code] = 0; QuickSale._beepAndAdd(code); }
+      if (seen[code] >= 2) { seen[code] = 0; QuickSale._beepAndAdd(code); }
     };
 
     Quagga.init({
