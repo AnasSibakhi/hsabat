@@ -375,7 +375,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const format = result?.codeResult?.format;
       const err    = result?.codeResult?.startInfo?.error ?? 1;
       if (!code || code.length < 4) return;
-      if (err > 0.15) return;  // دقيق جداً
+      if (err > 0.35) return;
 
       const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(format);
       const inInventory = State.inventory.some(p => p.barcode === code);
