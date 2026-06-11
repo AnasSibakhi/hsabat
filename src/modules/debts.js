@@ -334,14 +334,34 @@ const Debts = {
 
     State.isMutating = true;
     try {
+      // إنشاء فاتورة تلقائية للدين
+      const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
+      const invNum  = 'INV-' + String((count||0)+1).padStart(4,'0');
+      const cust    = State.customers?.find(c => c.id === customerId);
+      const { data: inv } = await DB.invoices().insert({
+        store_id:      State.user.id,
+        customer_id:   customerId,
+        customer_name: cust?.name || '',
+        buyer_name:    cust?.name || '',
+        buyer_phone:   cust?.phone || phone || '',
+        total:         amount,
+        subtotal:      amount,
+        discount:      0,
+        payment_type:  'defer',
+        invoice_date:  date || Utils.today(),
+        sale_time:     new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true }),
+        invoice_number: invNum,
+        notes:         DOM.val('dn') || '',
+      }).select().single();
+
       const { error } = await DB.debts().insert({
         store_id:    State.user.id,
         customer_id: customerId,
         amount,
         debt_date:   date,
-        notes:       DOM.val('dn'),
+        notes:       inv ? 'فاتورة ' + invNum : DOM.val('dn'),
         remind_date: remindDate,
-        cust_phone:  phone || null,
+        cust_phone:  phone || cust?.phone || null,
       });
       if (error) throw error;
       Notify.success('تم حفظ الدين' + (remindDate ? ' — تذكير: ' + remindDate : ''));
