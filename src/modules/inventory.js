@@ -57,13 +57,14 @@ const Inventory = {
         unit:            DOM.val('inu'),
         quantity:        parseFloat(DOM.val('inq')) || 0,
         sale_price:      parseFloat(DOM.val('insp')) || 0,
+        cost_price:      parseFloat(DOM.val('incp')) || 0,
         low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
       });
       if (error) throw error;
       Notify.success('تم إضافة الصنف');
       Modal.close('m-inv');
-      DOM.clearInputs('inn', 'insp');
-      await Inventory.load();
+      DOM.clearInputs('inn', 'insp', 'incp');
+      await Promise.all([Inventory.loadList(), Inventory.load()]);
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
