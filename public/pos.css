@@ -381,6 +381,6 @@
 
 /* ══ SCANNER ══ */
 #qs-scanner-container video,
-#qs-scanner-container canvas { width: 100% !important; display: block; }
-#qs-scanner-container canvas.drawingBuffer { position: absolute; top: 0; left: 0; }
-@keyframes scan-line { 0%,100% { top: calc(50% - 58px); } 50% { top: calc(50% + 56px); } }
+#qs-scanner-container canvas { position:absolute;top:0;left:0;width:100%!important;height:100%!important;object-fit:cover;display:block; }
+#qs-scanner-container canvas.drawingBuffer { z-index:1; }
+@keyframes scan-line { 0%,100% { top:5%; } 50% { top:calc(100% - 8px); } }

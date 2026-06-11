@@ -1512,17 +1512,37 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </div></div>
 
 <!-- Scanner Overlay -->
-<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;">
-  <div style="position:relative;width:100%;max-width:480px;">
-    <div id="qs-scanner-container" style="width:100%;min-height:280px;background:#111;position:relative;overflow:hidden;"></div>
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:120px;border:3px solid #6366f1;border-radius:8px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,0.6);"></div>
+<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;">
+  <!-- Camera takes full screen -->
+  <div style="position:relative;flex:1;width:100%;overflow:hidden;">
+    <div id="qs-scanner-container" style="position:absolute;inset:0;background:#000;"></div>
+    <!-- Full width scan guide -->
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+      <!-- Dark overlay top -->
+      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <!-- Dark overlay bottom -->
+      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <!-- Scan frame -->
+      <div style="position:absolute;top:25%;left:5%;right:5%;bottom:25%;border:3px solid #6366f1;border-radius:12px;">
+        <!-- Corner marks -->
+        <div style="position:absolute;top:-3px;left:-3px;width:28px;height:28px;border-top:5px solid #6366f1;border-left:5px solid #6366f1;border-radius:8px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:28px;height:28px;border-top:5px solid #6366f1;border-right:5px solid #6366f1;border-radius:0 8px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:28px;height:28px;border-bottom:5px solid #6366f1;border-left:5px solid #6366f1;border-radius:0 0 0 8px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:28px;height:28px;border-bottom:5px solid #6366f1;border-right:5px solid #6366f1;border-radius:0 0 8px 0;"></div>
+        <!-- Scan line animation -->
+        <div style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#6366f1,transparent);animation:scan-line 1.5s ease-in-out infinite;"></div>
+      </div>
+    </div>
     <!-- Flash button -->
-    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:10px;left:10px;width:42px;height:42px;background:rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.3);border-radius:10px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.4);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
       <i class="ti ti-bolt"></i>
     </button>
   </div>
-  <p style="color:#fff;margin-top:1rem;font-size:15px;">وجّه الكاميرا على الباركود</p>
-  <button onclick="QuickSale.stopScanner()" style="margin-top:1rem;background:#dc2626;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إلغاء</button>
+  <!-- Bottom bar -->
+  <div style="background:#111;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+    <p style="color:#94a3b8;font-size:13px;margin:0;">وجّه الكاميرا على الباركود</p>
+    <button onclick="QuickSale.stopScanner()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:14px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إغلاق</button>
+  </div>
 </div>
 
 <!-- New Product Modal -->
