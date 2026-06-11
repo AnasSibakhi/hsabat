@@ -314,13 +314,31 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     el.innerHTML = '';
 
     const seen = {};
+    // checksum validator للـ EAN/UPC
+    const validateChecksum = (code) => {
+      const digits = code.split('').map(Number);
+      const last   = digits.pop();
+      const sum    = digits.reduce((s, d, i) =>
+        s + (digits.length % 2 === i % 2 ? d * 3 : d), 0);
+      return (10 - (sum % 10)) % 10 === last;
+    };
+
     _scanner = (result) => {
-      const code  = result?.codeResult?.code;
-      const err   = result?.codeResult?.startInfo?.error ?? 0;
-      const valid = result?.codeResult?.decodedCodes?.every(c => c.error === undefined || c.error < 0.15);
+      const code   = result?.codeResult?.code;
+      const format = result?.codeResult?.format;
+      const err    = result?.codeResult?.startInfo?.error ?? 1;
       if (!code || code.length < 4) return;
-      if (err > 0.15) return;
-      if (!valid) return;
+      if (err > 0.2) return;
+
+      // EAN/UPC — تحقق من الـ checksum → قراءة واحدة تكفي
+      const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(format);
+      if (isEAN && validateChecksum(code)) {
+        QuickSale.stopScanner();
+        QuickSale._onBarcode(code);
+        return;
+      }
+
+      // باقي الأنواع — قراءتين للتأكيد
       seen[code] = (seen[code] || 0) + 1;
       if (seen[code] >= 2) { QuickSale.stopScanner(); QuickSale._onBarcode(code); }
     };
