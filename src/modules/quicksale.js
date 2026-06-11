@@ -251,27 +251,39 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   // ── Continuous scan without closing camera ──
   async _beepAndAdd(code) {
     if (code === _lastScan) return;
-    _lastScan = code;
-    clearTimeout(_scanTimer);
-    _scanTimer = setTimeout(() => { _lastScan = null; }, 1500);
 
+    // تحقق من الباركود في المخزون أولاً
     let product = State.inventory.find(p => p.barcode === code);
     if (!product) {
       const { data } = await DB.inventory().select('*').eq('barcode', code).maybeSingle();
       if (data) { product = data; if (!State.inventory.find(p => p.id === data.id)) State.inventory.push(data); }
     }
 
-    if (product) {
-      QuickSale.addToCart(product.id);
-      QuickSale._beep('success');
-    } else {
+    // لو ما موجود في قاعدة البيانات — تجاهل القراءة وانتظر قراءة ثانية
+    if (!product) {
+      // نحتاج تأكيد ثاني قبل نفتح modal الإضافة
+      _unknownCount = _unknownCount || {};
+      _unknownCount[code] = (_unknownCount[code] || 0) + 1;
+      if (_unknownCount[code] < 3) return; // انتظر 3 قراءات للباركود المجهول
+      _unknownCount[code] = 0;
+      _lastScan = code;
+      clearTimeout(_scanTimer);
+      _scanTimer = setTimeout(() => { _lastScan = null; }, 2000);
       QuickSale.stopScanner();
       const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
       const nm = DOM.get('qs-new-name');   if (nm) { nm.value = ''; setTimeout(() => nm.focus(), 200); }
       Modal.open('m-new-product');
       Notify.error('المنتج غير موجود — أضفه الآن');
       QuickSale._beep('error');
+      return;
     }
+
+    // موجود — أضفه فوراً
+    _lastScan = code;
+    clearTimeout(_scanTimer);
+    _scanTimer = setTimeout(() => { _lastScan = null; }, 1500);
+    QuickSale.addToCart(product.id);
+    QuickSale._beep('success');
   },
 
   async _onBarcode(code) {
@@ -363,13 +375,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const format = result?.codeResult?.format;
       const err    = result?.codeResult?.startInfo?.error ?? 1;
       if (!code || code.length < 4) return;
-      if (err > 0.35) return;
+      if (err > 0.25) return;
 
+      // EAN/UPC مع checksum صح — قراءة واحدة كافية لو موجود بالمخزون
       const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(format);
-      if (isEAN && validateChecksum(code)) {
+      const inInventory = State.inventory.some(p => p.barcode === code);
+
+      if (isEAN && validateChecksum(code) && inInventory) {
         QuickSale._beepAndAdd(code);
         return;
       }
+
+      // غير موجود أو format ثاني — نحتاج قراءتين
       seen[code] = (seen[code] || 0) + 1;
       if (seen[code] >= 2) { seen[code] = 0; QuickSale._beepAndAdd(code); }
     };
