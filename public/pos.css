@@ -319,6 +319,7 @@
   transition: .15s; width: 100%;
 }
 .qs-pay-opt:hover { border-color: #6366f1; background: #fafafe; box-shadow: 0 2px 12px rgba(99,102,241,.1); }
+.qs-pay-opt:focus { outline: none; border-color: #e2e8f0; }
 .qs-pay-opt:active { transform: scale(.98); }
 .qs-pay-opt-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .qs-pay-opt-icon i { font-size: 22px; }

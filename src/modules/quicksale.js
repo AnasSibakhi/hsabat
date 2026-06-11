@@ -413,6 +413,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const cs = DOM.get('qs-cash-section'); if (cs) cs.style.display = 'none';
     const total = _cart.reduce((s, c) => s + c.price * c.qty, 0) * (1 - _discount / 100);
     DOM.setText('qs-checkout-total', '₪' + total.toFixed(2));
+    // إزالة الـ focus من كل الأزرار
+    document.querySelectorAll('.qs-pay-opt').forEach(b => b.blur());
     Modal.open('m-qs-checkout');
   },
 
