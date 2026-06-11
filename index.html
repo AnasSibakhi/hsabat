@@ -1565,40 +1565,25 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  <div class="mfoot"><button class="btn btn-o" style="width:100%;justify-content:center;" onclick="Modal.close('m-qs-receipt')">إغلاق</button></div>
 </div></div>
 
-<!-- Checkout Modal -->
+<!-- Checkout Modal - Payment Selection -->
 <div class="mo" id="m-qs-checkout"><div class="modal" style="max-width:420px;">
  <div class="mhdr"><span class="mtitle">إتمام البيع</span><button class="mclose" onclick="Modal.close('m-qs-checkout')">✕</button></div>
  <div style="padding:.5rem 0;">
-
-  <!-- Buyer Info -->
-  <div class="fg" style="position:relative;">
-   <label class="lbl">اسم المشتري (اختياري)</label>
-   <input class="inp" id="qs-buyer-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyer(this.value)">
-   <div id="qs-buyer-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
-  </div>
-  <div class="fg">
-   <label class="lbl">رقم الجوال (اختياري)</label>
-   <input class="inp" id="qs-buyer-phone" placeholder="05X-XXXXXXX" inputmode="tel">
-  </div>
-
-  <!-- Total -->
   <div style="background:var(--pl);border-radius:10px;padding:12px 14px;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;">
    <span style="font-size:13px;color:var(--p);font-weight:700;">الإجمالي</span>
-   <span id="qs-checkout-total" style="font-size:20px;font-weight:900;color:var(--p);">₪0</span>
+   <span id="qs-checkout-total" style="font-size:22px;font-weight:900;color:var(--p);">₪0</span>
   </div>
-
-  <!-- Payment Options -->
   <div class="lbl" style="margin-bottom:8px;">اختر طريقة إتمام البيع</div>
   <div class="qs-pay-opts">
-   <button class="qs-pay-opt" onclick="QuickSale.checkoutPay('cash')">
+   <button class="qs-pay-opt" onclick="QuickSale.openPayModal('cash')">
     <div class="qs-pay-opt-icon" style="background:#dcfce7;"><i class="ti ti-cash" style="color:#16a34a;"></i></div>
     <div><div class="qs-pay-opt-title">كاش</div><div class="qs-pay-opt-sub">بيع مباشر مكتمل</div></div>
    </button>
-   <button class="qs-pay-opt" onclick="QuickSale.checkoutTransfer()">
+   <button class="qs-pay-opt" onclick="QuickSale.openPayModal('transfer')">
     <div class="qs-pay-opt-icon" style="background:#dbeafe;"><i class="ti ti-building-bank" style="color:#2563eb;"></i></div>
     <div><div class="qs-pay-opt-title">تحويل فوري</div><div class="qs-pay-opt-sub">تحويل تم استلامه</div></div>
    </button>
-   <button class="qs-pay-opt" onclick="QuickSale.checkoutDefer()">
+   <button class="qs-pay-opt" onclick="QuickSale.openPayModal('defer')">
     <div class="qs-pay-opt-icon" style="background:#fef9c3;"><i class="ti ti-clock" style="color:#ca8a04;"></i></div>
     <div><div class="qs-pay-opt-title">تطبيق لاحق</div><div class="qs-pay-opt-sub">يُضاف على حساب الزبون</div></div>
    </button>
@@ -1607,55 +1592,76 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <div><div class="qs-pay-opt-title">دين</div><div class="qs-pay-opt-sub">حفظ على حساب زبون</div></div>
    </button>
   </div>
+ </div>
+</div></div>
 
-  <!-- Cash Section -->
-  <div id="qs-cash-section" style="display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px;">
-   <div class="fg">
-    <label class="lbl">المبلغ المستلم (₪)</label>
-    <input class="inp" type="number" id="qs-cash-received" inputmode="decimal" placeholder="0.00" oninput="QuickSale.calcCashChange()">
-   </div>
-   <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;justify-content:space-between;margin-bottom:10px;">
-    <span style="font-size:13px;">الباقي للزبون</span>
-    <span id="qs-cash-change-val" style="font-weight:900;color:var(--s);">₪0</span>
-   </div>
-   <button class="btn btn-s" style="width:100%;justify-content:center;" onclick="QuickSale.sell('cash')">
-    <i class="ti ti-check"></i> تأكيد البيع نقدي
-   </button>
+<!-- Cash Modal -->
+<div class="mo" id="m-qs-pay-cash"><div class="modal" style="max-width:400px;">
+ <div class="mhdr"><span class="mtitle">💵 كاش</span><button class="mclose" onclick="Modal.close('m-qs-pay-cash')">✕</button></div>
+ <div class="fg" style="position:relative;">
+  <label class="lbl">اسم المشتري (اختياري)</label>
+  <input class="inp" id="qs-buyer-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyer(this.value)">
+  <div id="qs-buyer-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+ </div>
+ <div class="fg"><label class="lbl">رقم الجوال (اختياري)</label><input class="inp" id="qs-buyer-phone" placeholder="05X-XXXXXXX" inputmode="tel"></div>
+ <div class="fg"><label class="lbl">المبلغ المستلم (₪)</label><input class="inp" type="number" id="qs-cash-received" inputmode="decimal" placeholder="0.00" oninput="QuickSale.calcCashChange()"></div>
+ <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;justify-content:space-between;margin-bottom:10px;">
+  <span>الباقي للزبون</span><span id="qs-cash-change-val" style="font-weight:900;color:var(--s);">₪0</span>
+ </div>
+ <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
+  <span style="font-size:13px;color:var(--p);">الإجمالي</span><span id="qs-cash-total" style="font-weight:900;color:var(--p);">₪0</span>
+ </div>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-cash')">رجوع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.sell('cash')"><i class="ti ti-check"></i> تأكيد البيع</button>
+ </div>
+</div></div>
+
+<!-- Transfer Modal -->
+<div class="mo" id="m-qs-pay-transfer"><div class="modal" style="max-width:400px;">
+ <div class="mhdr"><span class="mtitle">🏦 تحويل فوري</span><button class="mclose" onclick="Modal.close('m-qs-pay-transfer')">✕</button></div>
+ <div class="fg" style="position:relative;">
+  <label class="lbl">اسم المشتري (اختياري)</label>
+  <input class="inp" id="qs-buyer-name-tr" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyerField('qs-buyer-name-tr','qs-buyer-phone-tr','qs-buyer-dd-tr',this.value)">
+  <div id="qs-buyer-dd-tr" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+ </div>
+ <div class="fg"><label class="lbl">رقم الجوال (اختياري)</label><input class="inp" id="qs-buyer-phone-tr" placeholder="05X-XXXXXXX" inputmode="tel"></div>
+ <div class="fg"><label class="lbl">جهة التحويل *</label><select class="inp" id="qs-checkout-transfer-entity"><option value="">-- اختر الجهة --</option></select></div>
+ <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
+  <span style="font-size:13px;color:var(--p);">الإجمالي</span><span id="qs-transfer-total" style="font-weight:900;color:var(--p);">₪0</span>
+ </div>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-transfer')">رجوع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmCheckoutTransfer()"><i class="ti ti-check"></i> تأكيد التحويل</button>
+ </div>
+</div></div>
+
+<!-- Defer Modal -->
+<div class="mo" id="m-qs-pay-defer"><div class="modal" style="max-width:400px;">
+ <div class="mhdr"><span class="mtitle">🕐 تطبيق لاحق</span><button class="mclose" onclick="Modal.close('m-qs-pay-defer')">✕</button></div>
+ <div class="fg" style="position:relative;">
+  <label class="lbl">اسم الزبون</label>
+  <input class="inp" id="qs-buyer-name-df" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyerField('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df',this.value)">
+  <div id="qs-buyer-dd-df" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+ </div>
+ <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="qs-buyer-phone-df" placeholder="05X-XXXXXXX" inputmode="tel"></div>
+ <div class="fr">
+  <div class="fg"><label class="lbl">على أي حساب سيحوّل؟</label>
+   <select class="inp" id="qs-defer-account">
+    <option value="">-- اختر --</option>
+    <option value="bank">دفع تطبيق بنك</option>
+    <option value="cash_later">كاش لاحقاً</option>
+    <option value="other">أخرى</option>
+   </select>
   </div>
-
-  <!-- Transfer Section -->
-  <div id="qs-transfer-section" style="display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px;">
-   <div class="fg">
-    <label class="lbl">جهة التحويل *</label>
-    <select class="inp" id="qs-checkout-transfer-entity">
-     <option value="">-- اختر الجهة --</option>
-    </select>
-   </div>
-   <button class="btn btn-s" style="width:100%;justify-content:center;" onclick="QuickSale.confirmCheckoutTransfer()">
-    <i class="ti ti-check"></i> تأكيد التحويل
-   </button>
-  </div>
-
-  <!-- Defer Section -->
-  <div id="qs-defer-section" style="display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px;">
-   <div class="fg">
-    <label class="lbl">على أي حساب سيحوّل؟</label>
-    <select class="inp" id="qs-checkout-defer-entity">
-     <option value="">-- اختر طريقة --</option>
-     <option value="bank">دفع تطبيق بنك</option>
-     <option value="cash_later">كاش لاحقاً</option>
-     <option value="other">أخرى</option>
-    </select>
-   </div>
-   <div class="fg">
-    <label class="lbl">تاريخ السداد (اختياري)</label>
-    <input class="inp" type="date" id="qs-checkout-defer-date">
-   </div>
-   <button class="btn btn-s" style="width:100%;justify-content:center;" onclick="QuickSale.sell('defer')">
-    <i class="ti ti-check"></i> حفظ كدين تطبيق لاحق
-   </button>
-  </div>
-
+  <div class="fg"><label class="lbl">تاريخ السداد (اختياري)</label><input class="inp" type="date" id="qs-defer-date"></div>
+ </div>
+ <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
+  <span style="font-size:13px;color:var(--p);">الإجمالي</span><span id="qs-defer-total" style="font-weight:900;color:var(--p);">₪0</span>
+ </div>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-defer')">رجوع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDefer()"><i class="ti ti-check"></i> حفظ كدين تطبيق لاحق</button>
  </div>
 </div></div>
 

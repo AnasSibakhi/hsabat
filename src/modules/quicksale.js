@@ -421,35 +421,68 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Modal.open('m-qs-checkout');
   },
 
-  _hideCheckoutSections() {
-    ['qs-cash-section','qs-transfer-section','qs-defer-section'].forEach(id => {
-      const el = DOM.get(id); if (el) el.style.display = 'none';
-    });
-  },
+  _hideCheckoutSections() {},
 
-  checkoutPay(type) {
-    QuickSale._hideCheckoutSections();
+  async openPayModal(type) {
+    const total = _cart.reduce((s,c) => s + c.price*c.qty, 0) * (1 - _discount/100);
+    Modal.close('m-qs-checkout');
+
     if (type === 'cash') {
-      DOM.get('qs-cash-section').style.display = 'block';
-      DOM.get('qs-cash-received')?.focus();
+      DOM.setText('qs-cash-total', '₪' + total.toFixed(2));
+      DOM.get('qs-buyer-name').value = '';
+      DOM.get('qs-buyer-phone').value = '';
+      DOM.get('qs-cash-received').value = '';
+      DOM.get('qs-cash-change-row').style.display = 'none';
+      Modal.open('m-qs-pay-cash');
+      setTimeout(() => DOM.get('qs-cash-received')?.focus(), 300);
+
+    } else if (type === 'transfer') {
+      DOM.setText('qs-transfer-total', '₪' + total.toFixed(2));
+      DOM.get('qs-buyer-name-tr').value = '';
+      DOM.get('qs-buyer-phone-tr').value = '';
+      if (!_transferEntities.length) await QuickSale.loadTransferEntities();
+      const sel = DOM.get('qs-checkout-transfer-entity');
+      sel.innerHTML = '<option value="">-- اختر الجهة --</option>';
+      _transferEntities.forEach(e => {
+        const names = e.names && e.names.length ? e.names : [e.name];
+        names.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = e.id + '::' + n;
+          opt.textContent = n;
+          sel.appendChild(opt);
+        });
+      });
+      Modal.open('m-qs-pay-transfer');
+
+    } else if (type === 'defer') {
+      DOM.setText('qs-defer-total', '₪' + total.toFixed(2));
+      DOM.get('qs-buyer-name-df').value = '';
+      DOM.get('qs-buyer-phone-df').value = '';
+      DOM.get('qs-defer-date').value = '';
+      Modal.open('m-qs-pay-defer');
     }
   },
 
-  async checkoutTransfer() {
-    QuickSale._hideCheckoutSections();
-    if (!_transferEntities.length) await QuickSale.loadTransferEntities();
-    const sel = DOM.get('qs-checkout-transfer-entity');
-    sel.innerHTML = '<option value="">-- اختر الجهة --</option>';
-    _transferEntities.forEach(e => {
-      const names = e.names && e.names.length ? e.names : [e.name];
-      names.forEach(n => {
-        const opt = document.createElement('option');
-        opt.value = e.id + '::' + n;
-        opt.textContent = n;
-        sel.appendChild(opt);
-      });
-    });
-    DOM.get('qs-transfer-section').style.display = 'block';
+  searchBuyerField(nameId, phoneId, ddId, val) {
+    const dd = DOM.get(ddId);
+    if (!val.trim()) { dd.style.display = 'none'; return; }
+    const q = val.trim().toLowerCase();
+    const matches = (State.customers || []).filter(c =>
+      c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { dd.style.display = 'none'; return; }
+    dd.innerHTML = matches.map(c =>
+      `<div class="dc-opt" onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}','${escape(c.name)}','${c.phone||''}')">
+        ${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
+      </div>`
+    ).join('');
+    dd.style.display = 'block';
+  },
+
+  selectBuyerField(nameId, phoneId, ddId, name, phone) {
+    DOM.get(nameId).value  = name;
+    DOM.get(phoneId).value = phone;
+    DOM.get(ddId).style.display = 'none';
   },
 
   confirmCheckoutTransfer() {
@@ -457,13 +490,26 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!sel.value) { Notify.error('اختر جهة التحويل'); return; }
     const [entityId, entityName] = sel.value.split('::');
     _selectedTransferEntity = { id: entityId, name: entityName };
+    // sync buyer from transfer modal
+    const n = DOM.val('qs-buyer-name-tr'); if (n) DOM.get('qs-buyer-name').value = n;
+    const p = DOM.val('qs-buyer-phone-tr'); if (p) DOM.get('qs-buyer-phone').value = p;
+    Modal.close('m-qs-pay-transfer');
     QuickSale.sell('transfer');
   },
 
-  checkoutDefer() {
-    QuickSale._hideCheckoutSections();
-    DOM.get('qs-defer-section').style.display = 'block';
+  confirmDefer() {
+    const name  = DOM.val('qs-buyer-name-df');
+    const phone = DOM.val('qs-buyer-phone-df');
+    // sync to main buyer fields
+    DOM.get('qs-buyer-name').value  = name;
+    DOM.get('qs-buyer-phone').value = phone;
+    Modal.close('m-qs-pay-defer');
+    QuickSale.sell('defer');
   },
+
+  checkoutPay(type) { QuickSale.openPayModal(type); },
+  checkoutTransfer() { QuickSale.openPayModal('transfer'); },
+  checkoutDefer()    { QuickSale.openPayModal('defer'); },
 
   checkoutDebt() {
     Modal.close('m-qs-checkout');
