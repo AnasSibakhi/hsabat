@@ -372,9 +372,10 @@ const Invoices = {
     const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', invId);
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
 
-    const payLabel  = PAY_LABELS[inv.payment_type] || inv.payment_type;
-    const payClass  = PAY_CLASS[inv.payment_type]  || '';
-    const totalQty  = (items || []).reduce((s, i) => s + i.quantity, 0);
+    const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
+    const payClass = PAY_CLASS[inv.payment_type]  || '';
+    const totalQty = (items || []).reduce((s, i) => s + i.quantity, 0);
+    const store    = State.user?.store_name || 'حسابات';
     const itemsHtml = (items || []).map(it =>
       `<tr>
         <td>${escape(it.product_name || '-')}</td>
@@ -383,6 +384,20 @@ const Invoices = {
         <td style="text-align:left;font-weight:700;">₪${(it.quantity * it.price).toFixed(2)}</td>
       </tr>`
     ).join('') || '<tr><td colspan="4" style="color:var(--g4);">لا توجد منتجات</td></tr>';
+
+    // واتساب
+    const phone = inv.buyer_phone || '';
+    const waMsg = encodeURIComponent(
+      `🧾 فاتورة من ${store}\n` +
+      `رقم: ${inv.invoice_number}\n` +
+      `التاريخ: ${inv.invoice_date} ${inv.sale_time||''}\n` +
+      (inv.buyer_name ? `الزبون: ${inv.buyer_name}\n` : '') +
+      `\nالمنتجات:\n` +
+      (items||[]).map(it => `• ${it.product_name} × ${it.quantity} = ₪${(it.quantity*it.price).toFixed(2)}`).join('\n') +
+      `\n\nالإجمالي: ₪${inv.total.toFixed(2)}\n` +
+      `طريقة الدفع: ${payLabel}`
+    );
+    const waUrl = phone ? `https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
     DOM.setHTML('inv-details-body', `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
@@ -397,7 +412,7 @@ const Invoices = {
         <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
-      <div style="background:var(--g0);border-radius:10px;padding:12px;font-size:13px;">
+      <div style="background:var(--g0);border-radius:10px;padding:12px;font-size:13px;margin-bottom:1rem;">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--g5);">
           <span>إجمالي الأصناف</span><span>${(items||[]).length} صنف · ${totalQty} قطعة</span>
         </div>
@@ -406,8 +421,65 @@ const Invoices = {
           <span>الإجمالي النهائي</span><span>₪${inv.total.toFixed(2)}</span>
         </div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="btn btn-s" onclick="Invoices.printInvoice('${invId}')" style="justify-content:center;gap:6px;"><i class="ti ti-printer"></i> طباعة</button>
+        <a href="${waUrl}" target="_blank" class="btn" style="background:#25d366;color:#fff;justify-content:center;gap:6px;text-decoration:none;display:flex;align-items:center;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;padding:10px;">
+          <i class="ti ti-brand-whatsapp"></i> واتساب
+        </a>
+      </div>
     `);
     Modal.open('m-inv-details');
+  },
+
+  // ── Print Invoice ──
+  printInvoice(invId) {
+    sb.from('invoices').select('*').eq('id', invId).single().then(({ data: inv }) => {
+      sb.from('invoice_items').select('*').eq('invoice_id', invId).then(({ data: items }) => {
+        const store   = State.user?.store_name || 'حسابات';
+        const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
+        const itemsHtml = (items||[]).map(it =>
+          `<tr>
+            <td>${it.product_name||'-'}</td>
+            <td style="text-align:center;">${it.quantity}</td>
+            <td style="text-align:left;">₪${parseFloat(it.price).toFixed(2)}</td>
+            <td style="text-align:left;font-weight:700;">₪${(it.quantity*it.price).toFixed(2)}</td>
+          </tr>`
+        ).join('');
+        const html = `<!DOCTYPE html><html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><title>فاتورة ${inv.invoice_number}</title>
+<style>
+  body{font-family:'Cairo',Arial,sans-serif;margin:0;padding:16px;font-size:13px;color:#111;max-width:320px;margin:auto;}
+  .store-name{font-size:18px;font-weight:900;text-align:center;margin-bottom:4px;}
+  .inv-num{text-align:center;color:#666;font-size:12px;margin-bottom:12px;border-bottom:1px dashed #ccc;padding-bottom:8px;}
+  .info-row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;}
+  th{background:#f5f5f5;padding:6px 8px;font-size:11px;text-align:right;border-bottom:1px solid #ddd;}
+  td{padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:12px;}
+  .total-row{font-size:15px;font-weight:900;display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid #111;margin-top:8px;}
+  .footer{text-align:center;font-size:11px;color:#999;margin-top:12px;border-top:1px dashed #ccc;padding-top:8px;}
+  @media print{body{padding:0;}}
+</style></head>
+<body>
+  <div class="store-name">${store}</div>
+  <div class="inv-num">${inv.invoice_number} · ${inv.invoice_date} ${inv.sale_time||''}</div>
+  ${inv.buyer_name ? `<div class="info-row"><span>الزبون</span><span>${inv.buyer_name}</span></div>` : ''}
+  ${inv.buyer_phone ? `<div class="info-row"><span>الجوال</span><span>${inv.buyer_phone}</span></div>` : ''}
+  <div class="info-row"><span>طريقة الدفع</span><span>${payLabel}</span></div>
+  ${inv.transfer_entity_name ? `<div class="info-row"><span>جهة التحويل</span><span>${inv.transfer_entity_name}</span></div>` : ''}
+  <table>
+    <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+    <tbody>${itemsHtml}</tbody>
+  </table>
+  ${inv.discount > 0 ? `<div class="info-row"><span>خصم</span><span style="color:red;">-₪${inv.discount.toFixed(2)}</span></div>` : ''}
+  <div class="total-row"><span>الإجمالي</span><span>₪${inv.total.toFixed(2)}</span></div>
+  <div class="footer">شكراً لتعاملكم معنا</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+</body></html>`;
+        const w = window.open('', '_blank');
+        w.document.write(html);
+        w.document.close();
+      });
+    });
   },
 
   // ── Export Excel ──
