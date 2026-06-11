@@ -34,9 +34,38 @@ const Invoices = {
     DOM.setText('inv-date-preview', now.toLocaleDateString('ar-EG'));
     DOM.setText('inv-cashier-preview', State.user?.owner || '');
     Invoices.resetForm();
+    // Auto-focus على حقل البحث
+    setTimeout(() => {
+      const s = DOM.get('inv-prod-search');
+      if (s) s.focus();
+    }, 300);
   },
 
   // ── Product Search ──
+  onSearchKey(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = DOM.val('inv-prod-search').trim();
+      if (!val) return;
+      // Try exact barcode match first
+      const exact = (State.inventory||[]).find(p => p.barcode === val && p.quantity > 0);
+      if (exact) {
+        Invoices.addProductById(exact.id);
+        return;
+      }
+      // Otherwise add first result
+      const first = (State.inventory||[]).find(p =>
+        p.quantity > 0 && (p.name.toLowerCase().includes(val.toLowerCase()) || (p.barcode||'').includes(val))
+      );
+      if (first) {
+        Invoices.addProductById(first.id);
+      } else {
+        Notify.error('المنتج غير موجود');
+        DOM.get('inv-prod-search').select();
+      }
+    }
+  },
+
   searchProduct(val) {
     const dd = DOM.get('inv-prod-dropdown');
     if (!val.trim()) { dd.style.display = 'none'; return; }
@@ -70,11 +99,17 @@ const Invoices = {
       tbody.insertAdjacentHTML('beforeend', `
         <tr data-pid="${p.id}" data-price="${p.sale_price||0}">
           <td><div style="font-weight:600;font-size:12px;">${escape(p.name)}</div><div style="font-size:10px;color:var(--g4);">${p.barcode||''}</div></td>
-          <td><input class="inv-qty-inp" type="number" value="1" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal"></td>
+          <td>
+            <div class="inv-qty-ctrl">
+              <button class="inv-qty-btn" onclick="Invoices.changeQty(this,-1)" type="button">−</button>
+              <input class="inv-qty-inp" type="number" value="1" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal">
+              <button class="inv-qty-btn" onclick="Invoices.changeQty(this,1)" type="button">+</button>
+            </div>
+          </td>
           <td><input class="inv-qty-inp price-inp" type="number" value="${p.sale_price||0}" min="0" oninput="Invoices.calcTotal()" inputmode="decimal" style="width:70px;"></td>
           <td><input class="inv-disc-inp" type="number" value="0" min="0" oninput="Invoices.calcTotal()" inputmode="decimal"></td>
           <td class="row-total" style="font-weight:700;">₪${p.sale_price?.toFixed(2)||0}</td>
-          <td><button class="inv-del-row" onclick="this.closest('tr').remove();Invoices.calcTotal()"><i class="ti ti-x"></i></button></td>
+          <td><button class="inv-del-row" onclick="this.closest('tr').remove();Invoices.calcTotal()" type="button"><i class="ti ti-x"></i></button></td>
         </tr>`
       );
     }
@@ -83,7 +118,23 @@ const Invoices = {
     Invoices.calcTotal();
   },
 
-  // ── Payment change handler ──
+  changeQty(btn, delta) {
+    const inp = btn.closest('.inv-qty-ctrl').querySelector('.inv-qty-inp');
+    const max = parseInt(inp.max) || 9999;
+    const val = Math.min(max, Math.max(1, (parseInt(inp.value)||1) + delta));
+    inp.value = val;
+    Invoices.calcTotal();
+  },
+
+  // ── Discount type toggle ──
+  _discType: 'fixed', // 'fixed' or 'pct'
+  toggleDiscType() {
+    Invoices._discType = Invoices._discType === 'fixed' ? 'pct' : 'fixed';
+    const btn = DOM.get('inv-disc-toggle');
+    if (btn) btn.textContent = Invoices._discType === 'pct' ? '%' : '₪';
+    DOM.get('idiscount').value = '0';
+    Invoices.calcTotal();
+  },
   onPayChange(radio) {
     const isPartial = radio.value === 'partial';
     const isCash    = radio.value === 'cash';
@@ -128,7 +179,10 @@ const Invoices = {
       totalQty  += qty;
       itemCount++;
     });
-    const globalDisc = parseFloat(DOM.val('idiscount')) || 0;
+    const globalDiscVal = parseFloat(DOM.val('idiscount')) || 0;
+    const globalDisc = Invoices._discType === 'pct'
+      ? subtotal * (globalDiscVal / 100)
+      : globalDiscVal;
     const total = Math.max(0, subtotal - totalDisc - globalDisc);
     DOM.setText('is-items',    itemCount + ' صنف');
     DOM.setText('is-qty',      totalQty + ' قطعة');
