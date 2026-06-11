@@ -545,19 +545,6 @@ const Invoices = {
 
   addItem() {},
 
-  _collectItems() {
-    const items = []; let subtotal = 0;
-    document.querySelectorAll('#iitems .ii').forEach(row => {
-      const select = row.querySelector('.prod-sel');
-      const qty    = parseFloat(row.querySelector('.qty-inp')?.value) || 0;
-      const price  = parseFloat(row.querySelector('.price-inp')?.value) || 0;
-      const invId  = select?.value || '';
-      const name   = select?.options[select?.selectedIndex]?.getAttribute('data-name') || 'منتج';
-      if (qty > 0 && price > 0) { items.push({ product_name: name, inventory_id: invId||null, quantity: qty, price }); subtotal += qty * price; }
-    });
-    return { items, subtotal };
-  },
-
   async _generateInvoiceNumber() {
     const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
     return 'INV-' + String((count||0)+1).padStart(4,'0');
@@ -595,6 +582,7 @@ const Invoices = {
       const { data: invoice, error } = await DB.invoices().insert({
         store_id: State.user.id, customer_id: customerId||null,
         customer_name: customerName, customer_phone: customerPhone,
+        buyer_name: customerName, buyer_phone: customerPhone,
         total, subtotal, discount, payment_type: paymentType,
         partial_paid: partialPaid, invoice_date: today,
         sale_time: timeNow, invoice_number: invoiceNumber,
