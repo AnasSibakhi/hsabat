@@ -12,6 +12,7 @@ import { CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getDashboard } from '../core/registry.js';
 import { Customers }    from './customers.js';
+import { sb }           from '../core/db.js';
 
 // ── State ──
 let _allDebts    = [];
@@ -73,6 +74,7 @@ const Debts = {
 
     DOM.setHTML('dlist', list.map(d => {
       const remaining   = d.amount - d.paid;
+      const invNum      = (d.notes || '').match(/INV-\d+/)?.[0] || '';
       const days        = Utils.daysSince(d.debt_date);
       const isLate      = days >= CONFIG.debtLateDays;
       const id          = d.id;
@@ -92,7 +94,10 @@ const Debts = {
             + (remindReady ? ' <button class="ibw" onclick="Debts.sendWhatsapp(\'' + id + '\')">📲 واتساب</button>' : '')
           : '<button class="ibb" onclick="Debts.unarchive(\'' + id + '\')">إلغاء أرشفة</button>')
         + '</td>'
-        + '<td><button class="ibr" onclick="Debts.delete(\'' + id + '\')">حذف</button></td>'
+        + '<td>'
+        + (invNum ? '<button class="ibb" onclick="Debts.openInvoiceDetails(\'' + invNum + '\')" style="margin-left:4px;">تفاصيل</button>' : '')
+        + ' <button class="ibr" onclick="Debts.delete(\'' + id + '\')">حذف</button>'
+        + '</td>'
         + '</tr>';
     }).join(''));
   },
@@ -186,6 +191,44 @@ const Debts = {
     const num   = phone.replace(/[^0-9]/g, '');
     if (!num) { Notify.error('لا يوجد رقم هاتف لهذا الزبون'); return; }
     window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+  },
+
+  async openInvoiceDetails(invoiceNumber) {
+    const { data: inv } = await sb.from('invoices').select('*').eq('invoice_number', invoiceNumber).single();
+    if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
+    const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', inv.id);
+
+    const payLabel = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' }[inv.payment_type] || inv.payment_type;
+    const itemsHtml = (items || []).map(it =>
+      `<tr>
+        <td>${escape(it.product_name || '-')}</td>
+        <td style="text-align:center;">${it.quantity}</td>
+        <td style="text-align:left;">₪${parseFloat(it.price).toFixed(2)}</td>
+        <td style="text-align:left;font-weight:700;">₪${(it.quantity * it.price).toFixed(2)}</td>
+      </tr>`
+    ).join('') || '<tr><td colspan="4" style="color:var(--g4);text-align:center;padding:1rem;">لا توجد منتجات</td></tr>';
+
+    DOM.setHTML('inv-details-body', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
+        <div class="inv-det-row"><span>رقم الفاتورة</span><strong>${escape(inv.invoice_number || '-')}</strong></div>
+        <div class="inv-det-row"><span>التاريخ والوقت</span><strong>${inv.invoice_date} ${inv.sale_time || ''}</strong></div>
+        <div class="inv-det-row"><span>اسم المشتري</span><strong>${escape(inv.buyer_name || inv.customer_name || '-')}</strong></div>
+        <div class="inv-det-row"><span>رقم الجوال</span><strong>${escape(inv.buyer_phone || '-')}</strong></div>
+        <div class="inv-det-row"><span>طريقة الدفع</span><strong>${payLabel}</strong></div>
+        ${inv.transfer_entity_name ? `<div class="inv-det-row"><span>جهة التحويل</span><strong>${escape(inv.transfer_entity_name)}</strong></div>` : ''}
+      </div>
+      <table class="dt" style="margin-bottom:.75rem;">
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+      <div style="background:var(--g0);border-radius:10px;padding:12px;font-size:13px;">
+        ${inv.discount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--d);"><span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px;">
+          <span>الإجمالي النهائي</span><span>₪${inv.total.toFixed(2)}</span>
+        </div>
+      </div>
+    `);
+    Modal.open('m-inv-details');
   },
 
   setSort(mode) {
