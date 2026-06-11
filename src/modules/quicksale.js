@@ -394,11 +394,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Quagga.init({
       inputStream: {
         type: 'LiveStream', target: el,
-        constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        constraints: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
       },
-      locator: { patchSize: 'medium', halfSample: true },
+      locator: { patchSize: 'small', halfSample: true },
       numOfWorkers: 1,
-      frequency: 20,
+      frequency: 30,
       decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'], multiple: false },
       locate: true,
     }, (err) => {
