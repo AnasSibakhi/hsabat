@@ -1,23 +1,21 @@
 /**
- * BarcodeScanner.js — html5-qrcode Professional Scanner
- * Best mobile barcode library, high sensitivity, low light support
+ * BarcodeScanner.js — Fast & Simple Quagga2 Scanner
  */
 
-let _active   = false;
-let _callback = null;
-let _lastCode = null;
-let _debTimer = null;
-let _scanner  = null;
+let _active    = false;
+let _callback  = null;
+let _lastCode  = null;
+let _debTimer  = null;
 
-const DEBOUNCE_MS = 700;
+const DEBOUNCE_MS = 800;
 
 export const BarcodeScanner = {
 
   async _loadLib() {
-    if (window.Html5Qrcode) return;
+    if (window.Quagga) return;
     await new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
       s.onload = resolve;
       s.onerror = reject;
       document.head.appendChild(s);
@@ -27,91 +25,59 @@ export const BarcodeScanner = {
   async start(containerId, onSuccess, onError) {
     if (_active) await BarcodeScanner.stop();
 
-    try {
-      await BarcodeScanner._loadLib();
-    } catch {
-      onError?.('فشل تحميل مكتبة الباركود');
-      return;
-    }
+    try { await BarcodeScanner._loadLib(); }
+    catch { onError?.('فشل تحميل مكتبة الباركود'); return; }
+
+    const el = document.getElementById(containerId);
+    if (!el) { onError?.('container not found'); return; }
 
     _callback = onSuccess;
     _lastCode = null;
 
-    try {
-      _scanner = new Html5Qrcode(containerId, {
-        verbose: false,
-        useBarCodeDetectorIfSupported: true, // استخدام API المدمج بالمتصفح لو متاح
+    await new Promise((resolve) => {
+      Quagga.init({
+        inputStream: {
+          type: 'LiveStream',
+          target: el,
+          constraints: {
+            facingMode: 'environment',
+            width:  { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        locator:      { patchSize: 'medium', halfSample: true },
+        numOfWorkers: 2,
+        frequency:    10,
+        decoder: {
+          readers: [
+            'ean_reader', 'ean_8_reader',
+            'upc_reader', 'upc_e_reader',
+            'code_128_reader',
+          ],
+          multiple: false,
+        },
+        locate: true,
+      }, (err) => {
+        if (err) {
+          const msg = (err?.message || '').includes('ermission')
+            ? 'يرجى السماح بالوصول للكاميرا'
+            : 'لا يمكن فتح الكاميرا';
+          onError?.(msg);
+        } else {
+          Quagga.start();
+          Quagga.onDetected(BarcodeScanner._onDetected);
+          _active = true;
+        }
+        resolve();
       });
-
-      const config = {
-        fps: 30,
-        qrbox: { width: 280, height: 160 },
-        aspectRatio: 1.7,
-        disableFlip: false,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true,
-        },
-        // إعدادات الكاميرا
-        videoConstraints: {
-          facingMode: 'environment',
-          width:  { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          frameRate: { ideal: 60, min: 30 },
-          focusMode: 'continuous',
-          exposureMode: 'continuous',
-        },
-        // كل الأنواع
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.QR_CODE,
-          Html5QrcodeSupportedFormats.DATA_MATRIX,
-        ],
-      };
-
-      await _scanner.start(
-        { facingMode: 'environment' },
-        config,
-        (code) => BarcodeScanner._onDetected(code),
-        () => {} // خطأ عادي — تجاهل
-      );
-
-      // تحسين الكاميرا بعد البدء
-      setTimeout(() => BarcodeScanner._enhanceCamera(), 1000);
-
-      _active = true;
-
-    } catch (err) {
-      const msg = (err?.message || '').toLowerCase().includes('permission')
-        ? 'يرجى السماح بالوصول للكاميرا'
-        : 'لا يمكن فتح الكاميرا';
-      onError?.(msg);
-    }
+    });
   },
 
-  async _enhanceCamera() {
-    try {
-      const stream = _scanner?.getRunningTrackCameraCapabilities?.()
-        || await navigator.mediaDevices.getUserMedia({ video: true });
-      const track = stream?.getVideoTracks?.()[0];
-      if (!track) return;
-      const caps = track.getCapabilities?.() || {};
-      const s = {};
-      if (caps.focusMode?.includes('continuous'))        s.focusMode = 'continuous';
-      if (caps.exposureMode?.includes('continuous'))     s.exposureMode = 'continuous';
-      if (caps.whiteBalanceMode?.includes('continuous')) s.whiteBalanceMode = 'continuous';
-      if (caps.sharpness) s.sharpness = caps.sharpness.max;
-      if (caps.exposureCompensation) s.exposureCompensation = Math.min(caps.exposureCompensation.max, 1);
-      if (Object.keys(s).length) await track.applyConstraints({ advanced: [s] });
-    } catch {}
-  },
-
-  _onDetected(code) {
-    if (!code || code.length < 3) return;
+  _onDetected(result) {
+    const code  = result?.codeResult?.code;
+    const error = result?.codeResult?.startInfo?.error;
+    if (!code || code.length < 4) return;
+    if (error > 0.2) return;
     if (code === _lastCode) return;
 
     _lastCode = code;
@@ -124,10 +90,12 @@ export const BarcodeScanner = {
 
   async stop() {
     if (!_active) return;
-    try { await _scanner?.stop(); } catch {}
-    try { _scanner?.clear(); } catch {}
+    try {
+      Quagga.offDetected(BarcodeScanner._onDetected);
+      Quagga.stop();
+    } catch {}
     _active = false; _callback = null;
-    _lastCode = null; _scanner = null;
+    _lastCode = null;
     clearTimeout(_debTimer);
   },
 
