@@ -411,12 +411,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   // ── Checkout ──
   openCheckout() {
     if (!_cart.length) { Notify.error('السلة فارغة'); return; }
-    // Reset buyer fields
+    State.isMutating = false;
     const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
     const bp = DOM.get('qs-buyer-phone'); if (bp) bp.value = '';
     const dd = DOM.get('qs-buyer-dropdown'); if (dd) dd.style.display = 'none';
     const cs = DOM.get('qs-cash-section'); if (cs) cs.style.display = 'none';
-    // Show total
     const total = _cart.reduce((s, c) => s + c.price * c.qty, 0) * (1 - _discount / 100);
     DOM.setText('qs-checkout-total', '₪' + total.toFixed(2));
     Modal.open('m-qs-checkout');
@@ -437,7 +436,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   checkoutDefer() {
     Modal.close('m-qs-checkout');
-    QuickSale.sell('defer');
+    QuickSale.openDebtModal();
   },
 
   checkoutDebt() {
