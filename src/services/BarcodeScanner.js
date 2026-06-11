@@ -10,7 +10,7 @@ let _lastCode      = null;
 let _readCounts    = {};
 let _debounceTimer = null;
 const REQUIRED_READS = 1;
-const DEBOUNCE_MS    = 800;
+const DEBOUNCE_MS    = 600;
 
 export const BarcodeScanner = {
 
@@ -53,9 +53,9 @@ export const BarcodeScanner = {
               height: { ideal: 720 },
             },
           },
-          locator:      { patchSize: 'large', halfSample: false },
-          numOfWorkers: 4,
-          frequency:    20,
+          locator:      { patchSize: 'medium', halfSample: false },
+          numOfWorkers: navigator.hardwareConcurrency || 4,
+          frequency:    25,
           decoder: {
             readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader',
                       'code_128_reader','code_39_reader'],

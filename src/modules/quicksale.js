@@ -511,8 +511,24 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   checkoutTransfer() { QuickSale.openPayModal('transfer'); },
   checkoutDefer()    { QuickSale.openPayModal('defer'); },
 
-  checkoutDebt() {
+  async checkoutDebt() {
+    const total = _cart.reduce((s,c) => s + c.price*c.qty, 0) * (1 - _discount/100);
     Modal.close('m-qs-checkout');
+    if (!State.customers?.length) await Customers.loadAll();
+    DOM.setText('qs-debt-pay-total', '₪' + total.toFixed(2));
+    DOM.get('qs-debt-pay-name').value  = '';
+    DOM.get('qs-debt-pay-phone').value = '';
+    DOM.get('qs-debt-pay-dd').style.display = 'none';
+    Modal.open('m-qs-pay-debt');
+  },
+
+  confirmDebt() {
+    const name  = DOM.val('qs-debt-pay-name');
+    const phone = DOM.val('qs-debt-pay-phone');
+    DOM.get('qs-buyer-name').value  = name;
+    DOM.get('qs-buyer-phone').value = phone;
+    Modal.close('m-qs-pay-debt');
+    // open standard debt modal for customer selection
     QuickSale.openDebtModal();
   },
 

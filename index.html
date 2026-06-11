@@ -1617,6 +1617,24 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  </div>
 </div></div>
 
+<!-- Debt Pay Modal -->
+<div class="mo" id="m-qs-pay-debt"><div class="modal" style="max-width:400px;">
+ <div class="mhdr"><span class="mtitle">👥 دين</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
+ <div class="fg" style="position:relative;">
+  <label class="lbl">اسم الزبون</label>
+  <input class="inp" id="qs-debt-pay-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)">
+  <div id="qs-debt-pay-dd" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+ </div>
+ <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="qs-debt-pay-phone" placeholder="05X-XXXXXXX" inputmode="tel"></div>
+ <div style="background:var(--dl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
+  <span style="font-size:13px;color:var(--d);">الإجمالي</span><span id="qs-debt-pay-total" style="font-weight:900;color:var(--d);">₪0</span>
+ </div>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-debt')">رجوع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.sell('defer')"><i class="ti ti-check"></i> تسجيل الدين</button>
+ </div>
+</div></div>
+
 <!-- Transfer Modal -->
 <div class="mo" id="m-qs-pay-transfer"><div class="modal" style="max-width:400px;">
  <div class="mhdr"><span class="mtitle">🏦 تحويل فوري</span><button class="mclose" onclick="Modal.close('m-qs-pay-transfer')">✕</button></div>
@@ -1662,6 +1680,24 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  <div class="mfoot">
   <button class="btn btn-o" onclick="Modal.close('m-qs-pay-defer')">رجوع</button>
   <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDefer()"><i class="ti ti-check"></i> حفظ كدين تطبيق لاحق</button>
+ </div>
+</div></div>
+
+<!-- Debt Pay Modal -->
+<div class="mo" id="m-qs-pay-debt"><div class="modal" style="max-width:400px;">
+ <div class="mhdr"><span class="mtitle">👥 دين</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
+ <div class="fg" style="position:relative;">
+  <label class="lbl">اسم الزبون</label>
+  <input class="inp" id="qs-debt-pay-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)">
+  <div id="qs-debt-pay-dd" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+ </div>
+ <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="qs-debt-pay-phone" placeholder="05X-XXXXXXX" inputmode="tel"></div>
+ <div style="background:var(--dl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
+  <span style="font-size:13px;color:var(--d);">الإجمالي</span><span id="qs-debt-pay-total" style="font-weight:900;color:var(--d);">₪0</span>
+ </div>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-debt')">رجوع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.sell('defer')"><i class="ti ti-check"></i> تسجيل الدين</button>
  </div>
 </div></div>
 
