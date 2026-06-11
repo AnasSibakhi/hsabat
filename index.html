@@ -759,13 +759,15 @@ PalPay" style="resize:none;"></textarea>
    <div class="page" id="page-quicksale">
     <div class="pos-wrap">
 
-      <!-- LEFT -->
+      <!-- RIGHT: Products -->
       <div class="pos-left">
+        <!-- Search + Barcode -->
         <div class="pos-search-bar">
-          <i class="ti ti-barcode" aria-hidden="true"></i>
+          <i class="ti ti-barcode"></i>
           <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" inputmode="text" oninput="QuickSale.search(this.value)">
           <button class="pos-cam-btn" onclick="QuickSale.startScanner()"><i class="ti ti-camera"></i></button>
         </div>
+        <!-- Categories -->
         <div class="pos-cats" id="qs-cats">
           <button class="pos-cat active" onclick="QuickSale.filterCat('',this)">الكل</button>
           <button class="pos-cat" onclick="QuickSale.filterCat('مواد غذائية',this)">غذائية</button>
@@ -773,22 +775,32 @@ PalPay" style="resize:none;"></textarea>
           <button class="pos-cat" onclick="QuickSale.filterCat('منظفات',this)">منظفات</button>
           <button class="pos-cat" onclick="QuickSale.filterCat('خضروات',this)">خضروات</button>
         </div>
+        <!-- Products Grid -->
         <div id="qs-product-grid" class="pos-grid"></div>
         <div id="qs-stats" class="pos-stats-bar"></div>
       </div>
 
-      <!-- RIGHT -->
+      <!-- LEFT: Cart + Summary + Pay -->
       <div class="pos-right">
+
+        <!-- Cart Header -->
         <div class="pos-cart-head">
-          <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+          <i class="ti ti-shopping-cart"></i>
           <span>السلة</span>
           <span id="qs-items-count" class="pos-count">0</span>
           <span style="flex:1"></span>
           <button class="pos-clear-btn" onclick="QuickSale.clearCart()"><i class="ti ti-trash"></i></button>
         </div>
+
+        <!-- Cart Items -->
         <div id="qs-cart-items" class="pos-cart-list"></div>
+
+        <!-- Summary -->
         <div id="qs-summary-box" class="pos-summary"></div>
+
+        <!-- Bottom Actions -->
         <div class="pos-bottom">
+          <!-- Discount -->
           <div class="pos-disc-row">
             <span>خصم</span>
             <button class="pos-disc active" data-pct="0"  onclick="QuickSale.applyDiscount(0)">بلا</button>
@@ -796,29 +808,19 @@ PalPay" style="resize:none;"></textarea>
             <button class="pos-disc"        data-pct="10" onclick="QuickSale.applyDiscount(10)">10%</button>
             <button class="pos-disc"        data-pct="15" onclick="QuickSale.applyDiscount(15)">15%</button>
           </div>
-          <div class="pos-calc-row">
-            <span>مبلغ الزبون</span>
-            <input type="number" id="qs-paid" class="pos-paid-inp" placeholder="0.00" inputmode="decimal" oninput="QuickSale.calcChange()">
-            <span id="qs-change" class="pos-change">—</span>
-          </div>
+          <!-- Total -->
           <div class="pos-total-row">
             <span>الإجمالي</span>
             <span id="qs-total-display" class="pos-grand-total">₪ 0.00</span>
           </div>
-          <div class="pos-buyer-row" id="qs-buyer-row">
-            <div style="position:relative;grid-column:1/-1;">
-             <input class="inp" id="qs-buyer-name" placeholder="اسم المشتري — ابحث أو اكتب يدوي..." autocomplete="off"
-              oninput="QuickSale.searchBuyer(this.value)" style="width:100%;box-sizing:border-box;">
-             <div id="qs-buyer-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:500;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
-            </div>
-            <input class="inp" id="qs-buyer-phone" placeholder="رقم الجوال" inputmode="tel">
-          </div>
-          <div class="pos-pay-grid">
-            <button class="pos-pay pos-cash"     onclick="QuickSale.sell('cash')"><i class="ti ti-cash"></i> نقدي</button>
-            <button class="pos-pay pos-transfer" onclick="QuickSale.openTransferModal()"><i class="ti ti-building-bank"></i> تحويل</button>
-            <button class="pos-pay pos-debt"     onclick="QuickSale.openDebtModal()"><i class="ti ti-credit-card"></i> دين</button>
-            <button class="pos-pay pos-invoice"  onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-file-invoice"></i> فاتورة</button>
-          </div>
+          <!-- Pay Button - single button opens checkout modal -->
+          <button class="pos-checkout-btn" onclick="QuickSale.openCheckout()">
+            <i class="ti ti-check"></i> إتمام البيع
+          </button>
+          <!-- Direct Invoice -->
+          <button class="pos-invoice-btn" onclick="Modal.open('m-invoice');Invoices.initModal()">
+            <i class="ti ti-file-invoice"></i> فاتورة مباشرة
+          </button>
         </div>
       </div>
     </div>
@@ -1561,6 +1563,67 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  <div class="mhdr"><span class="mtitle">إيصال البيع</span><button class="mclose" onclick="Modal.close('m-qs-receipt')">✕</button></div>
  <div id="qs-receipt-body" style="padding:.5rem 0;"></div>
  <div class="mfoot"><button class="btn btn-o" style="width:100%;justify-content:center;" onclick="Modal.close('m-qs-receipt')">إغلاق</button></div>
+</div></div>
+
+<!-- Checkout Modal -->
+<div class="mo" id="m-qs-checkout"><div class="modal" style="max-width:420px;">
+ <div class="mhdr"><span class="mtitle">إتمام البيع</span><button class="mclose" onclick="Modal.close('m-qs-checkout')">✕</button></div>
+ <div style="padding:.5rem 0;">
+
+  <!-- Buyer Info -->
+  <div class="fg" style="position:relative;">
+   <label class="lbl">اسم المشتري (اختياري)</label>
+   <input class="inp" id="qs-buyer-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyer(this.value)">
+   <div id="qs-buyer-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+  </div>
+  <div class="fg">
+   <label class="lbl">رقم الجوال (اختياري)</label>
+   <input class="inp" id="qs-buyer-phone" placeholder="05X-XXXXXXX" inputmode="tel">
+  </div>
+
+  <!-- Total -->
+  <div style="background:var(--pl);border-radius:10px;padding:12px 14px;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;">
+   <span style="font-size:13px;color:var(--p);font-weight:700;">الإجمالي</span>
+   <span id="qs-checkout-total" style="font-size:20px;font-weight:900;color:var(--p);">₪0</span>
+  </div>
+
+  <!-- Payment Options -->
+  <div class="lbl" style="margin-bottom:8px;">اختر طريقة إتمام البيع</div>
+  <div class="qs-pay-opts">
+   <button class="qs-pay-opt" onclick="QuickSale.checkoutPay('cash')">
+    <div class="qs-pay-opt-icon" style="background:#dcfce7;"><i class="ti ti-cash" style="color:#16a34a;"></i></div>
+    <div><div class="qs-pay-opt-title">كاش</div><div class="qs-pay-opt-sub">بيع مباشر مكتمل</div></div>
+   </button>
+   <button class="qs-pay-opt" onclick="QuickSale.checkoutTransfer()">
+    <div class="qs-pay-opt-icon" style="background:#dbeafe;"><i class="ti ti-building-bank" style="color:#2563eb;"></i></div>
+    <div><div class="qs-pay-opt-title">تحويل فوري</div><div class="qs-pay-opt-sub">تحويل تم استلامه</div></div>
+   </button>
+   <button class="qs-pay-opt" onclick="QuickSale.checkoutDefer()">
+    <div class="qs-pay-opt-icon" style="background:#fef9c3;"><i class="ti ti-clock" style="color:#ca8a04;"></i></div>
+    <div><div class="qs-pay-opt-title">تطبيق لاحق</div><div class="qs-pay-opt-sub">يُضاف على حساب الزبون</div></div>
+   </button>
+   <button class="qs-pay-opt" onclick="QuickSale.checkoutDebt()">
+    <div class="qs-pay-opt-icon" style="background:#fee2e2;"><i class="ti ti-users" style="color:#dc2626;"></i></div>
+    <div><div class="qs-pay-opt-title">دين</div><div class="qs-pay-opt-sub">حفظ على حساب زبون</div></div>
+   </button>
+  </div>
+
+  <!-- Cash Change -->
+  <div id="qs-cash-section" style="display:none;margin-top:10px;">
+   <div class="fg">
+    <label class="lbl">المبلغ المستلم (₪)</label>
+    <input class="inp" type="number" id="qs-cash-received" inputmode="decimal" placeholder="0.00" oninput="QuickSale.calcCashChange()">
+   </div>
+   <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;">
+    <span style="font-size:13px;">الباقي للزبون</span>
+    <span id="qs-cash-change-val" style="font-weight:900;color:var(--s);">₪0</span>
+   </div>
+   <button class="btn btn-s" style="width:100%;justify-content:center;margin-top:10px;" onclick="QuickSale.sell('cash')">
+    <i class="ti ti-check"></i> تأكيد البيع نقدي
+   </button>
+  </div>
+
+ </div>
 </div></div>
 
 <!-- Transfer Modal -->

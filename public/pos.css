@@ -262,6 +262,20 @@
 .qs-qn{font-size:17px;font-weight:900;min-width:32px;text-align:center;color:#0f172a;}
 .qs-rm{width:34px;height:34px;border-radius:8px;border:none;background:#fee2e2;color:#ef4444;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;flex-shrink:0;}
 .qs-rm:active{transform:scale(.88);background:#fecaca;}
+/* ── Checkout Button ── */
+.pos-checkout-btn{width:100%;background:linear-gradient(135deg,#1a56db,#1e40af);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;transition:.15s;}
+.pos-checkout-btn:active{transform:scale(.98);}
+.pos-invoice-btn{width:100%;background:var(--wl);color:var(--w);border:1.5px solid var(--w);border-radius:10px;padding:9px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+/* ── Payment Options Modal ── */
+.qs-pay-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:6px;}
+.qs-pay-opt{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--br);border-radius:12px;padding:12px 14px;cursor:pointer;font-family:'Cairo',sans-serif;text-align:right;transition:.15s;width:100%;}
+.qs-pay-opt:hover{border-color:var(--p);background:var(--pl);}
+.qs-pay-opt:active{transform:scale(.98);}
+.qs-pay-opt-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.qs-pay-opt-icon i{font-size:20px;}
+.qs-pay-opt-title{font-size:14px;font-weight:800;color:var(--g9);}
+.qs-pay-opt-sub{font-size:11px;color:var(--g5);margin-top:2px;}
+
 .pos-summary {
   padding: .45rem .8rem;
   background: #f8fafc;

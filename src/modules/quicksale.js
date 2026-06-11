@@ -408,6 +408,56 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Debt modal ──
+  // ── Checkout ──
+  openCheckout() {
+    if (!_cart.length) { Notify.error('السلة فارغة'); return; }
+    // Reset buyer fields
+    const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
+    const bp = DOM.get('qs-buyer-phone'); if (bp) bp.value = '';
+    const dd = DOM.get('qs-buyer-dropdown'); if (dd) dd.style.display = 'none';
+    const cs = DOM.get('qs-cash-section'); if (cs) cs.style.display = 'none';
+    // Show total
+    const total = _cart.reduce((s, c) => s + c.price * c.qty, 0) * (1 - _discount / 100);
+    DOM.setText('qs-checkout-total', '₪' + total.toFixed(2));
+    Modal.open('m-qs-checkout');
+  },
+
+  checkoutPay(type) {
+    if (type === 'cash') {
+      const cs = DOM.get('qs-cash-section');
+      if (cs) cs.style.display = 'block';
+      DOM.get('qs-cash-received')?.focus();
+    }
+  },
+
+  checkoutTransfer() {
+    Modal.close('m-qs-checkout');
+    QuickSale.openTransferModal();
+  },
+
+  checkoutDefer() {
+    Modal.close('m-qs-checkout');
+    QuickSale.sell('defer');
+  },
+
+  checkoutDebt() {
+    Modal.close('m-qs-checkout');
+    QuickSale.openDebtModal();
+  },
+
+  calcCashChange() {
+    const total    = _cart.reduce((s,c) => s + c.price * c.qty, 0) * (1 - _discount/100);
+    const received = parseFloat(DOM.val('qs-cash-received')) || 0;
+    const change   = received - total;
+    const row = DOM.get('qs-cash-change-row');
+    const val = DOM.get('qs-cash-change-val');
+    if (row && val) {
+      row.style.display = received > 0 ? 'flex' : 'none';
+      val.textContent = '₪' + Math.abs(change).toFixed(2);
+      val.style.color = change >= 0 ? 'var(--s)' : 'var(--d)';
+    }
+  },
+
   searchBuyer(val) {
     const dd = DOM.get('qs-buyer-dropdown');
     if (!val.trim()) { dd.style.display = 'none'; return; }
@@ -520,6 +570,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   // ── Checkout ──
   async sell(paymentType) {
     if (!_cart.length) { Notify.error('السلة فارغة'); return; }
+    Modal.close('m-qs-checkout');
 
     const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
     const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
