@@ -284,14 +284,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Camera Scanner ──
-  _flashOn: false,
-
   async toggleFlash() {
     await BarcodeScanner.toggleFlash();
   },
 
   async startScanner() {
-    if (_scanner || BarcodeScanner.isActive()) return;
+    if (BarcodeScanner.isActive()) return;
 
     const overlay = DOM.get('qs-scanner-overlay');
     if (overlay) overlay.style.display = 'flex';
@@ -302,16 +300,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     await BarcodeScanner.start(
       'qs-scanner-container',
-      (code) => {
-        QuickSale.stopScanner();
-        QuickSale._onBarcode(code);
-      },
-      (err) => {
-        Notify.error(err || 'لا يمكن فتح الكاميرا');
-        QuickSale.stopScanner();
-      }
+      (code) => { QuickSale.stopScanner(); QuickSale._onBarcode(code); },
+      (err)  => { Notify.error(err || 'لا يمكن فتح الكاميرا'); QuickSale.stopScanner(); }
     );
-    _scanner = true;
+    _scanner = BarcodeScanner.isActive() ? true : null;
   },
 
   stopScanner() {
