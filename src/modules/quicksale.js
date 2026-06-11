@@ -568,19 +568,115 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       }
 
       if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-      QuickSale._beep();
-      Notify.success(invNum + ' — ₪' + total.toFixed(2));
+      QuickSale._beep('success');
+
+      // احفظ نسخة من السلة قبل المسح
+      const cartSnapshot = _cart.map(c => ({ ...c }));
+
       QuickSale.clearCart();
       await getDashboard()?.load();
       await QuickSale._loadStats();
-      // Sync maxQty for cart after inventory update
       const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
       QuickSale._renderGrid();
+
+      // عرض الفاتورة بعد البيع
+      QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone);
     } catch (err) {
       Notify.error(err.message);
     } finally {
       setTimeout(() => { State.isMutating = false; }, 500);
     }
+  },
+
+  // ── Daily Stats ──
+  _showReceipt(inv, cart, total, paymentType, custName, phone) {
+    if (!inv) return;
+    const PAY = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
+    const store = State.user?.store_name || 'حسابات';
+    const itemsHtml = cart.map(c =>
+      `<tr>
+        <td>${escape(c.name)}</td>
+        <td style="text-align:center;">${c.qty}</td>
+        <td style="text-align:left;">₪${c.price.toFixed(2)}</td>
+        <td style="text-align:left;font-weight:700;">₪${(c.qty*c.price).toFixed(2)}</td>
+      </tr>`
+    ).join('');
+
+    const waMsg = encodeURIComponent(
+      `🧾 فاتورة من ${store}\n` +
+      `رقم: ${inv.invoice_number}\n` +
+      `التاريخ: ${inv.invoice_date} ${inv.sale_time||''}\n` +
+      (custName && custName !== 'زبون عادي' ? `الزبون: ${custName}\n` : '') +
+      `\nالمنتجات:\n` +
+      cart.map(c => `• ${c.name} × ${c.qty} = ₪${(c.qty*c.price).toFixed(2)}`).join('\n') +
+      `\n\nالإجمالي: ₪${total.toFixed(2)}\n` +
+      `طريقة الدفع: ${PAY[paymentType]||paymentType}`
+    );
+    const waUrl = phone
+      ? `https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}`
+      : `https://wa.me/?text=${waMsg}`;
+
+    // بناء modal الإيصال
+    const el = DOM.get('qs-receipt-body');
+    if (el) {
+      el.innerHTML = `
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:22px;">✅</div>
+          <div style="font-size:16px;font-weight:900;color:var(--s);">تم البيع بنجاح</div>
+          <div style="font-size:13px;color:var(--g5);">${inv.invoice_number} · ₪${total.toFixed(2)}</div>
+        </div>
+        <table class="dt" style="margin-bottom:.75rem;font-size:12px;">
+          <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:900;background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+          <span>الإجمالي</span><span>₪${total.toFixed(2)}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button class="btn btn-s" onclick="QuickSale._printReceipt()" style="justify-content:center;gap:6px;"><i class="ti ti-printer"></i> طباعة</button>
+          <a href="${waUrl}" target="_blank" class="btn" style="background:#25d366;color:#fff;justify-content:center;gap:6px;text-decoration:none;display:flex;align-items:center;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;padding:10px;">
+            <i class="ti ti-brand-whatsapp"></i> واتساب
+          </a>
+        </div>`;
+      // حفظ بيانات الطباعة
+      QuickSale._lastReceipt = { inv, cart, total, paymentType, custName, store };
+    }
+    Modal.open('m-qs-receipt');
+  },
+
+  _printReceipt() {
+    const r = QuickSale._lastReceipt;
+    if (!r) return;
+    const PAY = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
+    const itemsHtml = r.cart.map(c =>
+      `<tr><td>${c.name}</td><td style="text-align:center;">${c.qty}</td><td>₪${c.price.toFixed(2)}</td><td style="font-weight:700;">₪${(c.qty*c.price).toFixed(2)}</td></tr>`
+    ).join('');
+    const html = `<!DOCTYPE html><html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><title>فاتورة ${r.inv.invoice_number}</title>
+<style>body{font-family:'Cairo',Arial,sans-serif;margin:0;padding:16px;max-width:320px;margin:auto;font-size:13px;}
+.store{font-size:18px;font-weight:900;text-align:center;margin-bottom:4px;}
+.meta{text-align:center;color:#666;font-size:11px;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:10px;}
+.row{display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;}
+table{width:100%;border-collapse:collapse;margin:10px 0;}
+th{background:#f5f5f5;padding:5px 6px;font-size:11px;text-align:right;}
+td{padding:5px 6px;border-bottom:1px solid #f0f0f0;font-size:12px;}
+.total{display:flex;justify-content:space-between;font-size:15px;font-weight:900;border-top:2px solid #111;padding-top:8px;margin-top:6px;}
+.footer{text-align:center;font-size:11px;color:#999;margin-top:10px;}
+@media print{body{padding:0;}}</style></head>
+<body>
+<div class="store">${r.store}</div>
+<div class="meta">${r.inv.invoice_number} · ${r.inv.invoice_date} ${r.inv.sale_time||''}</div>
+${r.custName && r.custName !== 'زبون عادي' ? `<div class="row"><span>الزبون</span><span>${r.custName}</span></div>` : ''}
+<div class="row"><span>طريقة الدفع</span><span>${PAY[r.paymentType]||r.paymentType}</span></div>
+<table><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+<tbody>${itemsHtml}</tbody></table>
+<div class="total"><span>الإجمالي</span><span>₪${r.total.toFixed(2)}</span></div>
+<div class="footer">شكراً لتعاملكم معنا</div>
+<script>window.onload=()=>{window.print()}<\/script>
+</body></html>`;
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
   },
 
   // ── Daily Stats ──
