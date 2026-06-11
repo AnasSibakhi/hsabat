@@ -1512,36 +1512,35 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </div></div>
 
 <!-- Scanner Overlay -->
-<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;">
-  <!-- Camera takes full screen -->
+<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;">
+  <!-- Camera full screen -->
   <div style="position:relative;flex:1;width:100%;overflow:hidden;">
     <div id="qs-scanner-container" style="position:absolute;inset:0;background:#000;"></div>
-    <!-- Full width scan guide -->
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
-      <!-- Dark overlay top -->
-      <div style="position:absolute;top:0;left:0;right:0;height:20%;background:rgba(0,0,0,0.5);"></div>
-      <!-- Dark overlay bottom -->
-      <div style="position:absolute;bottom:0;left:0;right:0;height:20%;background:rgba(0,0,0,0.5);"></div>
-      <!-- Scan frame — 95% wide, 60% tall -->
-      <div style="position:absolute;top:20%;left:2%;right:2%;bottom:20%;border:2px solid rgba(99,102,241,0.8);border-radius:10px;">
-        <!-- Corner marks -->
-        <div style="position:absolute;top:-3px;left:-3px;width:24px;height:24px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:6px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:24px;height:24px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 6px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:24px;height:24px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 6px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:24px;height:24px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 6px 0;"></div>
-        <!-- Scan line animation -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.8s ease-in-out infinite;"></div>
-      </div>
+    <!-- Only corner guides - no dark overlay -->
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <!-- Top-right corner -->
+      <div style="position:absolute;top:12%;right:4%;width:36px;height:36px;border-top:4px solid #fff;border-right:4px solid #fff;border-radius:0 8px 0 0;"></div>
+      <!-- Top-left corner -->
+      <div style="position:absolute;top:12%;left:4%;width:36px;height:36px;border-top:4px solid #fff;border-left:4px solid #fff;border-radius:8px 0 0 0;"></div>
+      <!-- Bottom-right corner -->
+      <div style="position:absolute;bottom:18%;right:4%;width:36px;height:36px;border-bottom:4px solid #fff;border-right:4px solid #fff;border-radius:0 0 8px 0;"></div>
+      <!-- Bottom-left corner -->
+      <div style="position:absolute;bottom:18%;left:4%;width:36px;height:36px;border-bottom:4px solid #fff;border-left:4px solid #fff;border-radius:0 0 0 8px;"></div>
+      <!-- Scan line -->
+      <div style="position:absolute;top:12%;left:4%;right:4%;height:2px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.9),transparent);animation:scan-line 1.8s ease-in-out infinite;"></div>
     </div>
     <!-- Flash button -->
-    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.4);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
       <i class="ti ti-bolt"></i>
     </button>
+    <!-- Close button top left -->
+    <button onclick="QuickSale.stopScanner()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+      <i class="ti ti-x"></i>
+    </button>
   </div>
-  <!-- Bottom bar -->
-  <div style="background:#111;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
-    <p style="color:#94a3b8;font-size:13px;margin:0;">وجّه الكاميرا على الباركود</p>
-    <button onclick="QuickSale.stopScanner()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:14px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إغلاق</button>
+  <!-- Minimal bottom hint -->
+  <div style="background:rgba(0,0,0,0.7);padding:12px;text-align:center;backdrop-filter:blur(8px);">
+    <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">وجّه الكاميرا على الباركود</p>
   </div>
 </div>
 
