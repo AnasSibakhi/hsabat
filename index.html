@@ -284,8 +284,21 @@ table.dt tr:hover td{background:var(--g0);}
 .inv-det-row span{font-size:11px;color:var(--g5);}
 .inv-det-row strong{font-size:13px;}
 
+/* ── INVOICE ITEMS LIST ── */
+.inv-item-row{padding:10px 12px;border-bottom:1px solid var(--g1);background:#fff;}
+.inv-item-row:last-child{border-bottom:none;}
+.inv-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.inv-item-name{font-size:13px;font-weight:700;color:var(--g9);flex:1;}
+.inv-item-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.inv-item-ctrl{display:flex;align-items:center;gap:6px;}
+.inv-item-total{font-size:13px;font-weight:900;color:var(--p);min-width:60px;text-align:left;}
+.inv-qty-btn{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--br);background:var(--g0);font-size:18px;font-weight:800;color:var(--p);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.inv-qty-btn:active{transform:scale(.9);background:var(--pl);}
+.inv-qty-inp{width:44px;padding:5px;border:1.5px solid var(--br);border-radius:6px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;text-align:center;}
+.inv-del-row{background:var(--dl);color:var(--d);border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+
 /* ── INVOICE MODAL ── */
-.inv-modal{max-width:900px!important;padding:0!important;border-radius:16px!important;max-height:92vh!important;display:flex;flex-direction:column;}
+.inv-modal{max-width:560px!important;}
 .inv-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--br);flex-shrink:0;}
 .inv-modal-header-right{display:flex;align-items:center;gap:12px;}
 .inv-modal-icon{width:40px;height:40px;background:var(--pl);border-radius:10px;display:flex;align-items:center;justify-content:center;}
@@ -1170,125 +1183,99 @@ PalPay" style="resize:none;"></textarea>
 </div></div>
 
 <!-- Invoice -->
-<div class="mo" id="m-invoice"><div class="modal inv-modal">
-
- <!-- Header -->
- <div class="inv-modal-header">
-  <div class="inv-modal-header-right">
-   <div class="inv-modal-icon"><i class="ti ti-receipt"></i></div>
-   <div>
-    <div class="inv-modal-title">فاتورة جديدة</div>
-    <div class="inv-modal-meta"><span id="inv-num-preview">INV-####</span> · <span id="inv-date-preview"></span> · <span id="inv-cashier-preview"></span></div>
-   </div>
-  </div>
-  <button class="mclose" onclick="Modal.close('m-invoice')">✕</button>
- </div>
-
- <div class="inv-modal-body">
-  <div class="inv-modal-main">
-
-   <!-- Customer -->
-   <div class="inv-section">
-    <div class="inv-section-title"><i class="ti ti-user"></i> العميل</div>
-    <select class="inp" id="ic" onchange="Customers.toggleNewCustomerFields(this)">
-     <option value="">زبون عادي</option>
-     <option value="__new__">➕ إضافة زبون جديد</option>
-    </select>
-    <div id="new-cust-wrap" class="hidden" style="margin-top:8px;">
-     <div style="background:var(--pl);border-radius:8px;padding:10px;">
-      <div style="font-size:12px;font-weight:700;color:var(--p);margin-bottom:8px;">بيانات الزبون الجديد</div>
-      <div class="fr">
-       <div class="fg" style="margin-bottom:0;"><label class="lbl">الاسم *</label><input class="inp" id="inv-new-name" style="font-size:13px;"></div>
-       <div class="fg" style="margin-bottom:0;"><label class="lbl">الجوال</label><input class="inp" id="inv-new-phone" inputmode="tel" style="font-size:13px;"></div>
-      </div>
-     </div>
-    </div>
-   </div>
-
-   <!-- Product Search -->
-   <div class="inv-section">
-    <div class="inv-section-title"><i class="ti ti-search"></i> البحث عن منتج</div>
-    <div class="inv-prod-search-wrap">
-     <input class="inp inv-prod-search" id="inv-prod-search" placeholder="اسم المنتج أو الباركود..." autocomplete="off" oninput="Invoices.searchProduct(this.value)" onkeydown="Invoices.onSearchKey(event)">
-     <div class="inv-prod-dropdown" id="inv-prod-dropdown" style="display:none;"></div>
-    </div>
-   </div>
-
-   <!-- Items Table -->
-   <div class="inv-section" style="padding:0;">
-    <div class="inv-section-title" style="padding:10px 14px 0;"><i class="ti ti-list"></i> المنتجات <span class="inv-items-badge" id="inv-items-count">0 صنف</span></div>
-    <div class="inv-items-table-wrap">
-     <table class="inv-items-table">
-      <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>خصم ₪</th><th>الإجمالي</th><th></th></tr></thead>
-      <tbody id="iitems"><tr class="inv-empty-row"><td colspan="6">لم يتم إضافة منتجات بعد</td></tr></tbody>
-     </table>
-    </div>
-   </div>
-
-   <!-- Notes -->
-   <div class="inv-section">
-    <div class="inv-section-title"><i class="ti ti-notes"></i> ملاحظات</div>
-    <input class="inp" id="inotes" placeholder="اختياري">
-   </div>
-
-  </div>
-
-  <!-- Sidebar Summary -->
-  <div class="inv-modal-sidebar">
-
-   <!-- Summary -->
-   <div class="inv-summary-card">
-    <div class="inv-summary-title">ملخص الفاتورة</div>
-    <div class="inv-summary-rows">
-     <div class="inv-summary-row"><span>عدد الأصناف</span><span id="is-items">0</span></div>
-     <div class="inv-summary-row"><span>إجمالي الكميات</span><span id="is-qty">0</span></div>
-     <div class="inv-summary-row"><span>المجموع الفرعي</span><span id="is-subtotal">₪0</span></div>
-     <div class="inv-summary-row">
-      <span>خصم إجمالي</span>
-      <div style="display:flex;align-items:center;gap:5px;">
-       <button id="inv-disc-toggle" onclick="Invoices.toggleDiscType()" type="button" style="background:var(--p);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;">₪</button>
-       <input class="inv-discount-inp" type="number" id="idiscount" value="0" min="0" oninput="Invoices.calcTotal()" inputmode="decimal" placeholder="0">
-       <span id="is-discount" style="color:var(--d);">₪0</span>
-      </div>
-     </div>
-     <div class="inv-summary-total"><span>الإجمالي</span><span id="itotal">₪0</span></div>
-    </div>
-   </div>
-
-   <!-- Payment -->
-   <div class="inv-pay-card">
-    <div class="inv-summary-title">طريقة الدفع</div>
-    <div class="inv-pay-btns">
-     <label class="inv-pay-opt" id="ipopt-cash"><input type="radio" name="ip" value="cash" checked onchange="Invoices.onPayChange(this)"><i class="ti ti-cash"></i> نقدي</label>
-     <label class="inv-pay-opt" id="ipopt-transfer"><input type="radio" name="ip" value="transfer" onchange="Invoices.onPayChange(this)"><i class="ti ti-building-bank"></i> تحويل</label>
-     <label class="inv-pay-opt" id="ipopt-defer"><input type="radio" name="ip" value="defer" onchange="Invoices.onPayChange(this)"><i class="ti ti-clock"></i> دين</label>
-     <label class="inv-pay-opt" id="ipopt-partial"><input type="radio" name="ip" value="partial" onchange="Invoices.onPayChange(this)"><i class="ti ti-credit-card"></i> جزئي</label>
-    </div>
-    <div id="ipartialwrap" style="display:none;margin-top:10px;">
-     <label class="lbl">المبلغ المدفوع الآن (₪)</label>
-     <input class="inp" type="number" id="ipartial" inputmode="decimal" placeholder="0" oninput="Invoices.calcChange()">
-     <div class="inv-change-row" id="inv-change-row" style="display:none;">
-      <span>المتبقي</span><span id="inv-change-val" style="color:var(--d);font-weight:700;">₪0</span>
-     </div>
-    </div>
-    <div id="inv-cash-wrap" style="display:none;margin-top:10px;">
-     <label class="lbl">المبلغ المستلم (₪)</label>
-     <input class="inp" type="number" id="inv-paid-cash" inputmode="decimal" placeholder="0" oninput="Invoices.calcChange()">
-     <div class="inv-change-row" id="inv-cash-change-row" style="display:none;">
-      <span>الباقي للعميل</span><span id="inv-cash-change-val" style="color:var(--s);font-weight:700;">₪0</span>
-     </div>
-    </div>
-   </div>
-
-   <!-- Action Buttons -->
-   <div class="inv-action-btns">
-    <button class="btn btn-s inv-save-btn" onclick="Invoices.save()"><i class="ti ti-device-floppy"></i> حفظ الفاتورة</button>
-    <button class="btn btn-o" onclick="Modal.close('m-invoice')" style="width:100%;justify-content:center;">إلغاء</button>
-   </div>
-
+<div class="mo" id="m-invoice"><div class="modal" style="max-width:560px;">
+ <div class="mhdr">
+  <span class="mtitle">فاتورة جديدة</span>
+  <div style="display:flex;align-items:center;gap:8px;">
+   <span style="font-size:11px;color:var(--g5);" id="inv-num-preview"></span>
+   <button class="mclose" onclick="Modal.close('m-invoice')">✕</button>
   </div>
  </div>
 
+ <!-- العميل -->
+ <div class="fg">
+  <label class="lbl">الزبون (اختياري)</label>
+  <select class="inp" id="ic" onchange="Customers.toggleNewCustomerFields(this)">
+   <option value="">زبون عادي</option>
+   <option value="__new__">➕ زبون جديد</option>
+  </select>
+ </div>
+ <div id="new-cust-wrap" class="hidden">
+  <div style="background:var(--pl);border-radius:8px;padding:10px;margin-bottom:.75rem;">
+   <div style="font-size:12px;font-weight:700;color:var(--p);margin-bottom:8px;">بيانات الزبون الجديد</div>
+   <div class="fr">
+    <div class="fg" style="margin-bottom:0;"><label class="lbl">الاسم *</label><input class="inp" id="inv-new-name"></div>
+    <div class="fg" style="margin-bottom:0;"><label class="lbl">الجوال</label><input class="inp" id="inv-new-phone" inputmode="tel"></div>
+   </div>
+  </div>
+ </div>
+
+ <!-- البحث -->
+ <div class="fg" style="position:relative;">
+  <label class="lbl">🔍 بحث أو باركود</label>
+  <input class="inp" id="inv-prod-search" placeholder="اسم المنتج أو الباركود..." autocomplete="off"
+   oninput="Invoices.searchProduct(this.value)" onkeydown="Invoices.onSearchKey(event)">
+  <div id="inv-prod-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+ </div>
+
+ <!-- المنتجات -->
+ <div style="background:var(--g0);border-radius:10px;overflow:hidden;margin-bottom:.75rem;">
+  <div style="padding:8px 12px;font-size:12px;font-weight:700;color:var(--g6);display:flex;justify-content:space-between;">
+   <span>المنتجات</span><span id="inv-items-count" style="color:var(--p);">0 صنف</span>
+  </div>
+  <div id="inv-items-list" style="background:#fff;"></div>
+ </div>
+
+ <!-- الملخص -->
+ <div style="background:var(--g0);border-radius:10px;padding:10px 12px;margin-bottom:.75rem;">
+  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g6);margin-bottom:5px;"><span>المجموع الفرعي</span><span id="is-subtotal">₪0</span></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--g6);margin-bottom:8px;">
+   <span>خصم إجمالي</span>
+   <div style="display:flex;align-items:center;gap:5px;">
+    <button id="inv-disc-toggle" onclick="Invoices.toggleDiscType()" type="button"
+     style="background:var(--p);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;">₪</button>
+    <input style="width:60px;padding:4px 6px;border:1.5px solid var(--br);border-radius:6px;font-family:Cairo,sans-serif;font-size:12px;text-align:center;"
+     type="number" id="idiscount" value="0" min="0" oninput="Invoices.calcTotal()" inputmode="decimal">
+    <span id="is-discount" style="color:var(--d);font-size:12px;">₪0</span>
+   </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;color:var(--g9);border-top:1.5px solid var(--br);padding-top:8px;">
+   <span>الإجمالي</span><span id="itotal">₪0</span>
+  </div>
+ </div>
+
+ <!-- طريقة الدفع -->
+ <div class="fg">
+  <label class="lbl">طريقة الدفع</label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+   <label class="inv-pay-opt" id="ipopt-cash"><input type="radio" name="ip" value="cash" checked onchange="Invoices.onPayChange(this)"><i class="ti ti-cash"></i> نقدي</label>
+   <label class="inv-pay-opt" id="ipopt-transfer"><input type="radio" name="ip" value="transfer" onchange="Invoices.onPayChange(this)"><i class="ti ti-building-bank"></i> تحويل</label>
+   <label class="inv-pay-opt" id="ipopt-defer"><input type="radio" name="ip" value="defer" onchange="Invoices.onPayChange(this)"><i class="ti ti-clock"></i> دين</label>
+   <label class="inv-pay-opt" id="ipopt-partial"><input type="radio" name="ip" value="partial" onchange="Invoices.onPayChange(this)"><i class="ti ti-credit-card"></i> جزئي</label>
+  </div>
+  <div id="ipartialwrap" style="display:none;">
+   <label class="lbl">المبلغ المدفوع الآن (₪)</label>
+   <input class="inp" type="number" id="ipartial" inputmode="decimal" placeholder="0" oninput="Invoices.calcChange()">
+   <div id="inv-change-row" style="display:none;justify-content:space-between;font-size:13px;margin-top:6px;padding:8px;background:var(--g0);border-radius:8px;">
+    <span>المتبقي</span><span id="inv-change-val" style="color:var(--d);font-weight:700;">₪0</span>
+   </div>
+  </div>
+  <div id="inv-cash-wrap" style="display:none;">
+   <label class="lbl">المبلغ المستلم (₪)</label>
+   <input class="inp" type="number" id="inv-paid-cash" inputmode="decimal" placeholder="0" oninput="Invoices.calcChange()">
+   <div id="inv-cash-change-row" style="display:none;justify-content:space-between;font-size:13px;margin-top:6px;padding:8px;background:var(--g0);border-radius:8px;">
+    <span>الباقي للعميل</span><span id="inv-cash-change-val" style="color:var(--s);font-weight:700;">₪0</span>
+   </div>
+  </div>
+ </div>
+
+ <!-- ملاحظات -->
+ <div class="fg"><label class="lbl">ملاحظات (اختياري)</label><input class="inp" id="inotes" placeholder="اختياري"></div>
+
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-invoice')">إلغاء</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="Invoices.save()"><i class="ti ti-device-floppy"></i> حفظ الفاتورة</button>
+ </div>
 </div></div>
 
 <!-- QS Debt -->

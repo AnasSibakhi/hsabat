@@ -87,35 +87,38 @@ const Invoices = {
     const p = (State.inventory||[]).find(i => i.id === id);
     if (!p) return;
     // Check if already in list
-    const existing = document.querySelector(`#iitems tr[data-pid="${id}"]`);
+    const existing = document.querySelector(`#inv-items-list .inv-item-row[data-pid="${id}"]`);
     if (existing) {
       const qtyInp = existing.querySelector('.inv-qty-inp');
       qtyInp.value = parseInt(qtyInp.value||1) + 1;
       Invoices.calcTotal();
     } else {
-      const tbody = DOM.get('iitems');
-      // Remove empty row
-      tbody.querySelector('.inv-empty-row')?.remove();
-      tbody.insertAdjacentHTML('beforeend', `
-        <tr data-pid="${p.id}" data-price="${p.sale_price||0}">
-          <td><div style="font-weight:600;font-size:12px;">${escape(p.name)}</div><div style="font-size:10px;color:var(--g4);">${p.barcode||''}</div></td>
-          <td>
-            <div class="inv-qty-ctrl">
+      const list = DOM.get('inv-items-list');
+      list.insertAdjacentHTML('beforeend', `
+        <div class="inv-item-row" data-pid="${p.id}" data-price="${p.sale_price||0}">
+          <div class="inv-item-top">
+            <div class="inv-item-name">${escape(p.name)}</div>
+            <button class="inv-del-row" onclick="this.closest('.inv-item-row').remove();Invoices.calcTotal()" type="button">✕</button>
+          </div>
+          <div class="inv-item-bottom">
+            <div class="inv-item-ctrl">
               <button class="inv-qty-btn" onclick="Invoices.changeQty(this,-1)" type="button">−</button>
               <input class="inv-qty-inp" type="number" value="1" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal">
               <button class="inv-qty-btn" onclick="Invoices.changeQty(this,1)" type="button">+</button>
             </div>
-          </td>
-          <td><input class="inv-qty-inp price-inp" type="number" value="${p.sale_price||0}" min="0" oninput="Invoices.calcTotal()" inputmode="decimal" style="width:70px;"></td>
-          <td><input class="inv-disc-inp" type="number" value="0" min="0" oninput="Invoices.calcTotal()" inputmode="decimal"></td>
-          <td class="row-total" style="font-weight:700;">₪${p.sale_price?.toFixed(2)||0}</td>
-          <td><button class="inv-del-row" onclick="this.closest('tr').remove();Invoices.calcTotal()" type="button"><i class="ti ti-x"></i></button></td>
-        </tr>`
+            <div style="font-size:12px;color:var(--g5);">
+              ₪<input class="price-inp" type="number" value="${p.sale_price||0}" min="0" oninput="Invoices.calcTotal()" inputmode="decimal"
+               style="width:60px;border:1px solid var(--br);border-radius:6px;padding:3px 5px;font-size:12px;font-family:Cairo,sans-serif;text-align:center;">
+            </div>
+            <div class="inv-item-total">₪${((p.sale_price||0)).toFixed(2)}</div>
+          </div>
+        </div>`
       );
     }
     DOM.get('inv-prod-search').value = '';
     DOM.get('inv-prod-dropdown').style.display = 'none';
     Invoices.calcTotal();
+    setTimeout(() => DOM.get('inv-prod-search')?.focus(), 100);
   },
 
   changeQty(btn, delta) {
@@ -167,15 +170,13 @@ const Invoices = {
   // ── Calc total (override) ──
   calcTotal() {
     let subtotal = 0, totalDisc = 0, totalQty = 0, itemCount = 0;
-    document.querySelectorAll('#iitems tr[data-pid]').forEach(row => {
+    document.querySelectorAll('#inv-items-list .inv-item-row').forEach(row => {
       const price = parseFloat(row.dataset.price) || parseFloat(row.querySelector('.price-inp')?.value) || 0;
       const qty   = parseFloat(row.querySelector('.inv-qty-inp')?.value) || 0;
-      const disc  = parseFloat(row.querySelector('.inv-disc-inp')?.value) || 0;
-      const rowTotal = Math.max(0, qty * price - disc);
-      const el = row.querySelector('.row-total');
+      const rowTotal = qty * price;
+      const el = row.querySelector('.inv-item-total');
       if (el) el.textContent = '₪' + rowTotal.toFixed(2);
-      subtotal  += qty * price;
-      totalDisc += disc;
+      subtotal  += rowTotal;
       totalQty  += qty;
       itemCount++;
     });
@@ -183,12 +184,10 @@ const Invoices = {
     const globalDisc = Invoices._discType === 'pct'
       ? subtotal * (globalDiscVal / 100)
       : globalDiscVal;
-    const total = Math.max(0, subtotal - totalDisc - globalDisc);
-    DOM.setText('is-items',    itemCount + ' صنف');
-    DOM.setText('is-qty',      totalQty + ' قطعة');
-    DOM.setText('is-subtotal', '₪' + subtotal.toFixed(2));
-    DOM.setText('is-discount', '-₪' + (totalDisc + globalDisc).toFixed(2));
-    DOM.setText('itotal',      '₪' + total.toFixed(2));
+    const total = Math.max(0, subtotal - globalDisc);
+    DOM.setText('is-subtotal',    '₪' + subtotal.toFixed(2));
+    DOM.setText('is-discount',    '-₪' + globalDisc.toFixed(2));
+    DOM.setText('itotal',         '₪' + total.toFixed(2));
     DOM.setText('inv-items-count', itemCount + ' صنف');
     Invoices.calcChange();
   },
@@ -196,15 +195,14 @@ const Invoices = {
   // ── Collect items (override) ──
   _collectItems() {
     const items = []; let subtotal = 0;
-    document.querySelectorAll('#iitems tr[data-pid]').forEach(row => {
+    document.querySelectorAll('#inv-items-list .inv-item-row').forEach(row => {
       const id    = row.dataset.pid;
       const p     = (State.inventory||[]).find(i => i.id === id);
       const qty   = parseFloat(row.querySelector('.inv-qty-inp')?.value) || 0;
       const price = parseFloat(row.querySelector('.price-inp')?.value) || parseFloat(row.dataset.price) || 0;
-      const disc  = parseFloat(row.querySelector('.inv-disc-inp')?.value) || 0;
       if (qty > 0 && price > 0) {
-        items.push({ product_name: p?.name||'منتج', inventory_id: id||null, quantity: qty, price, discount: disc });
-        subtotal += qty * price - disc;
+        items.push({ product_name: p?.name||'منتج', inventory_id: id||null, quantity: qty, price });
+        subtotal += qty * price;
       }
     });
     return { items, subtotal };
@@ -460,21 +458,20 @@ const Invoices = {
   },
 
   resetForm() {
-    const wrap = DOM.get('iitems'); if (wrap) wrap.innerHTML = Invoices._buildItemRow();
-    DOM.setText('itotal', '₪ 0');
+    const list = DOM.get('inv-items-list');
+    if (list) list.innerHTML = '';
+    DOM.setText('itotal',          '₪0');
+    DOM.setText('is-subtotal',     '₪0');
+    DOM.setText('is-discount',     '₪0');
+    DOM.setText('inv-items-count', '0 صنف');
     const disc = DOM.get('idiscount'); if (disc) disc.value = '0';
+    const srch = DOM.get('inv-prod-search'); if (srch) srch.value = '';
+    const dd   = DOM.get('inv-prod-dropdown'); if (dd) dd.style.display = 'none';
+    Invoices._discType = 'fixed';
+    const btn = DOM.get('inv-disc-toggle'); if (btn) btn.textContent = '₪';
   },
 
-  addItem() { DOM.get('iitems')?.insertAdjacentHTML('beforeend', Invoices._buildItemRow()); },
-
-  calcTotal() {
-    let subtotal = 0;
-    document.querySelectorAll('#iitems .ii').forEach(row => {
-      subtotal += (parseFloat(row.querySelector('.qty-inp')?.value)||0) * (parseFloat(row.querySelector('.price-inp')?.value)||0);
-    });
-    const discount = parseFloat(DOM.val('idiscount')) || 0;
-    DOM.setText('itotal', '₪ ' + Math.max(0, subtotal - discount).toFixed(2));
-  },
+  addItem() {},
 
   _collectItems() {
     const items = []; let subtotal = 0;
