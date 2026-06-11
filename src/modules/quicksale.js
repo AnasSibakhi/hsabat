@@ -248,6 +248,32 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Barcode ──
+  // ── Continuous scan without closing camera ──
+  async _beepAndAdd(code) {
+    if (code === _lastScan) return;
+    _lastScan = code;
+    clearTimeout(_scanTimer);
+    _scanTimer = setTimeout(() => { _lastScan = null; }, 1500);
+
+    let product = State.inventory.find(p => p.barcode === code);
+    if (!product) {
+      const { data } = await DB.inventory().select('*').eq('barcode', code).maybeSingle();
+      if (data) { product = data; if (!State.inventory.find(p => p.id === data.id)) State.inventory.push(data); }
+    }
+
+    if (product) {
+      QuickSale.addToCart(product.id);
+      QuickSale._beep('success');
+    } else {
+      QuickSale.stopScanner();
+      const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
+      const nm = DOM.get('qs-new-name');   if (nm) { nm.value = ''; setTimeout(() => nm.focus(), 200); }
+      Modal.open('m-new-product');
+      Notify.error('المنتج غير موجود — أضفه الآن');
+      QuickSale._beep('error');
+    }
+  },
+
   async _onBarcode(code) {
     // Debounce
     if (code === _lastScan) return;
@@ -337,19 +363,15 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const format = result?.codeResult?.format;
       const err    = result?.codeResult?.startInfo?.error ?? 1;
       if (!code || code.length < 4) return;
-      if (err > 0.2) return;
+      if (err > 0.35) return;
 
-      // EAN/UPC — تحقق من الـ checksum → قراءة واحدة تكفي
       const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(format);
       if (isEAN && validateChecksum(code)) {
-        QuickSale.stopScanner();
-        QuickSale._onBarcode(code);
+        QuickSale._beepAndAdd(code);
         return;
       }
-
-      // باقي الأنواع — قراءتين للتأكيد
       seen[code] = (seen[code] || 0) + 1;
-      if (seen[code] >= 2) { QuickSale.stopScanner(); QuickSale._onBarcode(code); }
+      if (seen[code] >= 2) { seen[code] = 0; QuickSale._beepAndAdd(code); }
     };
 
     Quagga.init({
@@ -358,7 +380,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
       },
       locator: { patchSize: 'medium', halfSample: true },
-      numOfWorkers: 2, frequency: 10,
+      numOfWorkers: 1,
+      frequency: 20,
       decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'], multiple: false },
       locate: true,
     }, (err) => {
