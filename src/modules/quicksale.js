@@ -180,16 +180,18 @@ export const QuickSale = {
     el.innerHTML = _cart.map(item => {
       const line = item.qty * item.price;
       return '<div class="qs-cart-item" id="ci-' + item.id + '">' +
-        '<div class="qs-ci-main">' +
+        '<div class="qs-ci-top">' +
           '<div class="qs-ci-name">' + escape(item.name) + '</div>' +
+          '<button class="qs-rm" onclick="QuickSale.removeFromCart(\'' + item.id + '\')"><i class="ti ti-x"></i></button>' +
+        '</div>' +
+        '<div class="qs-ci-bottom">' +
           '<div class="qs-ci-meta">₪' + item.price.toFixed(2) + ' × ' + item.qty +
             ' = <strong>₪' + line.toFixed(2) + '</strong></div>' +
-        '</div>' +
-        '<div class="qs-ci-ctrl">' +
-          '<button class="qs-qb" onclick="QuickSale.changeQty(\'' + item.id + '\',-1)">−</button>' +
-          '<span class="qs-qn">' + item.qty + '</span>' +
-          '<button class="qs-qb" onclick="QuickSale.changeQty(\'' + item.id + '\',1)">+</button>' +
-          '<button class="qs-rm" onclick="QuickSale.removeFromCart(\'' + item.id + '\')"><i class="ti ti-x"></i></button>' +
+          '<div class="qs-ci-ctrl">' +
+            '<button class="qs-qb" onclick="QuickSale.changeQty(\'' + item.id + '\',-1)">−</button>' +
+            '<span class="qs-qn">' + item.qty + '</span>' +
+            '<button class="qs-qb" onclick="QuickSale.changeQty(\'' + item.id + '\',1)">+</button>' +
+          '</div>' +
         '</div>' +
         '</div>';
     }).join('');
