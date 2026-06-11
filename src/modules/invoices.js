@@ -211,23 +211,6 @@ const Invoices = {
   },
 
   // ── Reset form (override) ──
-  resetForm() {
-    const tbody = DOM.get('iitems');
-    if (tbody) tbody.innerHTML = '<tr class="inv-empty-row"><td colspan="6">لم يتم إضافة منتجات بعد</td></tr>';
-    DOM.setText('itotal', '₪0');
-    DOM.setText('is-items', '0 صنف');
-    DOM.setText('is-qty', '0 قطعة');
-    DOM.setText('is-subtotal', '₪0');
-    DOM.setText('is-discount', '₪0');
-    DOM.setText('inv-items-count', '0 صنف');
-    const disc = DOM.get('idiscount'); if (disc) disc.value = '0';
-    const srch = DOM.get('inv-prod-search'); if (srch) srch.value = '';
-    const dd = DOM.get('inv-prod-dropdown'); if (dd) dd.style.display = 'none';
-  },
-
-  // ── Override addItem ──
-  addItem() {},
-
   // ── Load all invoices ──
   async load() {
     const { data } = await DB.invoices().select('*').order('created_at', { ascending: false });
