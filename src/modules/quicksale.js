@@ -523,9 +523,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
       const invNum = 'INV-' + String((count || 0) + 1).padStart(4, '0');
 
-      // Buyer info
-      const buyerName  = DOM.val('qs-buyer-name')  || custName || 'زبون عادي';
-      const buyerPhone = DOM.val('qs-buyer-phone') || '';
+      // Buyer info — للدين نجيب الجوال من بيانات الزبون إذا ما كان مكتوب يدوي
+      const buyerName  = DOM.val('qs-buyer-name') || custName || 'زبون عادي';
+      const custRecord = custId ? State.customers.find(x => x.id === custId) : null;
+      const buyerPhone = DOM.val('qs-buyer-phone') || custRecord?.phone || '';
 
       const { data: inv, error } = await DB.invoices().insert({
         store_id: State.user.id, customer_id: custId || null,
