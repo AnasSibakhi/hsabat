@@ -317,9 +317,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     _scanner = (result) => {
       const code  = result?.codeResult?.code;
       const err   = result?.codeResult?.startInfo?.error ?? 0;
-      if (!code || code.length < 4 || err > 0.3) return;
+      const valid = result?.codeResult?.decodedCodes?.every(c => c.error === undefined || c.error < 0.15);
+      if (!code || code.length < 4) return;
+      if (err > 0.15) return;
+      if (!valid) return;
       seen[code] = (seen[code] || 0) + 1;
-      if (seen[code] >= 1) { QuickSale.stopScanner(); QuickSale._onBarcode(code); }
+      if (seen[code] >= 2) { QuickSale.stopScanner(); QuickSale._onBarcode(code); }
     };
 
     Quagga.init({
