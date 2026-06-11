@@ -287,115 +287,35 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   _flashOn: false,
 
   async toggleFlash() {
-    try {
-      const video = DOM.get('qs-scanner-container')?.querySelector('video');
-      const stream = video?.srcObject;
-      const track  = stream?.getVideoTracks?.()?.[0];
-      if (!track) { Notify.error('الفلاش غير متاح'); return; }
-
-      QuickSale._flashOn = !QuickSale._flashOn;
-      await track.applyConstraints({ advanced: [{ torch: QuickSale._flashOn }] });
-
-      const btn = DOM.get('qs-flash-btn');
-      if (btn) {
-        btn.style.background = QuickSale._flashOn ? '#fbbf24' : 'rgba(0,0,0,0.6)';
-        btn.style.color = QuickSale._flashOn ? '#000' : '#fff';
-      }
-    } catch {
-      Notify.error('الفلاش غير مدعوم على هذا الجهاز');
-    }
+    await BarcodeScanner.toggleFlash();
   },
 
   async startScanner() {
-    if (_scanner) return;
+    if (_scanner || BarcodeScanner.isActive()) return;
 
     const overlay = DOM.get('qs-scanner-overlay');
     if (overlay) overlay.style.display = 'flex';
-
-    if (!window.Quagga) {
-      try {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
-          s.onload = resolve;
-          s.onerror = () => reject(new Error('failed'));
-          document.head.appendChild(s);
-        });
-      } catch {
-        Notify.error('فشل تحميل مكتبة الباركود');
-        QuickSale.stopScanner();
-        return;
-      }
-    }
 
     const container = DOM.get('qs-scanner-container');
     if (!container) return;
     container.innerHTML = '';
 
-    const seen = {};
-    const handler = (result) => {
-      const code  = result?.codeResult?.code;
-      const err   = result?.codeResult?.startInfo?.error;
-      if (!code || code.length < 4 || err > 0.2) return;
-      seen[code] = (seen[code] || 0) + 1;
-      if (seen[code] >= 1) {
+    await BarcodeScanner.start(
+      'qs-scanner-container',
+      (code) => {
         QuickSale.stopScanner();
         QuickSale._onBarcode(code);
+      },
+      (err) => {
+        Notify.error(err || 'لا يمكن فتح الكاميرا');
+        QuickSale.stopScanner();
       }
-    };
-
-    await new Promise((resolve) => {
-      Quagga.init({
-        inputStream: {
-          type: 'LiveStream',
-          target: container,
-          constraints: {
-            facingMode: 'environment',
-            width:  { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        },
-        locator:      { patchSize: 'medium', halfSample: true },
-        numOfWorkers: 2,
-        frequency:    10,
-        decoder: {
-          readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
-          multiple: false,
-        },
-        locate: true,
-      }, (initErr) => {
-        if (initErr) {
-          const msg = (initErr?.message||'').includes('ermission')
-            ? 'يرجى السماح بالوصول للكاميرا'
-            : 'لا يمكن فتح الكاميرا';
-          Notify.error(msg);
-          QuickSale.stopScanner();
-        } else {
-          Quagga.start();
-          Quagga.onDetected(handler);
-          _scanner = handler;
-        }
-        resolve();
-      });
-    });
+    );
+    _scanner = true;
   },
 
   stopScanner() {
-    try {
-      if (_scanner && window.Quagga) {
-        Quagga.offDetected(_scanner);
-        Quagga.stop();
-      }
-    } catch {}
-    // إطفاء الفلاش
-    if (QuickSale._flashOn) {
-      try {
-        const video = DOM.get('qs-scanner-container')?.querySelector('video');
-        const track = video?.srcObject?.getVideoTracks?.()?.[0];
-        track?.applyConstraints({ advanced: [{ torch: false }] });
-      } catch {}
-      QuickSale._flashOn = false;
-    }
+    BarcodeScanner.stop();
     _scanner = null;
     const overlay = DOM.get('qs-scanner-overlay'); if (overlay) overlay.style.display = 'none';
     const container = DOM.get('qs-scanner-container'); if (container) container.innerHTML = '';
