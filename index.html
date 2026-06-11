@@ -1608,18 +1608,51 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
    </button>
   </div>
 
-  <!-- Cash Change -->
-  <div id="qs-cash-section" style="display:none;margin-top:10px;">
+  <!-- Cash Section -->
+  <div id="qs-cash-section" style="display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px;">
    <div class="fg">
     <label class="lbl">المبلغ المستلم (₪)</label>
     <input class="inp" type="number" id="qs-cash-received" inputmode="decimal" placeholder="0.00" oninput="QuickSale.calcCashChange()">
    </div>
-   <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;">
+   <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;justify-content:space-between;margin-bottom:10px;">
     <span style="font-size:13px;">الباقي للزبون</span>
     <span id="qs-cash-change-val" style="font-weight:900;color:var(--s);">₪0</span>
    </div>
-   <button class="btn btn-s" style="width:100%;justify-content:center;margin-top:10px;" onclick="QuickSale.sell('cash')">
+   <button class="btn btn-s" style="width:100%;justify-content:center;" onclick="QuickSale.sell('cash')">
     <i class="ti ti-check"></i> تأكيد البيع نقدي
+   </button>
+  </div>
+
+  <!-- Transfer Section -->
+  <div id="qs-transfer-section" style="display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px;">
+   <div class="fg">
+    <label class="lbl">جهة التحويل *</label>
+    <select class="inp" id="qs-checkout-transfer-entity">
+     <option value="">-- اختر الجهة --</option>
+    </select>
+   </div>
+   <button class="btn btn-s" style="width:100%;justify-content:center;" onclick="QuickSale.confirmCheckoutTransfer()">
+    <i class="ti ti-check"></i> تأكيد التحويل
+   </button>
+  </div>
+
+  <!-- Defer Section -->
+  <div id="qs-defer-section" style="display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px;">
+   <div class="fg">
+    <label class="lbl">على أي حساب سيحوّل؟</label>
+    <select class="inp" id="qs-checkout-defer-entity">
+     <option value="">-- اختر طريقة --</option>
+     <option value="bank">دفع تطبيق بنك</option>
+     <option value="cash_later">كاش لاحقاً</option>
+     <option value="other">أخرى</option>
+    </select>
+   </div>
+   <div class="fg">
+    <label class="lbl">تاريخ السداد (اختياري)</label>
+    <input class="inp" type="date" id="qs-checkout-defer-date">
+   </div>
+   <button class="btn btn-s" style="width:100%;justify-content:center;" onclick="QuickSale.sell('defer')">
+    <i class="ti ti-check"></i> حفظ كدين تطبيق لاحق
    </button>
   </div>
 

@@ -421,22 +421,48 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Modal.open('m-qs-checkout');
   },
 
+  _hideCheckoutSections() {
+    ['qs-cash-section','qs-transfer-section','qs-defer-section'].forEach(id => {
+      const el = DOM.get(id); if (el) el.style.display = 'none';
+    });
+  },
+
   checkoutPay(type) {
+    QuickSale._hideCheckoutSections();
     if (type === 'cash') {
-      const cs = DOM.get('qs-cash-section');
-      if (cs) cs.style.display = 'block';
+      DOM.get('qs-cash-section').style.display = 'block';
       DOM.get('qs-cash-received')?.focus();
     }
   },
 
-  checkoutTransfer() {
-    Modal.close('m-qs-checkout');
-    QuickSale.openTransferModal();
+  async checkoutTransfer() {
+    QuickSale._hideCheckoutSections();
+    if (!_transferEntities.length) await QuickSale.loadTransferEntities();
+    const sel = DOM.get('qs-checkout-transfer-entity');
+    sel.innerHTML = '<option value="">-- اختر الجهة --</option>';
+    _transferEntities.forEach(e => {
+      const names = e.names && e.names.length ? e.names : [e.name];
+      names.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = e.id + '::' + n;
+        opt.textContent = n;
+        sel.appendChild(opt);
+      });
+    });
+    DOM.get('qs-transfer-section').style.display = 'block';
+  },
+
+  confirmCheckoutTransfer() {
+    const sel = DOM.get('qs-checkout-transfer-entity');
+    if (!sel.value) { Notify.error('اختر جهة التحويل'); return; }
+    const [entityId, entityName] = sel.value.split('::');
+    _selectedTransferEntity = { id: entityId, name: entityName };
+    QuickSale.sell('transfer');
   },
 
   checkoutDefer() {
-    Modal.close('m-qs-checkout');
-    QuickSale.openDebtModal();
+    QuickSale._hideCheckoutSections();
+    DOM.get('qs-defer-section').style.display = 'block';
   },
 
   checkoutDebt() {
