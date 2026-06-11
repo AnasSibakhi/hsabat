@@ -284,6 +284,28 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Camera Scanner ──
+  _flashOn: false,
+
+  async toggleFlash() {
+    try {
+      const video = DOM.get('qs-scanner-container')?.querySelector('video');
+      const stream = video?.srcObject;
+      const track  = stream?.getVideoTracks?.()?.[0];
+      if (!track) { Notify.error('الفلاش غير متاح'); return; }
+
+      QuickSale._flashOn = !QuickSale._flashOn;
+      await track.applyConstraints({ advanced: [{ torch: QuickSale._flashOn }] });
+
+      const btn = DOM.get('qs-flash-btn');
+      if (btn) {
+        btn.style.background = QuickSale._flashOn ? '#fbbf24' : 'rgba(0,0,0,0.6)';
+        btn.style.color = QuickSale._flashOn ? '#000' : '#fff';
+      }
+    } catch {
+      Notify.error('الفلاش غير مدعوم على هذا الجهاز');
+    }
+  },
+
   async startScanner() {
     if (_scanner) return;
 
@@ -365,6 +387,15 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         Quagga.stop();
       }
     } catch {}
+    // إطفاء الفلاش
+    if (QuickSale._flashOn) {
+      try {
+        const video = DOM.get('qs-scanner-container')?.querySelector('video');
+        const track = video?.srcObject?.getVideoTracks?.()?.[0];
+        track?.applyConstraints({ advanced: [{ torch: false }] });
+      } catch {}
+      QuickSale._flashOn = false;
+    }
     _scanner = null;
     const overlay = DOM.get('qs-scanner-overlay'); if (overlay) overlay.style.display = 'none';
     const container = DOM.get('qs-scanner-container'); if (container) container.innerHTML = '';

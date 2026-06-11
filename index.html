@@ -1515,7 +1515,11 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 <div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;">
   <div style="position:relative;width:100%;max-width:480px;">
     <div id="qs-scanner-container" style="width:100%;min-height:280px;background:#111;position:relative;overflow:hidden;"></div>
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:120px;border:3px solid #1a56db;border-radius:8px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,0.6);"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:120px;border:3px solid #6366f1;border-radius:8px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,0.6);"></div>
+    <!-- Flash button -->
+    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:10px;left:10px;width:42px;height:42px;background:rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.3);border-radius:10px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <i class="ti ti-bolt"></i>
+    </button>
   </div>
   <p style="color:#fff;margin-top:1rem;font-size:15px;">وجّه الكاميرا على الباركود</p>
   <button onclick="QuickSale.stopScanner()" style="margin-top:1rem;background:#dc2626;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إلغاء</button>
