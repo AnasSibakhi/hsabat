@@ -380,7 +380,8 @@
 }
 
 /* ══ SCANNER ══ */
-#qs-scanner-container video,
-#qs-scanner-container canvas { position:absolute;top:0;left:0;width:100%!important;height:100%!important;object-fit:cover;display:block; }
-#qs-scanner-container canvas.drawingBuffer { z-index:1; }
-@keyframes scan-line { 0%,100% { top:5%; } 50% { top:calc(100% - 8px); } }
+#qs-scanner-container { position:relative; }
+#qs-scanner-container video { position:absolute;top:0;left:0;width:100%!important;height:100%!important;object-fit:cover;display:block; }
+#qs-scanner-container canvas { position:absolute;top:0;left:0;width:100%!important;height:100%!important;display:block; }
+#qs-scanner-container canvas.drawingBuffer { display:none!important; }
+@keyframes scan-line { 0%,100% { top:10%; } 50% { top:82%; } }
