@@ -25,6 +25,155 @@ const PAY_CLASS   = { cash: 'inv-pay-cash', transfer: 'inv-pay-transfer', defer:
 
 const Invoices = {
 
+  // ── Invoice Modal Init ──
+  async initModal() {
+    const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
+    const num = 'INV-' + String((count||0)+1).padStart(4,'0');
+    DOM.setText('inv-num-preview', num);
+    const now = new Date();
+    DOM.setText('inv-date-preview', now.toLocaleDateString('ar-EG'));
+    DOM.setText('inv-cashier-preview', State.user?.owner || '');
+    Invoices.resetForm();
+  },
+
+  // ── Product Search ──
+  searchProduct(val) {
+    const dd = DOM.get('inv-prod-dropdown');
+    if (!val.trim()) { dd.style.display = 'none'; return; }
+    const q = val.trim().toLowerCase();
+    const matches = (State.inventory || []).filter(p =>
+      p.quantity > 0 && (p.name.toLowerCase().includes(q) || (p.barcode||'').includes(q))
+    ).slice(0, 8);
+    if (!matches.length) { dd.innerHTML = '<div class="inv-prod-opt" style="color:var(--g4);">لا توجد نتائج</div>'; dd.style.display = 'block'; return; }
+    dd.innerHTML = matches.map(p =>
+      `<div class="inv-prod-opt" onclick="Invoices.addProductById('${p.id}')">
+        <div><div class="inv-prod-opt-name">${escape(p.name)}</div><div class="inv-prod-opt-meta">${p.barcode||''} · ${p.quantity} ${p.unit||'قطعة'}</div></div>
+        <div style="font-weight:700;color:var(--p);">₪${p.sale_price?.toFixed(2)||0}</div>
+      </div>`
+    ).join('');
+    dd.style.display = 'block';
+  },
+
+  addProductById(id) {
+    const p = (State.inventory||[]).find(i => i.id === id);
+    if (!p) return;
+    // Check if already in list
+    const existing = document.querySelector(`#iitems tr[data-pid="${id}"]`);
+    if (existing) {
+      const qtyInp = existing.querySelector('.inv-qty-inp');
+      qtyInp.value = parseInt(qtyInp.value||1) + 1;
+      Invoices.calcTotal();
+    } else {
+      const tbody = DOM.get('iitems');
+      // Remove empty row
+      tbody.querySelector('.inv-empty-row')?.remove();
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr data-pid="${p.id}" data-price="${p.sale_price||0}">
+          <td><div style="font-weight:600;font-size:12px;">${escape(p.name)}</div><div style="font-size:10px;color:var(--g4);">${p.barcode||''}</div></td>
+          <td><input class="inv-qty-inp" type="number" value="1" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal"></td>
+          <td><input class="inv-qty-inp price-inp" type="number" value="${p.sale_price||0}" min="0" oninput="Invoices.calcTotal()" inputmode="decimal" style="width:70px;"></td>
+          <td><input class="inv-disc-inp" type="number" value="0" min="0" oninput="Invoices.calcTotal()" inputmode="decimal"></td>
+          <td class="row-total" style="font-weight:700;">₪${p.sale_price?.toFixed(2)||0}</td>
+          <td><button class="inv-del-row" onclick="this.closest('tr').remove();Invoices.calcTotal()"><i class="ti ti-x"></i></button></td>
+        </tr>`
+      );
+    }
+    DOM.get('inv-prod-search').value = '';
+    DOM.get('inv-prod-dropdown').style.display = 'none';
+    Invoices.calcTotal();
+  },
+
+  // ── Payment change handler ──
+  onPayChange(radio) {
+    const isPartial = radio.value === 'partial';
+    const isCash    = radio.value === 'cash';
+    DOM.get('ipartialwrap').style.display  = isPartial ? 'block' : 'none';
+    DOM.get('inv-cash-wrap').style.display = isCash    ? 'block' : 'none';
+    Invoices.calcChange();
+  },
+
+  calcChange() {
+    const total = parseFloat(DOM.get('itotal')?.textContent?.replace('₪','')) || 0;
+    // Partial
+    const partial = parseFloat(DOM.val('ipartial')) || 0;
+    const remaining = total - partial;
+    const changeRow = DOM.get('inv-change-row');
+    if (changeRow) {
+      changeRow.style.display = partial > 0 ? 'flex' : 'none';
+      DOM.setText('inv-change-val', '₪' + Math.max(0, remaining).toFixed(2));
+    }
+    // Cash
+    const paid = parseFloat(DOM.val('inv-paid-cash')) || 0;
+    const change = paid - total;
+    const cashRow = DOM.get('inv-cash-change-row');
+    if (cashRow) {
+      cashRow.style.display = paid > 0 ? 'flex' : 'none';
+      const el = DOM.get('inv-cash-change-val');
+      if (el) { el.textContent = '₪' + Math.abs(change).toFixed(2); el.style.color = change >= 0 ? 'var(--s)' : 'var(--d)'; }
+    }
+  },
+
+  // ── Calc total (override) ──
+  calcTotal() {
+    let subtotal = 0, totalDisc = 0, totalQty = 0, itemCount = 0;
+    document.querySelectorAll('#iitems tr[data-pid]').forEach(row => {
+      const price = parseFloat(row.dataset.price) || parseFloat(row.querySelector('.price-inp')?.value) || 0;
+      const qty   = parseFloat(row.querySelector('.inv-qty-inp')?.value) || 0;
+      const disc  = parseFloat(row.querySelector('.inv-disc-inp')?.value) || 0;
+      const rowTotal = Math.max(0, qty * price - disc);
+      const el = row.querySelector('.row-total');
+      if (el) el.textContent = '₪' + rowTotal.toFixed(2);
+      subtotal  += qty * price;
+      totalDisc += disc;
+      totalQty  += qty;
+      itemCount++;
+    });
+    const globalDisc = parseFloat(DOM.val('idiscount')) || 0;
+    const total = Math.max(0, subtotal - totalDisc - globalDisc);
+    DOM.setText('is-items',    itemCount + ' صنف');
+    DOM.setText('is-qty',      totalQty + ' قطعة');
+    DOM.setText('is-subtotal', '₪' + subtotal.toFixed(2));
+    DOM.setText('is-discount', '-₪' + (totalDisc + globalDisc).toFixed(2));
+    DOM.setText('itotal',      '₪' + total.toFixed(2));
+    DOM.setText('inv-items-count', itemCount + ' صنف');
+    Invoices.calcChange();
+  },
+
+  // ── Collect items (override) ──
+  _collectItems() {
+    const items = []; let subtotal = 0;
+    document.querySelectorAll('#iitems tr[data-pid]').forEach(row => {
+      const id    = row.dataset.pid;
+      const p     = (State.inventory||[]).find(i => i.id === id);
+      const qty   = parseFloat(row.querySelector('.inv-qty-inp')?.value) || 0;
+      const price = parseFloat(row.querySelector('.price-inp')?.value) || parseFloat(row.dataset.price) || 0;
+      const disc  = parseFloat(row.querySelector('.inv-disc-inp')?.value) || 0;
+      if (qty > 0 && price > 0) {
+        items.push({ product_name: p?.name||'منتج', inventory_id: id||null, quantity: qty, price, discount: disc });
+        subtotal += qty * price - disc;
+      }
+    });
+    return { items, subtotal };
+  },
+
+  // ── Reset form (override) ──
+  resetForm() {
+    const tbody = DOM.get('iitems');
+    if (tbody) tbody.innerHTML = '<tr class="inv-empty-row"><td colspan="6">لم يتم إضافة منتجات بعد</td></tr>';
+    DOM.setText('itotal', '₪0');
+    DOM.setText('is-items', '0 صنف');
+    DOM.setText('is-qty', '0 قطعة');
+    DOM.setText('is-subtotal', '₪0');
+    DOM.setText('is-discount', '₪0');
+    DOM.setText('inv-items-count', '0 صنف');
+    const disc = DOM.get('idiscount'); if (disc) disc.value = '0';
+    const srch = DOM.get('inv-prod-search'); if (srch) srch.value = '';
+    const dd = DOM.get('inv-prod-dropdown'); if (dd) dd.style.display = 'none';
+  },
+
+  // ── Override addItem ──
+  addItem() {},
+
   // ── Load all invoices ──
   async load() {
     const { data } = await DB.invoices().select('*').order('created_at', { ascending: false });
@@ -310,11 +459,14 @@ const Invoices = {
 
   async save() {
     const { items, subtotal } = Invoices._collectItems();
-    if (!items.length || !subtotal) { Notify.error('أضف منتجاً وسعراً'); return; }
+    if (!items.length) { Notify.error('أضف منتجاً على الأقل'); return; }
+    if (!subtotal && subtotal !== 0) { Notify.error('تحقق من أسعار المنتجات'); return; }
 
-    const discount    = parseFloat(DOM.val('idiscount')) || 0;
+    const globalDisc  = parseFloat(DOM.val('idiscount')) || 0;
+    const itemsDisc   = items.reduce((s, i) => s + (i.discount||0), 0);
+    const discount    = globalDisc + itemsDisc;
     const total       = Math.max(0, subtotal - discount);
-    const paymentType = document.querySelector('input[name="ip"]:checked').value;
+    const paymentType = document.querySelector('input[name="ip"]:checked')?.value || 'cash';
     const partialPaid = paymentType === PAYMENT.PARTIAL ? (parseFloat(DOM.val('ipartial'))||0) : 0;
     const today       = Utils.today();
     const timeNow     = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });

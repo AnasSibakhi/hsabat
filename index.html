@@ -284,7 +284,57 @@ table.dt tr:hover td{background:var(--g0);}
 .inv-det-row span{font-size:11px;color:var(--g5);}
 .inv-det-row strong{font-size:13px;}
 
-/* ── INVOICES DASHBOARD ── */
+/* ── INVOICE MODAL ── */
+.inv-modal{max-width:900px!important;padding:0!important;border-radius:16px!important;max-height:92vh!important;display:flex;flex-direction:column;}
+.inv-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--br);flex-shrink:0;}
+.inv-modal-header-right{display:flex;align-items:center;gap:12px;}
+.inv-modal-icon{width:40px;height:40px;background:var(--pl);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.inv-modal-icon i{color:var(--p);font-size:20px;}
+.inv-modal-title{font-size:16px;font-weight:900;color:var(--g9);}
+.inv-modal-meta{font-size:11px;color:var(--g5);margin-top:2px;}
+.inv-modal-body{display:flex;gap:0;flex:1;overflow:hidden;min-height:0;}
+.inv-modal-main{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;}
+.inv-modal-sidebar{width:260px;min-width:260px;border-right:1px solid var(--br);display:flex;flex-direction:column;gap:10px;padding:14px;overflow-y:auto;background:var(--g0);}
+.inv-section{background:#fff;border:1px solid var(--br);border-radius:10px;padding:10px 12px;}
+.inv-section-title{font-size:12px;font-weight:700;color:var(--g6);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.inv-section-title i{font-size:14px;color:var(--p);}
+.inv-prod-search-wrap{position:relative;}
+.inv-prod-search{font-size:13px;}
+.inv-prod-dropdown{position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:200px;overflow-y:auto;margin-top:2px;}
+.inv-prod-opt{padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--g1);display:flex;justify-content:space-between;align-items:center;}
+.inv-prod-opt:hover{background:var(--pl);}
+.inv-prod-opt:last-child{border-bottom:none;}
+.inv-prod-opt-name{font-weight:600;}
+.inv-prod-opt-meta{font-size:11px;color:var(--g5);}
+.inv-items-table-wrap{overflow-x:auto;}
+.inv-items-table{width:100%;border-collapse:collapse;font-size:12px;}
+.inv-items-table th{background:var(--g0);padding:8px 10px;font-weight:700;font-size:11px;color:var(--g5);border-bottom:1px solid var(--br);text-align:right;white-space:nowrap;}
+.inv-items-table td{padding:7px 10px;border-bottom:1px solid var(--g1);vertical-align:middle;}
+.inv-items-table tr:last-child td{border-bottom:none;}
+.inv-empty-row td{text-align:center;color:var(--g4);padding:1.5rem!important;font-size:13px;}
+.inv-qty-inp{width:60px;padding:5px 8px;border:1.5px solid var(--br);border-radius:6px;font-family:'Cairo',sans-serif;font-size:12px;text-align:center;}
+.inv-disc-inp{width:60px;padding:5px 8px;border:1.5px solid var(--br);border-radius:6px;font-family:'Cairo',sans-serif;font-size:12px;text-align:center;}
+.inv-qty-inp:focus,.inv-disc-inp:focus{outline:none;border-color:var(--p);}
+.inv-del-row{background:none;border:none;color:var(--d);cursor:pointer;font-size:16px;padding:4px;border-radius:4px;}
+.inv-del-row:hover{background:var(--dl);}
+.inv-summary-card,.inv-pay-card{background:#fff;border:1px solid var(--br);border-radius:10px;padding:12px;}
+.inv-summary-title{font-size:12px;font-weight:800;color:var(--g7);margin-bottom:10px;}
+.inv-summary-rows{display:flex;flex-direction:column;gap:7px;}
+.inv-summary-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--g6);}
+.inv-summary-total{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:900;color:var(--g9);padding-top:8px;border-top:2px solid var(--br);margin-top:4px;}
+.inv-discount-inp{width:55px;padding:4px 6px;border:1.5px solid var(--br);border-radius:6px;font-family:'Cairo',sans-serif;font-size:12px;text-align:center;}
+.inv-pay-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
+.inv-pay-opt{display:flex;align-items:center;gap:5px;border:1.5px solid var(--br);border-radius:8px;padding:8px;cursor:pointer;font-size:12px;font-weight:600;transition:.15s;}
+.inv-pay-opt input{display:none;}
+.inv-pay-opt:has(input:checked){background:var(--p);color:#fff;border-color:var(--p);}
+.inv-change-row{display:flex;justify-content:space-between;font-size:13px;margin-top:8px;padding:8px;background:var(--g0);border-radius:8px;}
+.inv-action-btns{display:flex;flex-direction:column;gap:6px;margin-top:auto;}
+.inv-save-btn{width:100%;justify-content:center;font-size:14px;padding:12px;}
+@media(max-width:768px){
+  .inv-modal{max-height:100dvh!important;border-radius:0!important;}
+  .inv-modal-body{flex-direction:column;}
+  .inv-modal-sidebar{width:100%;min-width:unset;border-right:none;border-top:1px solid var(--br);}
+}
 .inv-header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0 .75rem;flex-wrap:wrap;gap:8px;}
 .inv-header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .inv-header-left{display:flex;align-items:center;gap:8px;}
@@ -677,7 +727,7 @@ PalPay" style="resize:none;"></textarea>
     <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">إجراءات سريعة</div>
     <div class="qa">
      <div class="qab" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
-     <div class="qab" onclick="Modal.open('m-invoice')"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
+     <div class="qab" onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
      <div class="qab" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i><span>دين جديد</span></div>
      <div class="qab" onclick="Modal.open('m-customer')"><i class="ti ti-user-plus"></i><span>زبون</span></div>
     </div>
@@ -743,7 +793,7 @@ PalPay" style="resize:none;"></textarea>
             <button class="pos-pay pos-cash"     onclick="QuickSale.sell('cash')"><i class="ti ti-cash"></i> نقدي</button>
             <button class="pos-pay pos-transfer" onclick="QuickSale.openTransferModal()"><i class="ti ti-building-bank"></i> تحويل</button>
             <button class="pos-pay pos-debt"     onclick="QuickSale.openDebtModal()"><i class="ti ti-credit-card"></i> دين</button>
-            <button class="pos-pay pos-invoice"  onclick="Modal.open('m-invoice')"><i class="ti ti-file-invoice"></i> فاتورة</button>
+            <button class="pos-pay pos-invoice"  onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-file-invoice"></i> فاتورة</button>
           </div>
         </div>
       </div>
@@ -820,7 +870,7 @@ PalPay" style="resize:none;"></textarea>
      </div>
      <div class="inv-header-left">
       <button class="btn btn-o inv-export-btn" onclick="Invoices.exportExcel()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
-      <button class="btn btn-s" onclick="Modal.open('m-invoice')"><i class="ti ti-plus"></i> جديدة</button>
+      <button class="btn btn-s" onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-plus"></i> جديدة</button>
      </div>
     </div>
 
@@ -1035,7 +1085,7 @@ PalPay" style="resize:none;"></textarea>
 <!-- Add Menu -->
 <div id="add-menu-overlay" onclick="closeAddMenu()" style="display:none;position:fixed;inset:0;z-index:299;"></div>
 <div id="add-menu" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;min-width:220px;border:1px solid var(--br);">
-  <button onclick="closeAddMenu();Modal.open('m-invoice')" class="add-menu-item"><i class="ti ti-receipt" style="color:var(--p);"></i> فاتورة جديدة</button>
+  <button onclick="closeAddMenu();Modal.open('m-invoice');Invoices.initModal()" class="add-menu-item"><i class="ti ti-receipt" style="color:var(--p);"></i> فاتورة جديدة</button>
   <button onclick="closeAddMenu();Modal.open('m-debt')" class="add-menu-item"><i class="ti ti-credit-card-off" style="color:var(--d);"></i> إضافة دين</button>
   <button onclick="closeAddMenu();Modal.open('m-customer')" class="add-menu-item"><i class="ti ti-user-plus" style="color:var(--s);"></i> زبون جديد</button>
   <button onclick="closeAddMenu();Modal.open('m-inv')" class="add-menu-item"><i class="ti ti-box" style="color:var(--w);"></i> صنف جديد</button>
@@ -1113,31 +1163,124 @@ PalPay" style="resize:none;"></textarea>
 </div></div>
 
 <!-- Invoice -->
-<div class="mo" id="m-invoice"><div class="modal">
- <div class="mhdr"><span class="mtitle">فاتورة جديدة</span><button class="mclose" onclick="Modal.close('m-invoice')">✕</button></div>
- <div class="fg"><label class="lbl">الزبون (اختياري)</label>
-  <select class="inp" id="ic" onchange="Customers.toggleNewCustomerFields(this)"><option value="">-- زبون عادي --</option><option value="__new__">➕ زبون جديد...</option></select>
+<div class="mo" id="m-invoice"><div class="modal inv-modal">
+
+ <!-- Header -->
+ <div class="inv-modal-header">
+  <div class="inv-modal-header-right">
+   <div class="inv-modal-icon"><i class="ti ti-receipt"></i></div>
+   <div>
+    <div class="inv-modal-title">فاتورة جديدة</div>
+    <div class="inv-modal-meta"><span id="inv-num-preview">INV-####</span> · <span id="inv-date-preview"></span> · <span id="inv-cashier-preview"></span></div>
+   </div>
+  </div>
+  <button class="mclose" onclick="Modal.close('m-invoice')">✕</button>
  </div>
- <div id="new-cust-wrap" class="hidden">
-  <div style="background:var(--pl);border-radius:8px;padding:10px;margin-bottom:.75rem;">
-   <div style="font-size:12px;font-weight:700;color:var(--p);margin-bottom:8px;">بيانات الزبون الجديد</div>
-   <div class="fr"><div class="fg" style="margin-bottom:0;"><label class="lbl">الاسم *</label><input class="inp" id="inv-new-name" style="font-size:13px;"></div><div class="fg" style="margin-bottom:0;"><label class="lbl">الجوال</label><input class="inp" id="inv-new-phone" inputmode="tel" style="font-size:13px;"></div></div>
+
+ <div class="inv-modal-body">
+  <div class="inv-modal-main">
+
+   <!-- Customer -->
+   <div class="inv-section">
+    <div class="inv-section-title"><i class="ti ti-user"></i> العميل</div>
+    <select class="inp" id="ic" onchange="Customers.toggleNewCustomerFields(this)">
+     <option value="">زبون عادي</option>
+     <option value="__new__">➕ إضافة زبون جديد</option>
+    </select>
+    <div id="new-cust-wrap" class="hidden" style="margin-top:8px;">
+     <div style="background:var(--pl);border-radius:8px;padding:10px;">
+      <div style="font-size:12px;font-weight:700;color:var(--p);margin-bottom:8px;">بيانات الزبون الجديد</div>
+      <div class="fr">
+       <div class="fg" style="margin-bottom:0;"><label class="lbl">الاسم *</label><input class="inp" id="inv-new-name" style="font-size:13px;"></div>
+       <div class="fg" style="margin-bottom:0;"><label class="lbl">الجوال</label><input class="inp" id="inv-new-phone" inputmode="tel" style="font-size:13px;"></div>
+      </div>
+     </div>
+    </div>
+   </div>
+
+   <!-- Product Search -->
+   <div class="inv-section">
+    <div class="inv-section-title"><i class="ti ti-search"></i> البحث عن منتج</div>
+    <div class="inv-prod-search-wrap">
+     <input class="inp inv-prod-search" id="inv-prod-search" placeholder="اسم المنتج أو الباركود..." autocomplete="off" oninput="Invoices.searchProduct(this.value)">
+     <div class="inv-prod-dropdown" id="inv-prod-dropdown" style="display:none;"></div>
+    </div>
+   </div>
+
+   <!-- Items Table -->
+   <div class="inv-section" style="padding:0;">
+    <div class="inv-section-title" style="padding:10px 14px 0;"><i class="ti ti-list"></i> المنتجات <span class="inv-items-badge" id="inv-items-count">0 صنف</span></div>
+    <div class="inv-items-table-wrap">
+     <table class="inv-items-table">
+      <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>خصم ₪</th><th>الإجمالي</th><th></th></tr></thead>
+      <tbody id="iitems"><tr class="inv-empty-row"><td colspan="6">لم يتم إضافة منتجات بعد</td></tr></tbody>
+     </table>
+    </div>
+   </div>
+
+   <!-- Notes -->
+   <div class="inv-section">
+    <div class="inv-section-title"><i class="ti ti-notes"></i> ملاحظات</div>
+    <input class="inp" id="inotes" placeholder="اختياري">
+   </div>
+
+  </div>
+
+  <!-- Sidebar Summary -->
+  <div class="inv-modal-sidebar">
+
+   <!-- Summary -->
+   <div class="inv-summary-card">
+    <div class="inv-summary-title">ملخص الفاتورة</div>
+    <div class="inv-summary-rows">
+     <div class="inv-summary-row"><span>عدد الأصناف</span><span id="is-items">0</span></div>
+     <div class="inv-summary-row"><span>إجمالي الكميات</span><span id="is-qty">0</span></div>
+     <div class="inv-summary-row"><span>المجموع الفرعي</span><span id="is-subtotal">₪0</span></div>
+     <div class="inv-summary-row">
+      <span>خصم إجمالي</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+       <input class="inv-discount-inp" type="number" id="idiscount" value="0" min="0" oninput="Invoices.calcTotal()" inputmode="decimal" placeholder="0">
+       <span id="is-discount" style="color:var(--d);">₪0</span>
+      </div>
+     </div>
+     <div class="inv-summary-total"><span>الإجمالي</span><span id="itotal">₪0</span></div>
+    </div>
+   </div>
+
+   <!-- Payment -->
+   <div class="inv-pay-card">
+    <div class="inv-summary-title">طريقة الدفع</div>
+    <div class="inv-pay-btns">
+     <label class="inv-pay-opt" id="ipopt-cash"><input type="radio" name="ip" value="cash" checked onchange="Invoices.onPayChange(this)"><i class="ti ti-cash"></i> نقدي</label>
+     <label class="inv-pay-opt" id="ipopt-transfer"><input type="radio" name="ip" value="transfer" onchange="Invoices.onPayChange(this)"><i class="ti ti-building-bank"></i> تحويل</label>
+     <label class="inv-pay-opt" id="ipopt-defer"><input type="radio" name="ip" value="defer" onchange="Invoices.onPayChange(this)"><i class="ti ti-clock"></i> دين</label>
+     <label class="inv-pay-opt" id="ipopt-partial"><input type="radio" name="ip" value="partial" onchange="Invoices.onPayChange(this)"><i class="ti ti-credit-card"></i> جزئي</label>
+    </div>
+    <div id="ipartialwrap" style="display:none;margin-top:10px;">
+     <label class="lbl">المبلغ المدفوع الآن (₪)</label>
+     <input class="inp" type="number" id="ipartial" inputmode="decimal" placeholder="0" oninput="Invoices.calcChange()">
+     <div class="inv-change-row" id="inv-change-row" style="display:none;">
+      <span>المتبقي</span><span id="inv-change-val" style="color:var(--d);font-weight:700;">₪0</span>
+     </div>
+    </div>
+    <div id="inv-cash-wrap" style="display:none;margin-top:10px;">
+     <label class="lbl">المبلغ المستلم (₪)</label>
+     <input class="inp" type="number" id="inv-paid-cash" inputmode="decimal" placeholder="0" oninput="Invoices.calcChange()">
+     <div class="inv-change-row" id="inv-cash-change-row" style="display:none;">
+      <span>الباقي للعميل</span><span id="inv-cash-change-val" style="color:var(--s);font-weight:700;">₪0</span>
+     </div>
+    </div>
+   </div>
+
+   <!-- Action Buttons -->
+   <div class="inv-action-btns">
+    <button class="btn btn-s inv-save-btn" onclick="Invoices.save()"><i class="ti ti-device-floppy"></i> حفظ الفاتورة</button>
+    <button class="btn btn-o" onclick="Modal.close('m-invoice')" style="width:100%;justify-content:center;">إلغاء</button>
+   </div>
+
   </div>
  </div>
- <div id="iitems"></div>
- <button onclick="Invoices.addItem()" style="width:100%;background:none;border:1px dashed var(--g3);border-radius:8px;padding:8px;font-size:13px;color:var(--p);cursor:pointer;margin-bottom:.75rem;font-family:'Cairo',sans-serif;">+ منتج آخر</button>
- <div class="fr"><div class="fg"><label class="lbl">خصم (₪)</label><input class="inp" type="number" id="idiscount" value="0" oninput="Invoices.calcTotal()" inputmode="decimal"></div><div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="inotes" placeholder="اختياري"></div></div>
- <div style="display:flex;justify-content:space-between;background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:14px;"><span>المجموع:</span><strong id="itotal">₪ 0</strong></div>
- <div class="fg"><label class="lbl">طريقة الدفع</label>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="cash" checked> 💵 نقدي</label>
-   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="transfer"> 🏦 تحويل</label>
-   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="ip" value="defer"> 📋 دين كامل</label>
-   <label style="display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;" onclick="document.getElementById('ipartialwrap').classList.remove('hidden')"><input type="radio" name="ip" value="partial"> 💳 جزئي</label>
-  </div>
- </div>
- <div class="fg hidden" id="ipartialwrap"><label class="lbl">المدفوع الآن (₪)</label><input class="inp" type="number" id="ipartial" inputmode="decimal"></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-invoice')">إلغاء</button><button class="btn btn-s" onclick="Invoices.save()">حفظ الفاتورة</button></div>
+
 </div></div>
 
 <!-- QS Debt -->
