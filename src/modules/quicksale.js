@@ -429,7 +429,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     });
     const rec = DOM.get('qs-transfer-receiver');
     const buyerName = DOM.val('qs-buyer-name');
-    if (rec && buyerName) rec.value = buyerName;
+    if (rec) rec.value = buyerName || '';
     Modal.open('m-qs-transfer');
   },
 

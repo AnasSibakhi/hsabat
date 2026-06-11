@@ -792,8 +792,8 @@ PalPay" style="resize:none;"></textarea>
             <span>الإجمالي</span>
             <span id="qs-total-display" class="pos-grand-total">₪ 0.00</span>
           </div>
-          <div class="pos-buyer-row" id="qs-buyer-row" style="display:none;">
-            <input class="inp" id="qs-buyer-name" placeholder="اسم المستلم (اختياري)" autocomplete="off">
+          <div class="pos-buyer-row" id="qs-buyer-row">
+            <input class="inp" id="qs-buyer-name" placeholder="اسم المشتري (اختياري)" autocomplete="off">
             <input class="inp" id="qs-buyer-phone" placeholder="رقم الجوال" inputmode="tel">
           </div>
           <div class="pos-pay-grid">
@@ -1572,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
   <select class="inp" id="qs-transfer-entity"><option value="">-- اختر --</option></select>
  </div>
  <div class="fg">
-  <label class="lbl">اسم المستلم</label>
+  <label class="lbl">اسم المشتري</label>
   <input class="inp" id="qs-transfer-receiver" placeholder="اختياري">
  </div>
  <div class="mfoot">
