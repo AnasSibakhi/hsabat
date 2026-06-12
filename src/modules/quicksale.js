@@ -304,6 +304,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (c) { c.style.transition='transform .15s'; c.style.transform='scale(1.15)'; setTimeout(()=>c.style.transform='scale(1)',200); }
     } else {
       QuickSale._beep('error');
+      QuickSale.stopScanner();
       const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
       const nm = DOM.get('qs-new-name');   if (nm) nm.value = '';
       Modal.open('m-new-product');
