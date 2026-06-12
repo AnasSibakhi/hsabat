@@ -1,7 +1,7 @@
 /**
- * BarcodeScanner — Simple, Reliable, Fast
- * Android: Native BarcodeDetector (instant)
- * iOS: Quagga2 with existing video stream via canvas hack
+ * BarcodeScanner — Production
+ * Android/Chrome: Native BarcodeDetector
+ * iOS/Safari: Quagga LiveStream → Canvas fallback
  */
 
 let _active  = false;
@@ -23,12 +23,11 @@ const eanOk = (code) => {
   return (10 - s%10) %10 === c;
 };
 
-const fire = (code, dbg) => {
+const fire = (code) => {
   if (!code || code === _last) return;
   _last = code;
   clearTimeout(_timer);
   _timer = setTimeout(() => { _last = null; }, DEBOUNCE);
-  if (dbg) dbg.textContent = '✅ ' + code;
   _cb?.(code);
 };
 
@@ -42,14 +41,9 @@ export const BarcodeScanner = {
     if (!el) { onError?.('container not found'); return; }
     _cb = onSuccess; _last = null;
 
-    // فتح الكاميرا
     try {
       _stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width:  { ideal: 1280 },
-          height: { ideal: 720  },
-        },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
     } catch(e) {
@@ -57,7 +51,6 @@ export const BarcodeScanner = {
       return;
     }
 
-    // عرض الفيديو
     el.innerHTML = '';
     _video = document.createElement('video');
     _video.setAttribute('autoplay','');
@@ -67,6 +60,8 @@ export const BarcodeScanner = {
     _video.srcObject = _stream;
     el.appendChild(_video);
     try { await _video.play(); } catch {}
+
+    _active = true;
 
     // تحسين الكاميرا
     setTimeout(() => {
@@ -81,56 +76,36 @@ export const BarcodeScanner = {
         if (c.sharpness) s.sharpness = c.sharpness.max;
         if (Object.keys(s).length) t.applyConstraints({ advanced:[s] }).catch(()=>{});
       } catch {}
-    }, 1000);
+    }, 800);
 
-    _active = true;
-
-    // مؤشر debug
-    const dbg = document.createElement('div');
-    dbg.style.cssText = 'position:absolute;bottom:55px;left:0;right:0;text-align:center;color:#fff;font-size:11px;background:rgba(0,0,0,0.55);padding:3px;z-index:10;font-family:monospace;pointer-events:none;';
-    el.parentElement?.appendChild(dbg);
-
-    // اختيار المحرك
     if ('BarcodeDetector' in window) {
-      dbg.textContent = '🟢 Native';
-      BarcodeScanner._native(dbg);
+      BarcodeScanner._native();
     } else {
-      dbg.textContent = '🟡 Loading Quagga...';
-      BarcodeScanner._quagga(el, dbg, onError);
+      BarcodeScanner._quagga(el, onError);
     }
   },
 
-  // ── Native BarcodeDetector ──
-  _native(dbg) {
+  _native() {
     const det = new BarcodeDetector({
       formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code','data_matrix','itf'],
     });
     const loop = async () => {
       if (!_active) return;
       if (_video?.readyState >= 2) {
-        try {
-          const r = await det.detect(_video);
-          if (r.length) fire(r[0].rawValue, dbg);
-        } catch {}
+        try { const r = await det.detect(_video); if (r.length) fire(r[0].rawValue); } catch {}
       }
       if (_active) _raf = requestAnimationFrame(loop);
     };
     _raf = requestAnimationFrame(loop);
   },
 
-  // ── Quagga on existing video via canvas ──
-  _quagga(el, dbg, onError) {
+  _quagga(el, onError) {
     const init = () => {
-      // نستخدم الـ video element الموجود مباشرة
       Quagga.init({
         inputStream: {
           type: 'LiveStream',
-          target: _video,  // الفيديو الموجود مباشرة
-          constraints: {
-            facingMode: 'environment',
-            width:  { ideal: 1280 },
-            height: { ideal: 720  },
-          },
+          target: _video,
+          constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
         },
         locator: { patchSize: 'medium', halfSample: true },
         numOfWorkers: 2,
@@ -141,13 +116,7 @@ export const BarcodeScanner = {
         },
         locate: true,
       }, (err) => {
-        if (err) {
-          // LiveStream فشل — نجرب Canvas loop
-          dbg.textContent = '🟡 Canvas mode...';
-          BarcodeScanner._canvasLoop(dbg, onError);
-          return;
-        }
-        dbg.textContent = '🟢 Quagga ready';
+        if (err) { BarcodeScanner._canvasLoop(onError); return; }
         Quagga.start();
         Quagga.onDetected((res) => {
           const code = res?.codeResult?.code;
@@ -155,65 +124,49 @@ export const BarcodeScanner = {
           if (!code || code.length < 4) return;
           const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
           if (isEAN && !eanOk(code)) return;
-          fire(code, dbg);
+          fire(code);
         });
       });
     };
-
     if (window.Quagga) { init(); return; }
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
-    s.onload = () => { dbg.textContent = '🟢 Quagga loaded'; init(); };
-    s.onerror = () => {
-      dbg.textContent = '🟡 Canvas fallback...';
-      BarcodeScanner._canvasLoop(dbg, onError);
-    };
+    s.onload = init;
+    s.onerror = () => BarcodeScanner._canvasLoop(onError);
     document.head.appendChild(s);
   },
 
-  // ── Canvas + Quagga ImageReader loop ──
-  _canvasLoop(dbg, onError) {
-    // نستخدم canvas لالتقاط frames وQuagga لتحليلها
+  _canvasLoop(onError) {
+    if (!window.Quagga) { onError?.('فشل تحميل الباركود'); return; }
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
     const scan = () => {
       if (!_active) return;
       if (_video?.readyState >= 2) {
         canvas.width  = _video.videoWidth  || 640;
         canvas.height = _video.videoHeight || 480;
         ctx.drawImage(_video, 0, 0, canvas.width, canvas.height);
-
-        if (window.Quagga) {
-          Quagga.decodeSingle({
-            decoder: {
-              readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
-            },
-            locate: true,
-            src: canvas.toDataURL(),
-          }, (res) => {
-            if (!_active) return;
-            const code = res?.codeResult?.code;
-            const fmt  = res?.codeResult?.format;
-            if (!code || code.length < 4) { if (_active) _raf = requestAnimationFrame(scan); return; }
+        Quagga.decodeSingle({
+          decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'] },
+          locate: true,
+          src: canvas.toDataURL(),
+        }, (res) => {
+          if (!_active) return;
+          const code = res?.codeResult?.code;
+          const fmt  = res?.codeResult?.format;
+          if (code && code.length >= 4) {
             const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-            if (isEAN && !eanOk(code)) { if (_active) _raf = requestAnimationFrame(scan); return; }
-            fire(code, dbg);
-            if (_active) setTimeout(() => { if (_active) _raf = requestAnimationFrame(scan); }, 500);
-          });
-        } else {
-          _raf = requestAnimationFrame(scan);
-        }
+            if (!isEAN || eanOk(code)) fire(code);
+          }
+          if (_active) setTimeout(() => { if (_active) _raf = requestAnimationFrame(scan); }, 200);
+        });
       } else {
-        _raf = requestAnimationFrame(scan);
+        if (_active) _raf = requestAnimationFrame(scan);
       }
     };
-
-    dbg.textContent = '🟢 Canvas ready';
     _raf = requestAnimationFrame(scan);
   },
 
-  // ── Flash ──
   async toggleFlash() {
     try {
       const t = _stream?.getVideoTracks()?.[0];
@@ -225,7 +178,6 @@ export const BarcodeScanner = {
     } catch { window.Notify?.error?.('الفلاش غير مدعوم'); }
   },
 
-  // ── Stop ──
   async stop() {
     _active = false;
     if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
