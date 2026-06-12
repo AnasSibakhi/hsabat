@@ -13,7 +13,9 @@ let _stream  = null;
 let _video   = null;
 let _raf     = null;
 let _flashOn = false;
-let _handler = null;
+let _handler      = null;
+let _pendingCode  = null;
+let _pendingCount = 0;
 
 const DEBOUNCE = 900;
 
@@ -170,16 +172,22 @@ export const BarcodeScanner = {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
           if (!code || code.length < 8) return;
-          // EAN-13 يجب أن يكون 13 رقم بالضبط
           if (fmt === 'ean_13' && code.length !== 13) return;
-          // EAN-8 يجب أن يكون 8 أرقام بالضبط
           if (fmt === 'ean_8'  && code.length !== 8)  return;
-          // تحقق من checksum لكل EAN/UPC
           const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
           if (isEAN && !eanOk(code)) return;
-          // رفض أي قراءة code_128 أقل من 4 أرقام
           if (fmt === 'code_128' && code.length < 4) return;
-          fire(code);
+          // قراءتان متطابقتان للتأكد
+          if (_pendingCode === code) {
+            _pendingCount++;
+          } else {
+            _pendingCode  = code;
+            _pendingCount = 1;
+          }
+          if (_pendingCount >= 2) {
+            _pendingCode = null; _pendingCount = 0;
+            fire(code);
+          }
         };
         Quagga.onDetected(_handler);
       });
@@ -236,7 +244,7 @@ export const BarcodeScanner = {
     } catch {}
     try { if (_handler && window.Quagga) { Quagga.offDetected(_handler); Quagga.stop(); } } catch {}
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
-    _stream = null; _video = null; _handler = null;
+    _stream = null; _video = null; _handler = null; _pendingCode = null; _pendingCount = 0;
     _cb = null; _last = null;
     clearTimeout(_timer);
   },
