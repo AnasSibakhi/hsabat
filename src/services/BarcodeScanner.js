@@ -163,8 +163,14 @@ export const BarcodeScanner = {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
           if (!code || code.length < 4) return;
-          const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-          if (isEAN && !eanOk(code)) return;
+          const isEAN13 = fmt === 'ean_13' && code.length === 13;
+          const isEAN8  = fmt === 'ean_8'  && code.length === 8;
+          const isUPC   = (fmt === 'upc_a' || fmt === 'upc_e');
+          const isOther = !['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
+          // EAN/UPC — تحقق من الطول والـ checksum
+          if ((isEAN13 || isEAN8 || isUPC) && !eanOk(code)) return;
+          if (fmt === 'ean_13' && code.length !== 13) return;
+          if (fmt === 'ean_8'  && code.length !== 8)  return;
           fire(code);
         };
         Quagga.onDetected(_handler);
