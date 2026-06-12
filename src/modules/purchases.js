@@ -252,6 +252,108 @@ const Purchases = {
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
+
+  switchTab(tab) {
+    const isAll = tab === 'all';
+    const secAll   = document.getElementById('pur-section-all');
+    const secDebts = document.getElementById('pur-section-debts');
+    if (secAll)   secAll.style.display   = isAll ? 'block' : 'none';
+    if (secDebts) secDebts.style.display = isAll ? 'none'  : 'block';
+    const btnAll   = document.getElementById('pur-tab-all');
+    const btnDebts = document.getElementById('pur-tab-debts');
+    if (btnAll) {
+      btnAll.style.background  = isAll ? 'var(--p)' : '#fff';
+      btnAll.style.color       = isAll ? '#fff' : 'var(--g7)';
+      btnAll.style.borderColor = isAll ? 'var(--p)' : 'var(--br)';
+    }
+    if (btnDebts) {
+      btnDebts.style.background  = !isAll ? 'var(--r)' : '#fff';
+      btnDebts.style.color       = !isAll ? '#fff' : 'var(--g7)';
+      btnDebts.style.borderColor = !isAll ? 'var(--r)' : 'var(--br)';
+    }
+    if (!isAll) Purchases.loadDebts();
+  },
+
+  async loadDebts() {
+    const { data } = await DB.purchases()
+      .select('*')
+      .eq('payment_status', 'defer')
+      .gt('remaining', 0)
+      .order('purchase_date', { ascending: false });
+
+    const list = document.getElementById('sup-debt-list');
+    if (!list) return;
+
+    if (!data || !data.length) {
+      list.innerHTML = '<tr class="er"><td colspan="8">لا توجد ديون للموردين 🎉</td></tr>';
+      const t = document.getElementById('sup-debt-total'); if (t) t.textContent = '₪0.00';
+      const p = document.getElementById('sup-debt-paid');  if (p) p.textContent = '₪0.00';
+      return;
+    }
+
+    const totalRem  = data.reduce((s, r) => s + (r.remaining   || 0), 0);
+    const totalPaid = data.reduce((s, r) => s + (r.paid_amount || 0), 0);
+    const tEl = document.getElementById('sup-debt-total'); if (tEl) tEl.textContent = '₪' + totalRem.toFixed(2);
+    const pEl = document.getElementById('sup-debt-paid');  if (pEl) pEl.textContent = '₪' + totalPaid.toFixed(2);
+
+    list.innerHTML = data.map(p => {
+      const rem  = p.remaining   || 0;
+      const paid = p.paid_amount || 0;
+      const phone = p.supplier_phone
+        ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>'
+        : '-';
+      return '<tr>'
+        + '<td style="font-weight:700;">' + Utils.escape(p.supplier) + '</td>'
+        + '<td>' + phone + '</td>'
+        + '<td>' + Utils.escape(p.product_name) + '</td>'
+        + '<td>₪' + p.cost.toFixed(2) + '</td>'
+        + '<td style="color:var(--s);font-weight:700;">₪' + paid.toFixed(2) + '</td>'
+        + '<td style="color:var(--r);font-weight:800;">₪' + rem.toFixed(2) + '</td>'
+        + '<td>' + p.purchase_date + '</td>'
+        + '<td><button class="ibb" onclick="Purchases.openPayModal(\'' + p.id + '\')" >تسديد</button></td>'
+        + '</tr>';
+    }).join('');
+  },
+
+  openPayModal(id) {
+    const p = Purchases._cache[id];
+    if (!p) { Notify.error('لم يُوجد السجل'); return; }
+    document.getElementById('sup-pay-id').value          = id;
+    document.getElementById('sup-pay-name').textContent  = p.supplier + (p.product_name ? ' — ' + p.product_name : '');
+    document.getElementById('sup-pay-total').textContent = '₪' + (p.cost || 0).toFixed(2);
+    document.getElementById('sup-pay-paid').textContent  = '₪' + (p.paid_amount || 0).toFixed(2);
+    document.getElementById('sup-pay-rem').textContent   = '₪' + (p.remaining || 0).toFixed(2);
+    document.getElementById('sup-pay-amount').value      = '';
+    Modal.open('m-sup-pay');
+  },
+
+  quickPayFull() {
+    const id = document.getElementById('sup-pay-id')?.value;
+    const p  = Purchases._cache[id];
+    if (p) document.getElementById('sup-pay-amount').value = (p.remaining || 0).toFixed(2);
+  },
+
+  async paySupplier() {
+    const id     = document.getElementById('sup-pay-id')?.value;
+    const amount = parseFloat(document.getElementById('sup-pay-amount')?.value) || 0;
+    if (!id || amount <= 0) { Notify.error('أدخل مبلغ التسديد'); return; }
+    const p = Purchases._cache[id];
+    if (!p) { Notify.error('لم يُوجد السجل'); return; }
+    const newPaid      = (p.paid_amount || 0) + amount;
+    const newRemaining = Math.max(0, (p.remaining || 0) - amount);
+    const newStatus    = newRemaining <= 0 ? 'cash' : 'defer';
+    try {
+      const { error } = await DB.purchases().update({
+        paid_amount: newPaid, remaining: newRemaining, payment_status: newStatus,
+      }).eq('id', id);
+      if (error) throw error;
+      Notify.success('تم التسديد — المتبقي: ₪' + newRemaining.toFixed(2));
+      Modal.close('m-sup-pay');
+      await Purchases.load();
+      await Purchases.loadDebts();
+    } catch (err) { Notify.error(err.message); }
+  },
+
   openEdit(id) {
     const p = Purchases._cache[id];
     if (!p) { Notify.error('لم يُوجد السجل'); return; }

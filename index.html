@@ -1050,7 +1050,44 @@ PalPay" style="resize:none;"></textarea>
    <!-- PURCHASES -->
    <div class="page" id="page-purchases">
     <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="Modal.open('m-pur')"><i class="ti ti-plus"></i> تسجيل</button></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>المورد</th><th>الجوال</th><th>فاتورة</th><th>البضاعة</th><th>الكمية</th><th>التكلفة</th><th>الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody id="purlist"><tr class="er"><td colspan="9"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+
+    <!-- تبويبات -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button id="pur-tab-all" onclick="Purchases.switchTab('all')"
+        style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--p);background:var(--p);color:#fff;font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">
+        📋 كل المشتريات
+      </button>
+      <button id="pur-tab-debts" onclick="Purchases.switchTab('debts')"
+        style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--br);background:#fff;color:var(--g7);font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">
+        ⏳ ديون الموردين
+      </button>
+    </div>
+
+    <!-- كل المشتريات -->
+    <div id="pur-section-all">
+      <div class="card"><div class="tw"><table class="dt"><thead><tr><th>المورد</th><th>الجوال</th><th>فاتورة</th><th>البضاعة</th><th>الكمية</th><th>التكلفة</th><th>الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody id="purlist"><tr class="er"><td colspan="9"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    </div>
+
+    <!-- ديون الموردين -->
+    <div id="pur-section-debts" style="display:none;">
+      <!-- إجماليات -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="card" style="padding:14px;text-align:center;border-right:4px solid var(--r);">
+          <div style="font-size:12px;color:var(--g5);margin-bottom:4px;">إجمالي ديون الموردين</div>
+          <div id="sup-debt-total" style="font-size:22px;font-weight:900;color:var(--r);">-</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;border-right:4px solid var(--s);">
+          <div style="font-size:12px;color:var(--g5);margin-bottom:4px;">إجمالي المدفوع</div>
+          <div id="sup-debt-paid" style="font-size:22px;font-weight:900;color:var(--s);">-</div>
+        </div>
+      </div>
+
+      <!-- جدول الموردين المدينين -->
+      <div class="card"><div class="tw"><table class="dt">
+        <thead><tr><th>المورد</th><th>الجوال</th><th>البضاعة</th><th>الكلي</th><th>المدفوع</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
+        <tbody id="sup-debt-list"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
+      </table></div></div>
+    </div>
    </div>
 
    <!-- NET CARDS -->
@@ -1560,7 +1597,40 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
   </div>
 </div></div>
 
-  <div class="mo" id="m-edit-pur"><div class="modal">
+<!-- Modal تسديد دين المورد -->
+<div class="mo" id="m-sup-pay"><div class="modal">
+  <div class="mhdr"><span class="mtitle">تسديد دين المورد</span><button class="mclose" onclick="Modal.close('m-sup-pay')">✕</button></div>
+  <input type="hidden" id="sup-pay-id">
+  <div style="background:var(--g0);border-radius:12px;padding:14px;margin-bottom:14px;">
+    <div style="font-size:13px;color:var(--g5);margin-bottom:4px;">المورد</div>
+    <div id="sup-pay-name" style="font-size:16px;font-weight:800;color:var(--g9);"></div>
+    <div style="display:flex;gap:16px;margin-top:10px;">
+      <div>
+        <div style="font-size:11px;color:var(--g5);">إجمالي الفاتورة</div>
+        <div id="sup-pay-total" style="font-size:15px;font-weight:700;color:var(--g9);"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--g5);">المدفوع</div>
+        <div id="sup-pay-paid" style="font-size:15px;font-weight:700;color:var(--s);"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--g5);">المتبقي</div>
+        <div id="sup-pay-rem" style="font-size:15px;font-weight:700;color:var(--r);"></div>
+      </div>
+    </div>
+  </div>
+  <div class="fg">
+    <label class="lbl">مبلغ التسديد (₪) *</label>
+    <input class="inp" type="number" id="sup-pay-amount" inputmode="decimal" placeholder="أدخل المبلغ المدفوع">
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button onclick="Purchases.quickPayFull()" style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--s);background:var(--sl);color:var(--s);font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">تسديد كلي</button>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Modal.close('m-sup-pay')">إلغاء</button>
+    <button class="btn btn-s" onclick="Purchases.paySupplier()">تسديد</button>
+  </div>
+</div></div>
   <div class="mhdr"><span class="mtitle">تعديل مشتريات</span><button class="mclose" onclick="Modal.close('m-edit-pur')">✕</button></div>
   <input type="hidden" id="edit-pur-id">
   <div class="fr">
