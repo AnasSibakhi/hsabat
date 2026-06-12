@@ -164,7 +164,10 @@ const Inventory = {
     import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
       BarcodeScanner.start('inv-scanner-container', (code) => {
         const el = document.getElementById('inb');
-        if (el) el.value = code;
+        if (el) {
+          el.value = code;
+          Inventory.onBarcodeInput(code); // trigger lookup
+        }
         Inventory.stopScanner();
         Notify.success('✅ تم مسح الباركود: ' + code);
       }, (err) => {
