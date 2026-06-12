@@ -180,7 +180,7 @@ export const BarcodeScanner = {
           const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
           if (isEAN && !eanOk(code)) return;
           if (fmt === 'code_128' && code.length < 4) return;
-          // قراءتان متطابقتان للتأكد
+          // قراءتان متطابقتان للتأكد — reset بعد القبول
           if (_pendingCode === code) {
             _pendingCount++;
           } else {
@@ -188,20 +188,36 @@ export const BarcodeScanner = {
             _pendingCount = 1;
           }
           if (_pendingCount >= 2) {
-            _pendingCode = null; _pendingCount = 0;
-            // عداد حي على الشاشة
-            if (_liveCode === code) { _liveCount++; } else { _liveCode = code; _liveCount = 1; }
+            _pendingCode = null; _pendingCount = 0;  // reset فوراً
+            // عداد حي — debounce 800ms
             clearTimeout(_liveTimer);
-            _liveTimer = setTimeout(() => { _liveCode = null; _liveCount = 0; const e=document.getElementById('qs-live-counter'); if(e) e.style.display='none'; }, 2000);
+            if (_liveCode === code) {
+              _liveCount++;
+            } else {
+              _liveCode  = code;
+              _liveCount = 1;
+            }
+            // تحديث الشاشة فوراً
             const lc = document.getElementById('qs-live-counter');
             if (lc) {
-              lc.style.display = 'flex';
-              // احسب المتبقي من المخزون
               const prod = (window.State?.inventory || []).find(p => p.barcode === code);
-              const inCart = (window.QuickSale?._getCartQty?.(code)) || _liveCount;
-              const remaining = prod ? Math.max(0, prod.quantity - inCart) : '?';
-              lc.innerHTML = '<div style="text-align:center"><div style="font-size:48px;font-weight:900;">×' + _liveCount + '</div><div style="font-size:14px;opacity:0.85;margin-top:2px;">متبقي: ' + remaining + '</div></div>';
+              const inCart = window.QuickSale?._getCartQty?.(code) || 0;
+              const stock  = prod ? prod.quantity : null;
+              const remaining = stock !== null ? Math.max(0, stock - inCart) : null;
+              lc.style.display = 'flex';
+              lc.innerHTML = '<div style="text-align:center">'
+                + '<div style="font-size:52px;font-weight:900;line-height:1;">×' + _liveCount + '</div>'
+                + (remaining !== null
+                    ? '<div style="font-size:13px;opacity:0.85;margin-top:4px;">متبقي: ' + remaining + '</div>'
+                    : '')
+                + '</div>';
             }
+            // إخفاء العداد بعد 1.5 ثانية من آخر قراءة
+            _liveTimer = setTimeout(() => {
+              _liveCode = null; _liveCount = 0;
+              const e = document.getElementById('qs-live-counter');
+              if (e) e.style.display = 'none';
+            }, 1500);
             fire(code);
           }
         };
