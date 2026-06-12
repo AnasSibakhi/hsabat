@@ -200,15 +200,17 @@ export const BarcodeScanner = {
             // تحديث الشاشة فوراً
             const lc = document.getElementById('qs-live-counter');
             if (lc) {
-              const prod = (window.State?.inventory || []).find(p => p.barcode === code);
-              const inCart = window.QuickSale?._getCartQty?.(code) || 0;
-              const stock  = prod ? prod.quantity : null;
+              const prod      = (window.State?.inventory || []).find(p => p.barcode === code);
+              const name      = prod ? prod.name : '';
+              const inCart    = window.QuickSale?._getCartQty?.(code) || 0;
+              const stock     = prod ? prod.quantity : null;
               const remaining = stock !== null ? Math.max(0, stock - inCart) : null;
               lc.style.display = 'flex';
-              lc.innerHTML = '<div style="text-align:center">'
-                + '<div style="font-size:52px;font-weight:900;line-height:1;">×' + _liveCount + '</div>'
+              lc.innerHTML = '<div style="text-align:center;padding:4px;">'
+                + (name ? '<div style="font-size:15px;font-weight:700;margin-bottom:6px;opacity:0.95;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</div>' : '')
+                + '<div style="font-size:56px;font-weight:900;line-height:1;">×' + _liveCount + '</div>'
                 + (remaining !== null
-                    ? '<div style="font-size:13px;opacity:0.85;margin-top:4px;">متبقي: ' + remaining + '</div>'
+                    ? '<div style="font-size:13px;opacity:0.85;margin-top:6px;">متبقي: ' + remaining + '</div>'
                     : '')
                 + '</div>';
             }
