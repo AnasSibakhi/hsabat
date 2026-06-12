@@ -118,13 +118,14 @@ export const BarcodeScanner = {
     _raf = requestAnimationFrame(loop);
   },
 
-  // ── Quagga on video element ──
+  // ── Quagga on existing video via canvas ──
   _quagga(el, dbg, onError) {
     const init = () => {
+      // نستخدم الـ video element الموجود مباشرة
       Quagga.init({
         inputStream: {
           type: 'LiveStream',
-          target: el,
+          target: _video,  // الفيديو الموجود مباشرة
           constraints: {
             facingMode: 'environment',
             width:  { ideal: 1280 },
@@ -141,8 +142,9 @@ export const BarcodeScanner = {
         locate: true,
       }, (err) => {
         if (err) {
-          dbg.textContent = '🔴 ' + (err?.message || 'Error');
-          onError?.('خطأ في الكاميرا');
+          // LiveStream فشل — نجرب Canvas loop
+          dbg.textContent = '🟡 Canvas mode...';
+          BarcodeScanner._canvasLoop(dbg, onError);
           return;
         }
         dbg.textContent = '🟢 Quagga ready';
@@ -162,8 +164,53 @@ export const BarcodeScanner = {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
     s.onload = () => { dbg.textContent = '🟢 Quagga loaded'; init(); };
-    s.onerror = () => { dbg.textContent = '🔴 Load failed'; onError?.('فشل تحميل الباركود'); };
+    s.onerror = () => {
+      dbg.textContent = '🟡 Canvas fallback...';
+      BarcodeScanner._canvasLoop(dbg, onError);
+    };
     document.head.appendChild(s);
+  },
+
+  // ── Canvas + Quagga ImageReader loop ──
+  _canvasLoop(dbg, onError) {
+    // نستخدم canvas لالتقاط frames وQuagga لتحليلها
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    const scan = () => {
+      if (!_active) return;
+      if (_video?.readyState >= 2) {
+        canvas.width  = _video.videoWidth  || 640;
+        canvas.height = _video.videoHeight || 480;
+        ctx.drawImage(_video, 0, 0, canvas.width, canvas.height);
+
+        if (window.Quagga) {
+          Quagga.decodeSingle({
+            decoder: {
+              readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
+            },
+            locate: true,
+            src: canvas.toDataURL(),
+          }, (res) => {
+            if (!_active) return;
+            const code = res?.codeResult?.code;
+            const fmt  = res?.codeResult?.format;
+            if (!code || code.length < 4) { if (_active) _raf = requestAnimationFrame(scan); return; }
+            const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
+            if (isEAN && !eanOk(code)) { if (_active) _raf = requestAnimationFrame(scan); return; }
+            fire(code, dbg);
+            if (_active) setTimeout(() => { if (_active) _raf = requestAnimationFrame(scan); }, 500);
+          });
+        } else {
+          _raf = requestAnimationFrame(scan);
+        }
+      } else {
+        _raf = requestAnimationFrame(scan);
+      }
+    };
+
+    dbg.textContent = '🟢 Canvas ready';
+    _raf = requestAnimationFrame(scan);
   },
 
   // ── Flash ──
