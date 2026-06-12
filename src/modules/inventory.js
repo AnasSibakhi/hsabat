@@ -106,25 +106,50 @@ const Inventory = {
 
   scanBarcode() {
     import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
+      // نفس overlay البيع السريع
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;';
-      const container = document.createElement('div');
-      container.id = 'inv-bc-container';
-      container.style.cssText = 'flex:1;position:relative;';
-      const closeBtn = document.createElement('button');
-      closeBtn.textContent = '✕ إغلاق';
-      closeBtn.style.cssText = 'padding:14px;background:#dc2626;color:#fff;border:none;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer;';
-      overlay.appendChild(container);
-      overlay.appendChild(closeBtn);
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;';
+      overlay.innerHTML = `
+        <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
+          <div id="inv-bc-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
+          <div style="position:absolute;inset:0;pointer-events:none;">
+            <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+            <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
+            <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
+            <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
+              <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:3px 0 0 0;"></div>
+              <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 3px 0 0;"></div>
+              <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 3px;"></div>
+              <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 3px 0;"></div>
+              <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+            </div>
+          </div>
+          <button onclick="this.closest('div[style*=fixed]').querySelector('#inv-bc-close').click()"
+            style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <div style="background:rgba(0,0,0,0.9);padding:12px;text-align:center;display:flex;align-items:center;justify-content:space-between;">
+          <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">ضع الباركود داخل المربع</p>
+          <button id="inv-bc-close" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:13px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">إغلاق</button>
+        </div>`;
+
       document.body.appendChild(overlay);
-      closeBtn.onclick = () => { BarcodeScanner.stop(); overlay.remove(); };
+
+      overlay.querySelector('#inv-bc-close').onclick = () => {
+        BarcodeScanner.stop();
+        overlay.remove();
+      };
+
       BarcodeScanner.start('inv-bc-container', (code) => {
         const el = document.getElementById('inb');
         if (el) el.value = code;
         BarcodeScanner.stop();
         overlay.remove();
         Notify.success('تم مسح الباركود: ' + code);
-      }, (err) => { Notify.error(err); overlay.remove(); });
+      }, (err) => {
+        Notify.error(err);
+        overlay.remove();
+      });
     });
   },
 
