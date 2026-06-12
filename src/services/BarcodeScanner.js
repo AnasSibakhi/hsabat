@@ -127,29 +127,42 @@ const runZXing = async (onError, dbg) => {
       ZXing.BarcodeFormat.QR_CODE,
     ]],
   ]);
+
   const reader = new ZXing.BrowserMultiFormatReader(hints);
 
-  const loop = () => {
-    if (!_active) return;
-    try {
+  // استخدام decodeFromVideoElement مباشرة — أدق من Canvas
+  try {
+    reader.decodeFromStream(_stream, _video, (result, err) => {
+      if (!_active) return;
+      if (result) {
+        const code = result.getText();
+        if (dbg) dbg.textContent = '✅ قرأ: ' + code;
+        fire(code);
+      }
+    });
+  } catch {
+    // Fallback to canvas loop
+    const loop = () => {
+      if (!_active) return;
       if (_video?.readyState >= 2 && _canvas && _ctx) {
         const w = _video.videoWidth  || 640;
         const h = _video.videoHeight || 480;
-        if (_canvas.width !== w)  _canvas.width  = w;
-        if (_canvas.height !== h) _canvas.height = h;
+        _canvas.width = w; _canvas.height = h;
         _ctx.drawImage(_video, 0, 0, w, h);
         try {
-          const result = reader.decodeFromCanvas(_canvas);
+          const lum    = new ZXing.HTMLCanvasElementLuminanceSource(_canvas);
+          const bmp    = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+          const result = reader.decode(bmp);
           if (result) {
             if (dbg) dbg.textContent = '✅ قرأ: ' + result.getText();
             fire(result.getText());
           }
         } catch {}
       }
-    } catch {}
-    if (_active) _rafId = requestAnimationFrame(loop);
-  };
-  _rafId = requestAnimationFrame(loop);
+      if (_active) _rafId = requestAnimationFrame(loop);
+    };
+    _rafId = requestAnimationFrame(loop);
+  }
 };
 
 // ── Quagga fallback (last resort) ──
