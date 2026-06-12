@@ -1064,7 +1064,7 @@ PalPay" style="resize:none;"></textarea>
 
     <!-- كل المشتريات -->
     <div id="pur-section-all">
-      <div class="card"><div class="tw"><table class="dt"><thead><tr><th>المورد</th><th>الجوال</th><th>فاتورة</th><th>البضاعة</th><th>الكمية</th><th>التكلفة</th><th>الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody id="purlist"><tr class="er"><td colspan="9"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+      <div class="card"><div class="tw"><table class="dt"><thead><tr><th>المورد</th><th>الجوال</th><th>فاتورة</th><th>البضاعة</th><th>الكمية</th><th>التكلفة</th><th>سعر البيع</th><th>الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody id="purlist"><tr class="er"><td colspan="10"><span class="spin">↻</span></td></tr></tbody></table></div></div>
     </div>
 
     <!-- ديون الموردين -->
@@ -1594,10 +1594,41 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="edit-pur-qty" inputmode="decimal"></div>
     <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="edit-pur-cost" inputmode="decimal"></div>
   </div>
+  <div class="fg"><label class="lbl">سعر البيع للوحدة (₪)</label><input class="inp" type="number" id="edit-pur-sale-price" inputmode="decimal" placeholder="سعر البيع" style="background:var(--pl);color:var(--p);font-weight:700;"></div>
   <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="edit-pur-date"></div>
   <div class="mfoot">
     <button class="btn btn-o" onclick="Modal.close('m-edit-pur')">إلغاء</button>
     <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
+  </div>
+</div></div>
+
+<!-- Modal مرتجعات المشتريات -->
+<div class="mo" id="m-pur-return"><div class="modal">
+  <div class="mhdr"><span class="mtitle">🔄 مرتجع للمورد</span><button class="mclose" onclick="Modal.close('m-pur-return')">✕</button></div>
+  <input type="hidden" id="ret-pur-id">
+
+  <!-- معلومات الشراء -->
+  <div style="background:var(--g0);border-radius:12px;padding:14px;margin-bottom:14px;">
+    <div id="ret-pur-info" style="font-size:13px;color:var(--g7);"></div>
+  </div>
+
+  <div class="fr">
+    <div class="fg">
+      <label class="lbl">الكمية المرتجعة *</label>
+      <input class="inp" type="number" id="ret-pur-qty" inputmode="decimal" placeholder="0" min="1" oninput="Purchases.calcReturnAmount()">
+    </div>
+    <div class="fg">
+      <label class="lbl">المبلغ المسترد (₪)</label>
+      <input class="inp" type="number" id="ret-pur-amount" inputmode="decimal" placeholder="يُحسب تلقائياً" style="background:var(--sl);color:var(--s);font-weight:700;">
+    </div>
+  </div>
+  <div class="fg">
+    <label class="lbl">سبب الإرجاع</label>
+    <input class="inp" id="ret-pur-reason" placeholder="مثال: بضاعة تالفة، غير مطابقة...">
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Modal.close('m-pur-return')">إلغاء</button>
+    <button class="btn btn-s" style="background:var(--r);border-color:var(--r);" onclick="Purchases.saveReturn()">تأكيد الإرجاع</button>
   </div>
 </div></div>
 <div class="mo" id="m-sup-pay"><div class="modal">

@@ -32,6 +32,7 @@ const Purchases = {
           const statusLabel = { cash: '💵 كاش', transfer: '🏦 تحويل', defer: '⏳ آجل' }[p.payment_status] || '💵 كاش';
           const statusColor = { cash: 'var(--s)', transfer: 'var(--p)', defer: 'var(--r)' }[p.payment_status] || 'var(--s)';
           const remaining   = p.remaining > 0 ? '<br><small style="color:var(--r);">متبقي: ₪' + p.remaining.toFixed(2) + '</small>' : '';
+          const salePrice   = p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-';
           return '<tr>'
             + '<td>' + Utils.escape(p.supplier) + '</td>'
             + '<td>' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
@@ -39,10 +40,12 @@ const Purchases = {
             + '<td>' + Utils.escape(p.product_name) + '</td>'
             + '<td>' + p.quantity + '</td>'
             + '<td>₪' + p.cost.toFixed(2) + '</td>'
+            + '<td style="color:var(--p);font-weight:700;">' + salePrice + '</td>'
             + '<td><span style="color:' + statusColor + ';font-weight:700;">' + statusLabel + '</span>' + remaining + '</td>'
             + '<td>' + p.purchase_date + '</td>'
-            + '<td>'
+            + '<td style="white-space:nowrap;">'
             + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')" style="margin-left:4px;">تعديل</button>'
+            + '<button class="ibb" onclick="Purchases.openReturn(\'' + p.id + '\')" style="margin-left:4px;background:var(--rl);color:var(--r);border-color:var(--r);">🔄</button>'
             + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
             + '</td>'
             + '</tr>';
@@ -357,24 +360,91 @@ const Purchases = {
   openEdit(id) {
     const p = Purchases._cache[id];
     if (!p) { Notify.error('لم يُوجد السجل'); return; }
-    document.getElementById('edit-pur-id').value       = p.id;
-    document.getElementById('edit-pur-supplier').value = p.supplier || '';
-    document.getElementById('edit-pur-phone').value    = p.supplier_phone || '';
-    document.getElementById('edit-pur-invoice').value  = p.invoice_ref || '';
-    document.getElementById('edit-pur-product').value  = p.product_name || '';
-    document.getElementById('edit-pur-qty').value      = p.quantity || 1;
-    document.getElementById('edit-pur-cost').value     = p.cost || '';
-    document.getElementById('edit-pur-date').value     = p.purchase_date || '';
+    document.getElementById('edit-pur-id').value           = p.id;
+    document.getElementById('edit-pur-supplier').value     = p.supplier || '';
+    document.getElementById('edit-pur-phone').value        = p.supplier_phone || '';
+    document.getElementById('edit-pur-invoice').value      = p.invoice_ref || '';
+    document.getElementById('edit-pur-product').value      = p.product_name || '';
+    document.getElementById('edit-pur-qty').value          = p.quantity || 1;
+    document.getElementById('edit-pur-cost').value         = p.cost || '';
+    document.getElementById('edit-pur-sale-price').value   = p.sale_price || '';
+    document.getElementById('edit-pur-date').value         = p.purchase_date || '';
     window.Modal.open('m-edit-pur');
   },
 
+  openReturn(id) {
+    const p = Purchases._cache[id];
+    if (!p) { Notify.error('لم يُوجد السجل'); return; }
+    document.getElementById('ret-pur-id').value = id;
+    const unitCost = p.quantity > 0 ? (p.cost / p.quantity) : 0;
+    document.getElementById('ret-pur-info').innerHTML =
+      '<b style="color:var(--g9);">' + Utils.escape(p.supplier) + '</b> — ' + Utils.escape(p.product_name) +
+      '<br>الكمية المتوفرة: <b>' + p.quantity + '</b> — تكلفة الوحدة: <b>₪' + unitCost.toFixed(2) + '</b>';
+    document.getElementById('ret-pur-qty').value    = '';
+    document.getElementById('ret-pur-amount').value = '';
+    document.getElementById('ret-pur-reason').value = '';
+    Purchases._returnUnitCost = unitCost;
+    Purchases._returnPurId    = id;
+    Modal.open('m-pur-return');
+  },
+
+  calcReturnAmount() {
+    const qty    = parseFloat(document.getElementById('ret-pur-qty')?.value) || 0;
+    const amount = qty * (Purchases._returnUnitCost || 0);
+    const el     = document.getElementById('ret-pur-amount');
+    if (el) el.value = amount.toFixed(2);
+  },
+
+  async saveReturn() {
+    const id     = document.getElementById('ret-pur-id')?.value;
+    const qty    = parseFloat(document.getElementById('ret-pur-qty')?.value) || 0;
+    const amount = parseFloat(document.getElementById('ret-pur-amount')?.value) || 0;
+    const reason = document.getElementById('ret-pur-reason')?.value?.trim();
+
+    if (!qty || qty <= 0)    { Notify.error('أدخل الكمية المرتجعة'); return; }
+
+    const p = Purchases._cache[id];
+    if (!p) { Notify.error('لم يُوجد السجل'); return; }
+    if (qty > p.quantity)    { Notify.error('الكمية أكبر من المشتراة'); return; }
+
+    try {
+      // خصم من المخزون
+      const { data: inv } = await DB.inventory()
+        .select('id,quantity')
+        .eq('name', p.product_name)
+        .maybeSingle();
+      if (inv) {
+        await DB.inventory()
+          .update({ quantity: Math.max(0, inv.quantity - qty) })
+          .eq('id', inv.id);
+      }
+
+      // تحديث كمية الشراء والتكلفة
+      const newQty  = p.quantity - qty;
+      const newCost = newQty > 0 ? (p.cost - amount) : 0;
+      const newRem  = Math.max(0, (p.remaining || 0) - amount);
+      await DB.purchases().update({
+        quantity: newQty,
+        cost:     newCost,
+        remaining: newRem,
+        payment_status: newRem <= 0 ? 'cash' : p.payment_status,
+      }).eq('id', id);
+
+      Notify.success('تم الإرجاع — خُصمت ' + qty + ' وحدة ومبلغ ₪' + amount.toFixed(2));
+      Modal.close('m-pur-return');
+      await Purchases.load();
+      await getInventory()?.loadList?.();
+    } catch (err) { Notify.error(err.message); }
+  },
+
   async updatePurchase() {
-    const id       = document.getElementById('edit-pur-id').value;
-    const supplier = document.getElementById('edit-pur-supplier').value.trim();
-    const product  = document.getElementById('edit-pur-product').value.trim();
-    const qty      = parseFloat(document.getElementById('edit-pur-qty').value) || 1;
-    const cost     = parseFloat(document.getElementById('edit-pur-cost').value);
-    const date     = document.getElementById('edit-pur-date').value;
+    const id        = document.getElementById('edit-pur-id').value;
+    const supplier  = document.getElementById('edit-pur-supplier').value.trim();
+    const product   = document.getElementById('edit-pur-product').value.trim();
+    const qty       = parseFloat(document.getElementById('edit-pur-qty').value) || 1;
+    const cost      = parseFloat(document.getElementById('edit-pur-cost').value);
+    const salePrice = parseFloat(document.getElementById('edit-pur-sale-price').value) || null;
+    const date      = document.getElementById('edit-pur-date').value;
 
     if (!supplier) { Notify.error('أدخل اسم المورد'); return; }
     if (!cost || cost <= 0) { Notify.error('أدخل التكلفة'); return; }
@@ -386,14 +456,19 @@ const Purchases = {
         supplier, product_name: product, quantity: qty, cost, purchase_date: date,
         supplier_phone: phone || null,
         invoice_ref:    invno || null,
+        sale_price:     salePrice,
       }).eq('id', id);
       if (error) throw error;
+
+      // تحديث سعر البيع في المخزون
+      if (salePrice) {
+        const { data: inv } = await DB.inventory().select('id').eq('name', product).maybeSingle();
+        if (inv) await DB.inventory().update({ sale_price: salePrice }).eq('id', inv.id);
+      }
+
       Notify.success('تم التعديل');
       window.Modal.close('m-edit-pur');
       await Purchases.load();
-      // Scroll content area back to top
-      const contentEl = document.querySelector('.content');
-      if (contentEl) contentEl.scrollTop = 0;
     } catch(err) { Notify.error(err.message); }
   },
 
