@@ -1,7 +1,8 @@
 /**
- * BarcodeScanner — Production
- * Android/Chrome: Native BarcodeDetector
- * iOS/Safari: Quagga LiveStream → Canvas fallback
+ * BarcodeScanner — Final Clean Version
+ * 
+ * Android Chrome/PWA: Native BarcodeDetector via getUserMedia
+ * iOS Safari/Chrome: Quagga2 manages its own stream (no conflict)
  */
 
 let _active  = false;
@@ -12,6 +13,7 @@ let _stream  = null;
 let _video   = null;
 let _raf     = null;
 let _flashOn = false;
+let _handler = null;
 
 const DEBOUNCE = 900;
 
@@ -40,30 +42,64 @@ export const BarcodeScanner = {
     const el = document.getElementById(containerId);
     if (!el) { onError?.('container not found'); return; }
     _cb = onSuccess; _last = null;
-
-    try {
-      _stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-    } catch(e) {
-      onError?.(e.name==='NotAllowedError' ? 'يرجى السماح بالوصول للكاميرا' : 'لا يمكن فتح الكاميرا');
-      return;
-    }
-
     el.innerHTML = '';
-    _video = document.createElement('video');
-    _video.setAttribute('autoplay','');
-    _video.setAttribute('playsinline','');
-    _video.setAttribute('muted','');
-    _video.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-    _video.srcObject = _stream;
-    el.appendChild(_video);
-    try { await _video.play(); } catch {}
 
-    _active = true;
+    if ('BarcodeDetector' in window) {
+      // ── Android Chrome: Native API ──
+      try {
+        _stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1280 },
+            height: { ideal: 720  },
+          },
+          audio: false,
+        });
+      } catch(e) {
+        onError?.(e.name === 'NotAllowedError'
+          ? 'يرجى السماح بالوصول للكاميرا'
+          : 'لا يمكن فتح الكاميرا');
+        return;
+      }
 
-    // تحسين الكاميرا
+      _video = document.createElement('video');
+      _video.setAttribute('autoplay','');
+      _video.setAttribute('playsinline','');
+      _video.setAttribute('muted','');
+      _video.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      _video.srcObject = _stream;
+      el.appendChild(_video);
+      try { await _video.play(); } catch {}
+
+      _active = true;
+      BarcodeScanner._boostNative();
+      BarcodeScanner._nativeLoop();
+
+    } else {
+      // ── iOS / Quagga: let Quagga manage its own stream ──
+      BarcodeScanner._startQuagga(el, onError);
+    }
+  },
+
+  // ── Native BarcodeDetector loop ──
+  _nativeLoop() {
+    const det = new BarcodeDetector({
+      formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code','data_matrix','itf'],
+    });
+    const loop = async () => {
+      if (!_active) return;
+      if (_video?.readyState >= 2) {
+        try {
+          const r = await det.detect(_video);
+          if (r.length) fire(r[0].rawValue);
+        } catch {}
+      }
+      if (_active) _raf = requestAnimationFrame(loop);
+    };
+    _raf = requestAnimationFrame(loop);
+  },
+
+  _boostNative() {
     setTimeout(() => {
       try {
         const t = _stream?.getVideoTracks()?.[0];
@@ -77,125 +113,88 @@ export const BarcodeScanner = {
         if (Object.keys(s).length) t.applyConstraints({ advanced:[s] }).catch(()=>{});
       } catch {}
     }, 800);
-
-    if ('BarcodeDetector' in window) {
-      BarcodeScanner._native();
-    } else {
-      BarcodeScanner._quagga(el, onError);
-    }
   },
 
-  _native() {
-    const det = new BarcodeDetector({
-      formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code','data_matrix','itf'],
-    });
-    const loop = async () => {
-      if (!_active) return;
-      if (_video?.readyState >= 2) {
-        try { const r = await det.detect(_video); if (r.length) fire(r[0].rawValue); } catch {}
-      }
-      if (_active) _raf = requestAnimationFrame(loop);
-    };
-    _raf = requestAnimationFrame(loop);
-  },
-
-  _quagga(el, onError) {
-    const init = () => {
-      // نوقف الفيديو الحالي ونخلي Quagga يفتح كاميراه
-      try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
-      try { _video?.remove(); } catch {}
-
+  // ── Quagga manages its own stream ──
+  _startQuagga(el, onError) {
+    const run = () => {
       Quagga.init({
         inputStream: {
           type: 'LiveStream',
           target: el,
           constraints: {
             facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width:  { ideal: 1280 },
+            height: { ideal: 720  },
           },
         },
         locator: { patchSize: 'medium', halfSample: true },
         numOfWorkers: 2,
         frequency: 15,
         decoder: {
-          readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
+          readers: [
+            'ean_reader', 'ean_8_reader',
+            'upc_reader', 'upc_e_reader',
+            'code_128_reader',
+          ],
           multiple: false,
         },
         locate: true,
       }, (err) => {
         if (err) {
-          onError?.('لا يمكن فتح الكاميرا: ' + (err?.message || ''));
+          onError?.(err?.message?.includes('ermission')
+            ? 'يرجى السماح بالوصول للكاميرا'
+            : 'لا يمكن فتح الكاميرا');
           return;
         }
         Quagga.start();
-        // تحسين الكاميرا
+        _active = true;
+
+        // احفظ stream للفلاش
         setTimeout(() => {
           try {
-            const video = el.querySelector('video');
-            const track = video?.srcObject?.getVideoTracks()?.[0];
-            if (!track) return;
-            const c = track.getCapabilities?.() || {};
-            const s = {};
-            if (c.focusMode?.includes('continuous'))        s.focusMode = 'continuous';
-            if (c.exposureMode?.includes('continuous'))     s.exposureMode = 'continuous';
-            if (c.whiteBalanceMode?.includes('continuous')) s.whiteBalanceMode = 'continuous';
-            if (c.sharpness) s.sharpness = c.sharpness.max;
-            if (Object.keys(s).length) track.applyConstraints({ advanced:[s] }).catch(()=>{});
-            _stream = video?.srcObject; // احفظ الـ stream للفلاش
+            const v = el.querySelector('video');
+            if (v?.srcObject) _stream = v.srcObject;
+            BarcodeScanner._boostQuagga(el);
           } catch {}
-        }, 1000);
+        }, 800);
 
-        Quagga.onDetected((res) => {
+        _handler = (res) => {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
           if (!code || code.length < 4) return;
           const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
           if (isEAN && !eanOk(code)) return;
           fire(code);
-        });
+        };
+        Quagga.onDetected(_handler);
       });
     };
 
-    if (window.Quagga) { init(); return; }
+    if (window.Quagga) { run(); return; }
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
-    s.onload = init;
+    s.onload = run;
     s.onerror = () => onError?.('فشل تحميل الباركود');
     document.head.appendChild(s);
   },
 
-  _canvasLoop(onError) {
-    if (!window.Quagga) { onError?.('فشل تحميل الباركود'); return; }
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const scan = () => {
-      if (!_active) return;
-      if (_video?.readyState >= 2) {
-        canvas.width  = _video.videoWidth  || 640;
-        canvas.height = _video.videoHeight || 480;
-        ctx.drawImage(_video, 0, 0, canvas.width, canvas.height);
-        Quagga.decodeSingle({
-          decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'] },
-          locate: true,
-          src: canvas.toDataURL(),
-        }, (res) => {
-          if (!_active) return;
-          const code = res?.codeResult?.code;
-          const fmt  = res?.codeResult?.format;
-          if (code && code.length >= 4) {
-            const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-            if (!isEAN || eanOk(code)) fire(code);
-          }
-          if (_active) setTimeout(() => { if (_active) _raf = requestAnimationFrame(scan); }, 200);
-        });
-      } else {
-        if (_active) _raf = requestAnimationFrame(scan);
-      }
-    };
-    _raf = requestAnimationFrame(scan);
+  _boostQuagga(el) {
+    try {
+      const v = el.querySelector('video');
+      const t = v?.srcObject?.getVideoTracks()?.[0];
+      if (!t) return;
+      const c = t.getCapabilities?.() || {};
+      const s = {};
+      if (c.focusMode?.includes('continuous'))        s.focusMode = 'continuous';
+      if (c.exposureMode?.includes('continuous'))     s.exposureMode = 'continuous';
+      if (c.whiteBalanceMode?.includes('continuous')) s.whiteBalanceMode = 'continuous';
+      if (c.sharpness) s.sharpness = c.sharpness.max;
+      if (Object.keys(s).length) t.applyConstraints({ advanced:[s] }).catch(()=>{});
+    } catch {}
   },
 
+  // ── Flash ──
   async toggleFlash() {
     try {
       const t = _stream?.getVideoTracks()?.[0];
@@ -203,17 +202,28 @@ export const BarcodeScanner = {
       _flashOn = !_flashOn;
       await t.applyConstraints({ advanced: [{ torch: _flashOn }] });
       const btn = document.getElementById('qs-flash-btn');
-      if (btn) { btn.style.background = _flashOn ? '#fbbf24' : 'rgba(0,0,0,0.5)'; btn.style.color = _flashOn ? '#000' : '#fff'; }
+      if (btn) {
+        btn.style.background = _flashOn ? '#fbbf24' : 'rgba(0,0,0,0.5)';
+        btn.style.color = _flashOn ? '#000' : '#fff';
+      }
     } catch { window.Notify?.error?.('الفلاش غير مدعوم'); }
   },
 
+  // ── Stop ──
   async stop() {
     _active = false;
     if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
-    try { if (_flashOn) { const t=_stream?.getVideoTracks()?.[0]; await t?.applyConstraints({advanced:[{torch:false}]}); _flashOn=false; } } catch {}
-    try { if (window.Quagga) Quagga.stop(); } catch {}
+    try {
+      if (_flashOn) {
+        const t = _stream?.getVideoTracks()?.[0];
+        await t?.applyConstraints({ advanced: [{ torch: false }] });
+        _flashOn = false;
+      }
+    } catch {}
+    try { if (_handler && window.Quagga) { Quagga.offDetected(_handler); Quagga.stop(); } } catch {}
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
-    _stream=null; _video=null; _cb=null; _last=null;
+    _stream = null; _video = null; _handler = null;
+    _cb = null; _last = null;
     clearTimeout(_timer);
   },
 };

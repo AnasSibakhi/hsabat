@@ -1465,19 +1465,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 
 <!-- Scanner Overlay -->
 <!-- New Product Modal (from scanner) -->
-<div class="mo" id="m-new-product"><div class="modal">
-  <div class="mhdr"><span class="mtitle">تسجيل منتج جديد</span><button class="mclose" onclick="Modal.close('m-new-product')">✕</button></div>
-  <div class="fg"><label class="lbl">الباركود</label><input class="inp" id="qs-new-barcode" readonly style="background:var(--g1);direction:ltr;"></div>
-  <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="qs-new-name" placeholder="مثال: سكر 1kg"></div>
-  <div class="fr">
-    <div class="fg"><label class="lbl">سعر البيع (₪) *</label><input class="inp" type="number" id="qs-new-sell" inputmode="decimal"></div>
-    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="qs-new-qty" value="1" inputmode="decimal"></div>
-  </div>
-  <div class="mfoot">
-    <button class="btn btn-o" onclick="Modal.close('m-new-product')">إلغاء</button>
-    <button class="btn btn-s" onclick="QuickSale.saveNewProduct()">حفظ وإضافة للسلة</button>
-  </div>
-</div></div>
+
 
 
 
