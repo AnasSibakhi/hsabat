@@ -772,7 +772,7 @@ PalPay" style="resize:none;"></textarea>
         <!-- Search + Barcode -->
         <div class="pos-search-bar">
           <i class="ti ti-barcode"></i>
-          <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" inputmode="text" oninput="QuickSale.search(this.value)">
+          <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="QuickSale.onBarcodeInput(this.value)" onkeydown="QuickSale.onBarcodeKey(event)">
           <button class="pos-cam-btn" onclick="QuickSale.startScanner()"><i class="ti ti-camera"></i></button>
         </div>
         <!-- Categories -->

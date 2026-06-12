@@ -33,28 +33,50 @@ export const QuickSale = {
     QuickSale._renderCart();
     QuickSale._renderGrid();
     QuickSale._loadStats();
-    const si = DOM.get('qs-search-input');
-    if (si) si.value = '';
-    // Physical barcode scanner support (keyboard input)
+    // ── Physical barcode scanner (USB/BT) ──
     QuickSale._initPhysicalScanner();
-    // Auto-focus barcode input for physical scanner
-    const bi = DOM.get('qs-barcode-input');
-    if (bi) setTimeout(() => bi.focus(), 200);
+    // Auto-focus
+    setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 300);
   },
 
-  // ── Physical Scanner (USB/Bluetooth barcode reader) ──
+  // ── Physical Scanner ──
+  _barcodeBuffer: '',
+  _barcodeTimer:  null,
+
   _initPhysicalScanner() {
-    const input = DOM.get('qs-barcode-input');
-    if (!input) return;
-    input.addEventListener('keydown', async (e) => {
-      if (e.key === 'Enter') {
-        const code = input.value.trim();
-        input.value = '';
-        if (code) await QuickSale._onBarcode(code);
-        // Re-focus for next scan
-        setTimeout(() => input.focus(), 100);
-      }
+    // Re-focus when user clicks elsewhere
+    document.addEventListener('click', (e) => {
+      if (!_active) return;
+      const ignore = ['INPUT','SELECT','TEXTAREA','BUTTON'];
+      if (ignore.includes(e.target.tagName)) return;
+      DOM.get('qs-barcode-input')?.focus();
     });
+  },
+
+  // Called on every input change
+  onBarcodeInput(val) {
+    clearTimeout(QuickSale._barcodeTimer);
+    if (!val.trim()) return;
+    // Debounce — physical scanner sends all chars then Enter
+    // For typing: wait 400ms then search
+    QuickSale._barcodeTimer = setTimeout(() => {
+      const q = val.trim();
+      if (q.length >= 2) QuickSale._renderGrid(q);
+    }, 300);
+  },
+
+  // Called on keydown
+  onBarcodeKey(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const input = DOM.get('qs-barcode-input');
+      const code  = input?.value?.trim();
+      if (!code) return;
+      input.value = '';
+      clearTimeout(QuickSale._barcodeTimer);
+      QuickSale._renderGrid('');
+      QuickSale._onBarcode(code);
+    }
   },
 
   // ── Product Grid ──
@@ -297,21 +319,22 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   async _onBarcode(code) {
-    // Debounce
-    if (code === _lastScan) return;
+    if (!code || code === _lastScan) return;
     _lastScan = code;
     clearTimeout(_scanTimer);
-    _scanTimer = setTimeout(() => { _lastScan = null; }, 1500);
+    _scanTimer = setTimeout(() => { _lastScan = null; }, 1200);
 
-    // Search in cached inventory first
+    // ١. ابحث في الـ cache أولاً (فوري)
     let product = State.inventory.find(p => p.barcode === code);
 
-    // If not found, search DB
+    // ٢. لو مش موجود — ابحث في DB
     if (!product) {
-      const { data } = await DB.inventory().select('*').eq('barcode', code).maybeSingle();
+      const { data } = await DB.inventory()
+        .select('id,name,barcode,sale_price,quantity,unit,category')
+        .eq('barcode', code)
+        .maybeSingle();
       if (data) {
         product = data;
-        // Add to cache
         if (!State.inventory.find(p => p.id === data.id)) State.inventory.push(data);
       }
     }
@@ -319,16 +342,20 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (product) {
       QuickSale.addToCart(product.id);
       QuickSale._beep('success');
+      // Zoom animation
+      const c = DOM.get('qs-scanner-container');
+      if (c) { c.style.transition='transform .15s'; c.style.transform='scale(1.15)'; setTimeout(()=>c.style.transform='scale(1)',200); }
     } else {
-      // Open add product modal
-      const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
-      const nm = DOM.get('qs-new-name');   if (nm) { nm.value = ''; setTimeout(() => nm.focus(), 200); }
-      Modal.open('m-new-product');
-      Notify.error('المنتج غير موجود — أضفه الآن');
       QuickSale._beep('error');
+      const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
+      const nm = DOM.get('qs-new-name');   if (nm) nm.value = '';
+      Modal.open('m-new-product');
+      setTimeout(() => DOM.get('qs-new-name')?.focus(), 300);
+      Notify.error('المنتج غير موجود — أضفه الآن');
     }
 
-    const bi = DOM.get('qs-barcode-input'); if (bi) setTimeout(() => bi.focus(), 200);
+    // Re-focus للصنف التالي
+    setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150);
   },
 
   // ── Camera Scanner ──
