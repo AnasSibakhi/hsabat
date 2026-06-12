@@ -127,6 +127,12 @@ export const BarcodeScanner = {
             width:  { ideal: 1280 },
             height: { ideal: 720  },
           },
+          area: {
+            top:    '30%',
+            right:  '6%',
+            left:   '6%',
+            bottom: '30%',
+          },
         },
         locator: { patchSize: 'medium', halfSample: true },
         numOfWorkers: 2,
