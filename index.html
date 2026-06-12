@@ -783,12 +783,17 @@ PalPay" style="resize:none;"></textarea>
    <div class="page active" id="page-home">
     <div class="ph"><div><div class="pt" id="hgreet">مرحباً</div><div style="font-size:12px;color:var(--g5);margin-top:2px;" id="hdate"></div></div></div>
     <div id="halerts"></div>
-    <div class="sg c4">
-     <div class="sc blue"><div class="sc-l">مبيعات اليوم</div><div class="sc-v" id="hs1">-</div></div>
-     <div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="hs2">-</div></div>
-     <div class="sc green"><div class="sc-l">مبيعات الشهر</div><div class="sc-v" id="hs3">-</div></div>
-     <div class="sc amber"><div class="sc-l">قاربت النفاد</div><div class="sc-v" id="hs4">-</div></div>
+
+    <!-- إحصائيات اليوم -->
+    <div style="font-size:14px;font-weight:800;color:var(--g6);margin-bottom:8px;margin-top:4px;">📊 إحصائيات اليوم</div>
+    <div class="sg c4" style="margin-bottom:14px;">
+     <div class="sc blue"  onclick="Nav.goTo('invoices')"  style="cursor:pointer;"><div class="sc-l">مبيعات اليوم</div><div class="sc-v" id="hs1">-</div></div>
+     <div class="sc green" style="cursor:default;">        <div class="sc-l">ربح اليوم</div>    <div class="sc-v" id="hs-profit">-</div></div>
+     <div class="sc amber" onclick="Nav.goTo('invoices')"  style="cursor:pointer;"><div class="sc-l">عدد الفواتير</div><div class="sc-v" id="hs-invoices">-</div></div>
+     <div class="sc red"   onclick="Nav.goTo('inventory')" style="cursor:pointer;"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="hs2">-</div></div>
     </div>
+
+    <!-- إجراءات سريعة -->
     <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">إجراءات سريعة</div>
     <div class="qa">
      <div class="qab" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
@@ -796,7 +801,15 @@ PalPay" style="resize:none;"></textarea>
      <div class="qab" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i><span>دين جديد</span></div>
      <div class="qab" onclick="Modal.open('m-customer')"><i class="ti ti-user-plus"></i><span>زبون</span></div>
     </div>
-    <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">الديون المتأخرة</div>
+
+    <!-- المنتجات الناقصة والمنتهية -->
+    <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;">⚠️ تنبيهات المخزون</div>
+    <div id="hs-inventory-alerts">
+      <div style="padding:1rem;text-align:center;color:var(--g4);font-size:13px;"><span class="spin">↻</span></div>
+    </div>
+
+    <!-- الديون المتأخرة -->
+    <div style="font-size:15px;font-weight:800;margin-bottom:.6rem;margin-top:14px;">الديون المتأخرة</div>
     <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الزبون</th><th>المبلغ</th><th>تأخر</th><th></th></tr></thead><tbody id="hoverdue"><tr class="er"><td colspan="4"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
 
