@@ -111,3 +111,10 @@ Object.assign(window, {
   openM:   (id)     => Modal.open(id),
   closeM:  (id)     => Modal.close(id),
 });
+
+// ── PWA Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
