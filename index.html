@@ -1581,14 +1581,19 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 
 
 <!-- Edit Purchase Modal -->
+<!-- Modal تعديل مشتريات -->
 <div class="mo" id="m-edit-pur"><div class="modal">
   <div class="mhdr"><span class="mtitle">تعديل مشتريات</span><button class="mclose" onclick="Modal.close('m-edit-pur')">✕</button></div>
   <input type="hidden" id="edit-pur-id">
-  <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="edit-pur-supplier"></div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="edit-pur-supplier"></div>
+    <div class="fg"><label class="lbl">جوال المورد</label><input class="inp" id="edit-pur-phone" inputmode="tel"></div>
+  </div>
+  <div class="fg"><label class="lbl">رقم فاتورة المورد</label><input class="inp" id="edit-pur-invoice" placeholder="اختياري"></div>
   <div class="fg"><label class="lbl">البضاعة *</label><input class="inp" id="edit-pur-product"></div>
   <div class="fr">
     <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="edit-pur-qty" inputmode="decimal"></div>
-    <div class="fg"><label class="lbl">التكلفة (₪) *</label><input class="inp" type="number" id="edit-pur-cost" inputmode="decimal"></div>
+    <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="edit-pur-cost" inputmode="decimal"></div>
   </div>
   <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="edit-pur-date"></div>
   <div class="mfoot">
@@ -1596,8 +1601,6 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
   </div>
 </div></div>
-
-<!-- Modal تسديد دين المورد -->
 <div class="mo" id="m-sup-pay"><div class="modal">
   <div class="mhdr"><span class="mtitle">تسديد دين المورد</span><button class="mclose" onclick="Modal.close('m-sup-pay')">✕</button></div>
   <input type="hidden" id="sup-pay-id">
@@ -1631,25 +1634,6 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <button class="btn btn-s" onclick="Purchases.paySupplier()">تسديد</button>
   </div>
 </div></div>
-  <div class="mhdr"><span class="mtitle">تعديل مشتريات</span><button class="mclose" onclick="Modal.close('m-edit-pur')">✕</button></div>
-  <input type="hidden" id="edit-pur-id">
-  <div class="fr">
-    <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="edit-pur-supplier"></div>
-    <div class="fg"><label class="lbl">جوال المورد</label><input class="inp" id="edit-pur-phone" inputmode="tel"></div>
-  </div>
-  <div class="fg"><label class="lbl">رقم فاتورة المورد</label><input class="inp" id="edit-pur-invoice" placeholder="اختياري"></div>
-  <div class="fg"><label class="lbl">البضاعة *</label><input class="inp" id="edit-pur-product"></div>
-  <div class="fr">
-    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="edit-pur-qty" inputmode="decimal"></div>
-    <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="edit-pur-cost" inputmode="decimal"></div>
-  </div>
-  <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="edit-pur-date"></div>
-  <div class="mfoot">
-    <button class="btn btn-o" onclick="Modal.close('m-edit-pur')">إلغاء</button>
-    <button class="btn btn-s" onclick="Purchases.updatePurchase()">حفظ التعديل</button>
-  </div>
-</div></div>
-
 <!-- Scanner Overlay -->
 <div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;">
   <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
