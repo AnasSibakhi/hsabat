@@ -1511,22 +1511,15 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 <div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;">
   <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
     <div id="qs-scanner-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
-    <div style="position:absolute;inset:0;pointer-events:none;">
-      <div style="position:absolute;top:10%;left:3%;width:36px;height:36px;border-top:4px solid #fff;border-left:4px solid #fff;border-radius:8px 0 0 0;"></div>
-      <div style="position:absolute;top:10%;right:3%;width:36px;height:36px;border-top:4px solid #fff;border-right:4px solid #fff;border-radius:0 8px 0 0;"></div>
-      <div style="position:absolute;bottom:15%;left:3%;width:36px;height:36px;border-bottom:4px solid #fff;border-left:4px solid #fff;border-radius:0 0 0 8px;"></div>
-      <div style="position:absolute;bottom:15%;right:3%;width:36px;height:36px;border-bottom:4px solid #fff;border-right:4px solid #fff;border-radius:0 0 8px 0;"></div>
-    </div>
-    
-    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
       <i class="ti ti-bolt"></i>
     </button>
-    <button onclick="QuickSale.stopScanner()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+    <button onclick="QuickSale.stopScanner()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
       <i class="ti ti-x"></i>
     </button>
   </div>
   <div style="background:rgba(0,0,0,0.85);padding:12px;text-align:center;">
-    <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">وجّه الكاميرا على الباركود</p>
+    <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">وجّه الكاميرا على الباركود من أي زاوية</p>
   </div>
 </div>
 
