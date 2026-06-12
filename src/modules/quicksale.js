@@ -325,18 +325,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     await BarcodeScanner.toggleFlash();
   },
 
-  _scannerIdleTimer: null,
-
-  _resetIdleTimer() {
-    clearTimeout(QuickSale._scannerIdleTimer);
-    QuickSale._scannerIdleTimer = setTimeout(() => {
-      if (BarcodeScanner.isActive()) {
-        QuickSale.stopScanner();
-        Notify.error('تم إغلاق الكاميرا تلقائياً');
-      }
-    }, 20000);
-  },
-
   async startScanner() {
     if (BarcodeScanner.isActive()) return;
 
@@ -348,17 +336,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     container.innerHTML = '';
     container.style.height = (window.innerHeight - 50) + 'px';
 
-    QuickSale._resetIdleTimer();
-
     await BarcodeScanner.start(
       'qs-scanner-container',
-      (code) => { QuickSale._resetIdleTimer(); QuickSale._beepAndAdd(code); },
+      (code) => QuickSale._beepAndAdd(code),
       (err)  => { Notify.error(err || 'لا يمكن فتح الكاميرا'); QuickSale.stopScanner(); }
     );
   },
 
   stopScanner() {
-    clearTimeout(QuickSale._scannerIdleTimer);
     BarcodeScanner.stop();
     const overlay = DOM.get('qs-scanner-overlay');
     if (overlay) overlay.style.display = 'none';
