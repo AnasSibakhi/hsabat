@@ -87,17 +87,19 @@ const fire = (code) => {
 };
 
 // ── Native BarcodeDetector (Chrome, Android, Edge) ──
-const runNative = () => {
-  console.log('[SCANNER] using Native BarcodeDetector');
+const runNative = (dbg) => {
   const detector = new BarcodeDetector({
-    formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code', 'data_matrix'],
+    formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code','data_matrix'],
   });
   const loop = async () => {
     if (!_active) return;
     try {
       if (_video?.readyState >= 2) {
         const results = await detector.detect(_video);
-        if (results.length) fire(results[0].rawValue);
+        if (results.length) {
+          if (dbg) dbg.textContent = '✅ قرأ: ' + results[0].rawValue;
+          fire(results[0].rawValue);
+        }
       }
     } catch {}
     if (_active) _rafId = requestAnimationFrame(loop);
@@ -105,35 +107,28 @@ const runNative = () => {
   _rafId = requestAnimationFrame(loop);
 };
 
-// ── ZXing Canvas scan (iOS Safari, Firefox) ──
-const runZXing = async (onError) => {
-  // Load ZXing
+const runZXing = async (onError, dbg) => {
   if (!window.ZXing) {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
-      s.onload = res;
-      s.onerror = rej;
+      s.onload = res; s.onerror = rej;
       document.head.appendChild(s);
     });
   }
+  if (dbg) dbg.textContent = '🟡 ZXing loaded — scanning...';
 
   const hints = new Map([
     [ZXing.DecodeHintType.TRY_HARDER, true],
     [ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-      ZXing.BarcodeFormat.EAN_13,
-      ZXing.BarcodeFormat.EAN_8,
-      ZXing.BarcodeFormat.UPC_A,
-      ZXing.BarcodeFormat.UPC_E,
-      ZXing.BarcodeFormat.CODE_128,
-      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A,  ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
       ZXing.BarcodeFormat.QR_CODE,
     ]],
   ]);
-
   const reader = new ZXing.BrowserMultiFormatReader(hints);
 
-  // Scan every frame via canvas
   const loop = () => {
     if (!_active) return;
     try {
@@ -143,20 +138,11 @@ const runZXing = async (onError) => {
         if (_canvas.width !== w)  _canvas.width  = w;
         if (_canvas.height !== h) _canvas.height = h;
         _ctx.drawImage(_video, 0, 0, w, h);
-
-        // Try full frame
         try {
-          const img = _ctx.getImageData(0, 0, w, h);
-          const lum = ZXing.HTMLCanvasElementLuminanceSource
-            ? new ZXing.HTMLCanvasElementLuminanceSource(_canvas)
-            : null;
-          if (lum) {
-            const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-            const result = reader.decode(bmp);
-            if (result) { fire(result.getText()); }
-          } else {
-            const result = reader.decodeFromCanvas(_canvas);
-            if (result) fire(result.getText());
+          const result = reader.decodeFromCanvas(_canvas);
+          if (result) {
+            if (dbg) dbg.textContent = '✅ قرأ: ' + result.getText();
+            fire(result.getText());
           }
         } catch {}
       }
@@ -261,15 +247,19 @@ export const BarcodeScanner = {
     boostCamera(_stream);
 
     // Pick engine
+    const dbg = document.createElement('div');
+    dbg.style.cssText = 'position:absolute;bottom:60px;left:0;right:0;text-align:center;color:#fff;font-size:12px;background:rgba(0,0,0,0.6);padding:4px;z-index:999;font-family:monospace;';
+    document.getElementById('qs-scanner-container')?.parentElement?.appendChild(dbg);
+
     if ('BarcodeDetector' in window) {
-      console.log('[SCANNER] BarcodeDetector supported ✅');
-      runNative();
+      dbg.textContent = '🟢 Native BarcodeDetector';
+      runNative(dbg);
     } else {
-      console.log('[SCANNER] BarcodeDetector NOT supported, trying ZXing');
+      dbg.textContent = '🟡 جاري تحميل ZXing...';
       try {
-        await runZXing(onError);
+        await runZXing(onError, dbg);
       } catch (e) {
-        console.log('[SCANNER] ZXing failed:', e, '— falling back to Quagga');
+        dbg.textContent = '🔴 Quagga fallback';
         runQuagga(el, onError);
       }
     }
