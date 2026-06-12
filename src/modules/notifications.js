@@ -92,10 +92,35 @@ export const Notifications = {
 
     const unread = all.filter(n => !n.read_at).length;
     const badge  = DOM.get('notif-badge');
+    const bell   = DOM.get('notif-bell-icon');
+
     if (badge) {
-      badge.style.display = unread > 0 ? 'block' : 'none';
+      badge.style.display    = unread > 0 ? 'block' : 'none';
       badge.style.background = auto.some(n => n._type === 'out') ? '#dc2626' : '#f59e0b';
     }
+
+    // هز الجرس لو في تنبيهات
+    if (unread > 0 && bell) {
+      Notifications._shakeBell();
+      // هز كل 30 ثانية
+      clearInterval(Notifications._bellInterval);
+      Notifications._bellInterval = setInterval(() => {
+        if (document.visibilityState === 'visible') Notifications._shakeBell();
+      }, 30000);
+    } else {
+      clearInterval(Notifications._bellInterval);
+    }
+  },
+
+  _bellInterval: null,
+
+  _shakeBell() {
+    const bell = DOM.get('notif-bell-icon');
+    if (!bell) return;
+    bell.classList.remove('bell-ringing');
+    void bell.offsetWidth; // reflow
+    bell.classList.add('bell-ringing');
+    setTimeout(() => bell.classList.remove('bell-ringing'), 900);
   },
 
 
