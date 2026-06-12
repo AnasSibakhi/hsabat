@@ -1095,6 +1095,85 @@ PalPay" style="resize:none;"></textarea>
     </table></div></div>
    </div>
 
+   <!-- PRODUCT DETAILS -->
+   <div class="page" id="page-product">
+    <div class="ph">
+      <button onclick="Nav.goTo('inventory')" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--g7);padding:0 8px 0 0;">←</button>
+      <span class="pt" id="prod-title">تفاصيل المنتج</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-o" id="prod-print-btn" onclick="Inventory.printBarcode(window._prodId)"><i class="ti ti-printer"></i></button>
+        <button class="btn btn-s" onclick="Inventory.openEditModal(window._prodId)"><i class="ti ti-edit"></i> تعديل</button>
+      </div>
+    </div>
+
+    <!-- بطاقة المنتج الرئيسية -->
+    <div class="card" style="padding:18px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div>
+          <div id="prod-name" style="font-size:20px;font-weight:900;color:#1e293b;"></div>
+          <div id="prod-barcode" style="font-family:monospace;color:#64748b;font-size:13px;margin-top:4px;"></div>
+        </div>
+        <div id="prod-status-badge"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">سعر البيع</div>
+          <div id="prod-sale-price" style="font-size:20px;font-weight:900;color:#6366f1;"></div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">سعر التكلفة</div>
+          <div id="prod-cost-price" style="font-size:20px;font-weight:900;color:#475569;"></div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">الكمية</div>
+          <div id="prod-qty" style="font-size:20px;font-weight:900;color:#1e293b;"></div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">هامش الربح</div>
+          <div id="prod-margin" style="font-size:20px;font-weight:900;color:#10b981;"></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <span id="prod-category" style="background:#ede9fe;color:#6366f1;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;"></span>
+        <span id="prod-unit" style="background:#f1f5f9;color:#475569;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;"></span>
+      </div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div class="card" style="padding:12px;text-align:center;">
+        <div style="font-size:11px;color:#64748b;">إجمالي المبيعات</div>
+        <div id="prod-total-sold" style="font-size:17px;font-weight:900;color:#6366f1;">-</div>
+      </div>
+      <div class="card" style="padding:12px;text-align:center;">
+        <div style="font-size:11px;color:#64748b;">إجمالي الإيراد</div>
+        <div id="prod-total-revenue" style="font-size:17px;font-weight:900;color:#10b981;">-</div>
+      </div>
+      <div class="card" style="padding:12px;text-align:center;">
+        <div style="font-size:11px;color:#64748b;">إجمالي الربح</div>
+        <div id="prod-total-profit" style="font-size:17px;font-weight:900;color:#059669;">-</div>
+      </div>
+    </div>
+
+    <!-- سجل المشتريات -->
+    <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:8px;">📦 سجل المشتريات</div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="tw"><table class="dt">
+        <thead><tr><th>المورد</th><th>الكمية</th><th>التكلفة</th><th>التاريخ</th></tr></thead>
+        <tbody id="prod-purchases-list"><tr class="er"><td colspan="4">لا يوجد</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- سجل المبيعات -->
+    <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:8px;">🧾 آخر المبيعات</div>
+    <div class="card">
+      <div class="tw"><table class="dt">
+        <thead><tr><th>الفاتورة</th><th>الكمية</th><th>السعر</th><th>التاريخ</th></tr></thead>
+        <tbody id="prod-sales-list"><tr class="er"><td colspan="4">لا يوجد</td></tr></tbody>
+      </table></div>
+    </div>
+   </div>
+
    <!-- PURCHASES -->
    <div class="page" id="page-purchases">
     <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="Modal.open('m-pur')"><i class="ti ti-plus"></i> تسجيل</button></div>

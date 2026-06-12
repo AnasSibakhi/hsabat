@@ -74,6 +74,95 @@ const Inventory = {
   },
 
 
+  async openProduct(id) {
+    const item = State.inventory.find(i => i.id === id);
+    if (!item) return;
+    window._prodId = id;
+
+    // تعبئة البيانات الأساسية
+    document.getElementById('prod-title').textContent    = item.name;
+    document.getElementById('prod-name').textContent     = item.name;
+    document.getElementById('prod-barcode').textContent  = item.barcode ? '📊 ' + item.barcode : 'لا يوجد باركود';
+    document.getElementById('prod-sale-price').textContent = item.sale_price ? '₪' + item.sale_price.toFixed(2) : '-';
+    document.getElementById('prod-cost-price').textContent = item.cost_price ? '₪' + item.cost_price.toFixed(2) : '-';
+    document.getElementById('prod-qty').textContent      = item.quantity + ' ' + (item.unit || '');
+    document.getElementById('prod-category').textContent = item.category || 'عام';
+    document.getElementById('prod-unit').textContent     = item.unit || '';
+
+    // هامش الربح
+    const margin = item.sale_price && item.cost_price
+      ? (((item.sale_price - item.cost_price) / item.cost_price) * 100).toFixed(1) + '%'
+      : '-';
+    document.getElementById('prod-margin').textContent = margin;
+
+    // حالة المخزون
+    const statusEl = document.getElementById('prod-status-badge');
+    if (item.quantity <= 0)
+      statusEl.innerHTML = '<span style="background:#fee2e2;color:#dc2626;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🔴 نفد</span>';
+    else if (item.quantity <= (item.low_stock_alert || 5))
+      statusEl.innerHTML = '<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟡 منخفض</span>';
+    else
+      statusEl.innerHTML = '<span style="background:#dcfce7;color:#16a34a;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟢 متوفر</span>';
+
+    // إخفاء زر الطباعة لو ما في باركود
+    const printBtn = document.getElementById('prod-print-btn');
+    if (printBtn) printBtn.style.display = item.barcode ? 'flex' : 'none';
+
+    Nav.goTo('product');
+
+    // جلب سجل المشتريات
+    const { data: purchases } = await DB.purchases()
+      .select('supplier, quantity, cost, purchase_date')
+      .eq('product_name', item.name)
+      .order('purchase_date', { ascending: false })
+      .limit(10);
+
+    document.getElementById('prod-purchases-list').innerHTML = (purchases || []).length
+      ? purchases.map(p => `<tr>
+          <td style="color:#1e293b;font-weight:600;">${Utils.escape(p.supplier)}</td>
+          <td>${p.quantity}</td>
+          <td>₪${p.cost.toFixed(2)}</td>
+          <td style="color:#64748b;">${p.purchase_date}</td>
+        </tr>`).join('')
+      : '<tr class="er"><td colspan="4">لا يوجد سجل مشتريات</td></tr>';
+
+    // جلب سجل المبيعات من الفواتير
+    const { data: invoices } = await DB.invoices()
+      .select('id,invoice_date,items,total')
+      .order('invoice_date', { ascending: false })
+      .limit(50);
+
+    let totalSold = 0, totalRevenue = 0, totalProfit = 0;
+    const salesRows = [];
+
+    (invoices || []).forEach(inv => {
+      const items = Array.isArray(inv.items) ? inv.items : [];
+      items.forEach(it => {
+        if (it.product_id === id) {
+          const qty = it.qty || it.quantity || 1;
+          const price = it.price || 0;
+          const profit = (price - (item.cost_price || 0)) * qty;
+          totalSold    += qty;
+          totalRevenue += price * qty;
+          totalProfit  += profit;
+          salesRows.push(`<tr>
+            <td style="color:#6366f1;font-weight:700;">#${inv.id?.slice(-4) || '-'}</td>
+            <td>${qty}</td>
+            <td>₪${price.toFixed(2)}</td>
+            <td style="color:#64748b;">${inv.invoice_date}</td>
+          </tr>`);
+        }
+      });
+    });
+
+    document.getElementById('prod-total-sold').textContent    = totalSold + ' وحدة';
+    document.getElementById('prod-total-revenue').textContent = '₪' + totalRevenue.toFixed(2);
+    document.getElementById('prod-total-profit').textContent  = '₪' + totalProfit.toFixed(2);
+    document.getElementById('prod-sales-list').innerHTML = salesRows.length
+      ? salesRows.slice(0, 15).join('')
+      : '<tr class="er"><td colspan="4">لا يوجد مبيعات</td></tr>';
+  },
+
   filterList(q) {
     const query  = (q || document.getElementById('inv-search')?.value || '').toLowerCase();
     const status = document.getElementById('inv-filter-status')?.value || '';
@@ -97,7 +186,7 @@ const Inventory = {
       return '<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟢 متوفر</span>';
     };
     DOM.setHTML('invlist', list.length
-      ? list.map(i => `<tr>
+      ? list.map(i => `<tr onclick="Inventory.openProduct('${i.id}')" style="cursor:pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
           <td style="font-weight:700;">${Utils.escape(i.name)}</td>
           <td style="font-family:monospace;color:var(--g6);font-size:12px;">${i.barcode || '-'}</td>
           <td>${Utils.escape(i.category || '-')}</td>

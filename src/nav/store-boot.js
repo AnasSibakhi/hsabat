@@ -50,6 +50,7 @@ export const Store = {
     Nav.register('invoices',  () => Invoices.load());
     Nav.register('sales',     () => { Sales.load('day'); Sales.loadDailyReport(); });
     Nav.register('inventory', () => Inventory.load());
+    Nav.register('product',   () => {});
     Nav.register('purchases', () => Purchases.load());
     Nav.register('netcards',  () => { NetCards.loadStock(); NetCards.loadSales('day'); });
     Nav.register('returns',   () => Returns.load());
