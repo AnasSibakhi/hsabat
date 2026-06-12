@@ -276,10 +276,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   async _onBarcode(code) {
-    if (!code || code === _lastScan) return;
-    _lastScan = code;
-    clearTimeout(_scanTimer);
-    _scanTimer = setTimeout(() => { _lastScan = null; }, 1200);
+    if (!code) return;
 
     // ١. ابحث في الـ cache أولاً (فوري)
     let product = State.inventory.find(p => p.barcode === code);

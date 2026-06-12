@@ -16,6 +16,9 @@ let _flashOn = false;
 let _handler      = null;
 let _pendingCode  = null;
 let _pendingCount = 0;
+let _liveCode     = null;
+let _liveCount    = 0;
+let _liveTimer    = null;
 
 const DEBOUNCE = 900;
 
@@ -186,6 +189,12 @@ export const BarcodeScanner = {
           }
           if (_pendingCount >= 2) {
             _pendingCode = null; _pendingCount = 0;
+            // عداد حي على الشاشة
+            if (_liveCode === code) { _liveCount++; } else { _liveCode = code; _liveCount = 1; }
+            clearTimeout(_liveTimer);
+            _liveTimer = setTimeout(() => { _liveCode = null; _liveCount = 0; const e=document.getElementById('qs-live-counter'); if(e) e.style.display='none'; }, 2000);
+            const lc = document.getElementById('qs-live-counter');
+            if (lc) { lc.style.display='flex'; lc.textContent='×'+_liveCount; }
             fire(code);
           }
         };
