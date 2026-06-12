@@ -188,8 +188,11 @@ export const BarcodeScanner = {
             _pendingCount = 1;
           }
           if (_pendingCount >= 2) {
-            _pendingCode = null; _pendingCount = 0;  // reset فوراً
-            // عداد حي — debounce 800ms
+            _pendingCode  = code;   // keep code to block re-fire
+            _pendingCount = 0;      // reset count للقراءة التالية
+            // منع نفس الكود لمدة ثانية واحدة
+            setTimeout(() => { if (_pendingCode === code) _pendingCode = null; }, 1000);
+            // عداد حي
             clearTimeout(_liveTimer);
             if (_liveCode === code) {
               _liveCount++;
