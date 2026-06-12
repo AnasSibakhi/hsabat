@@ -303,13 +303,13 @@ const Purchases = {
         ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>'
         : '-';
       return '<tr>'
-        + '<td style="font-weight:700;">' + Utils.escape(p.supplier) + '</td>'
-        + '<td>' + phone + '</td>'
-        + '<td>' + Utils.escape(p.product_name) + '</td>'
-        + '<td>₪' + p.cost.toFixed(2) + '</td>'
+        + '<td style="font-weight:800;color:var(--g9);">' + Utils.escape(p.supplier) + '</td>'
+        + '<td style="color:var(--g7);">' + phone + '</td>'
+        + '<td style="color:var(--g7);">' + Utils.escape(p.product_name) + '</td>'
+        + '<td style="font-weight:600;">₪' + p.cost.toFixed(2) + '</td>'
         + '<td style="color:var(--s);font-weight:700;">₪' + paid.toFixed(2) + '</td>'
         + '<td style="color:var(--r);font-weight:800;">₪' + rem.toFixed(2) + '</td>'
-        + '<td>' + p.purchase_date + '</td>'
+        + '<td style="color:var(--g5);">' + p.purchase_date + '</td>'
         + '<td><button class="ibb" onclick="Purchases.openPayModal(\'' + p.id + '\')" >تسديد</button></td>'
         + '</tr>';
     }).join('');
