@@ -84,7 +84,10 @@ export const Notifications = {
         created_at:p.purchase_date+'T00:00:00', read_at:null, _type:'supplier' });
     });
 
-    const all = [...auto, ...(notifsRes.data||[])].sort(
+    const all = [...auto, ...(notifsRes.data||[])].map(n => ({
+      ...n,
+      read_at: n.read_at || (Notifications._isRead(n.id) ? 'local' : null),
+    })).sort(
       (a,b) => new Date(b.created_at) - new Date(a.created_at)
     );
 
@@ -112,7 +115,16 @@ export const Notifications = {
     }
   },
 
-  _bellInterval: null,
+  _readSet: new Set(JSON.parse(localStorage.getItem('notif_read') || '[]')),
+
+  _markRead(id) {
+    Notifications._readSet.add(String(id));
+    localStorage.setItem('notif_read', JSON.stringify([...Notifications._readSet]));
+  },
+
+  _isRead(id) {
+    return Notifications._readSet.has(String(id));
+  },
 
   _shakeBell() {
     const bell = DOM.get('notif-bell-icon');
@@ -136,7 +148,7 @@ export const Notifications = {
       const time    = new Date(n.created_at).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
       const unread  = !n.read_at;
       return `
-        <div onclick="Notifications.open('${n.id}')" style="
+        <div onclick="Notifications.open('${n.id}')" data-notif-id="${n.id}" style="
           padding:12px 14px;border-bottom:1px solid var(--g1);cursor:pointer;
           background:${unread ? 'var(--pl)' : '#fff'};
           display:flex;gap:10px;align-items:flex-start;
@@ -176,12 +188,19 @@ export const Notifications = {
   },
 
   async open(id) {
-    // Mark as read
-    await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
+    Notifications._markRead(id);
+    // لو إشعار DB — احفظه في الـ server
+    if (!String(id).includes('-')) {
+      await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
+    }
     await Notifications.load();
   },
 
   async markAllRead() {
+    // اقرأ كل التنبيهات التلقائية محلياً
+    const items = document.querySelectorAll('[data-notif-id]');
+    items.forEach(el => Notifications._markRead(el.dataset.notifId));
+    // واقرأ DB
     await sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
     await Notifications.load();
   },
