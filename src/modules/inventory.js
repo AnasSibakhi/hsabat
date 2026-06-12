@@ -67,25 +67,17 @@ const Inventory = {
     }
   },
 
-  async updateExistingQty() {
+  openExistingEdit() {
     const p = Inventory._existingProduct;
     if (!p) return;
-    const addQty = parseFloat(document.getElementById('inq')?.value) || 0;
-    if (addQty <= 0) { Notify.error('أدخل الكمية المضافة'); return; }
-
-    const newQty = p.quantity + addQty;
-    try {
-      const { error } = await DB.inventory().update({ quantity: newQty }).eq('id', p.id);
-      if (error) throw error;
-      Notify.success('تم تحديث كمية "' + p.name + '" إلى ' + newQty);
-      Modal.close('m-inv');
-      document.getElementById('inb').value = '';
-      document.getElementById('inv-bc-alert').style.display = 'none';
-      document.getElementById('inn').value = '';
-      Inventory._existingProduct = null;
-      await Inventory.load();
-    } catch (err) { Notify.error(err.message); }
+    Modal.close('m-inv');
+    document.getElementById('inv-bc-alert').style.display = 'none';
+    document.getElementById('inb').value = '';
+    document.getElementById('inn').value = '';
+    Inventory._existingProduct = null;
+    Inventory.openEditModal(p.id);
   },
+
 
   filterList(q) {
     const query  = (q || document.getElementById('inv-search')?.value || '').toLowerCase();
