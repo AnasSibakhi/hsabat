@@ -36,6 +36,57 @@ const Inventory = {
     Inventory._renderList(list);
   },
 
+  _existingProduct: null,
+
+  async onBarcodeInput(val) {
+    const alert  = document.getElementById('inv-bc-alert');
+    const nameEl = document.getElementById('inv-bc-alert-name');
+    Inventory._existingProduct = null;
+    if (!val || val.length < 6) { if (alert) alert.style.display = 'none'; return; }
+
+    // ابحث في الـ cache أولاً
+    let found = State.inventory.find(i => i.barcode === val);
+    if (!found) {
+      const { data } = await DB.inventory().select('*').eq('barcode', val).maybeSingle();
+      found = data;
+    }
+
+    if (found) {
+      Inventory._existingProduct = found;
+      // عبّي الاسم تلقائياً
+      const nameInput = document.getElementById('inn');
+      if (nameInput && !nameInput.value) nameInput.value = found.name;
+      // أظهر التنبيه
+      if (alert) alert.style.display = 'block';
+      if (nameEl) nameEl.innerHTML =
+        '<b>' + Utils.escape(found.name) + '</b>' +
+        ' — الكمية الحالية: <b>' + found.quantity + ' ' + (found.unit || '') + '</b>' +
+        ' — سعر البيع: <b>₪' + (found.sale_price || 0) + '</b>';
+    } else {
+      if (alert) alert.style.display = 'none';
+    }
+  },
+
+  async updateExistingQty() {
+    const p = Inventory._existingProduct;
+    if (!p) return;
+    const addQty = parseFloat(document.getElementById('inq')?.value) || 0;
+    if (addQty <= 0) { Notify.error('أدخل الكمية المضافة'); return; }
+
+    const newQty = p.quantity + addQty;
+    try {
+      const { error } = await DB.inventory().update({ quantity: newQty }).eq('id', p.id);
+      if (error) throw error;
+      Notify.success('تم تحديث كمية "' + p.name + '" إلى ' + newQty);
+      Modal.close('m-inv');
+      document.getElementById('inb').value = '';
+      document.getElementById('inv-bc-alert').style.display = 'none';
+      document.getElementById('inn').value = '';
+      Inventory._existingProduct = null;
+      await Inventory.load();
+    } catch (err) { Notify.error(err.message); }
+  },
+
   filterList(q) {
     const query  = (q || document.getElementById('inv-search')?.value || '').toLowerCase();
     const status = document.getElementById('inv-filter-status')?.value || '';
