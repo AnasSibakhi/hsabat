@@ -364,10 +364,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!name)              { Notify.error('أدخل اسم المنتج'); return; }
     if (!sell || sell <= 0) { Notify.error('أدخل سعر البيع');  return; }
 
-    // Check barcode uniqueness
+    // لو الباركود موجود — اسأل المستخدم
     if (bc) {
       const { data: existing } = await DB.inventory().select('id,name').eq('barcode', bc).maybeSingle();
-      if (existing) { Notify.error('الباركود موجود مسبقاً لـ "' + existing.name + '"'); return; }
+      if (existing) {
+        const ok = window.confirm('⚠️ الباركود مسجّل للمنتج:\n"' + existing.name + '"\n\nأضفه للسلة مباشرة؟');
+        if (ok) {
+          Modal.close('m-new-product');
+          QuickSale.addToCart(existing.id);
+          Notify.success('تم إضافة "' + existing.name + '" للسلة');
+        }
+        return;
+      }
     }
 
     try {
