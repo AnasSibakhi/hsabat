@@ -25,24 +25,83 @@ const Inventory = {
   async load() {
     await Inventory.loadList();
     const list = State.inventory;
-    const low  = list.filter(i => i.quantity <= i.low_stock_alert);
+    const low  = list.filter(i => i.quantity > 0 && i.quantity <= (i.low_stock_alert || 5));
+    const out  = list.filter(i => i.quantity <= 0);
 
-    DOM.setHTML('invalerts', low.map(i =>
-      `<div class="alert aw"><i class="ti ti-alert-circle"></i><span><strong>${Utils.escape(i.name)}</strong> — المتبقي: ${i.quantity} ${i.unit}</span></div>`
-    ).join(''));
+    const alerts = [
+      ...out.map(i  => `<div class="alert ad"><i class="ti ti-alert-triangle"></i><span><strong>${Utils.escape(i.name)}</strong> — نفد المخزون 🔴</span></div>`),
+      ...low.map(i  => `<div class="alert aw"><i class="ti ti-alert-circle"></i><span><strong>${Utils.escape(i.name)}</strong> — المتبقي: ${i.quantity} ${i.unit} 🟡</span></div>`),
+    ];
+    DOM.setHTML('invalerts', alerts.join(''));
+    Inventory._renderList(list);
+  },
 
+  filterList(q) {
+    const query  = (q || document.getElementById('inv-search')?.value || '').toLowerCase();
+    const status = document.getElementById('inv-filter-status')?.value || '';
+    const list   = State.inventory.filter(i => {
+      const matchQ = !query || i.name?.toLowerCase().includes(query) || i.barcode?.includes(query);
+      const qty    = i.quantity;
+      const low    = i.low_stock_alert || 5;
+      const matchS = !status
+        || (status === 'out' && qty <= 0)
+        || (status === 'low' && qty > 0 && qty <= low)
+        || (status === 'ok'  && qty > low);
+      return matchQ && matchS;
+    });
+    Inventory._renderList(list);
+  },
+
+  _renderList(list) {
+    const getStatus = (i) => {
+      if (i.quantity <= 0)                              return '<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🔴 نفد</span>';
+      if (i.quantity <= (i.low_stock_alert || 5))       return '<span style="background:#fef3c7;color:#d97706;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟡 منخفض</span>';
+      return '<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟢 متوفر</span>';
+    };
     DOM.setHTML('invlist', list.length
       ? list.map(i => `<tr>
-          <td>${Utils.escape(i.name)}</td>
-          <td>${Utils.escape(i.category)}</td>
-          <td>${i.quantity} ${Utils.escape(i.unit)}</td>
-          <td>${i.sale_price ? '₪' + i.sale_price : '-'}</td>
-          <td>${i.quantity <= i.low_stock_alert ? '<span class="br">قارب النفاد</span>' : '<span class="bg">متوفر</span>'}</td>
-          <td><button class="ibb" onclick="Inventory.openEditModal('${i.id}','${Utils.escape(i.name)}',${i.quantity},${i.sale_price || 0})">تعديل</button></td>
-          <td><button class="ibr" onclick="Inventory.delete('${i.id}')">حذف</button></td>
+          <td style="font-weight:700;">${Utils.escape(i.name)}</td>
+          <td style="font-family:monospace;color:var(--g6);font-size:12px;">${i.barcode || '-'}</td>
+          <td>${Utils.escape(i.category || '-')}</td>
+          <td style="color:var(--p);font-weight:700;">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</td>
+          <td style="color:var(--g6);">${i.cost_price ? '₪' + i.cost_price.toFixed(2) : '-'}</td>
+          <td style="font-weight:700;">${i.quantity} ${Utils.escape(i.unit || '')}</td>
+          <td>${getStatus(i)}</td>
+          <td style="white-space:nowrap;display:flex;gap:4px;">
+            <button class="ibb" onclick="Inventory.openEditModal('${i.id}','${Utils.escape(i.name)}',${i.quantity},${i.sale_price || 0})">تعديل</button>
+            ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
+            <button class="ibr" onclick="Inventory.delete('${i.id}')">حذف</button>
+          </td>
         </tr>`).join('')
-      : '<tr class="er"><td colspan="7">لا يوجد مخزون</td></tr>'
+      : '<tr class="er"><td colspan="8">لا يوجد منتجات</td></tr>'
     );
+  },
+
+  printBarcode(id) {
+    const item = State.inventory.find(i => i.id === id);
+    if (!item || !item.barcode) { Notify.error('لا يوجد باركود'); return; }
+
+    const win = window.open('', '_blank', 'width=400,height=300');
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="UTF-8">
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+      <style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Cairo,sans-serif;}
+      .label{text-align:center;padding:16px;border:1px dashed #ccc;border-radius:8px;}
+      .name{font-size:13px;font-weight:700;margin-bottom:6px;color:#1e293b;}
+      .price{font-size:15px;font-weight:900;color:#6366f1;margin-top:6px;}
+      </style></head><body>
+      <div class="label">
+        <div class="name">${Utils.escape(item.name)}</div>
+        <svg id="bc"></svg>
+        <div class="price">${item.sale_price ? '₪' + item.sale_price.toFixed(2) : ''}</div>
+      </div>
+      <script>
+        window.onload = function() {
+          JsBarcode('#bc', '${item.barcode}', {format:'CODE128',width:2,height:60,displayValue:true,fontSize:14});
+          setTimeout(() => { window.print(); window.close(); }, 500);
+        };
+      <\/script></body></html>`);
+    win.document.close();
   },
 
   async save() {

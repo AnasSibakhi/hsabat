@@ -1054,9 +1054,31 @@ PalPay" style="resize:none;"></textarea>
 
    <!-- INVENTORY -->
    <div class="page" id="page-inventory">
-    <div class="ph"><span class="pt">المخزون</span><button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة</button></div>
+    <div class="ph"><span class="pt">المخزون</span><button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة منتج</button></div>
     <div id="invalerts"></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>سعر البيع</th><th>الحالة</th><th></th><th></th></tr></thead><tbody id="invlist"><tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <!-- فلتر سريع -->
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <input class="inp" id="inv-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
+      <select class="inp" id="inv-filter-status" onchange="Inventory.filterList()" style="min-width:120px;">
+        <option value="">كل المنتجات</option>
+        <option value="out">🔴 نفد</option>
+        <option value="low">🟡 منخفض</option>
+        <option value="ok">🟢 متوفر</option>
+      </select>
+    </div>
+    <div class="card"><div class="tw"><table class="dt">
+      <thead><tr>
+        <th>المنتج</th>
+        <th>الباركود</th>
+        <th>الفئة</th>
+        <th>سعر البيع</th>
+        <th>سعر التكلفة</th>
+        <th>الكمية</th>
+        <th>الحالة</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="invlist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
+    </table></div></div>
    </div>
 
    <!-- PURCHASES -->
