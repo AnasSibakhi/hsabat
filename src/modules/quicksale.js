@@ -248,23 +248,20 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Barcode ──
-  // ── Continuous scan without closing camera ──
   async _beepAndAdd(code) {
     if (code === _lastScan) return;
 
-    // تحقق من الباركود في المخزون أولاً
+    // تحقق من المخزون
     let product = State.inventory.find(p => p.barcode === code);
     if (!product) {
       const { data } = await DB.inventory().select('*').eq('barcode', code).maybeSingle();
       if (data) { product = data; if (!State.inventory.find(p => p.id === data.id)) State.inventory.push(data); }
     }
 
-    // لو ما موجود في قاعدة البيانات — تجاهل القراءة وانتظر قراءة ثانية
     if (!product) {
-      // نحتاج تأكيد ثاني قبل نفتح modal الإضافة
       _unknownCount = _unknownCount || {};
       _unknownCount[code] = (_unknownCount[code] || 0) + 1;
-      if (_unknownCount[code] < 3) return; // انتظر 3 قراءات للباركود المجهول
+      if (_unknownCount[code] < 3) return;
       _unknownCount[code] = 0;
       _lastScan = code;
       clearTimeout(_scanTimer);
@@ -274,16 +271,27 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const nm = DOM.get('qs-new-name');   if (nm) { nm.value = ''; setTimeout(() => nm.focus(), 200); }
       Modal.open('m-new-product');
       Notify.error('المنتج غير موجود — أضفه الآن');
-      QuickSale._beep('error');
       return;
     }
 
-    // موجود — أضفه فوراً
+    // موجود — زوم + بيب + إضافة
     _lastScan = code;
     clearTimeout(_scanTimer);
-    _scanTimer = setTimeout(() => { _lastScan = null; }, 1500);
-    QuickSale.addToCart(product.id);
+    _scanTimer = setTimeout(() => { _lastScan = null; }, 1200);
+
+    // تأثير الزوم على الكاميرا
+    const container = DOM.get('qs-scanner-container');
+    if (container) {
+      container.style.transition = 'transform 0.2s ease';
+      container.style.transform  = 'scale(1.18)';
+      setTimeout(() => {
+        container.style.transform = 'scale(1)';
+      }, 300);
+    }
+
     QuickSale._beep('success');
+    if (navigator.vibrate) navigator.vibrate(40);
+    QuickSale.addToCart(product.id);
   },
 
   async _onBarcode(code) {
