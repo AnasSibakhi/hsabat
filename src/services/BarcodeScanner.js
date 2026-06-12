@@ -133,8 +133,9 @@ export const BarcodeScanner = {
         frequency: 15,
         decoder: {
           readers: [
-            'ean_reader', 'ean_8_reader',
-            'upc_reader', 'upc_e_reader',
+            'ean_reader',
+            'upc_reader',
+            'upc_e_reader',
             'code_128_reader',
           ],
           multiple: false,
@@ -162,15 +163,16 @@ export const BarcodeScanner = {
         _handler = (res) => {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
-          if (!code || code.length < 4) return;
-          const isEAN13 = fmt === 'ean_13' && code.length === 13;
-          const isEAN8  = fmt === 'ean_8'  && code.length === 8;
-          const isUPC   = (fmt === 'upc_a' || fmt === 'upc_e');
-          const isOther = !['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-          // EAN/UPC — تحقق من الطول والـ checksum
-          if ((isEAN13 || isEAN8 || isUPC) && !eanOk(code)) return;
+          if (!code || code.length < 8) return;
+          // EAN-13 يجب أن يكون 13 رقم بالضبط
           if (fmt === 'ean_13' && code.length !== 13) return;
+          // EAN-8 يجب أن يكون 8 أرقام بالضبط
           if (fmt === 'ean_8'  && code.length !== 8)  return;
+          // تحقق من checksum لكل EAN/UPC
+          const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
+          if (isEAN && !eanOk(code)) return;
+          // رفض أي قراءة code_128 أقل من 4 أرقام
+          if (fmt === 'code_128' && code.length < 4) return;
           fire(code);
         };
         Quagga.onDetected(_handler);
