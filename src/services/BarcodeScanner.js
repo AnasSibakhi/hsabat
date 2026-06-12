@@ -14,11 +14,7 @@ let _video   = null;
 let _raf     = null;
 let _flashOn = false;
 let _handler      = null;
-let _pendingCode  = null;
-let _pendingCount = 0;
-let _liveCode     = null;
-let _liveCount    = 0;
-let _liveTimer    = null;
+
 
 const DEBOUNCE = 900;
 
@@ -180,51 +176,7 @@ export const BarcodeScanner = {
           const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
           if (isEAN && !eanOk(code)) return;
           if (fmt === 'code_128' && code.length < 4) return;
-          // قراءتان متطابقتان للتأكد — reset بعد القبول
-          if (_pendingCode === code) {
-            _pendingCount++;
-          } else {
-            _pendingCode  = code;
-            _pendingCount = 1;
-          }
-          if (_pendingCount >= 2) {
-            _pendingCode  = code;   // keep code to block re-fire
-            _pendingCount = 0;      // reset count للقراءة التالية
-            // منع نفس الكود لمدة ثانية واحدة
-            setTimeout(() => { if (_pendingCode === code) _pendingCode = null; }, 1000);
-            // عداد حي
-            clearTimeout(_liveTimer);
-            if (_liveCode === code) {
-              _liveCount++;
-            } else {
-              _liveCode  = code;
-              _liveCount = 1;
-            }
-            // تحديث الشاشة فوراً
-            const lc = document.getElementById('qs-live-counter');
-            if (lc) {
-              const prod      = (window.State?.inventory || []).find(p => p.barcode === code);
-              const name      = prod ? prod.name : '';
-              const inCart    = window.QuickSale?._getCartQty?.(code) || 0;
-              const stock     = prod ? prod.quantity : null;
-              const remaining = stock !== null ? Math.max(0, stock - inCart) : null;
-              lc.style.display = 'flex';
-              lc.innerHTML = '<div style="text-align:center;padding:4px;">'
-                + (name ? '<div style="font-size:15px;font-weight:700;margin-bottom:6px;opacity:0.95;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</div>' : '')
-                + '<div style="font-size:56px;font-weight:900;line-height:1;">×' + _liveCount + '</div>'
-                + (remaining !== null
-                    ? '<div style="font-size:13px;opacity:0.85;margin-top:6px;">متبقي: ' + remaining + '</div>'
-                    : '')
-                + '</div>';
-            }
-            // إخفاء العداد بعد 1.5 ثانية من آخر قراءة
-            _liveTimer = setTimeout(() => {
-              _liveCode = null; _liveCount = 0;
-              const e = document.getElementById('qs-live-counter');
-              if (e) e.style.display = 'none';
-            }, 1500);
-            fire(code);
-          }
+          fire(code);
         };
         Quagga.onDetected(_handler);
       });
