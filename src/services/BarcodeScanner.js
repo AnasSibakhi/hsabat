@@ -101,11 +101,19 @@ export const BarcodeScanner = {
 
   _quagga(el, onError) {
     const init = () => {
+      // نوقف الفيديو الحالي ونخلي Quagga يفتح كاميراه
+      try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
+      try { _video?.remove(); } catch {}
+
       Quagga.init({
         inputStream: {
           type: 'LiveStream',
-          target: _video,
-          constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          target: el,
+          constraints: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         },
         locator: { patchSize: 'medium', halfSample: true },
         numOfWorkers: 2,
@@ -116,8 +124,28 @@ export const BarcodeScanner = {
         },
         locate: true,
       }, (err) => {
-        if (err) { BarcodeScanner._canvasLoop(onError); return; }
+        if (err) {
+          onError?.('لا يمكن فتح الكاميرا: ' + (err?.message || ''));
+          return;
+        }
         Quagga.start();
+        // تحسين الكاميرا
+        setTimeout(() => {
+          try {
+            const video = el.querySelector('video');
+            const track = video?.srcObject?.getVideoTracks()?.[0];
+            if (!track) return;
+            const c = track.getCapabilities?.() || {};
+            const s = {};
+            if (c.focusMode?.includes('continuous'))        s.focusMode = 'continuous';
+            if (c.exposureMode?.includes('continuous'))     s.exposureMode = 'continuous';
+            if (c.whiteBalanceMode?.includes('continuous')) s.whiteBalanceMode = 'continuous';
+            if (c.sharpness) s.sharpness = c.sharpness.max;
+            if (Object.keys(s).length) track.applyConstraints({ advanced:[s] }).catch(()=>{});
+            _stream = video?.srcObject; // احفظ الـ stream للفلاش
+          } catch {}
+        }, 1000);
+
         Quagga.onDetected((res) => {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
@@ -128,11 +156,12 @@ export const BarcodeScanner = {
         });
       });
     };
+
     if (window.Quagga) { init(); return; }
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js';
     s.onload = init;
-    s.onerror = () => BarcodeScanner._canvasLoop(onError);
+    s.onerror = () => onError?.('فشل تحميل الباركود');
     document.head.appendChild(s);
   },
 
