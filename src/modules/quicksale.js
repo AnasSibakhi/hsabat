@@ -13,6 +13,7 @@ import { CONFIG, PAYMENT } from '../config/constants.js';
 import * as Modal          from '../nav/modal.js';
 import { getDashboard, getDebts, getInventory } from '../core/registry.js';
 import { Customers }       from './customers.js';
+import { BarcodeScanner }  from '../services/BarcodeScanner.js';
 
 // ── State ──
 let _cart     = [];   // [{id, name, barcode, unit, price, cost, qty, maxQty}]
