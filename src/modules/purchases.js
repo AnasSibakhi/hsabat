@@ -34,15 +34,15 @@ const Purchases = {
           const remaining   = p.remaining > 0 ? '<br><small style="color:var(--r);">متبقي: ₪' + p.remaining.toFixed(2) + '</small>' : '';
           const salePrice   = p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-';
           return '<tr>'
-            + '<td>' + Utils.escape(p.supplier) + '</td>'
-            + '<td>' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
-            + '<td>' + Utils.escape(p.invoice_ref || '-') + '</td>'
-            + '<td>' + Utils.escape(p.product_name) + '</td>'
-            + '<td>' + p.quantity + '</td>'
-            + '<td>₪' + p.cost.toFixed(2) + '</td>'
-            + '<td style="color:var(--p);font-weight:700;">' + salePrice + '</td>'
+            + '<td style="font-weight:800;color:#1e293b;">' + Utils.escape(p.supplier) + '</td>'
+            + '<td style="color:#2563eb;">' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:#2563eb;">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
+            + '<td style="color:#475569;">' + Utils.escape(p.invoice_ref || '-') + '</td>'
+            + '<td style="color:#1e293b;font-weight:600;">' + Utils.escape(p.product_name) + '</td>'
+            + '<td style="color:#1e293b;">' + p.quantity + '</td>'
+            + '<td style="color:#1e293b;font-weight:600;">₪' + p.cost.toFixed(2) + '</td>'
+            + '<td style="color:#6366f1;font-weight:700;">' + salePrice + '</td>'
             + '<td><span style="color:' + statusColor + ';font-weight:700;">' + statusLabel + '</span>' + remaining + '</td>'
-            + '<td>' + p.purchase_date + '</td>'
+            + '<td style="color:#64748b;">' + p.purchase_date + '</td>'
             + '<td style="white-space:nowrap;">'
             + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')" style="margin-left:4px;">تعديل</button>'
             + '<button class="ibb" onclick="Purchases.openReturn(\'' + p.id + '\')" style="margin-left:4px;background:var(--rl);color:var(--r);border-color:var(--r);">🔄</button>'
@@ -378,7 +378,7 @@ const Purchases = {
     document.getElementById('ret-pur-id').value = id;
     const unitCost = p.quantity > 0 ? (p.cost / p.quantity) : 0;
     document.getElementById('ret-pur-info').innerHTML =
-      '<b style="color:var(--g9);">' + Utils.escape(p.supplier) + '</b> — ' + Utils.escape(p.product_name) +
+      '<b style="color:#1e293b;">' + Utils.escape(p.supplier) + '</b> — ' + Utils.escape(p.product_name) +
       '<br>الكمية المتوفرة: <b>' + p.quantity + '</b> — تكلفة الوحدة: <b>₪' + unitCost.toFixed(2) + '</b>';
     document.getElementById('ret-pur-qty').value    = '';
     document.getElementById('ret-pur-amount').value = '';
