@@ -28,20 +28,26 @@ const Purchases = {
     (data || []).forEach(p => { Purchases._cache[p.id] = p; });
 
     DOM.setHTML('purlist', (data || []).length
-      ? data.map(p => '<tr>'
-          + '<td>' + Utils.escape(p.supplier) + '</td>'
-          + '<td>' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
-          + '<td>' + Utils.escape(p.invoice_ref || '-') + '</td>'
-          + '<td>' + Utils.escape(p.product_name) + '</td>'
-          + '<td>' + p.quantity + '</td>'
-          + '<td>₪' + p.cost.toFixed(2) + '</td>'
-          + '<td>' + p.purchase_date + '</td>'
-          + '<td>'
-          + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')" style="margin-left:4px;">تعديل</button>'
-          + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
-          + '</td>'
-          + '</tr>').join('')
-      : '<tr class="er"><td colspan="6">لا توجد مشتريات</td></tr>'
+      ? data.map(p => {
+          const statusLabel = { cash: '💵 كاش', transfer: '🏦 تحويل', defer: '⏳ آجل' }[p.payment_status] || '💵 كاش';
+          const statusColor = { cash: 'var(--s)', transfer: 'var(--p)', defer: 'var(--r)' }[p.payment_status] || 'var(--s)';
+          const remaining   = p.remaining > 0 ? '<br><small style="color:var(--r);">متبقي: ₪' + p.remaining.toFixed(2) + '</small>' : '';
+          return '<tr>'
+            + '<td>' + Utils.escape(p.supplier) + '</td>'
+            + '<td>' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
+            + '<td>' + Utils.escape(p.invoice_ref || '-') + '</td>'
+            + '<td>' + Utils.escape(p.product_name) + '</td>'
+            + '<td>' + p.quantity + '</td>'
+            + '<td>₪' + p.cost.toFixed(2) + '</td>'
+            + '<td><span style="color:' + statusColor + ';font-weight:700;">' + statusLabel + '</span>' + remaining + '</td>'
+            + '<td>' + p.purchase_date + '</td>'
+            + '<td>'
+            + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')" style="margin-left:4px;">تعديل</button>'
+            + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
+            + '</td>'
+            + '</tr>';
+        }).join('')
+      : '<tr class="er"><td colspan="9">لا توجد مشتريات</td></tr>'
     );
   },
 
@@ -108,6 +114,44 @@ const Purchases = {
       totalEl.style.background = 'var(--sl)';
       totalEl.style.color      = 'var(--s)';
     }
+    Purchases.calcRemaining();
+  },
+
+  calcTotalAndRemaining() {
+    Purchases.calcRemaining();
+  },
+
+  setPayStatus(status) {
+    DOM.get('pur-pay-status').value = status;
+    const btns = { cash: 'pur-pay-cash', transfer: 'pur-pay-transfer', defer: 'pur-pay-defer' };
+    Object.entries(btns).forEach(([k, id]) => {
+      const btn = DOM.get(id);
+      if (!btn) return;
+      if (k === status) {
+        btn.style.background   = 'var(--p)';
+        btn.style.color        = '#fff';
+        btn.style.borderColor  = 'var(--p)';
+      } else {
+        btn.style.background  = '#fff';
+        btn.style.color       = 'var(--g7)';
+        btn.style.borderColor = 'var(--br)';
+      }
+    });
+    // كاش وتحويل = دفع كلي، آجل = دفع جزئي/كلي
+    const section = DOM.get('pur-partial-section');
+    if (section) section.style.display = (status === 'defer') ? 'block' : 'none';
+    if (status !== 'defer') {
+      const paid = DOM.get('pur-paid-amount'); if (paid) paid.value = '';
+      const rem  = DOM.get('pur-remaining');   if (rem)  rem.value  = '';
+    }
+    Purchases.calcRemaining();
+  },
+
+  calcRemaining() {
+    const total  = parseFloat(DOM.get('puc')?.value) || 0;
+    const paid   = parseFloat(DOM.get('pur-paid-amount')?.value) || 0;
+    const remEl  = DOM.get('pur-remaining');
+    if (remEl) remEl.value = Math.max(0, total - paid).toFixed(2);
   },
 
 
@@ -130,6 +174,10 @@ const Purchases = {
     const supplierPhone   = DOM.val('pus-phone');
     const invoiceNumber   = DOM.val('pus-invoice');
 
+    const payStatus  = DOM.val('pur-pay-status') || 'cash';
+    const paidAmount = parseFloat(DOM.val('pur-paid-amount')) || (payStatus !== 'defer' ? cost : 0);
+    const remaining  = Math.max(0, cost - paidAmount);
+
     State.isMutating = true;
     try {
       const { error } = await DB.purchases().insert({
@@ -137,6 +185,9 @@ const Purchases = {
         quantity: qty, cost, purchase_date: DOM.val('pud'),
         supplier_phone: supplierPhone || null,
         invoice_ref:    invoiceNumber || null,
+        payment_status: payStatus,
+        paid_amount:    paidAmount,
+        remaining:      remaining,
       });
       if (error) throw error;
 
@@ -190,6 +241,10 @@ const Purchases = {
       const invno = DOM.get('pus-invoice');if (invno) invno.value = '';
       const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
       const inp = DOM.get('pup'); if (inp) inp.placeholder = 'اتركه فارغاً لو اخترت من فوق';
+      // Reset payment
+      Purchases.setPayStatus('cash');
+      const paidEl = DOM.get('pur-paid-amount'); if (paidEl) paidEl.value = '';
+      const remEl  = DOM.get('pur-remaining');   if (remEl)  remEl.value  = '';
       await getInventory().load();
       await Purchases.load();
       await getDashboard().load();

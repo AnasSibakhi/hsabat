@@ -1384,19 +1384,54 @@ PalPay" style="resize:none;"></textarea>
    <div class="fg"><label class="lbl">الكمية *</label><input class="inp" type="number" id="puq" value="1" inputmode="decimal" oninput="Purchases.calcTotal()"></div>
    <div class="fg"><label class="lbl">تكلفة الوحدة (₪)</label><input class="inp" type="number" id="puu" inputmode="decimal" placeholder="سعر الوحدة" oninput="Purchases.calcTotal()"></div>
  </div>
- <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="puc" inputmode="decimal" placeholder="يُحسب تلقائياً" oninput="Purchases.calcTotal()" style="background:var(--sl);font-weight:700;color:var(--s);"></div>
- <div class="fg"><label class="lbl">سعر البيع للوحدة (₪) *</label><input class="inp" type="number" id="pus-price" inputmode="decimal" placeholder="كم ستبيع الوحدة؟" style="background:var(--pl);font-weight:700;color:var(--p);"></div>
+ <div class="fr">
+   <div class="fg"><label class="lbl">التكلفة الإجمالية (₪) *</label><input class="inp" type="number" id="puc" inputmode="decimal" placeholder="يُحسب تلقائياً" oninput="Purchases.calcTotalAndRemaining()" style="background:var(--sl);font-weight:700;color:var(--s);"></div>
+   <div class="fg"><label class="lbl">سعر البيع للوحدة (₪) *</label><input class="inp" type="number" id="pus-price" inputmode="decimal" placeholder="سعر البيع" style="background:var(--pl);font-weight:700;color:var(--p);"></div>
+ </div>
 
  <!-- 3. المورد -->
  <div class="fr">
    <div class="fg"><label class="lbl">المورد *</label><input class="inp" id="pus" placeholder="اسم المورد"></div>
+   <div class="fg"><label class="lbl">جوال المورد</label><input class="inp" id="pus-phone" inputmode="tel" placeholder="اختياري"></div>
+ </div>
+ <div class="fr">
    <div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="pud"></div>
+   <div class="fg"><label class="lbl">رقم فاتورة المورد</label><input class="inp" id="pus-invoice" placeholder="اختياري"></div>
  </div>
 
- <!-- 4. تفاصيل اختيارية -->
- <div class="fr">
-   <div class="fg"><label class="lbl">جوال المورد</label><input class="inp" id="pus-phone" inputmode="tel" placeholder="اختياري"></div>
-   <div class="fg"><label class="lbl">رقم فاتورة المورد</label><input class="inp" id="pus-invoice" placeholder="اختياري"></div>
+ <!-- 4. حالة الدفع للتاجر -->
+ <div class="fg" style="margin-top:4px;">
+   <label class="lbl">حالة الدفع للتاجر</label>
+   <div style="display:flex;gap:8px;margin-top:6px;">
+     <button type="button" id="pur-pay-cash" onclick="Purchases.setPayStatus('cash')"
+       style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--br);background:#fff;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;">
+       💵 كاش
+     </button>
+     <button type="button" id="pur-pay-transfer" onclick="Purchases.setPayStatus('transfer')"
+       style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--br);background:#fff;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;">
+       🏦 تحويل
+     </button>
+     <button type="button" id="pur-pay-defer" onclick="Purchases.setPayStatus('defer')"
+       style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--br);background:#fff;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;">
+       ⏳ آجل
+     </button>
+   </div>
+   <input type="hidden" id="pur-pay-status" value="cash">
+ </div>
+
+ <!-- 5. مبلغ مدفوع (يظهر فقط في دفع جزئي/آجل) -->
+ <div id="pur-partial-section" style="display:none;">
+   <div class="fr" style="margin-top:8px;">
+     <div class="fg">
+       <label class="lbl">المبلغ المدفوع (₪)</label>
+       <input class="inp" type="number" id="pur-paid-amount" inputmode="decimal" placeholder="0" oninput="Purchases.calcRemaining()">
+     </div>
+     <div class="fg">
+       <label class="lbl">المتبقي للتاجر (₪)</label>
+       <input class="inp" type="number" id="pur-remaining" inputmode="decimal" readonly
+         style="background:var(--rl);color:var(--r);font-weight:700;">
+     </div>
+   </div>
  </div>
 
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-pur')">إلغاء</button><button class="btn btn-s" onclick="Purchases.save()">حفظ وتحديث المخزون</button></div>
