@@ -142,12 +142,26 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 @media(max-width:768px){
   .sa-menu-btn{display:flex;}
   .sa-admin-chip{display:none;}
-  .sa-sidebar{position:fixed;top:0;right:0;bottom:0;z-index:401;transform:translateX(100%);width:260px;box-shadow:-8px 0 32px rgba(0,0,0,0.3);}
+  .sa-sidebar{position:fixed;top:0;right:0;bottom:0;z-index:401;transform:translateX(100%);width:75vw;max-width:280px;box-shadow:-8px 0 32px rgba(0,0,0,0.3);}
   .sa-sidebar.open{transform:translateX(0);}
-  .sa-stats-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
-  .sa-content{padding:1rem;padding-bottom:1.5rem;}
-  .sa-title{font-size:18px;}
-  table.sa-dt th,table.sa-dt td{padding:8px 10px;font-size:12px;}
+  .sa-stats-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .sa-stat{padding:.9rem;}
+  .sa-stat-value{font-size:20px;}
+  .sa-content{padding:.75rem;padding-bottom:2rem;}
+  .sa-title{font-size:17px;}
+  .sa-card-body{padding:.9rem;}
+  .sa-page-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  /* Tables scroll on mobile */
+  .sa-card{overflow-x:auto;}
+  table.sa-dt{min-width:500px;}
+  table.sa-dt th,table.sa-dt td{padding:8px;font-size:11px;}
+  /* Forms full width */
+  .sa-form-group input,.sa-form-group select,.sa-input,.sa-select{font-size:16px;}
+  /* Buttons */
+  .sa-btn{padding:9px 14px;font-size:12px;}
+  /* Grid layouts inside admin */
+  [style*="grid-template-columns:1fr 2fr"]{display:block!important;}
+  [style*="grid-template-columns:1fr 2fr"] > *{margin-bottom:.75rem;}
 }
 @media(min-width:769px){
   .sa-sidebar{transform:none!important;}
