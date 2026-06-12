@@ -107,8 +107,8 @@ export const Notifications = {
       return;
     }
     list.innerHTML = items.map(n => {
-      const date    = new Date(n.created_at).toLocaleDateString('ar-EG');
-      const time    = new Date(n.created_at).toLocaleTimeString('ar-EG', { hour:'2-digit', minute:'2-digit' });
+      const date    = new Date(n.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      const time    = new Date(n.created_at).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
       const unread  = !n.read_at;
       return `
         <div onclick="Notifications.open('${n.id}')" style="

@@ -28,11 +28,6 @@ const Inventory = {
     const low  = list.filter(i => i.quantity > 0 && i.quantity <= (i.low_stock_alert || 5));
     const out  = list.filter(i => i.quantity <= 0);
 
-    const alerts = [
-      ...out.map(i  => `<div class="alert ad"><i class="ti ti-alert-triangle"></i><span><strong>${Utils.escape(i.name)}</strong> — نفد المخزون 🔴</span></div>`),
-      ...low.map(i  => `<div class="alert aw"><i class="ti ti-alert-circle"></i><span><strong>${Utils.escape(i.name)}</strong> — المتبقي: ${i.quantity} ${i.unit} 🟡</span></div>`),
-    ];
-    DOM.setHTML('invalerts', alerts.join(''));
     Inventory._renderList(list);
   },
 
