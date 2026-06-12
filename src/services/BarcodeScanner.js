@@ -141,15 +141,12 @@ export const BarcodeScanner = {
         },
         locate: true,
       }, (err) => {
-        const dbg = document.getElementById('qs-scan-debug');
         if (err) {
-          if (dbg) dbg.textContent = '❌ Quagga Error: ' + (err?.message || JSON.stringify(err));
           onError?.(err?.message?.includes('ermission')
             ? 'يرجى السماح بالوصول للكاميرا'
             : 'لا يمكن فتح الكاميرا');
           return;
         }
-        if (dbg) dbg.textContent = '✅ Quagga started — scanning...';
         Quagga.start();
         _active = true;
 
@@ -163,14 +160,11 @@ export const BarcodeScanner = {
         }, 800);
 
         _handler = (res) => {
-          const dbg2 = document.getElementById('qs-scan-debug');
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
           if (!code || code.length < 4) return;
-          if (dbg2) dbg2.textContent = '📷 detected: ' + code + ' fmt:' + fmt;
           const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-          if (isEAN && !eanOk(code)) { if (dbg2) dbg2.textContent += ' ❌ checksum fail'; return; }
-          if (dbg2) dbg2.textContent = '🔥 firing: ' + code;
+          if (isEAN && !eanOk(code)) return;
           fire(code);
         };
         Quagga.onDetected(_handler);
