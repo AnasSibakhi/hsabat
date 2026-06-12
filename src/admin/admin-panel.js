@@ -238,11 +238,35 @@ const AdminPanel = {
   editStore() { Notify.show('ميزة التعديل قريباً'); },
 
   async sendNotification() {
-    const title = DOM.val('notif-title');
-    const msg   = DOM.val('notif-msg');
+    const title   = DOM.val('notif-title');
+    const msg     = DOM.val('notif-msg');
+    const type    = DOM.val('notif-type') || 'info';
+    const sendAll = DOM.get('notif-all')?.checked;
     if (!title || !msg) { Notify.error('أدخل العنوان والرسالة'); return; }
-    await sb.from('notifications').insert({ from_id: State.user.id, title, message: msg });
-    Notify.success('تم إرسال الإشعار');
+
+    const typeIcon = { info:'📢', update:'🆕', feature:'✨', warning:'⚠️' }[type] || '📢';
+    const fullTitle = typeIcon + ' ' + title;
+
+    if (sendAll) {
+      // أرسل لكل المحلات
+      const { data: stores } = await sbAdmin.from('app_accounts').select('id');
+      const rows = (stores || []).map(s => ({
+        from_id: State.user.id,
+        store_id: s.id,
+        title: fullTitle,
+        message: msg,
+        type,
+      }));
+      if (rows.length) await sbAdmin.from('notifications').insert(rows);
+    } else {
+      await sb.from('notifications').insert({
+        from_id: State.user.id,
+        title: fullTitle,
+        message: msg,
+        type,
+      });
+    }
+    Notify.success('تم إرسال الإشعار لـ ' + (sendAll ? 'جميع المحلات' : 'المحل الحالي'));
     DOM.clearInputs('notif-title', 'notif-msg');
   },
 

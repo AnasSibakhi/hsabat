@@ -658,6 +658,15 @@ body.dark .ni.active{background:#1e3a5f;}
     <div class="sa-title">🔔 إرسال إشعار</div>
     <div class="sa-card">
      <div style="padding:1.25rem;">
+      <div style="margin-bottom:1rem;">
+       <label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">نوع الإشعار</label>
+       <select class="inp" id="notif-type" style="background:#334155;border-color:#475569;color:#f1f5f9;">
+        <option value="info">📢 إعلان عام</option>
+        <option value="update">🆕 تحديث جديد</option>
+        <option value="feature">✨ ميزة جديدة</option>
+        <option value="warning">⚠️ تنبيه</option>
+       </select>
+      </div>
       <div style="margin-bottom:1rem;"><label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">العنوان</label><input class="inp" id="notif-title" placeholder="عنوان الإشعار" style="background:#334155;border-color:#475569;color:#f1f5f9;"></div>
       <div style="margin-bottom:1rem;"><label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">الرسالة</label><textarea class="inp" id="notif-msg" rows="4" placeholder="نص الإشعار..." style="background:#334155;border-color:#475569;color:#f1f5f9;resize:none;"></textarea></div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;margin-bottom:1rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>

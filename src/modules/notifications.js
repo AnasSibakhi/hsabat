@@ -13,10 +13,11 @@ export const Notifications = {
   async load() {
     if (!State.user?.id) return;
 
-    // إشعارات من جدول notifications
+    // إشعارات من جدول notifications الخاصة بهذا المحل
     const { data: notifs } = await sb
       .from('notifications')
       .select('*')
+      .or(`store_id.eq.${State.user.id},store_id.is.null`)
       .order('created_at', { ascending: false })
       .limit(20);
 
