@@ -1442,11 +1442,47 @@ PalPay" style="resize:none;"></textarea>
 
 <!-- Edit Inventory -->
 <div class="mo" id="m-editinv"><div class="modal">
- <div class="mhdr"><span class="mtitle">تعديل الصنف</span><button class="mclose" onclick="Modal.close('m-editinv')">✕</button></div>
+ <div class="mhdr"><span class="mtitle">تعديل المنتج</span><button class="mclose" onclick="Modal.close('m-editinv')">✕</button></div>
  <input type="hidden" id="einvid">
- <div class="fg"><label class="lbl">الصنف</label><input class="inp" id="einvname" readonly style="background:var(--g1);"></div>
- <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="einvqty" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="einvprice" inputmode="decimal"></div></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-editinv')">إلغاء</button><button class="btn btn-s" onclick="Inventory.update()">تحديث</button></div>
+
+ <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="einvname"></div>
+ <div class="fg">
+   <label class="lbl">الباركود</label>
+   <div style="display:flex;gap:8px;">
+     <input class="inp" id="einvbarcode" inputmode="numeric" style="flex:1;font-family:monospace;" placeholder="اختياري">
+     <button type="button" onclick="Inventory.scanBarcodeEdit()" style="padding:8px 12px;border-radius:10px;border:2px solid var(--p);background:var(--pl);color:var(--p);font-size:18px;cursor:pointer;">📷</button>
+   </div>
+ </div>
+ <div class="fr">
+   <div class="fg"><label class="lbl">الفئة</label>
+     <select class="inp" id="einvcat">
+       <option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>مشروبات</option><option>عام</option>
+     </select>
+   </div>
+   <div class="fg"><label class="lbl">النوع</label>
+     <select class="inp" id="einvunit">
+       <option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option>
+     </select>
+   </div>
+ </div>
+ <div class="fr">
+   <div class="fg"><label class="lbl">الكمية الحالية</label><input class="inp" type="number" id="einvqty" inputmode="decimal"></div>
+   <div class="fg">
+     <label class="lbl">إضافة كمية ➕</label>
+     <input class="inp" type="number" id="einvqty-add" inputmode="decimal" placeholder="0" oninput="Inventory.calcNewQty()">
+   </div>
+ </div>
+ <!-- مجموع الكمية -->
+ <div id="einv-qty-preview" style="display:none;background:var(--sl);color:var(--s);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;margin-bottom:8px;"></div>
+ <div class="fr">
+   <div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="einvprice" inputmode="decimal"></div>
+   <div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="einvcost" inputmode="decimal"></div>
+ </div>
+ <div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="einvalert" inputmode="decimal"></div>
+ <div class="mfoot">
+   <button class="btn btn-o" onclick="Modal.close('m-editinv')">إلغاء</button>
+   <button class="btn btn-s" onclick="Inventory.update()">حفظ التعديل</button>
+ </div>
 </div></div>
 
 <!-- Purchases -->

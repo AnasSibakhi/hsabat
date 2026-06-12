@@ -119,7 +119,7 @@ const Inventory = {
           <td style="font-weight:700;">${i.quantity} ${Utils.escape(i.unit || '')}</td>
           <td>${getStatus(i)}</td>
           <td style="white-space:nowrap;display:flex;gap:4px;">
-            <button class="ibb" onclick="Inventory.openEditModal('${i.id}','${Utils.escape(i.name)}',${i.quantity},${i.sale_price || 0})">تعديل</button>
+            <button class="ibb" onclick="Inventory.openEditModal('${i.id}')">تعديل</button>
             ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
             <button class="ibr" onclick="Inventory.delete('${i.id}')">حذف</button>
           </td>
@@ -212,22 +212,101 @@ const Inventory = {
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
-  openEditModal(id, name, qty, price) {
-    DOM.get('einvid').value  = id;
-    DOM.get('einvname').value = name;
-    DOM.get('einvqty').value  = qty;
-    DOM.get('einvprice').value = price;
+  openEditModal(id) {
+    const item = State.inventory.find(i => i.id === id);
+    if (!item) { Notify.error('لم يُوجد المنتج'); return; }
+    document.getElementById('einvid').value       = id;
+    document.getElementById('einvname').value     = item.name || '';
+    document.getElementById('einvbarcode').value  = item.barcode || '';
+    document.getElementById('einvqty').value      = item.quantity || 0;
+    document.getElementById('einvqty-add').value  = '';
+    document.getElementById('einvprice').value    = item.sale_price || 0;
+    document.getElementById('einvcost').value     = item.cost_price || 0;
+    document.getElementById('einvalert').value    = item.low_stock_alert || 10;
+    // الفئة والنوع
+    const catEl  = document.getElementById('einvcat');
+    const unitEl = document.getElementById('einvunit');
+    if (catEl  && item.category) [...catEl.options].forEach((o,i)  => { if (o.value === item.category) catEl.selectedIndex  = i; });
+    if (unitEl && item.unit)     [...unitEl.options].forEach((o,i) => { if (o.value === item.unit)     unitEl.selectedIndex = i; });
+    // إخفاء preview
+    const prev = document.getElementById('einv-qty-preview');
+    if (prev) prev.style.display = 'none';
     Modal.open('m-editinv');
   },
 
+  calcNewQty() {
+    const current = parseFloat(document.getElementById('einvqty')?.value) || 0;
+    const add     = parseFloat(document.getElementById('einvqty-add')?.value) || 0;
+    const prev    = document.getElementById('einv-qty-preview');
+    if (!prev) return;
+    if (add > 0) {
+      prev.style.display = 'block';
+      prev.textContent   = '✅ الكمية الجديدة: ' + (current + add);
+    } else {
+      prev.style.display = 'none';
+    }
+  },
+
+  scanBarcodeEdit() {
+    import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;';
+      overlay.innerHTML = `
+        <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
+          <div id="inv-edit-bc-cont" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
+          <div style="position:absolute;inset:0;pointer-events:none;">
+            <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+            <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
+              <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:3px 0 0 0;"></div>
+              <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 3px 0 0;"></div>
+              <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 3px;"></div>
+              <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 3px 0;"></div>
+              <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+            </div>
+          </div>
+          <button onclick="this.closest('[style*=fixed]').remove();arguments[0].stopPropagation();" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;">✕</button>
+        </div>
+        <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
+          <p style="color:#fff;font-size:13px;margin:0;">وجّه الكاميرا على الباركود</p>
+        </div>`;
+      document.body.appendChild(overlay);
+      BarcodeScanner.start('inv-edit-bc-cont', (code) => {
+        document.getElementById('einvbarcode').value = code;
+        BarcodeScanner.stop(); overlay.remove();
+        Notify.success('✅ ' + code);
+      }, (err) => { Notify.error(err); overlay.remove(); });
+    });
+  },
+
   async update() {
-    const id    = DOM.val('einvid');
-    const qty   = parseFloat(DOM.val('einvqty'));
-    const price = parseFloat(DOM.val('einvprice')) || 0;
-    await DB.inventory().update({ quantity: qty, sale_price: price }).eq('id', id);
-    Notify.success('تم التحديث');
-    Modal.close('m-editinv');
-    await Inventory.load();
+    const id      = DOM.val('einvid');
+    const name    = DOM.val('einvname')?.trim();
+    const barcode = DOM.val('einvbarcode')?.trim() || null;
+    const qty     = parseFloat(DOM.val('einvqty')) || 0;
+    const addQty  = parseFloat(document.getElementById('einvqty-add')?.value) || 0;
+    const price   = parseFloat(DOM.val('einvprice')) || 0;
+    const cost    = parseFloat(DOM.val('einvcost'))  || 0;
+    const alert   = parseFloat(DOM.val('einvalert')) || 10;
+    const cat     = DOM.val('einvcat')  || 'عام';
+    const unit    = DOM.val('einvunit') || 'قطعة (pcs)';
+
+    if (!name) { Notify.error('أدخل اسم المنتج'); return; }
+
+    const finalQty = qty + addQty;
+    try {
+      const { error } = await DB.inventory().update({
+        name, barcode, category: cat, unit,
+        quantity:        finalQty,
+        sale_price:      price,
+        cost_price:      cost,
+        low_stock_alert: alert,
+      }).eq('id', id);
+      if (error) throw error;
+      Notify.success('تم تحديث "' + name + '" — الكمية: ' + finalQty);
+      Modal.close('m-editinv');
+      await Inventory.load();
+    } catch (err) { Notify.error(err.message); }
   },
 
   async delete(id) {
