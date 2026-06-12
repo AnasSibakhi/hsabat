@@ -250,6 +250,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Barcode ──
   async _beepAndAdd(code) {
+    console.log('[ADD] code:', code, 'lastScan:', _lastScan);
     if (code === _lastScan) return;
 
     // تحقق من المخزون

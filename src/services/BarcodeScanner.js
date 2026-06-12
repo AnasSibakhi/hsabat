@@ -75,17 +75,20 @@ const boostCamera = async (stream) => {
   } catch {}
 };
 
-// ── Fire result ──
+  // ── Fire result ──
 const fire = (code) => {
+  console.log('[SCAN] detected:', code, 'last:', _lastCode);
   if (!code || code === _lastCode) return;
   _lastCode = code;
   clearTimeout(_debTimer);
   _debTimer = setTimeout(() => { _lastCode = null; }, DEBOUNCE);
+  console.log('[SCAN] firing callback');
   _callback?.(code);
 };
 
 // ── Native BarcodeDetector (Chrome, Android, Edge) ──
 const runNative = () => {
+  console.log('[SCANNER] using Native BarcodeDetector');
   const detector = new BarcodeDetector({
     formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code', 'data_matrix'],
   });
@@ -259,14 +262,14 @@ export const BarcodeScanner = {
 
     // Pick engine
     if ('BarcodeDetector' in window) {
-      // Chrome, Android, Edge — fastest
+      console.log('[SCANNER] BarcodeDetector supported ✅');
       runNative();
     } else {
-      // iOS Safari, Firefox
+      console.log('[SCANNER] BarcodeDetector NOT supported, trying ZXing');
       try {
         await runZXing(onError);
-      } catch {
-        // ZXing load failed — use Quagga
+      } catch (e) {
+        console.log('[SCANNER] ZXing failed:', e, '— falling back to Quagga');
         runQuagga(el, onError);
       }
     }
