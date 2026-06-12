@@ -1745,6 +1745,41 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
   </div>
 </div>
 
+<!-- Inventory Barcode Scanner Overlay -->
+<div id="inv-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;">
+  <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
+    <div id="inv-scanner-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
+
+    <!-- Dark overlays around scan box -->
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
+      <!-- Scan box -->
+      <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
+        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:3px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 3px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 3px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 3px 0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+      </div>
+    </div>
+
+    <!-- Flash button -->
+    <button id="inv-flash-btn" onclick="Inventory.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <i class="ti ti-bolt"></i>
+    </button>
+    <!-- Close button -->
+    <button onclick="Inventory.stopScanner()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <i class="ti ti-x"></i>
+    </button>
+  </div>
+  <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
+    <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">وجّه الكاميرا على الباركود لتعبئة الحقل تلقائياً</p>
+  </div>
+</div>
+
 <!-- New Product Modal -->
 <div class="mo" id="m-new-product"><div class="modal">
   <div class="mhdr"><span class="mtitle">🆕 منتج جديد</span><button class="mclose" onclick="Modal.close('m-new-product')">✕</button></div>
