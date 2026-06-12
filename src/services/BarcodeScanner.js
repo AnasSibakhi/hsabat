@@ -194,7 +194,14 @@ export const BarcodeScanner = {
             clearTimeout(_liveTimer);
             _liveTimer = setTimeout(() => { _liveCode = null; _liveCount = 0; const e=document.getElementById('qs-live-counter'); if(e) e.style.display='none'; }, 2000);
             const lc = document.getElementById('qs-live-counter');
-            if (lc) { lc.style.display='flex'; lc.textContent='×'+_liveCount; }
+            if (lc) {
+              lc.style.display = 'flex';
+              // احسب المتبقي من المخزون
+              const prod = (window.State?.inventory || []).find(p => p.barcode === code);
+              const inCart = (window.QuickSale?._getCartQty?.(code)) || _liveCount;
+              const remaining = prod ? Math.max(0, prod.quantity - inCart) : '?';
+              lc.innerHTML = '<div style="text-align:center"><div style="font-size:48px;font-weight:900;">×' + _liveCount + '</div><div style="font-size:14px;opacity:0.85;margin-top:2px;">متبقي: ' + remaining + '</div></div>';
+            }
             fire(code);
           }
         };

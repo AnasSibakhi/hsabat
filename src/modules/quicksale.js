@@ -275,6 +275,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     await QuickSale._onBarcode(code);
   },
 
+  _getCartQty(barcode) {
+    const p = State.inventory.find(i => i.barcode === barcode);
+    if (!p) return 0;
+    const item = _cart.find(c => c.id === p.id);
+    return item ? item.qty : 0;
+  },
+
   async _onBarcode(code) {
     if (!code) return;
 
