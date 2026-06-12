@@ -713,6 +713,21 @@ PalPay" style="resize:none;"></textarea>
    <span class="tb-name">حسابات</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px;">
+   <!-- Bell -->
+   <div style="position:relative;">
+    <button class="btn btn-o" onclick="Notifications.toggle()" style="padding:6px 8px;font-size:16px;position:relative;">
+     <i class="ti ti-bell"></i>
+     <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #fff;"></span>
+    </button>
+    <!-- Dropdown -->
+    <div id="notif-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);left:0;width:320px;background:#fff;border:1px solid var(--br);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:600;overflow:hidden;max-height:420px;overflow-y:auto;">
+     <div style="padding:12px 14px;font-size:13px;font-weight:800;color:var(--g7);border-bottom:1px solid var(--br);display:flex;justify-content:space-between;align-items:center;">
+      <span>الإشعارات</span>
+      <button onclick="Notifications.markAllRead()" style="font-size:11px;color:var(--p);background:none;border:none;cursor:pointer;font-family:Cairo,sans-serif;">قراءة الكل</button>
+     </div>
+     <div id="notif-list"><div style="padding:2rem;text-align:center;color:var(--g4);font-size:13px;">لا توجد إشعارات</div></div>
+    </div>
+   </div>
    <button class="btn btn-o" onclick="toggleDark()" style="padding:6px 8px;font-size:16px;"><i class="ti ti-moon" id="dark-icon"></i></button>
    <span class="store-pill" id="store-pill">...</span>
    <button class="btn-out" onclick="Auth.logout()"><i class="ti ti-logout" style="font-size:15px;"></i></button>
