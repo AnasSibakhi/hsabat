@@ -95,7 +95,7 @@ window.UI = { toggleDarkMode: () => toggleDark() };
 
 Object.assign(window, {
   // Auth
-  Auth, toggleDark,
+  Auth, toggleDark, confirmLogout: () => Auth.confirmLogout(),
 
   // Navigation
   Nav, Modal, Notify,

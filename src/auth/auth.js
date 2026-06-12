@@ -168,6 +168,29 @@ export const Auth = {
     }
   },
 
+  confirmLogout() {
+    // نافذة تأكيد بسيطة
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:18px;padding:28px 24px;max-width:300px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+        <div style="font-size:40px;margin-bottom:12px;">👋</div>
+        <div style="font-size:17px;font-weight:800;color:#1e293b;margin-bottom:8px;">تسجيل الخروج</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:20px;">هل أنت متأكد أنك تريد الخروج؟</div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="this.closest('div[style*=fixed]').remove()"
+            style="flex:1;padding:11px;border-radius:10px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">
+            إلغاء
+          </button>
+          <button onclick="this.closest('div[style*=fixed]').remove();Auth.logout()"
+            style="flex:1;padding:11px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">
+            خروج
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  },
+
   async logout() {
     Loading.show();
     await sb.auth.signOut();
