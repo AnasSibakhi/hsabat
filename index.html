@@ -1421,10 +1421,16 @@ PalPay" style="resize:none;"></textarea>
 <div class="mo" id="m-inv"><div class="modal">
  <div class="mhdr"><span class="mtitle">إضافة صنف</span><button class="mclose" onclick="Modal.close('m-inv')">✕</button></div>
  <div class="fg"><label class="lbl">اسم الصنف *</label><input class="inp" id="inn" placeholder="سكر، أرز..."></div>
- <div class="fr"><div class="fg"><label class="lbl">الفئة</label><select class="inp" id="inc"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>عام</option></select></div><div class="fg"><label class="lbl">النوع</label><select class="inp" id="inu"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div></div>
+ <div class="fg">
+   <label class="lbl">الباركود</label>
+   <div style="display:flex;gap:8px;">
+     <input class="inp" id="inb" placeholder="امسح أو أدخل يدوياً" inputmode="numeric" style="flex:1;font-family:monospace;">
+     <button type="button" onclick="Inventory.scanBarcode()" style="padding:8px 12px;border-radius:10px;border:2px solid var(--p);background:var(--pl);color:var(--p);font-size:18px;cursor:pointer;">📷</button>
+   </div>
+ </div>
+ <div class="fr"><div class="fg"><label class="lbl">الفئة</label><select class="inp" id="inc"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>مشروبات</option><option>عام</option></select></div><div class="fg"><label class="lbl">النوع</label><select class="inp" id="inu"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div></div>
  <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="inq" value="0" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="insp" value="0" inputmode="decimal"></div></div>
- <div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="incp" value="0" inputmode="decimal" placeholder="اختياري"></div>
- <div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="ina" value="10" inputmode="decimal"></div>
+ <div class="fr"><div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="incp" value="0" inputmode="decimal" placeholder="اختياري"></div><div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="ina" value="10" inputmode="decimal"></div></div>
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv')">إلغاء</button><button class="btn btn-s" onclick="Inventory.save()">إضافة</button></div>
 </div></div>
 

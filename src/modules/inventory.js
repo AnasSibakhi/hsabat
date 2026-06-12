@@ -104,6 +104,30 @@ const Inventory = {
     win.document.close();
   },
 
+  scanBarcode() {
+    import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;';
+      const container = document.createElement('div');
+      container.id = 'inv-bc-container';
+      container.style.cssText = 'flex:1;position:relative;';
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = '✕ إغلاق';
+      closeBtn.style.cssText = 'padding:14px;background:#dc2626;color:#fff;border:none;font-family:Cairo,sans-serif;font-size:15px;font-weight:700;cursor:pointer;';
+      overlay.appendChild(container);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+      closeBtn.onclick = () => { BarcodeScanner.stop(); overlay.remove(); };
+      BarcodeScanner.start('inv-bc-container', (code) => {
+        const el = document.getElementById('inb');
+        if (el) el.value = code;
+        BarcodeScanner.stop();
+        overlay.remove();
+        Notify.success('تم مسح الباركود: ' + code);
+      }, (err) => { Notify.error(err); overlay.remove(); });
+    });
+  },
+
   async save() {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
@@ -112,6 +136,7 @@ const Inventory = {
       const { error } = await DB.inventory().insert({
         store_id:        State.user.id,
         name,
+        barcode:         DOM.val('inb') || null,
         category:        DOM.val('inc'),
         unit:            DOM.val('inu'),
         quantity:        parseFloat(DOM.val('inq')) || 0,
