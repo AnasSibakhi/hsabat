@@ -832,7 +832,7 @@ PalPay" style="resize:none;"></textarea>
    <div class="page" id="page-quicksale">
     <div class="pos-wrap">
 
-      <!-- RIGHT: Products -->
+      <!-- RIGHT: Search + Cart -->
       <div class="pos-left">
         <!-- Search + Barcode -->
         <div class="pos-search-bar">
@@ -840,15 +840,11 @@ PalPay" style="resize:none;"></textarea>
           <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="QuickSale.onBarcodeInput(this.value)" onkeydown="QuickSale.onBarcodeKey(event)">
           <button class="pos-cam-btn" onclick="QuickSale.startScanner()"><i class="ti ti-camera"></i></button>
         </div>
-        <!-- Categories -->
-        <div class="pos-cats" id="qs-cats">
-          <button class="pos-cat active" onclick="QuickSale.filterCat('',this)">الكل</button>
-          <button class="pos-cat" onclick="QuickSale.filterCat('مواد غذائية',this)">غذائية</button>
-          <button class="pos-cat" onclick="QuickSale.filterCat('مشروبات',this)">مشروبات</button>
-          <button class="pos-cat" onclick="QuickSale.filterCat('منظفات',this)">منظفات</button>
-          <button class="pos-cat" onclick="QuickSale.filterCat('خضروات',this)">خضروات</button>
-        </div>
-        <!-- Products Grid -->
+
+        <!-- نتائج البحث فقط -->
+        <div id="qs-product-grid" class="pos-grid" style="display:none;"></div>
+        <div id="qs-stats" class="pos-stats-bar"></div>
+      </div>
         <div id="qs-product-grid" class="pos-grid"></div>
         <div id="qs-stats" class="pos-stats-bar"></div>
       </div>

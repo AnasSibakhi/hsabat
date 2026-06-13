@@ -84,41 +84,42 @@ export const QuickSale = {
     const grid = DOM.get('qs-product-grid');
     if (!grid) return;
 
-    // Always use State.inventory - loadList() populates it in place
+    // لو ما في بحث — أخفي الشبكة
+    if (!filter || filter.trim().length < 1) {
+      grid.style.display = 'none';
+      grid.innerHTML = '';
+      return;
+    }
+
     if (!State.inventory.length) {
       const inv = getInventory();
       if (inv) await inv.loadList();
     }
-    let list = State.inventory;
 
-    if (filter) {
-      const q = filter.toLowerCase();
-      list = list.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.barcode || '').includes(q) ||
-        (p.category || '').toLowerCase().includes(q)
-      );
-    } else {
-      list = list.filter(p => p.quantity > 0 && p.sale_price > 0);
-    }
+    const q    = filter.toLowerCase();
+    const list = State.inventory.filter(p =>
+      p.name?.toLowerCase().includes(q) ||
+      (p.barcode || '').includes(q) ||
+      (p.category || '').toLowerCase().includes(q)
+    ).slice(0, 12);
+
+    grid.style.display = 'grid';
 
     if (!list.length) {
-      grid.innerHTML = '<div class="qs-empty">' +
-        (filter ? '🔍 لا توجد نتائج لـ "' + escape(filter) + '"' : 'لا يوجد مخزون متاح للبيع') +
-        '</div>';
+      grid.innerHTML = '<div class="qs-empty">🔍 لا توجد نتائج لـ "' + escape(filter) + '"</div>';
       return;
     }
 
-    grid.innerHTML = list.slice(0, 40).map(p => {
-      const low   = p.quantity <= p.low_stock_alert;
-      const zero  = p.quantity <= 0;
+    grid.innerHTML = list.map(p => {
+      const low  = p.quantity <= (p.low_stock_alert || 5);
+      const zero = p.quantity <= 0;
+      const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
       return '<button class="qs-product-btn' + (zero ? ' qs-out' : '') + '" ' +
-        (zero ? 'disabled' : 'onclick="QuickSale.addToCart(\'' + p.id + '\')"') + '>' +
-        '<div class="qs-p-name">' + escape(p.name) + '</div>' +
-        '<div class="qs-p-price">₪' + (p.sale_price || 0).toFixed(2) + '</div>' +
-        '<div class="qs-p-stock ' + (low ? 'low' : zero ? 'out' : '') + '">' +
-          (zero ? 'نفد' : p.quantity + ' ' + escape(p.unit || '')) +
-        '</div>' +
+        'onclick="QuickSale.addToCart(\'' + p.id + '\')" ' +
+        (zero ? 'disabled ' : '') + '>' +
+        '<div class="pi-name">' + escape(p.name) + '</div>' +
+        '<div class="pi-price">₪' + (p.sale_price||0).toFixed(2) + '</div>' +
+        '<div class="pi-qty">' + dot + ' ' + p.quantity + ' ' + escape(p.unit||'') + '</div>' +
         '</button>';
     }).join('');
   },
