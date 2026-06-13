@@ -44,6 +44,15 @@ export const QuickSale = {
   _barcodeTimer:  null,
 
   _initPhysicalScanner() {
+    // Close search dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const grid = DOM.get('qs-product-grid');
+      const input = DOM.get('qs-barcode-input');
+      if (grid && !grid.contains(e.target) && e.target !== input) {
+        grid.style.display = 'none';
+      }
+    });
+
     // Re-focus when user clicks elsewhere
     document.addEventListener('click', (e) => {
       if (!_active) return;
@@ -84,7 +93,6 @@ export const QuickSale = {
     const grid = DOM.get('qs-product-grid');
     if (!grid) return;
 
-    // لو ما في بحث — أخفي الشبكة
     if (!filter || filter.trim().length < 1) {
       grid.style.display = 'none';
       grid.innerHTML = '';
@@ -101,28 +109,31 @@ export const QuickSale = {
       p.name?.toLowerCase().includes(q) ||
       (p.barcode || '').includes(q) ||
       (p.category || '').toLowerCase().includes(q)
-    ).slice(0, 12);
+    ).slice(0, 10);
 
-    grid.style.display = 'grid';
+    grid.style.display = 'block';
 
     if (!list.length) {
-      grid.innerHTML = '<div class="qs-empty">🔍 لا توجد نتائج لـ "' + escape(filter) + '"</div>';
+      grid.innerHTML = '<div style="padding:16px;text-align:center;color:var(--g4);font-size:13px;">🔍 لا توجد نتائج</div>';
       return;
     }
 
     grid.innerHTML = list.map(p => {
-      const low  = p.quantity <= (p.low_stock_alert || 5);
       const zero = p.quantity <= 0;
+      const low  = p.quantity <= (p.low_stock_alert || 5);
       const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
-      return '<button class="qs-product-btn' + (zero ? ' qs-out' : '') + '" ' +
-        'onclick="QuickSale.addToCart(\'' + p.id + '\')" ' +
-        (zero ? 'disabled ' : '') + '>' +
-        '<div class="pi-name">' + escape(p.name) + '</div>' +
-        '<div class="pi-price">₪' + (p.sale_price||0).toFixed(2) + '</div>' +
-        '<div class="pi-qty">' + dot + ' ' + p.quantity + ' ' + escape(p.unit||'') + '</div>' +
-        '</button>';
+      return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-product-grid').style.display='none';DOM.get('qs-barcode-input').value='';DOM.get('qs-barcode-input').focus();"
+        style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--g1);cursor:pointer;${zero?'opacity:0.5;pointer-events:none;':''}"
+        onmouseover="this.style.background='var(--pl)'" onmouseout="this.style.background=''">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;color:#1e293b;font-size:14px;">${escape(p.name)}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:1px;">${dot} ${p.quantity} ${escape(p.unit||'')} ${p.barcode ? '· ' + p.barcode : ''}</div>
+        </div>
+        <div style="font-size:15px;font-weight:900;color:#6366f1;margin-right:12px;">₪${(p.sale_price||0).toFixed(2)}</div>
+      </div>`;
     }).join('');
   },
+
 
   search(val) {
     clearTimeout(QuickSale._searchTimer);
