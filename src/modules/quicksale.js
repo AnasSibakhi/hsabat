@@ -134,7 +134,7 @@ export const QuickSale = {
       const low  = p.quantity <= (p.low_stock_alert || 5);
       const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
       const border = idx < list.length - 1 ? 'border-bottom:1px solid var(--g1);' : '';
-      return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-barcode-input').value='';QuickSale._renderGrid('');document.querySelector('.pos-right').style.display='';"
+      return `<div onclick="QuickSale.selectFromSearch('${p.id}')"
         style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;${border}${zero?'opacity:0.5;pointer-events:none;':''}"
         onmouseover="this.style.background='rgba(99,102,241,0.08)'" onmouseout="this.style.background=''">
         <div style="flex:1;min-width:0;">
@@ -154,8 +154,16 @@ export const QuickSale = {
   },
 
   // ── Cart ──
+  selectFromSearch(id) {
+    QuickSale.addToCart(id);
+    const input = DOM.get('qs-barcode-input');
+    if (input) input.value = '';
+    QuickSale._renderGrid('');
+    const right = document.querySelector('.pos-right');
+    if (right) right.style.display = '';
+  },
+
   addToCart(productId) {
-    const p = State.inventory.find(x => x.id === productId);
     if (!p) return;
     if (!p.sale_price || p.sale_price <= 0) {
       Notify.error('"' + p.name + '" ليس له سعر بيع');
