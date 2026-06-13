@@ -100,16 +100,16 @@ export const Notifications = {
     if (badge) {
       badge.style.display    = unread > 0 ? 'block' : 'none';
       badge.style.background = auto.some(n => n._type === 'out') ? '#dc2626' : '#f59e0b';
+      badge.style.animation  = 'none';
     }
 
     // هز الجرس لو في تنبيهات
     if (unread > 0 && bell) {
       Notifications._shakeBell();
-      // هز كل 30 ثانية
       clearInterval(Notifications._bellInterval);
       Notifications._bellInterval = setInterval(() => {
         if (document.visibilityState === 'visible') Notifications._shakeBell();
-      }, 30000);
+      }, 60000);
     } else {
       clearInterval(Notifications._bellInterval);
     }
