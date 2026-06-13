@@ -65,13 +65,13 @@ export const QuickSale = {
   // Called on every input change
   onBarcodeInput(val) {
     clearTimeout(QuickSale._barcodeTimer);
-    if (!val.trim()) return;
-    // Debounce — physical scanner sends all chars then Enter
-    // For typing: wait 400ms then search
-    QuickSale._barcodeTimer = setTimeout(() => {
-      const q = val.trim();
-      if (q.length >= 2) QuickSale._renderGrid(q);
-    }, 300);
+    const grid = DOM.get('qs-product-grid');
+    if (!val.trim()) {
+      if (grid) grid.style.display = 'none';
+      return;
+    }
+    // بحث فوري بدون debounce
+    QuickSale._renderGrid(val.trim());
   },
 
   // Called on keydown
