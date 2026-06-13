@@ -69,11 +69,11 @@ export const QuickSale = {
     const right = document.querySelector('.pos-right');
     if (!val || !val.trim()) {
       if (grid)  { grid.style.display = 'none'; grid.innerHTML = ''; }
-      if (right) right.style.display = '';
+      if (right) right.style.removeProperty('display');
       return;
     }
     if (right) right.style.display = 'none';
-    QuickSale._renderGrid(val.trim());
+    QuickSale._showSearchResults(val.trim());
   },
 
   // Called on keydown
@@ -91,52 +91,60 @@ export const QuickSale = {
   },
 
   // ── Product Grid ──
-  async _renderGrid(q) {
+  async _showSearchResults(q) {
     const grid = DOM.get('qs-product-grid');
     if (!grid) return;
+
+    // موضع تحت شريط البحث
+    const bar = document.getElementById('qs-search-wrap');
+    if (bar) {
+      const r = bar.getBoundingClientRect();
+      grid.style.top   = r.bottom + 'px';
+      grid.style.left  = '0';
+      grid.style.right = '0';
+    }
 
     if (!State.inventory.length) {
       const inv = getInventory();
       if (inv) await inv.loadList();
     }
 
-    const query = q.toLowerCase();
-    const list  = State.inventory.filter(p =>
-      p.name?.toLowerCase().includes(query) ||
-      (p.barcode || '').includes(query)
+    const low = q.toLowerCase();
+    const res = State.inventory.filter(p =>
+      (p.name  || '').toLowerCase().includes(low) ||
+      (p.barcode || '').includes(low)
     ).slice(0, 12);
 
-    // حساب موضع الـ dropdown
-    const wrap = document.getElementById('qs-search-wrap');
-    if (wrap) {
-      const rect = wrap.getBoundingClientRect();
-      grid.style.top   = rect.bottom + 'px';
-      grid.style.left  = '0';
-      grid.style.right = '0';
-    }
-
-    grid.style.display = 'block';
-
-    if (!list.length) {
-      grid.innerHTML = '<div style="padding:18px;text-align:center;color:#94a3b8;font-size:13px;">لا توجد نتائج لـ "' + q + '"</div>';
+    if (!res.length) {
+      grid.style.display = 'block';
+      grid.innerHTML = `<div style="padding:18px;text-align:center;color:#94a3b8;font-size:13px;">لا توجد نتائج لـ "${q}"</div>`;
       return;
     }
 
-    grid.innerHTML = list.map(p => {
+    const rows = res.map(p => {
       const zero = p.quantity <= 0;
-      const low  = p.quantity <= (p.low_stock_alert || 5);
-      const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
-      return '<div onclick="QuickSale.selectFromSearch(\'' + p.id + '\')" ' +
-        'style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;' + (zero ? 'opacity:0.5;pointer-events:none;' : '') + '" ' +
-        'onmouseover="this.style.background=\"#f8fafc\"" onmouseout="this.style.background=\"\"">' +
-        '<div style="flex:1;">' +
-          '<div style="font-weight:700;color:#1e293b;font-size:14px;">' + escape(p.name) + '</div>' +
-          '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + dot + ' ' + p.quantity + ' ' + escape(p.unit || '') + (p.barcode ? ' · ' + p.barcode : '') + '</div>' +
-        '</div>' +
-        '<div style="font-size:15px;font-weight:900;color:#6366f1;">₪' + (p.sale_price || 0).toFixed(2) + '</div>' +
-      '</div>';
+      const dot  = zero ? '🔴' : p.quantity <= (p.low_stock_alert || 5) ? '🟡' : '🟢';
+      return `
+        <div data-id="${p.id}" class="qs-search-row" style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;${zero ? 'opacity:0.45;' : ''}">
+          <div style="flex:1;">
+            <div style="font-weight:700;color:#1e293b;font-size:14px;">${p.name}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${dot} ${p.quantity} ${p.unit || ''}${p.barcode ? ' · ' + p.barcode : ''}</div>
+          </div>
+          <div style="font-size:15px;font-weight:900;color:#6366f1;">₪${(p.sale_price || 0).toFixed(2)}</div>
+        </div>`;
     }).join('');
+
+    grid.style.display = 'block';
+    grid.innerHTML = rows;
+
+    // event delegation — أفضل من onclick inline
+    grid.querySelectorAll('.qs-search-row:not([style*="opacity:0.4"])').forEach(el => {
+      el.addEventListener('click', () => QuickSale.selectFromSearch(el.dataset.id));
+      el.addEventListener('mouseover', () => el.style.background = '#f8fafc');
+      el.addEventListener('mouseout',  () => el.style.background = '');
+    });
   },
+
 
 
 
@@ -148,12 +156,13 @@ export const QuickSale = {
 
   // ── Cart ──
   selectFromSearch(id) {
-    QuickSale.addToCart(id);
+    const grid  = DOM.get('qs-product-grid');
     const input = DOM.get('qs-barcode-input');
-    if (input) input.value = '';
-    QuickSale._renderGrid('');
     const right = document.querySelector('.pos-right');
-    if (right) right.style.display = '';
+    if (grid)  { grid.style.display = 'none'; grid.innerHTML = ''; }
+    if (input) input.value = '';
+    if (right) right.style.removeProperty('display');
+    QuickSale.addToCart(id);
   },
 
   addToCart(productId) {
