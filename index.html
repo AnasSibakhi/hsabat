@@ -1716,21 +1716,8 @@ PalPay" style="resize:none;"></textarea>
 
 <script>
 function fixLayout(){
-  const wrap = document.getElementById('app-wrap');
-  const topbar = document.querySelector('.topbar');
-  const bottomNav = document.querySelector('.bottom-nav');
-  const content = document.querySelector('.content');
-  if(!wrap || !content) return;
-  const topH = topbar ? topbar.offsetHeight : 52;
-  const botH = (bottomNav && getComputedStyle(bottomNav).display !== 'none') ? bottomNav.offsetHeight : 0;
-  const h = window.innerHeight - topH - botH;
-  content.style.height = h + 'px';
-  content.style.overflowY = 'auto';
-  content.style.webkitOverflowScrolling = 'touch';
-  wrap.style.height = window.innerHeight + 'px';
-  wrap.style.overflow = 'hidden';
+  // intentionally empty - layout handled by CSS flexbox
 }
-
 function openAddMenu(){
   document.getElementById('add-menu-overlay').style.display='block';
   document.getElementById('add-menu').style.display='block';
