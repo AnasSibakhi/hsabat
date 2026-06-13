@@ -227,9 +227,9 @@
 /* Cart Item */
 .qs-cart-item { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; background: #fff; }
 .qs-ci-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.qs-ci-name { font-size: 13px; font-weight: 700; color: #1e293b; flex: 1; }
+.qs-ci-name { font-size: 15px; font-weight: 800; color: #1e293b; flex: 1; }
 .qs-ci-bottom { display: flex; align-items: center; justify-content: space-between; }
-.qs-ci-meta { font-size: 12px; color: #64748b; }
+.qs-ci-meta { font-size: 14px; color: #475569; font-weight: 600; }
 .qs-ci-ctrl { display: flex; align-items: center; gap: 6px; }
 .qs-qb {
   width: 36px; height: 36px; border-radius: 9px;
@@ -239,7 +239,7 @@
   padding: 0; transition: .1s;
 }
 .qs-qb:active { transform: scale(.88); background: #e0e7ff; }
-.qs-qn { font-size: 16px; font-weight: 900; min-width: 28px; text-align: center; color: #1e293b; }
+.qs-qn { font-size: 22px; font-weight: 900; min-width: 36px; text-align: center; color: #1e293b; }
 .qs-rm {
   width: 32px; height: 32px; border-radius: 8px;
   border: none; background: #fee2e2; color: #ef4444;
@@ -258,7 +258,7 @@
 }
 .pos-sum-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; color: #64748b; }
 .pos-sum-row .disc { color: #059669; font-weight: 700; }
-.pos-sum-row.pos-total { font-size: 14px; font-weight: 800; color: #1e293b; border-top: 1.5px solid #e2e8f0; margin-top: 5px; padding-top: 5px; }
+.pos-sum-row.pos-total { font-size: 18px; font-weight: 900; color: #1e293b; border-top: 1.5px solid #e2e8f0; margin-top: 5px; padding-top: 5px; }
 
 /* Bottom */
 .pos-bottom { flex-shrink: 0; background: #fff; border-top: 1px solid #e2e8f0; padding: 8px 10px; }
@@ -283,7 +283,7 @@
   border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;
 }
 .pos-total-row > span:first-child { font-size: 12px; font-weight: 700; color: #4f46e5; }
-.pos-grand-total { font-size: 22px; font-weight: 900; color: #4f46e5; }
+.pos-grand-total { font-size: 32px; font-weight: 900; color: #4f46e5; }
 
 /* Checkout Button */
 .pos-checkout-btn {
@@ -375,7 +375,7 @@
   .pos-prod   { padding: 12px 8px; border-radius: 12px; }
   .pos-prod-name  { font-size: 12px; }
   .pos-prod-price { font-size: 15px; }
-  .pos-grand-total { font-size: 20px; }
+  .pos-grand-total { font-size: 28px; }
   .pos-checkout-btn { padding: 12px; font-size: 14px; }
 }
 
