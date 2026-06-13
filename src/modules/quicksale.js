@@ -65,11 +65,10 @@ export const QuickSale = {
 
   // Called on every input change
   onBarcodeInput(val) {
-    clearTimeout(QuickSale._barcodeTimer);
     const grid  = DOM.get('qs-product-grid');
-    const right  = document.querySelector('.pos-right');
-    if (!val.trim()) {
-      if (grid)  grid.style.display  = 'none';
+    const right = document.querySelector('.pos-right');
+    if (!val || !val.trim()) {
+      if (grid)  { grid.style.display = 'none'; grid.innerHTML = ''; }
       if (right) right.style.display = '';
       return;
     }
@@ -92,60 +91,53 @@ export const QuickSale = {
   },
 
   // ── Product Grid ──
-  async _renderGrid(filter = '') {
+  async _renderGrid(q) {
     const grid = DOM.get('qs-product-grid');
     if (!grid) return;
-
-    if (!filter || filter.trim().length < 1) {
-      grid.style.display = 'none';
-      grid.innerHTML = '';
-      return;
-    }
-
-    // حساب موضع الـ dropdown تحت الـ search bar
-    const wrap = document.getElementById('qs-search-wrap');
-    if (wrap) {
-      const rect = wrap.getBoundingClientRect();
-      grid.style.top  = rect.bottom + 'px';
-      grid.style.left = rect.left + 'px';
-      grid.style.right = (window.innerWidth - rect.right) + 'px';
-    }
 
     if (!State.inventory.length) {
       const inv = getInventory();
       if (inv) await inv.loadList();
     }
 
-    const q    = filter.toLowerCase();
-    const list = State.inventory.filter(p =>
-      p.name?.toLowerCase().includes(q) ||
-      (p.barcode || '').includes(q) ||
-      (p.category || '').toLowerCase().includes(q)
-    ).slice(0, 15);
+    const query = q.toLowerCase();
+    const list  = State.inventory.filter(p =>
+      p.name?.toLowerCase().includes(query) ||
+      (p.barcode || '').includes(query)
+    ).slice(0, 12);
+
+    // حساب موضع الـ dropdown
+    const wrap = document.getElementById('qs-search-wrap');
+    if (wrap) {
+      const rect = wrap.getBoundingClientRect();
+      grid.style.top   = rect.bottom + 'px';
+      grid.style.left  = '0';
+      grid.style.right = '0';
+    }
 
     grid.style.display = 'block';
 
     if (!list.length) {
-      grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--g4);font-size:13px;">🔍 لا توجد نتائج</div>';
+      grid.innerHTML = '<div style="padding:18px;text-align:center;color:#94a3b8;font-size:13px;">لا توجد نتائج لـ "' + q + '"</div>';
       return;
     }
 
-    grid.innerHTML = list.map((p, idx) => {
+    grid.innerHTML = list.map(p => {
       const zero = p.quantity <= 0;
       const low  = p.quantity <= (p.low_stock_alert || 5);
       const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
-      const border = idx < list.length - 1 ? 'border-bottom:1px solid var(--g1);' : '';
-      return `<div onclick="QuickSale.selectFromSearch('${p.id}')"
-        style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;${border}${zero?'opacity:0.5;pointer-events:none;':''}"
-        onmouseover="this.style.background='rgba(99,102,241,0.08)'" onmouseout="this.style.background=''">
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;color:#1e293b;font-size:14px;">${escape(p.name)}</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px;">${dot} ${p.quantity} ${escape(p.unit||'')}${p.barcode ? ' · ' + p.barcode : ''}</div>
-        </div>
-        <div style="font-size:16px;font-weight:900;color:#6366f1;white-space:nowrap;margin-right:10px;">₪${(p.sale_price||0).toFixed(2)}</div>
-      </div>`;
+      return '<div onclick="QuickSale.selectFromSearch(\'' + p.id + '\')" ' +
+        'style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;' + (zero ? 'opacity:0.5;pointer-events:none;' : '') + '" ' +
+        'onmouseover="this.style.background=\"#f8fafc\"" onmouseout="this.style.background=\"\"">' +
+        '<div style="flex:1;">' +
+          '<div style="font-weight:700;color:#1e293b;font-size:14px;">' + escape(p.name) + '</div>' +
+          '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + dot + ' ' + p.quantity + ' ' + escape(p.unit || '') + (p.barcode ? ' · ' + p.barcode : '') + '</div>' +
+        '</div>' +
+        '<div style="font-size:15px;font-weight:900;color:#6366f1;">₪' + (p.sale_price || 0).toFixed(2) + '</div>' +
+      '</div>';
     }).join('');
   },
+
 
 
 
