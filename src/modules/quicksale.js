@@ -162,7 +162,7 @@ export const QuickSale = {
     if (grid)  { grid.style.display = 'none'; grid.innerHTML = ''; }
     if (input) input.value = '';
     if (right) right.style.removeProperty('display');
-    QuickSale.addToCart(id);
+    setTimeout(() => QuickSale.addToCart(id), 50);
   },
 
   addToCart(productId) {
