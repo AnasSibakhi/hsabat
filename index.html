@@ -842,8 +842,30 @@ PalPay" style="resize:none;"></textarea>
         </div>
         <!-- نتائج البحث - fixed فوق كل شي -->
         <div id="qs-product-grid" style="display:none;position:fixed;left:0;right:0;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:2px solid var(--p);z-index:400;box-shadow:0 4px 20px rgba(0,0,0,0.12);max-height:50vh;overflow-y:auto;"></div>
+
+        <!-- Smart Cards -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;">
+
+          <!-- كارت الأكثر مبيعاً -->
+          <div onclick="QuickSale.openBestSelling()" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent;"
+            onmouseover="this.style.borderColor='#6366f1';this.style.background='#faf5ff'"
+            onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+            <div style="font-size:22px;margin-bottom:6px;">🏆</div>
+            <div style="font-size:13px;font-weight:800;color:#1e293b;">الأكثر مبيعاً</div>
+            <div id="qs-bestsell-count" style="font-size:11px;color:#6366f1;font-weight:700;margin-top:2px;">جاري التحميل...</div>
+          </div>
+
+          <!-- كارت بدون باركود -->
+          <div onclick="QuickSale.openNoBarcode()" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent;"
+            onmouseover="this.style.borderColor='#f59e0b';this.style.background='#fffbeb'"
+            onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+            <div style="font-size:22px;margin-bottom:6px;">📦</div>
+            <div style="font-size:13px;font-weight:800;color:#1e293b;">بدون باركود</div>
+            <div id="qs-nobc-count" style="font-size:11px;color:#f59e0b;font-weight:700;margin-top:2px;">جاري التحميل...</div>
+          </div>
+
+        </div>
       </div>
-        <div id="qs-product-grid" class="pos-grid"></div>
       </div>
 
       <!-- LEFT: Cart + Summary + Pay -->
@@ -1741,9 +1763,22 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </script>
 <script type="module" src="/src/main.js"></script>
 
+<!-- Best Selling Modal -->
+<div class="mo" id="m-qs-bestsell"><div class="modal" style="max-width:480px;">
+  <div class="mhdr"><span class="mtitle">🏆 الأكثر مبيعاً</span><button class="mclose" onclick="Modal.close('m-qs-bestsell')">✕</button></div>
+  <input class="inp" id="qs-bestsell-search" placeholder="🔍 ابحث..." oninput="QuickSale.filterBestSelling(this.value)" style="margin-bottom:10px;">
+  <div id="qs-bestsell-list" style="max-height:55vh;overflow-y:auto;border-radius:12px;border:1px solid var(--br);"></div>
+</div></div>
+
+<!-- No Barcode Modal -->
+<div class="mo" id="m-qs-nobc"><div class="modal" style="max-width:480px;">
+  <div class="mhdr"><span class="mtitle">📦 بدون باركود</span><button class="mclose" onclick="Modal.close('m-qs-nobc')">✕</button></div>
+  <input class="inp" id="qs-nobc-search" placeholder="🔍 ابحث..." oninput="QuickSale.filterNoBarcode(this.value)" style="margin-bottom:10px;">
+  <div id="qs-nobc-list" style="max-height:55vh;overflow-y:auto;border-radius:12px;border:1px solid var(--br);"></div>
+</div></div>
+
 <!-- Scanner Overlay -->
 <!-- New Product Modal (from scanner) -->
-
 
 
 

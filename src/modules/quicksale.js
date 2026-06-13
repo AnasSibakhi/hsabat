@@ -36,6 +36,7 @@ export const QuickSale = {
     QuickSale._initPhysicalScanner();
     const grid = DOM.get('qs-product-grid');
     if (grid) grid.style.display = 'none';
+    QuickSale._loadSmartCards();
     setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 300);
   },
 
@@ -153,7 +154,121 @@ export const QuickSale = {
     QuickSale._searchTimer = setTimeout(() => QuickSale._renderGrid(val), 200);
   },
 
-  // ── Cart ──
+  // ── Smart Cards ──
+  _bestSellingData: [],
+  _noBarcodeData:   [],
+
+  async _loadSmartCards() {
+    if (!State.inventory.length) {
+      const inv = getInventory();
+      if (inv) await inv.loadList();
+    }
+
+    // بدون باركود
+    const nobc = State.inventory.filter(p => !p.barcode);
+    QuickSale._noBarcodeData = nobc;
+    const nbEl = DOM.get('qs-nobc-count');
+    if (nbEl) nbEl.textContent = nobc.length + ' منتج';
+
+    // الأكثر مبيعاً — من الفواتير
+    const { data: invData } = await DB.invoices()
+      .select('items')
+      .gte('invoice_date', new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]);
+
+    const counts = {};
+    (invData || []).forEach(inv => {
+      (Array.isArray(inv.items) ? inv.items : []).forEach(it => {
+        if (it.product_id) counts[it.product_id] = (counts[it.product_id] || 0) + (it.qty || 1);
+      });
+    });
+
+    const best = State.inventory
+      .filter(p => counts[p.id])
+      .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0))
+      .slice(0, 20)
+      .map(p => ({ ...p, sold: counts[p.id] || 0 }));
+
+    QuickSale._bestSellingData = best;
+    const bsEl = DOM.get('qs-bestsell-count');
+    if (bsEl) bsEl.textContent = best.length + ' منتج · آخر 30 يوم';
+  },
+
+  _productRow(p, extra = '') {
+    const zero = p.quantity <= 0;
+    const dot  = zero ? '🔴' : p.quantity <= (p.low_stock_alert || 5) ? '🟡' : '🟢';
+    return `<div data-id="${p.id}" class="qs-smart-row" style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;${zero ? 'opacity:0.45;pointer-events:none;' : ''}">
+      <div style="flex:1;">
+        <div style="font-weight:700;color:#1e293b;font-size:14px;">${p.name}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${dot} ${p.quantity} ${p.unit || ''}${extra}</div>
+      </div>
+      <div style="text-align:left;">
+        <div style="font-size:16px;font-weight:900;color:#6366f1;">₪${(p.sale_price || 0).toFixed(2)}</div>
+        ${extra ? '<div style="font-size:10px;color:#94a3b8;">' + extra + '</div>' : ''}
+      </div>
+    </div>`;
+  },
+
+  _bindSmartRows(containerId, modalId) {
+    const container = DOM.get(containerId);
+    if (!container) return;
+    container.querySelectorAll('.qs-smart-row').forEach(el => {
+      el.addEventListener('click', () => {
+        Modal.close(modalId);
+        setTimeout(() => QuickSale.addToCart(el.dataset.id), 100);
+      });
+      el.addEventListener('mouseover', () => el.style.background = '#f8fafc');
+      el.addEventListener('mouseout',  () => el.style.background = '');
+    });
+  },
+
+  async openBestSelling() {
+    await QuickSale._loadSmartCards();
+    const list = QuickSale._bestSellingData;
+    const el   = DOM.get('qs-bestsell-list');
+    if (!el) return;
+    const inp = DOM.get('qs-bestsell-search'); if (inp) inp.value = '';
+    el.innerHTML = list.length
+      ? list.map(p => QuickSale._productRow(p, '· مبيع ' + p.sold + ' مرة')).join('')
+      : '<div style="padding:20px;text-align:center;color:#94a3b8;">لا توجد بيانات مبيعات بعد</div>';
+    Modal.open('m-qs-bestsell');
+    QuickSale._bindSmartRows('qs-bestsell-list', 'm-qs-bestsell');
+  },
+
+  filterBestSelling(q) {
+    const list = QuickSale._bestSellingData.filter(p =>
+      p.name.toLowerCase().includes(q.toLowerCase())
+    );
+    const el = DOM.get('qs-bestsell-list');
+    if (!el) return;
+    el.innerHTML = list.map(p => QuickSale._productRow(p, '· مبيع ' + p.sold + ' مرة')).join('');
+    QuickSale._bindSmartRows('qs-bestsell-list', 'm-qs-bestsell');
+  },
+
+  async openNoBarcode() {
+    if (!State.inventory.length) {
+      const inv = getInventory(); if (inv) await inv.loadList();
+    }
+    const list = State.inventory.filter(p => !p.barcode);
+    QuickSale._noBarcodeData = list;
+    const el  = DOM.get('qs-nobc-list');
+    const inp = DOM.get('qs-nobc-search'); if (inp) inp.value = '';
+    if (!el) return;
+    el.innerHTML = list.length
+      ? list.map(p => QuickSale._productRow(p)).join('')
+      : '<div style="padding:20px;text-align:center;color:#94a3b8;">لا توجد منتجات بدون باركود</div>';
+    Modal.open('m-qs-nobc');
+    QuickSale._bindSmartRows('qs-nobc-list', 'm-qs-nobc');
+  },
+
+  filterNoBarcode(q) {
+    const list = QuickSale._noBarcodeData.filter(p =>
+      p.name.toLowerCase().includes(q.toLowerCase())
+    );
+    const el = DOM.get('qs-nobc-list');
+    if (!el) return;
+    el.innerHTML = list.map(p => QuickSale._productRow(p)).join('');
+    QuickSale._bindSmartRows('qs-nobc-list', 'm-qs-nobc');
+  },
   selectFromSearch(id) {
     const grid  = DOM.get('qs-product-grid');
     const input = DOM.get('qs-barcode-input');
