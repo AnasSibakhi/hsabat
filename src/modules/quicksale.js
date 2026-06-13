@@ -166,7 +166,8 @@ export const QuickSale = {
   },
 
   addToCart(productId) {
-    if (!p) return;
+    const p = State.inventory.find(x => x.id === productId);
+    if (!p) { Notify.error('المنتج غير موجود'); return; }
     if (!p.sale_price || p.sale_price <= 0) {
       Notify.error('"' + p.name + '" ليس له سعر بيع');
       return;
