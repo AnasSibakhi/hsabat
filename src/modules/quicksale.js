@@ -32,7 +32,6 @@ export const QuickSale = {
     _discount = 0;
     QuickSale._renderCart();
     DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
-    QuickSale._loadStats();
     // ── Physical barcode scanner (USB/BT) ──
     QuickSale._initPhysicalScanner();
     const grid = DOM.get('qs-product-grid');
@@ -771,7 +770,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
       QuickSale.clearCart();
       await getDashboard()?.load();
-      await QuickSale._loadStats();
       const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
       DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
