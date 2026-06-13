@@ -65,12 +65,14 @@ export const QuickSale = {
   // Called on every input change
   onBarcodeInput(val) {
     clearTimeout(QuickSale._barcodeTimer);
-    const grid = DOM.get('qs-product-grid');
+    const grid  = DOM.get('qs-product-grid');
+    const right  = document.querySelector('.pos-right');
     if (!val.trim()) {
-      if (grid) grid.style.display = 'none';
+      if (grid)  grid.style.display  = 'none';
+      if (right) right.style.display = '';
       return;
     }
-    // بحث فوري بدون debounce
+    if (right) right.style.display = 'none';
     QuickSale._renderGrid(val.trim());
   },
 
@@ -132,9 +134,9 @@ export const QuickSale = {
       const low  = p.quantity <= (p.low_stock_alert || 5);
       const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
       const border = idx < list.length - 1 ? 'border-bottom:1px solid var(--g1);' : '';
-      return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-barcode-input').value='';QuickSale._renderGrid('');"
+      return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-barcode-input').value='';QuickSale._renderGrid('');document.querySelector('.pos-right').style.display='';"
         style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;${border}${zero?'opacity:0.5;pointer-events:none;':''}"
-        onmouseover="this.style.background='var(--pl)'" onmouseout="this.style.background=''">
+        onmouseover="this.style.background='rgba(99,102,241,0.08)'" onmouseout="this.style.background=''">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;color:#1e293b;font-size:14px;">${escape(p.name)}</div>
           <div style="font-size:11px;color:#64748b;margin-top:2px;">${dot} ${p.quantity} ${escape(p.unit||'')}${p.barcode ? ' · ' + p.barcode : ''}</div>
