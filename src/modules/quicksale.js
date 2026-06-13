@@ -778,6 +778,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     const deferDate = DOM.val('qs-defer-date');
     const deferAcct = DOM.val('qs-defer-account');
+    const el = DOM.get('qs-receipt-body');
 
     const msgConfig = {
       cash:     { icon: '✅', color: 'var(--s)',  text: 'تم البيع بنجاح' },
