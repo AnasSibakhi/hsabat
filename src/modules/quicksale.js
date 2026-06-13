@@ -31,11 +31,12 @@ export const QuickSale = {
     _cart     = [];
     _discount = 0;
     QuickSale._renderCart();
-    QuickSale._renderGrid();
+    DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
     QuickSale._loadStats();
     // ── Physical barcode scanner (USB/BT) ──
     QuickSale._initPhysicalScanner();
-    // Auto-focus
+    const grid = DOM.get('qs-product-grid');
+    if (grid) grid.style.display = 'none';
     setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 300);
   },
 
@@ -300,7 +301,7 @@ export const QuickSale = {
     const bp = DOM.get('qs-buyer-phone'); if (bp) bp.value = '';
     const bdd = DOM.get('qs-buyer-dropdown'); if (bdd) bdd.style.display = 'none';
 document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active'));
-    QuickSale._renderGrid();
+    DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
   },
 
   // ── Barcode ──
@@ -427,7 +428,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       State.inventory.push(data);
       Modal.close('m-new-product');
       QuickSale.addToCart(data.id);
-      QuickSale._renderGrid();
+      DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
       Notify.success('تم إضافة "' + name + '" للمخزون وللسلة');
     } catch (err) { Notify.error(err.message); }
   },
@@ -770,7 +771,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       await getDashboard()?.load();
       await QuickSale._loadStats();
       const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
-      QuickSale._renderGrid();
+      DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
       // عرض الفاتورة بعد البيع
       QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone);
