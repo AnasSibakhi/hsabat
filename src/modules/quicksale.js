@@ -103,7 +103,9 @@ export const QuickSale = {
     const wrap = document.getElementById('qs-search-wrap');
     if (wrap) {
       const rect = wrap.getBoundingClientRect();
-      grid.style.top = rect.bottom + 'px';
+      grid.style.top  = rect.bottom + 'px';
+      grid.style.left = rect.left + 'px';
+      grid.style.right = (window.innerWidth - rect.right) + 'px';
     }
 
     if (!State.inventory.length) {
