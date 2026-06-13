@@ -672,20 +672,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     let   custId   = null, custName = 'زبون عادي';
 
     if (paymentType === PAYMENT.DEFER) {
-      custId = DOM.val('qs-debt-cust');
-      // إذا زبون جديد
-      if (!custId && QuickSale._debtNewCust) {
-        const phone = DOM.val('qs-debt-new-phone');
-        const newC  = await Customers.createInline(QuickSale._debtNewCust, phone);
-        if (!newC?.id) { Notify.error('فشل إضافة الزبون'); return; }
-        custId   = newC.id;
-        custName = newC.name;
-      }
-      if (!custId) { Notify.error('اختر الزبون أو أدخل اسماً جديداً'); return; }
-      const c = State.customers.find(x => x.id === custId);
-      custName = c?.name || custName;
-      Modal.close('m-qs-debt');
-      QuickSale._debtNewCust = null;
+      const deferName = DOM.val('qs-buyer-name-df')?.trim();
+      if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
+      custName = deferName;
+      // لو الاسم مطابق لزبون موجود — استخدم ID
+      const existing = State.customers.find(c => c.name.toLowerCase() === deferName.toLowerCase());
+      if (existing) custId = existing.id;
     }
 
     State.isMutating = true;
