@@ -21,6 +21,7 @@ let _discount = 0;
 let _scanner  = null;
 let _lastScan = null;
 let _scanTimer = null;
+let _active   = false;
 let _transferEntities = [];
 let _selectedTransferEntity = null;
 
@@ -30,6 +31,7 @@ export const QuickSale = {
   async init() {
     _cart     = [];
     _discount = 0;
+    _active   = true;
     QuickSale._renderCart();
     DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
     // ── Physical barcode scanner (USB/BT) ──
