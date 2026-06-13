@@ -99,6 +99,13 @@ export const QuickSale = {
       return;
     }
 
+    // حساب موضع الـ dropdown تحت الـ search bar
+    const wrap = document.getElementById('qs-search-wrap');
+    if (wrap) {
+      const rect = wrap.getBoundingClientRect();
+      grid.style.top = rect.bottom + 'px';
+    }
+
     if (!State.inventory.length) {
       const inv = getInventory();
       if (inv) await inv.loadList();
@@ -112,20 +119,19 @@ export const QuickSale = {
     ).slice(0, 15);
 
     grid.style.display = 'block';
-    grid.style.cssText = 'display:block;background:#fff;border-radius:14px;border:1px solid var(--br);overflow:hidden;margin-top:4px;';
 
     if (!list.length) {
       grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--g4);font-size:13px;">🔍 لا توجد نتائج</div>';
       return;
     }
 
-    grid.innerHTML = list.map((p,idx) => {
+    grid.innerHTML = list.map((p, idx) => {
       const zero = p.quantity <= 0;
       const low  = p.quantity <= (p.low_stock_alert || 5);
       const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
       const border = idx < list.length - 1 ? 'border-bottom:1px solid var(--g1);' : '';
       return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-barcode-input').value='';QuickSale._renderGrid('');"
-        style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;${border}${zero?'opacity:0.5;pointer-events:none;':''}"
+        style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;${border}${zero?'opacity:0.5;pointer-events:none;':''}"
         onmouseover="this.style.background='var(--pl)'" onmouseout="this.style.background=''">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;color:#1e293b;font-size:14px;">${escape(p.name)}</div>
