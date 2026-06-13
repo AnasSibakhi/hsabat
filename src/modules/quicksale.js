@@ -464,13 +464,26 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const matches = (State.customers || []).filter(c =>
       c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)
     ).slice(0, 6);
-    if (!matches.length) { dd.style.display = 'none'; return; }
-    dd.innerHTML = matches.map(c =>
+
+    let html = matches.map(c =>
       `<div class="dc-opt" onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}','${escape(c.name)}','${c.phone||''}')">
-        ${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
+        <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
       </div>`
     ).join('');
+
+    // زر "استخدم هذا الاسم" دائماً
+    html += `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;" onclick="QuickSale.useName('${nameId}','${ddId}')">
+      ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
+    </div>`;
+
+    dd.innerHTML = html;
     dd.style.display = 'block';
+  },
+
+  useName(nameId, ddId) {
+    const dd = DOM.get(ddId);
+    dd.style.display = 'none';
+    DOM.get(nameId)?.focus();
   },
 
   selectBuyerField(nameId, phoneId, ddId, name, phone) {
