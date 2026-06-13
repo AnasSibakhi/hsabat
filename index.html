@@ -20,14 +20,13 @@
 :root{--p:#1a56db;--pl:#e8f0fe;--pd:#1241a8;--s:#0e9f6e;--sl:#def7ec;--w:#c27803;--wl:#fdf6b2;--d:#c81e1e;--dl:#fde8e8;--g0:#f9fafb;--g1:#f3f4f6;--g2:#e5e7eb;--g3:#d1d5db;--g4:#9ca3af;--g5:#6b7280;--g6:#4b5563;--g7:#374151;--g8:#1f2937;--g9:#111827;--br:#e5e7eb;}
 
 /* ── LAYOUT ── */
-html,body{height:100%;margin:0;}
+html,body{height:100dvh;margin:0;overflow:hidden;}
 body{
   font-family:'Cairo',sans-serif;
   background:#fff;
   color:var(--g9);
   display:flex;
   flex-direction:column;
-  height:100%;
   overflow:hidden;
 }
 
@@ -173,8 +172,8 @@ table.sa-dt tr:hover td{background:#f8fafc;}
   display:flex;
   flex-direction:column;
   flex:1;
+  min-height:0;
   overflow:hidden;
-  height:100%;
   visibility:hidden;
 }
 #app-wrap.hidden{display:none;}
@@ -204,7 +203,6 @@ table.sa-dt tr:hover td{background:#f8fafc;}
   display:flex;
   overflow:hidden;
   min-height:0;
-  height:0;
 }
 
 .sidebar{
