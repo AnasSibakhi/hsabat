@@ -221,6 +221,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .content{
   flex:1;
   overflow-y:auto;
+  overflow-x:hidden;
   padding:1rem;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
@@ -265,7 +266,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
-.page{display:none;}.page.active{display:block;}.page#page-quicksale.active{display:flex!important;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.page{display:none;}.page.active{display:block;width:100%;box-sizing:border-box;overflow-x:hidden;}.page#page-quicksale.active{display:flex!important;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;min-width:0;}
@@ -279,7 +280,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .sc.green{border-color:#bbf7d0;background:#f0fdf4;}.sc.green .sc-v{color:#15803d;}
 .sc.amber{border-color:#fde68a;background:#fffbeb;}.sc.amber .sc-v{color:#b45309;}
 .card{background:#fff;border:1px solid var(--br);border-radius:12px;overflow:hidden;margin-bottom:1rem;max-width:100%;}
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
 table.dt{width:100%;border-collapse:collapse;font-size:13px;}
 table.dt th{background:var(--g0);padding:9px 12px;font-weight:700;font-size:11px;color:var(--g6);border-bottom:1px solid var(--br);text-align:right;white-space:nowrap;}
 table.dt td{padding:9px 12px;border-bottom:.5px solid var(--g1);color:var(--g7);white-space:nowrap;}
