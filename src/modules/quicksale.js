@@ -109,30 +109,33 @@ export const QuickSale = {
       p.name?.toLowerCase().includes(q) ||
       (p.barcode || '').includes(q) ||
       (p.category || '').toLowerCase().includes(q)
-    ).slice(0, 10);
+    ).slice(0, 15);
 
     grid.style.display = 'block';
+    grid.style.cssText = 'display:block;background:#fff;border-radius:14px;border:1px solid var(--br);overflow:hidden;margin-top:4px;';
 
     if (!list.length) {
-      grid.innerHTML = '<div style="padding:16px;text-align:center;color:var(--g4);font-size:13px;">🔍 لا توجد نتائج</div>';
+      grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--g4);font-size:13px;">🔍 لا توجد نتائج</div>';
       return;
     }
 
-    grid.innerHTML = list.map(p => {
+    grid.innerHTML = list.map((p,idx) => {
       const zero = p.quantity <= 0;
       const low  = p.quantity <= (p.low_stock_alert || 5);
       const dot  = zero ? '🔴' : low ? '🟡' : '🟢';
-      return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-product-grid').style.display='none';DOM.get('qs-barcode-input').value='';DOM.get('qs-barcode-input').focus();"
-        style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--g1);cursor:pointer;${zero?'opacity:0.5;pointer-events:none;':''}"
+      const border = idx < list.length - 1 ? 'border-bottom:1px solid var(--g1);' : '';
+      return `<div onclick="QuickSale.addToCart('${p.id}');DOM.get('qs-barcode-input').value='';QuickSale._renderGrid('');"
+        style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;${border}${zero?'opacity:0.5;pointer-events:none;':''}"
         onmouseover="this.style.background='var(--pl)'" onmouseout="this.style.background=''">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;color:#1e293b;font-size:14px;">${escape(p.name)}</div>
-          <div style="font-size:11px;color:#64748b;margin-top:1px;">${dot} ${p.quantity} ${escape(p.unit||'')} ${p.barcode ? '· ' + p.barcode : ''}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px;">${dot} ${p.quantity} ${escape(p.unit||'')}${p.barcode ? ' · ' + p.barcode : ''}</div>
         </div>
-        <div style="font-size:15px;font-weight:900;color:#6366f1;margin-right:12px;">₪${(p.sale_price||0).toFixed(2)}</div>
+        <div style="font-size:16px;font-weight:900;color:#6366f1;white-space:nowrap;margin-right:10px;">₪${(p.sale_price||0).toFixed(2)}</div>
       </div>`;
     }).join('');
   },
+
 
 
   search(val) {

@@ -835,14 +835,13 @@ PalPay" style="resize:none;"></textarea>
       <!-- RIGHT: Search + Cart -->
       <div class="pos-left">
         <!-- Search + Barcode -->
-        <div class="pos-search-bar" style="position:relative;">
+        <div class="pos-search-bar">
           <i class="ti ti-barcode"></i>
           <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="QuickSale.onBarcodeInput(this.value)" onkeydown="QuickSale.onBarcodeKey(event)">
           <button class="pos-cam-btn" onclick="QuickSale.startScanner()"><i class="ti ti-camera"></i></button>
-          <!-- Search Results Dropdown -->
-          <div id="qs-product-grid" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1.5px solid var(--p);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:200;"></div>
         </div>
-
+        <!-- نتائج البحث في الصفحة -->
+        <div id="qs-product-grid" style="display:none;"></div>
         <div id="qs-stats" class="pos-stats-bar"></div>
       </div>
         <div id="qs-product-grid" class="pos-grid"></div>
