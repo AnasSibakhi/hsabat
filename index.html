@@ -206,6 +206,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
   min-height:0;
   height:0;
   width:100%;
+  direction:rtl;
 }
 
 .sidebar{
@@ -228,7 +229,8 @@ table.sa-dt tr:hover td{background:#f8fafc;}
   overscroll-behavior:contain;
   min-height:0;
   min-width:0;
-  width:0;
+  max-width:100%;
+  box-sizing:border-box;
 }
 .content.qs-mode{
   overflow:hidden!important;
@@ -268,7 +270,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
-.page{display:none;max-width:100%;overflow-x:hidden;}.page.active{display:block;}.page#page-quicksale.active{display:flex!important;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.page{display:none;width:100%;box-sizing:border-box;}.page.active{display:block;}.page#page-quicksale.active{display:flex!important;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;min-width:0;}
