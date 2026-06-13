@@ -37,7 +37,7 @@
   flex: 1.6;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
   border-left: 1px solid #e2e8f0;
   background: #fff;
@@ -369,7 +369,7 @@
 /* ══ MOBILE ══ */
 @media(max-width: 768px) {
   .pos-wrap   { flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .pos-left   { flex: none; height: auto; min-height: 45vh; border-left: none; border-bottom: 1px solid #e2e8f0; overflow: visible; }
+  .pos-left   { flex: none; height: auto; min-height: 0; border-left: none; border-bottom: none; overflow: visible; }
   .pos-right  { flex: none; width: 100%; min-width: unset; box-shadow: none; }
   .pos-grid   { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: .6rem; overflow: visible; max-height: none; background: #f8fafc; }
   .pos-prod   { padding: 12px 8px; border-radius: 12px; }
