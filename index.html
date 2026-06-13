@@ -1087,7 +1087,7 @@ PalPay" style="resize:none;"></textarea>
     <div class="ph"><span class="pt">المخزون</span><button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة منتج</button></div>
     <!-- فلتر سريع -->
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <input class="inp" id="inv-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
+      <input class="inp" id="inventory-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
       <select class="inp" id="inv-filter-status" onchange="Inventory.filterList()" style="min-width:120px;">
         <option value="">كل المنتجات</option>
         <option value="out">🔴 نفد</option>

@@ -164,7 +164,7 @@ const Inventory = {
   },
 
   filterList(q) {
-    const query  = (q || document.getElementById('inv-search')?.value || '').toLowerCase();
+    const query  = (q || document.getElementById('inventory-search')?.value || '').toLowerCase();
     const status = document.getElementById('inv-filter-status')?.value || '';
     const list   = State.inventory.filter(i => {
       const matchQ = !query || i.name?.toLowerCase().includes(query) || i.barcode?.includes(query);
