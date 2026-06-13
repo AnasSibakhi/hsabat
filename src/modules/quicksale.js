@@ -776,14 +776,31 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       ? `https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}`
       : `https://wa.me/?text=${waMsg}`;
 
-    // بناء modal الإيصال
-    const el = DOM.get('qs-receipt-body');
+    const deferDate = DOM.val('qs-defer-date');
+    const deferAcct = DOM.val('qs-defer-account');
+
+    const msgConfig = {
+      cash:     { icon: '✅', color: 'var(--s)',  text: 'تم البيع بنجاح' },
+      transfer: { icon: '🏦', color: '#0ea5e9',  text: 'تم التحويل بنجاح' },
+      defer:    { icon: '🕐', color: '#f59e0b',  text: 'تم تسجيل الدين بنجاح' },
+      partial:  { icon: '💰', color: 'var(--s)', text: 'تم البيع (دفع جزئي)' },
+    };
+    const msg = msgConfig[paymentType] || msgConfig.cash;
+
+    const extraInfo = paymentType === 'defer'
+      ? `<div style="margin-top:6px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:8px;padding:8px 12px;">
+          👤 ${escape(custName || '-')}
+          ${deferDate ? ' · 📅 السداد: ' + deferDate : ''}
+          ${deferAcct ? ' · ' + deferAcct : ''}
+        </div>`
+      : '';
     if (el) {
       el.innerHTML = `
         <div style="text-align:center;margin-bottom:12px;">
-          <div style="font-size:22px;">✅</div>
-          <div style="font-size:16px;font-weight:900;color:var(--s);">تم البيع بنجاح</div>
+          <div style="font-size:22px;">${msg.icon}</div>
+          <div style="font-size:16px;font-weight:900;color:${msg.color};">${msg.text}</div>
           <div style="font-size:13px;color:var(--g5);">${inv.invoice_number} · ₪${total.toFixed(2)}</div>
+          ${extraInfo}
         </div>
         <table class="dt" style="margin-bottom:.75rem;font-size:12px;">
           <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
