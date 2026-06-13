@@ -456,13 +456,20 @@ select.inp{appearance:none;cursor:pointer;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes bell-shake{
   0%,100%{transform:rotate(0);}
-  15%{transform:rotate(15deg);}
-  30%{transform:rotate(-13deg);}
-  45%{transform:rotate(10deg);}
-  60%{transform:rotate(-6deg);}
-  75%{transform:rotate(3deg);}
+  10%{transform:rotate(18deg);}
+  20%{transform:rotate(-16deg);}
+  30%{transform:rotate(14deg);}
+  40%{transform:rotate(-10deg);}
+  50%{transform:rotate(6deg);}
+  60%{transform:rotate(-4deg);}
+  70%{transform:rotate(2deg);}
+  80%{transform:rotate(0);}
 }
-.bell-ringing{animation:bell-shake 0.7s ease forwards;transform-origin:top center;}
+@keyframes badge-pulse{
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.4);opacity:0.7;}
+}
+.bell-ringing{animation:bell-shake 0.8s ease forwards;transform-origin:top center;}
 /* bottom-nav defined in responsive section */
 input[type="number"]{direction:ltr;text-align:right;}
 
