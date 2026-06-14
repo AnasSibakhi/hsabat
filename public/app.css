@@ -205,10 +205,9 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 
 .content{
   flex:1;
-  align-self:stretch;
   overflow-y:auto;
   overflow-x:hidden;
-  padding:1rem;
+  padding:1rem 1rem 1.5rem 1rem;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   min-height:0;
