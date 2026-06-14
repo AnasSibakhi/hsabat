@@ -726,3 +726,8 @@ body.dark .ni.active{background:#1e3a5f;}
   .prod-name       { font-size:17px; }
   .profit-main     { font-size:28px; }
 }
+
+@keyframes slideUp{
+  from{transform:translateY(100%);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
