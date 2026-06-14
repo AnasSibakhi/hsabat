@@ -723,3 +723,19 @@ body.dark .ni.active{background:#1e3a5f;}
   .prod-name       { font-size:17px; }
   .profit-main     { font-size:28px; }
 }
+
+/* ═══════════════════════════════════
+   REPORTS — Equation
+   ═══════════════════════════════════ */
+.eq-row   { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.eq-badge { padding:4px 10px; border-radius:6px; font-weight:700; font-size:13px; }
+.eq-lg    { font-weight:900; font-size:15px; }
+.eq-blue  { background:var(--pl); color:var(--p); }
+.eq-red   { background:var(--dl); color:var(--d); }
+.eq-amber { background:var(--wl); color:var(--w); }
+.eq-green { background:var(--sl); color:var(--s); }
+
+/* ═══════════════════════════════════
+   mb-8 utility (if not exists)
+   ═══════════════════════════════════ */
+.mb-8{ margin-bottom:8px; }
