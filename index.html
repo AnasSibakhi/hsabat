@@ -227,6 +227,10 @@ PalPay" style="resize:none;"></textarea>
    <span class="tb-name">حسابات</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px;">
+   <!-- Search -->
+   <button class="btn btn-o" onclick="GlobalSearch.open()" style="padding:6px 8px;font-size:16px;">
+     <i class="ti ti-search"></i>
+   </button>
    <!-- Bell -->
    <div class="pos-rel">
     <button class="btn btn-o" onclick="Notifications.toggle()" style="padding:6px 8px;font-size:16px;position:relative;">
@@ -1320,8 +1324,23 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <button class="btn btn-s" onclick="Purchases.paySupplier()">تسديد</button>
   </div>
 </div></div>
-<!-- Scanner Overlay -->
-<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;">
+<!-- Global Search Overlay -->
+<div id="global-search-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9000;backdrop-filter:blur(4px);" onclick="if(event.target===this)GlobalSearch.close()">
+  <div style="background:#fff;border-radius:0 0 20px 20px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <!-- حقل البحث -->
+    <div style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:2px solid var(--p);border-radius:12px;padding:10px 14px;">
+      <i class="ti ti-search" style="color:var(--p);font-size:18px;"></i>
+      <input id="global-search-input" class="inp" placeholder="ابحث عن اسم..." autocomplete="off"
+        style="border:none;background:none;padding:0;font-size:15px;flex:1;outline:none;"
+        oninput="GlobalSearch.search(this.value)">
+      <button onclick="GlobalSearch.close()" style="background:none;border:none;color:var(--g5);font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <!-- النتائج -->
+    <div id="global-search-results" style="max-height:60vh;overflow-y:auto;margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- Scanner Overlay --> style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;">
   <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
     <div id="qs-scanner-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
 
