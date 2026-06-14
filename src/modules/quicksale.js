@@ -706,13 +706,22 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
   },
 
-  searchBuyer(val) {
+  async searchBuyer(val) {
     const dd = DOM.get('qs-buyer-dropdown');
-    if (!val.trim()) { dd.style.display = 'none'; return; }
+    if (!val.trim()) { if(dd) dd.style.display = 'none'; return; }
+
+    // جيب الزبائن لو ما محمّلين
+    if (!State.customers?.length) {
+      const { data } = await sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name');
+      State.customers = data || [];
+    }
+
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c =>
       c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
     ).slice(0, 6);
+
+    if (!dd) return;
     if (!matches.length) { dd.style.display = 'none'; return; }
     dd.innerHTML = matches.map(c =>
       `<div class="dc-opt" onclick="QuickSale.selectBuyer('${c.id}','${escape(c.name)}','${c.phone||''}')">
