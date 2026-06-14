@@ -10,9 +10,10 @@ import * as Nav     from './nav.js';
 import { Realtime } from './realtime.js';
 
 // Module imports
-import { Dashboard }  from '../modules/dashboard.js';
-import { Customers }  from '../modules/customers.js';
-import { Debts }      from '../modules/debts.js';
+import { Dashboard }     from '../modules/dashboard.js';
+import { Customers }     from '../modules/customers.js';
+import { Debts }         from '../modules/debts.js';
+import { Notifications } from '../modules/notifications.js';
 import { Invoices }   from '../modules/invoices.js';
 import { Sales }      from '../modules/sales.js';
 import { Inventory }  from '../modules/inventory.js';
@@ -82,6 +83,9 @@ export const Store = {
     await Inventory.loadList();
     await Promise.all([Customers.loadAll(), Debts.loadBadge()]);
     await Dashboard.load();
+
+    // بدء التنبيهات التلقائية
+    Notifications.startAutoRefresh();
 
     Realtime.start();
 

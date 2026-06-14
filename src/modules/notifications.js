@@ -6,9 +6,26 @@ import { State }  from '../core/state.js';
 import * as DOM   from '../core/dom.js';
 import { escape } from '../core/utils.js';
 
-let _open = false;
+let _open            = false;
+let _refreshInterval = null;
+let _bellInterval    = null;
+let _lastCount       = 0;
 
 export const Notifications = {
+
+  // بدء التحديث التلقائي كل 5 دقائق
+  startAutoRefresh() {
+    Notifications.load();
+    clearInterval(_refreshInterval);
+    _refreshInterval = setInterval(() => {
+      Notifications.load();
+    }, 5 * 60 * 1000); // كل 5 دقائق
+  },
+
+  stopAutoRefresh() {
+    clearInterval(_refreshInterval);
+    clearInterval(_bellInterval);
+  },
 
   async load() {
     if (!State.user?.id) return;
@@ -29,21 +46,21 @@ export const Notifications = {
 
     const auto = [];
 
-    // ١. منتجات نفدت
+    // ١. منتجات نفدت 🔴
     (inventoryRes.data || []).filter(i => i.quantity <= 0).forEach(i => {
       auto.push({ id:'out-'+i.id, title:'🔴 نفد المخزون — '+i.name,
         message:'المنتج نفد تماماً — يرجى إعادة التوريد فوراً',
         created_at:today+'T00:00:00', read_at:null, _type:'out' });
     });
 
-    // ٢. قاربت النفاد
+    // ٢. قاربت النفاد 🟡
     (inventoryRes.data || []).filter(i => i.quantity > 0 && i.quantity <= (i.low_stock_alert || 5)).forEach(i => {
       auto.push({ id:'low-'+i.id, title:'🟡 قارب النفاد — '+i.name,
         message:'المتبقي: '+i.quantity+' '+(i.unit||'')+' — الحد: '+(i.low_stock_alert||5),
         created_at:today+'T00:00:00', read_at:null, _type:'low' });
     });
 
-    // ٣. ديون الزبائن المتأخرة
+    // ٣. ديون الزبائن المتأخرة ⏰
     (debtsRes.data || []).filter(d => {
       const rem  = d.amount - (d.paid || 0);
       const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
@@ -57,7 +74,7 @@ export const Notifications = {
         created_at:d.debt_date+'T00:00:00', read_at:null, _type:'debt' });
     });
 
-    // ٤. موعد سداد اقترب (خلال يومين)
+    // ٤. موعد سداد اقترب 📅
     (debtsRes.data || []).filter(d => {
       if (!d.remind_date) return false;
       const rem  = d.amount - (d.paid || 0);
@@ -73,7 +90,7 @@ export const Notifications = {
         created_at:today+'T12:00:00', read_at:null, _type:'remind' });
     });
 
-    // ٥. ديون الموردين المتأخرة
+    // ٥. ديون الموردين 🏭
     (purchasesRes.data || []).filter(p => {
       const days = Math.floor((new Date(today) - new Date(p.purchase_date)) / 86400000);
       return days >= 3;
@@ -84,75 +101,91 @@ export const Notifications = {
         created_at:p.purchase_date+'T00:00:00', read_at:null, _type:'supplier' });
     });
 
-    const all = [...auto, ...(notifsRes.data||[])].map(n => ({
-      ...n,
-      read_at: n.read_at || (Notifications._isRead(n.id) ? 'local' : null),
-    })).sort(
-      (a,b) => new Date(b.created_at) - new Date(a.created_at)
-    );
+    // دمج — التنبيهات التلقائية لا تُحفظ كـ مقروءة إلا لما يضغط عليها صاحب المحل
+    // لو المشكلة لسا موجودة (نفد مخزون، دين متأخر) ترجع تنبيه حتى لو قرأها
+    const autoUnresolved = auto.filter(n => {
+      // نعتبر التنبيه "مقروء" فقط لو أُغلق اليوم
+      const readToday = Notifications._isReadToday(n.id);
+      return !readToday;
+    });
 
-    Notifications._render(all);
+    const all = [
+      ...autoUnresolved,
+      ...(notifsRes.data||[]).filter(n => !n.read_at),
+      ...(notifsRes.data||[]).filter(n => n.read_at),
+    ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
     const unread = all.filter(n => !n.read_at).length;
-    const badge  = DOM.get('notif-badge');
-    const bell   = DOM.get('notif-bell-icon');
+
+    // تحديث الـ badge
+    const badge = DOM.get('notif-badge');
+    const bell  = DOM.get('notif-bell-icon');
 
     if (badge) {
       badge.style.display    = unread > 0 ? 'block' : 'none';
       badge.style.background = auto.some(n => n._type === 'out') ? '#dc2626' : '#f59e0b';
-      badge.style.animation  = 'none';
     }
 
-    // هز الجرس لو في تنبيهات
-    if (unread > 0 && bell) {
-      Notifications._shakeBell();
-      clearInterval(Notifications._bellInterval);
-      Notifications._bellInterval = setInterval(() => {
+    // هز الجرس لو في تنبيهات جديدة
+    if (unread > 0) {
+      // هز فوري لو في تنبيهات جديدة
+      if (unread > _lastCount) Notifications._shakeBell();
+      // هز دوري كل 30 ثانية
+      clearInterval(_bellInterval);
+      _bellInterval = setInterval(() => {
         if (document.visibilityState === 'visible') Notifications._shakeBell();
-      }, 60000);
+      }, 30000);
     } else {
-      clearInterval(Notifications._bellInterval);
+      clearInterval(_bellInterval);
     }
+
+    _lastCount = unread;
+
+    // تحديث القائمة لو مفتوحة
+    if (_open) Notifications._render(all);
   },
 
-  _readSet: new Set(JSON.parse(localStorage.getItem('notif_read') || '[]')),
+  // يحفظ كـ "مقروء اليوم" فقط — يرجع تنبيه بكرا لو المشكلة لسا موجودة
+  _readToday: JSON.parse(localStorage.getItem('notif_read_today') || '{}'),
 
   _markRead(id) {
-    Notifications._readSet.add(String(id));
-    localStorage.setItem('notif_read', JSON.stringify([...Notifications._readSet]));
+    const today = new Date().toISOString().split('T')[0];
+    Notifications._readToday[String(id)] = today;
+    localStorage.setItem('notif_read_today', JSON.stringify(Notifications._readToday));
   },
 
-  _isRead(id) {
-    return Notifications._readSet.has(String(id));
+  _isReadToday(id) {
+    const today = new Date().toISOString().split('T')[0];
+    return Notifications._readToday[String(id)] === today;
   },
+
+  _bellInterval: null,
 
   _shakeBell() {
     const bell = DOM.get('notif-bell-icon');
     if (!bell) return;
     bell.classList.remove('bell-ringing');
-    void bell.offsetWidth; // reflow
+    void bell.offsetWidth;
     bell.classList.add('bell-ringing');
     setTimeout(() => bell.classList.remove('bell-ringing'), 900);
   },
-
 
   _render(items) {
     const list = DOM.get('notif-list');
     if (!list) return;
     if (!items.length) {
-      list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--g4);font-size:13px;">لا توجد إشعارات</div>';
+      list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--g4);font-size:13px;">لا توجد إشعارات 🎉</div>';
       return;
     }
     list.innerHTML = items.map(n => {
-      const date    = new Date(n.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-      const time    = new Date(n.created_at).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
-      const unread  = !n.read_at;
+      const date   = new Date(n.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      const time   = new Date(n.created_at).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+      const unread = !n.read_at;
       return `
         <div onclick="Notifications.open('${n.id}')" data-notif-id="${n.id}" style="
           padding:12px 14px;border-bottom:1px solid var(--g1);cursor:pointer;
           background:${unread ? 'var(--pl)' : '#fff'};
-          display:flex;gap:10px;align-items:flex-start;
-          transition:.1s;
+          display:flex;gap:10px;align-items:flex-start;transition:.1s;
         " onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background='${unread ? 'var(--pl)' : '#fff'}'">
           <div style="width:8px;height:8px;border-radius:50%;background:${unread ? 'var(--p)' : 'transparent'};flex-shrink:0;margin-top:5px;"></div>
           <div style="flex:1;min-width:0;">
@@ -169,9 +202,11 @@ export const Notifications = {
     if (!dd) return;
     _open = !_open;
     dd.style.display = _open ? 'block' : 'none';
-    if (_open) Notifications.load();
-    // Close on outside click
     if (_open) {
+      Notifications.load().then(() => {
+        const badge = DOM.get('notif-badge');
+        // عرض القائمة بعد التحميل
+      });
       setTimeout(() => {
         document.addEventListener('click', Notifications._outsideClick, { once: true });
       }, 50);
@@ -179,7 +214,7 @@ export const Notifications = {
   },
 
   _outsideClick(e) {
-    const dd = DOM.get('notif-dropdown');
+    const dd  = DOM.get('notif-dropdown');
     const btn = dd?.previousElementSibling;
     if (dd && !dd.contains(e.target) && !btn?.contains(e.target)) {
       dd.style.display = 'none';
@@ -189,7 +224,6 @@ export const Notifications = {
 
   async open(id) {
     Notifications._markRead(id);
-    // لو إشعار DB — احفظه في الـ server
     if (!String(id).includes('-')) {
       await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
     }
@@ -197,10 +231,8 @@ export const Notifications = {
   },
 
   async markAllRead() {
-    // اقرأ كل التنبيهات التلقائية محلياً
     const items = document.querySelectorAll('[data-notif-id]');
     items.forEach(el => Notifications._markRead(el.dataset.notifId));
-    // واقرأ DB
     await sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
     await Notifications.load();
   },
