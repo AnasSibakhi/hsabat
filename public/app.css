@@ -207,7 +207,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
   flex:1;
   overflow-y:auto;
   overflow-x:hidden;
-  padding:1rem;
+  padding:1rem 1rem 1.5rem 1rem;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   min-height:0;
@@ -252,7 +252,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .add-menu-item i{font-size:20px;width:24px;}
 
 /* ── PAGES ── */
-.page{display:none;}.page.active{display:block;width:100%;box-sizing:border-box;overflow-x:hidden;padding-bottom:.75rem;}.page#page-quicksale.active{display:flex!important;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding-bottom:0;}
+.page{display:none;}.page.active{display:block;width:100%;box-sizing:border-box;}.page#page-quicksale.active{display:flex!important;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding-bottom:0;}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
 .pt{font-size:17px;font-weight:800;}
 .sec-title{font-size:14px;font-weight:800;color:var(--g6);margin-bottom:8px;margin-top:4px;}
