@@ -21,29 +21,26 @@ const Dashboard = {
     try {
       const todayStr = Utils.today();
 
-      const [todayInv, debts, inventory, todayCost] = await Promise.all([
-        DB.invoices().select('total,items').eq('invoice_date', todayStr),
+      const [todayInv, debts, inventory, purchasesRes] = await Promise.all([
+        DB.invoices().select('total').eq('invoice_date', todayStr),
         DB.debts().select('amount,paid'),
         DB.inventory().select('id,name,quantity,low_stock_alert,sale_price,cost_price'),
-        DB.invoices().select('items').eq('invoice_date', todayStr),
+        DB.purchases().select('*').eq('payment_status','defer').gt('remaining',0),
       ]);
 
       // ١. مبيعات اليوم
       const todaySales = Utils.sumBy(todayInv.data, 'total');
       DOM.setText('hs1', Utils.currency(todaySales));
 
-      // ٢. ربح اليوم
-      let todayProfit = 0;
-      const invData = todayInv.data || [];
-      invData.forEach(inv => {
-        const items = Array.isArray(inv.items) ? inv.items : [];
-        items.forEach(item => {
-          const prod = (inventory.data || []).find(p => p.id === item.product_id);
-          if (prod && prod.cost_price) {
-            todayProfit += (item.price - prod.cost_price) * (item.qty || 1);
-          }
-        });
-      });
+      // ٢. ربح اليوم — تقريبي بناءً على هامش المخزون
+      const avgMargin = (inventory.data || []).reduce((s, i) => {
+        if (i.sale_price && i.cost_price && i.sale_price > 0) {
+          return s + ((i.sale_price - i.cost_price) / i.sale_price);
+        }
+        return s;
+      }, 0) / Math.max((inventory.data || []).filter(i => i.sale_price > 0).length, 1);
+
+      const todayProfit = todaySales * avgMargin;
       const profitEl = DOM.get('hs-profit');
       if (profitEl) {
         profitEl.textContent = Utils.currency(todayProfit);
