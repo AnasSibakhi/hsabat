@@ -133,12 +133,18 @@ const Debts = {
   },
 
   // ── Customer Search ──
-  searchCustomer(val) {
+  async searchCustomer(val) {
     const dd = DOM.get('dc-dropdown');
     const newWrap = DOM.get('dc-new-wrap');
     DOM.get('dc').value = '';
     _newCustName = null;
     if (!val.trim()) { dd.style.display = 'none'; newWrap.style.display = 'none'; return; }
+
+    // جيب الزبائن من DB لو ما محمّلين
+    if (!State.customers?.length) {
+      const { data } = await sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name');
+      State.customers = data || [];
+    }
 
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
@@ -149,7 +155,7 @@ const Debts = {
       </div>`
     ).join('');
 
-    html += `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}')">+ إضافة &quot;${Utils.escape(val.trim())}&quot; كزبون جديد</div>`;
+    html += `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}')">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`;
 
     dd.innerHTML = html;
     dd.style.display = 'block';
