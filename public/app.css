@@ -686,3 +686,41 @@ body.dark .ni.active{background:#1e3a5f;}
   .tab-row      { gap:6px; margin-bottom:8px; }
   .filter-row   { gap:6px; margin-bottom:6px; }
 }
+
+/* ═══════════════════════════════════
+   PRODUCT PAGE
+   ═══════════════════════════════════ */
+.prod-main-card    { padding:16px; margin-bottom:12px; }
+.prod-card-header  { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.prod-name         { font-size:20px; font-weight:900; color:#1e293b; }
+.prod-barcode      { font-family:monospace; color:#64748b; font-size:13px; margin-top:4px; }
+.prod-stats-grid   { margin-bottom:10px; }
+.prod-tags         { display:flex; gap:8px; margin-top:8px; }
+.prod-kpi          { margin-bottom:0; }
+
+/* Tags */
+.tag               { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.tag-purple        { background:#ede9fe; color:#6366f1; }
+.tag-slate         { background:#f1f5f9; color:#475569; }
+
+/* Grid c2 */
+.sg.c2 { grid-template-columns:repeat(2,1fr); }
+
+/* Reports */
+.profit-banner  { border-radius:14px; padding:1.25rem; margin-bottom:1rem; text-align:center; background:var(--sl); }
+.profit-label   { font-size:13px; color:var(--g6); margin-bottom:4px; }
+.profit-main    { font-size:36px; font-weight:900; color:var(--g9); }
+.profit-margin  { font-size:13px; color:var(--g5); margin-top:4px; }
+
+/* flex-between shorthand */
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+
+/* mt-8 */
+.mt-8  { margin-top:8px; }
+
+/* Responsive product page */
+@media(max-width:768px){
+  .prod-main-card  { padding:12px; }
+  .prod-name       { font-size:17px; }
+  .profit-main     { font-size:28px; }
+}

@@ -420,8 +420,8 @@ PalPay" style="resize:none;"></textarea>
     <div id="dalerts"></div>
 
     <!-- Sort Controls -->
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:.75rem;">
-      <span style="font-size:12px;color:var(--g5);">ترتيب:</span>
+    <div class="flex-row items-center flex-gap6 mb-12">
+      <span class="text-sm c-muted">ترتيب:</span>
       <button id="dsort-date"    class="d-sort-btn active" onclick="Debts.setSort('date')">التاريخ</button>
       <button id="dsort-amount"  class="d-sort-btn"        onclick="Debts.setSort('amount')">المبلغ</button>
       <button id="dsort-overdue" class="d-sort-btn"        onclick="Debts.setSort('overdue')">الأقدم</button>
@@ -598,57 +598,36 @@ PalPay" style="resize:none;"></textarea>
     </div>
 
     <!-- بطاقة المنتج الرئيسية -->
-    <div class="card" style="padding:18px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+    <div class="card prod-main-card">
+      <div class="prod-card-header">
         <div>
-          <div id="prod-name" style="font-size:20px;font-weight:900;color:#1e293b;"></div>
-          <div id="prod-barcode" style="font-family:monospace;color:#64748b;font-size:13px;margin-top:4px;"></div>
+          <div id="prod-name" class="prod-name"></div>
+          <div id="prod-barcode" class="prod-barcode"></div>
         </div>
         <div id="prod-status-badge"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">سعر البيع</div>
-          <div id="prod-sale-price" style="font-size:20px;font-weight:900;color:#6366f1;"></div>
-        </div>
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">سعر التكلفة</div>
-          <div id="prod-cost-price" style="font-size:20px;font-weight:900;color:#475569;"></div>
-        </div>
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">الكمية</div>
-          <div id="prod-qty" style="font-size:20px;font-weight:900;color:#1e293b;"></div>
-        </div>
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">هامش الربح</div>
-          <div id="prod-margin" style="font-size:20px;font-weight:900;color:#10b981;"></div>
-        </div>
+      <div class="sg c4 prod-stats-grid">
+        <div class="mini-stat"><div class="mini-stat-label">سعر البيع</div><div id="prod-sale-price" class="mini-stat-val c-primary"></div></div>
+        <div class="mini-stat"><div class="mini-stat-label">سعر التكلفة</div><div id="prod-cost-price" class="mini-stat-val c-text"></div></div>
+        <div class="mini-stat"><div class="mini-stat-label">الكمية</div><div id="prod-qty" class="mini-stat-val c-dark"></div></div>
+        <div class="mini-stat"><div class="mini-stat-label">هامش الربح</div><div id="prod-margin" class="mini-stat-val c-success"></div></div>
       </div>
-      <div style="margin-top:10px;display:flex;gap:8px;">
-        <span id="prod-category" style="background:#ede9fe;color:#6366f1;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;"></span>
-        <span id="prod-unit" style="background:#f1f5f9;color:#475569;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;"></span>
+      <div class="prod-tags mt-8 flex-gap8">
+        <span id="prod-category" class="tag tag-purple"></span>
+        <span id="prod-unit" class="tag tag-slate"></span>
       </div>
     </div>
 
     <!-- إحصائيات سريعة -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
-      <div class="card" style="padding:12px;text-align:center;">
-        <div style="font-size:11px;color:#64748b;">إجمالي المبيعات</div>
-        <div id="prod-total-sold" style="font-size:17px;font-weight:900;color:#6366f1;">-</div>
-      </div>
-      <div class="card" style="padding:12px;text-align:center;">
-        <div style="font-size:11px;color:#64748b;">إجمالي الإيراد</div>
-        <div id="prod-total-revenue" style="font-size:17px;font-weight:900;color:#10b981;">-</div>
-      </div>
-      <div class="card" style="padding:12px;text-align:center;">
-        <div style="font-size:11px;color:#64748b;">إجمالي الربح</div>
-        <div id="prod-total-profit" style="font-size:17px;font-weight:900;color:#059669;">-</div>
-      </div>
+    <div class="sg c3 mb-12">
+      <div class="card prod-kpi text-center p-12"><div class="info-label">إجمالي المبيعات</div><div id="prod-total-sold" class="info-value c-primary">-</div></div>
+      <div class="card prod-kpi text-center p-12"><div class="info-label">إجمالي الإيراد</div><div id="prod-total-revenue" class="info-value c-success">-</div></div>
+      <div class="card prod-kpi text-center p-12"><div class="info-label">إجمالي الربح</div><div id="prod-total-profit" class="info-value" style="color:#059669;">-</div></div>
     </div>
 
     <!-- سجل المشتريات -->
-    <div class="sec-title" style="color:#1e293b;margin-bottom:8px;">📦 سجل المشتريات</div>
-    <div class="card" style="margin-bottom:12px;">
+    <div class="sec-title mb-8">📦 سجل المشتريات</div>
+    <div class="card mb-12">
       <div class="tw"><table class="dt">
         <thead><tr><th>المورد</th><th>الكمية</th><th>التكلفة</th><th>التاريخ</th></tr></thead>
         <tbody id="prod-purchases-list"><tr class="er"><td colspan="4">لا يوجد</td></tr></tbody>
@@ -689,15 +668,9 @@ PalPay" style="resize:none;"></textarea>
     <!-- ديون الموردين -->
     <div id="pur-section-debts" style="display:none;">
       <!-- إجماليات -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="card" style="padding:14px;text-align:center;border-right:4px solid var(--r);">
-          <div style="font-size:12px;color:var(--g5);margin-bottom:4px;">إجمالي ديون الموردين</div>
-          <div id="sup-debt-total" style="font-size:22px;font-weight:900;color:var(--r);">-</div>
-        </div>
-        <div class="card" style="padding:14px;text-align:center;border-right:4px solid var(--s);">
-          <div style="font-size:12px;color:var(--g5);margin-bottom:4px;">إجمالي المدفوع</div>
-          <div id="sup-debt-paid" style="font-size:22px;font-weight:900;color:var(--s);">-</div>
-        </div>
+      <div class="sg c2 mb-14">
+        <div class="card sc red"><div class="sc-l">إجمالي ديون الموردين</div><div class="sc-v" id="sup-debt-total">-</div></div>
+        <div class="card sc green"><div class="sc-l">إجمالي المدفوع</div><div class="sc-v" id="sup-debt-paid">-</div></div>
       </div>
 
       <!-- جدول الموردين المدينين -->
@@ -719,7 +692,7 @@ PalPay" style="resize:none;"></textarea>
     </div>
     <div class="ph" style="margin-bottom:.5rem;"><span style="font-size:14px;font-weight:800;">سجل المبيعات</span><div class="ptabs"><button class="ptab active" onclick="NetCards.loadSales('day',this)">اليوم</button><button class="ptab" onclick="NetCards.loadSales('week',this)">الأسبوع</button><button class="ptab" onclick="NetCards.loadSales('month',this)">الشهر</button></div></div>
     <div class="sg c3"><div class="sc blue"><div class="sc-l">المبيعات</div><div class="sc-v" id="ns1">-</div></div><div class="sc green"><div class="sc-l">بطاقات مباعة</div><div class="sc-v" id="ns2">-</div></div><div class="sc red"><div class="sc-l">متأخرون</div><div class="sc-v" id="ns3">-</div></div></div>
-    <div class="card" style="margin-top:.75rem;"><div class="tw"><table class="dt"><thead><tr><th>المشتري</th><th>النوع</th><th>العدد</th><th>السعر</th><th>الدفع</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead><tbody id="nslist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <div class="card mt-8"><div class="tw"><table class="dt"><thead><tr><th>المشتري</th><th>النوع</th><th>العدد</th><th>السعر</th><th>الدفع</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead><tbody id="nslist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
 
    <!-- EXPENSES -->
@@ -732,10 +705,10 @@ PalPay" style="resize:none;"></textarea>
    <!-- REPORTS -->
    <div class="page" id="page-reports">
     <div class="ph"><span class="pt">التقارير المالية</span><div class="ptabs"><button class="ptab active" onclick="Reports.load('day',this)">اليوم</button><button class="ptab" onclick="Reports.load('week',this)">الأسبوع</button><button class="ptab" onclick="Reports.load('month',this)">الشهر</button></div></div>
-    <div id="profit-banner" style="border-radius:14px;padding:1.25rem;margin-bottom:1rem;text-align:center;background:var(--sl);">
-     <div style="font-size:13px;margin-bottom:4px;" id="profit-label">صافي الربح</div>
-     <div style="font-size:36px;font-weight:900;" id="profit-main">-</div>
-     <div style="font-size:13px;margin-top:4px;" id="profit-margin-label">هامش الربح: -</div>
+    <div id="profit-banner" class="profit-banner">
+     <div class="profit-label" id="profit-label">صافي الربح</div>
+     <div class="profit-main" id="profit-main">-</div>
+     <div class="profit-margin" id="profit-margin-label">هامش الربح: -</div>
     </div>
     <div class="sg c3" class="mb-12">
      <div class="sc blue"><div class="sc-l">إجمالي المبيعات</div><div class="sc-v" id="r-sales">-</div></div>
@@ -767,16 +740,16 @@ PalPay" style="resize:none;"></textarea>
    <!-- SETTINGS -->
    <div class="page" id="page-settings">
     <div class="ph"><span class="pt">الإعدادات</span></div>
-    <div class="card" class="mb-12"><div style="padding:1.25rem;">
+    <div class="card mb-12"><div class="p-16">
      <div class="fg"><label class="lbl">اسم المحل</label><input class="inp" id="set1"></div>
      <div class="fg"><label class="lbl">اسم صاحب المحل</label><input class="inp" id="set2"></div>
      <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="set3" inputmode="tel"></div>
-     <div style="display:flex;justify-content:flex-end;"><button class="btn btn-s" onclick="Notify.show('تم حفظ الإعدادات')">حفظ</button></div>
+     <div class="flex-between"><button class="btn btn-s" onclick="Notify.show('تم حفظ الإعدادات')">حفظ</button></div>
     </div></div>
-    <div class="card"><div style="padding:1.25rem;">
-     <div style="font-weight:800;margin-bottom:.6rem;">الاشتراك</div>
-     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div><div style="font-size:13px;color:var(--g6);">ينتهي: <strong id="set-sub">-</strong></div><div style="font-size:11px;color:var(--g4);">بياناتك محمية دائماً</div></div>
+    <div class="card"><div class="p-16">
+     <div class="sec-title-lg">الاشتراك</div>
+     <div class="flex-between items-center">
+      <div><div class="text-md c-text">ينتهي: <strong id="set-sub">-</strong></div><div class="text-xs c-muted">بياناتك محمية دائماً</div></div>
       <span class="bg">نشط</span>
      </div>
     </div></div>
