@@ -203,10 +203,10 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .app-body{
   flex:1;
   display:flex;
-  direction:ltr;
   overflow:hidden;
   min-height:0;
   height:0;
+  position:relative;
 }
 
 .sidebar{
@@ -222,7 +222,6 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 
 .content{
   flex:1;
-  direction:rtl;
   overflow-y:auto;
   overflow-x:hidden;
   padding:1rem;
@@ -231,6 +230,7 @@ table.sa-dt tr:hover td{background:#f8fafc;}
   min-height:0;
   min-width:0;
   box-sizing:border-box;
+  align-self:stretch;
 }
 .content.qs-mode{
   overflow:hidden!important;
