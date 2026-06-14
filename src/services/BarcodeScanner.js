@@ -13,10 +13,14 @@ let _stream  = null;
 let _video   = null;
 let _raf     = null;
 let _flashOn = false;
-let _handler      = null;
+let _handler = null;
 
+// نظام التأكيد المزدوج — يمنع القراءات الخاطئة
+let _pendingCode  = null;
+let _pendingCount = 0;
+const CONFIRM_NEEDED = 2; // قراءتان متطابقتان قبل القبول
 
-const DEBOUNCE = 900;
+const DEBOUNCE = 1200;
 
 const eanOk = (code) => {
   if (!/^\d{8}$|^\d{13}$/.test(code)) return true;
@@ -28,6 +32,18 @@ const eanOk = (code) => {
 
 const fire = (code) => {
   if (!code || code === _last) return;
+  // التأكيد المزدوج
+  if (code === _pendingCode) {
+    _pendingCount++;
+    if (_pendingCount < CONFIRM_NEEDED) return;
+  } else {
+    _pendingCode  = code;
+    _pendingCount = 1;
+    return;
+  }
+  // قُبلت القراءة
+  _pendingCode  = null;
+  _pendingCount = 0;
   _last = code;
   clearTimeout(_timer);
   _timer = setTimeout(() => { _last = null; }, DEBOUNCE);
@@ -233,7 +249,8 @@ export const BarcodeScanner = {
     } catch {}
     try { if (_handler && window.Quagga) { Quagga.offDetected(_handler); Quagga.stop(); } } catch {}
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
-    _stream = null; _video = null; _handler = null; _pendingCode = null; _pendingCount = 0;
+    _stream = null; _video = null; _handler = null;
+    _pendingCode = null; _pendingCount = 0;
     _cb = null; _last = null;
     clearTimeout(_timer);
   },
