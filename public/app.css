@@ -186,7 +186,6 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .app-body{
   flex:1;
   display:flex;
-  flex-direction:row-reverse;
   overflow:hidden;
   min-height:0;
   height:0;
