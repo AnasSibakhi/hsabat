@@ -21,10 +21,11 @@ const Dashboard = {
     try {
       const todayStr = Utils.today();
 
+      // جلب فواتير اليوم + عناصرها + المخزون + الديون
       const [todayInv, debts, inventory, purchasesRes] = await Promise.all([
-        DB.invoices().select('total').eq('invoice_date', todayStr),
+        DB.invoices().select('id,total').eq('invoice_date', todayStr),
         DB.debts().select('amount,paid'),
-        DB.inventory().select('id,name,quantity,low_stock_alert,sale_price,cost_price'),
+        DB.inventory().select('id,name,quantity,low_stock_alert,cost_price'),
         DB.purchases().select('*').eq('payment_status','defer').gt('remaining',0),
       ]);
 
@@ -32,15 +33,23 @@ const Dashboard = {
       const todaySales = Utils.sumBy(todayInv.data, 'total');
       DOM.setText('hs1', Utils.currency(todaySales));
 
-      // ٢. ربح اليوم — تقريبي بناءً على هامش المخزون
-      const avgMargin = (inventory.data || []).reduce((s, i) => {
-        if (i.sale_price && i.cost_price && i.sale_price > 0) {
-          return s + ((i.sale_price - i.cost_price) / i.sale_price);
-        }
-        return s;
-      }, 0) / Math.max((inventory.data || []).filter(i => i.sale_price > 0).length, 1);
+      // ٢. ربح اليوم الحقيقي من invoice_items
+      const todayInvIds = (todayInv.data || []).map(i => i.id);
+      let todayProfit = 0;
 
-      const todayProfit = todaySales * avgMargin;
+      if (todayInvIds.length > 0) {
+        const { data: soldItems } = await sb.from('invoice_items')
+          .select('quantity, price, inventory_id, inventory(cost_price)')
+          .in('invoice_id', todayInvIds);
+
+        todayProfit = (soldItems || []).reduce((sum, it) => {
+          const cost  = it.inventory?.cost_price || 0;
+          const qty   = it.quantity || 1;
+          const price = it.price   || 0;
+          return sum + (price - cost) * qty;
+        }, 0);
+      }
+
       const profitEl = DOM.get('hs-profit');
       if (profitEl) {
         profitEl.textContent = Utils.currency(todayProfit);
