@@ -33,12 +33,55 @@ const Invoices = {
     const now = new Date();
     DOM.setText('inv-date-preview', now.toLocaleDateString('ar-EG'));
     DOM.setText('inv-cashier-preview', State.user?.owner || '');
+    // reset customer search
+    const cs = DOM.get('inv-cust-search'); if (cs) cs.value = '';
+    const ic = DOM.get('ic'); if (ic) ic.value = '';
+    const dd = DOM.get('inv-cust-dropdown'); if (dd) dd.style.display = 'none';
     Invoices.resetForm();
-    // Auto-focus على حقل البحث
-    setTimeout(() => {
-      const s = DOM.get('inv-prod-search');
-      if (s) s.focus();
-    }, 300);
+    setTimeout(() => { const s = DOM.get('inv-prod-search'); if (s) s.focus(); }, 300);
+  },
+
+  async searchCustomer(val) {
+    const dd = DOM.get('inv-cust-dropdown');
+    const ic = DOM.get('ic');
+    if (!val.trim()) {
+      if (dd) dd.style.display = 'none';
+      if (ic) ic.value = '';
+      return;
+    }
+    if (!State.customers?.length) {
+      const { data } = await sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name');
+      State.customers = data || [];
+    }
+    const q = val.trim().toLowerCase();
+    const matches = (State.customers || []).filter(c =>
+      c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
+    ).slice(0, 6);
+
+    if (!dd) return;
+    if (!matches.length) {
+      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--g5);">لا يوجد زبون — سيُضاف كزبون جديد</div>`;
+      dd.style.display = 'block';
+      if (ic) ic.value = '__new__';
+      // تعبئة حقل الاسم الجديد
+      const nm = DOM.get('inv-new-name'); if (nm) nm.value = val.trim();
+      DOM.get('new-cust-wrap')?.classList.remove('hidden');
+      return;
+    }
+    dd.innerHTML = matches.map(c =>
+      `<div class="dc-opt" onclick="Invoices.selectCustomer('${c.id}','${escape(c.name)}','${c.phone||''}')">
+        ${escape(c.name)}${c.phone ? ' — '+c.phone : ''}
+      </div>`
+    ).join('');
+    dd.style.display = 'block';
+    DOM.get('new-cust-wrap')?.classList.add('hidden');
+  },
+
+  selectCustomer(id, name, phone) {
+    const cs = DOM.get('inv-cust-search'); if (cs) cs.value = name;
+    const ic = DOM.get('ic'); if (ic) ic.value = id;
+    const dd = DOM.get('inv-cust-dropdown'); if (dd) dd.style.display = 'none';
+    DOM.get('new-cust-wrap')?.classList.add('hidden');
   },
 
   // ── Product Search ──

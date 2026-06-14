@@ -891,12 +891,12 @@ PalPay" style="resize:none;"></textarea>
  </div>
 
  <!-- العميل -->
- <div class="fg">
+ <div class="fg" style="position:relative;">
   <label class="lbl">الزبون (اختياري)</label>
-  <select class="inp" id="ic" onchange="Customers.toggleNewCustomerFields(this)">
-   <option value="">زبون عادي</option>
-   <option value="__new__">➕ زبون جديد</option>
-  </select>
+  <input class="inp" id="inv-cust-search" placeholder="ابحث باسم أو جوال..." autocomplete="off"
+    oninput="Invoices.searchCustomer(this.value)">
+  <input type="hidden" id="ic" value="">
+  <div id="inv-cust-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:180px;overflow-y:auto;margin-top:2px;"></div>
  </div>
  <div id="new-cust-wrap" class="hidden">
   <div style="background:var(--pl);border-radius:8px;padding:10px;margin-bottom:.75rem;">
