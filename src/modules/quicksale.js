@@ -74,7 +74,7 @@ export const QuickSale = {
       if (right) right.style.removeProperty('display');
       return;
     }
-    if (right) right.style.display = 'none';
+    // على mobile ما نخفي السلة — النتائج تظهر فوق كل شي (position:fixed)
     QuickSale._showSearchResults(val.trim());
   },
 
