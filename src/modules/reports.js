@@ -19,27 +19,43 @@ import * as Modal   from '../nav/modal.js';
 const Reports = {
   async load(period = 'month', btn = null) {
     if (btn) { document.querySelectorAll('#page-reports .ptab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); }
-    const from = Utils.periodStart(period);
+    const from  = Utils.periodStart(period);
     const label = { day: 'اليوم', week: 'الأسبوع', month: 'الشهر' }[period];
 
-    const [{ data: invData }, { data: purData }, { data: expData }] = await Promise.all([
-      DB.invoices().select('total').gte('invoice_date', from),
-      DB.purchases().select('cost').gte('purchase_date', from),
+    // جلب البيانات
+    const [invRes, expRes, invItemsRes] = await Promise.all([
+      DB.invoices().select('id,total').gte('invoice_date', from),
       DB.expenses().select('amount,exp_type').gte('exp_date', from),
+      // جلب عناصر الفواتير مع تكلفة المنتج من المخزون
+      sb.from('invoice_items')
+        .select('quantity, price, inventory_id, inventory(cost_price)')
+        .in('invoice_id',
+          // نجيب IDs الفواتير في الفترة
+          (await DB.invoices().select('id').gte('invoice_date', from)).data?.map(i => i.id) || []
+        ),
     ]);
 
-    const totalSales   = Utils.sumBy(invData, 'total');
-    const totalCOGS    = Utils.sumBy(purData, 'cost');
-    const expList      = expData || [];
-    const totalOpex    = Utils.sumBy(expList, 'amount');
-    const netProfit    = totalSales - totalCOGS - totalOpex;
-    const margin       = totalSales > 0 ? ((netProfit / totalSales) * 100) : 0;
+    const totalSales = Utils.sumBy(invRes.data, 'total');
+
+    // COGS = مجموع (تكلفة الوحدة × الكمية المباعة) لكل صنف بيع
+    const totalCOGS = (invItemsRes.data || []).reduce((sum, item) => {
+      const costPrice = item.inventory?.cost_price || 0;
+      return sum + (costPrice * (item.quantity || 1));
+    }, 0);
+
+    const expList   = expRes.data || [];
+    const totalOpex = Utils.sumBy(expList, 'amount');
+    const netProfit = totalSales - totalCOGS - totalOpex;
+    const margin    = totalSales > 0 ? ((netProfit / totalSales) * 100) : 0;
 
     // Banner
     const banner = DOM.get('profit-banner');
     if (banner) banner.style.background = netProfit >= 0 ? 'var(--sl)' : 'var(--dl)';
     const profitEl = DOM.get('profit-main');
-    if (profitEl) { profitEl.textContent = (netProfit >= 0 ? '+ ' : '- ') + '₪' + Math.abs(netProfit).toFixed(2); profitEl.style.color = netProfit >= 0 ? 'var(--s)' : 'var(--d)'; }
+    if (profitEl) {
+      profitEl.textContent = (netProfit >= 0 ? '+ ' : '- ') + '₪' + Math.abs(netProfit).toFixed(2);
+      profitEl.style.color = netProfit >= 0 ? 'var(--s)' : 'var(--d)';
+    }
     DOM.setText('profit-label',        'صافي الربح (' + label + ')');
     DOM.setText('profit-margin-label', 'هامش الربح: ' + margin.toFixed(1) + '%');
 
@@ -53,12 +69,22 @@ const Reports = {
     DOM.setText('eq-cogs',  Utils.currency(totalCOGS));
     DOM.setText('eq-opex',  Utils.currency(totalOpex));
     const eqProfit = DOM.get('eq-profit');
-    if (eqProfit) { eqProfit.textContent = Utils.currency(netProfit); eqProfit.style.color = netProfit >= 0 ? 'var(--s)' : 'var(--d)'; }
+    if (eqProfit) {
+      eqProfit.textContent = Utils.currency(netProfit);
+      eqProfit.style.color = netProfit >= 0 ? 'var(--s)' : 'var(--d)';
+    }
 
-    // Expenses breakdown
-    const byType = expList.reduce((acc, e) => { acc[e.exp_type] = (acc[e.exp_type] || 0) + e.amount; return acc; }, {});
+    // تفاصيل المصاريف
+    const byType = expList.reduce((acc, e) => {
+      acc[e.exp_type] = (acc[e.exp_type] || 0) + e.amount;
+      return acc;
+    }, {});
     DOM.setHTML('r-exp-detail', Object.keys(byType).length
-      ? Object.entries(byType).map(([t, a]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid var(--g1);font-size:13px;"><span>${Utils.escape(t)}</span><strong>₪${a.toFixed(2)}</strong></div>`).join('')
+      ? Object.entries(byType).map(([t, a]) =>
+          `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid var(--g1);font-size:13px;">
+            <span>${Utils.escape(t)}</span>
+            <strong>₪${a.toFixed(2)}</strong>
+          </div>`).join('')
       : '<span style="color:var(--g4);">لا توجد مصاريف للفترة</span>'
     );
   },
