@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فحص الإزاحة</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Cairo,sans-serif;background:#0f172a;color:#e2e8f0;padding:1rem;font-size:12px;}
+button{background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:Cairo,sans-serif;cursor:pointer;margin:4px;}
+.row{padding:4px 0;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;}
+.ok{color:#34d399;} .warn{color:#fbbf24;} .err{color:#f87171;}
+h3{color:#818cf8;margin:8px 0 4px;}
+</style>
+</head>
+<body>
+<h3>🔍 فحص الإزاحة</h3>
+<div>
+  <button onclick="check('home')">لوحة التحكم</button>
+  <button onclick="check('customers')">الزبائن</button>
+  <button onclick="check('debts')">الديون</button>
+  <button onclick="check('invoices')">الفواتير</button>
+  <button onclick="check('inventory')">المخزون</button>
+  <button onclick="check('purchases')">المشتريات</button>
+  <button onclick="check('sales')">المبيعات</button>
+  <button onclick="check('reports')">التقارير</button>
+</div>
+<div id="out" style="margin-top:12px;"></div>
+
+<script>
+function check(page) {
+  // Navigate to page then check
+  if(window.Nav) Nav.goTo(page);
+  setTimeout(() => {
+    const content = document.querySelector ? null : null;
+    analyze(page);
+  }, 300);
+
+  // Open in iframe
+  document.getElementById('out').innerHTML = '<p style="color:#94a3b8;">جاري الفحص...</p>';
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = `/?page=${page}`;
+  iframe.style.cssText = 'width:375px;height:812px;border:0;position:fixed;top:0;left:0;';
+  document.body.appendChild(iframe);
+  
+  iframe.onload = () => {
+    // Navigate to page
+    const w = iframe.contentWindow;
+    setTimeout(() => {
+      if(w.Nav) w.Nav.goTo(page);
+      setTimeout(() => runAnalysis(w, page, iframe), 500);
+    }, 500);
+  };
+}
+
+function runAnalysis(w, page, iframe) {
+  const doc = w.document;
+  const out = document.getElementById('out');
+  
+  iframe.remove();
+  
+  const content  = doc.querySelector('.content');
+  const pageEl   = doc.querySelector(`#page-${page}`);
+  const appBody  = doc.querySelector('.app-body');
+  const topbar   = doc.querySelector('.topbar');
+  const bottomNav= doc.querySelector('.bottom-nav');
+  
+  if(!content || !pageEl) { out.innerHTML = '<p class="err">لم يُوجد العنصر</p>'; return; }
+  
+  const cr = content.getBoundingClientRect();
+  const pr = pageEl.getBoundingClientRect();
+  const cs = w.getComputedStyle(content);
+  const ps = w.getComputedStyle(pageEl);
+  
+  const rows = [
+    ['Viewport', `${w.innerWidth} × ${w.innerHeight}`, 'ok'],
+    ['.content left', `${Math.round(cr.left)}px`, cr.left === 0 ? 'ok' : 'err'],
+    ['.content right', `${Math.round(cr.right)}px`, Math.abs(cr.right - w.innerWidth) < 2 ? 'ok' : 'err'],
+    ['.content width', `${Math.round(cr.width)}px`, 'ok'],
+    ['.content padding', `R:${cs.paddingRight} L:${cs.paddingLeft}`, cs.paddingRight === cs.paddingLeft ? 'ok' : 'warn'],
+    ['', '', ''],
+    [`#page-${page} left`, `${Math.round(pr.left)}px`, pr.left >= 0 ? 'ok' : 'err'],
+    [`#page-${page} right`, `${Math.round(pr.right)}px`, 'ok'],
+    [`#page-${page} width`, `${Math.round(pr.width)}px`, Math.abs(pr.width - cr.width) < 5 ? 'ok' : 'warn'],
+    ['', '', ''],
+  ];
+  
+  // Check all children for offset
+  const children = pageEl.querySelectorAll(':scope > *');
+  children.forEach(el => {
+    const r = el.getBoundingClientRect();
+    const offset = Math.round(r.left - cr.left);
+    const tag = (el.className || el.tagName).toString().split(' ')[0].substring(0,20);
+    rows.push([tag, `left:${Math.round(r.left)} offset:${offset}px w:${Math.round(r.width)}`, 
+      offset === 0 ? 'ok' : (Math.abs(offset) < 5 ? 'warn' : 'err')]);
+  });
+  
+  out.innerHTML = `<h3>صفحة: ${page}</h3>` + rows.map(([l,v,s]) => 
+    l ? `<div class="row"><span style="color:#94a3b8;">${l}</span><span class="${s}">${v}</span></div>` : '<hr style="border-color:#1e293b;margin:4px 0;">'
+  ).join('');
+}
+</script>
+</body>
+</html>
