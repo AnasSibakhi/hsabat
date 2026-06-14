@@ -150,13 +150,18 @@ export const Notifications = {
 
   _markRead(id) {
     const today = new Date().toISOString().split('T')[0];
-    Notifications._readToday[String(id)] = today;
-    localStorage.setItem('notif_read_today', JSON.stringify(Notifications._readToday));
+    // أعد القراءة من localStorage في كل مرة لضمان التزامن
+    const stored = JSON.parse(localStorage.getItem('notif_read_today') || '{}');
+    stored[String(id)] = today;
+    localStorage.setItem('notif_read_today', JSON.stringify(stored));
+    Notifications._readToday = stored;
   },
 
   _isReadToday(id) {
     const today = new Date().toISOString().split('T')[0];
-    return Notifications._readToday[String(id)] === today;
+    // اقرأ من localStorage مباشرة لضمان التزامن بعد التحديث
+    const stored = JSON.parse(localStorage.getItem('notif_read_today') || '{}');
+    return stored[String(id)] === today;
   },
 
   _bellInterval: null,
