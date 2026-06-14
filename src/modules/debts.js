@@ -153,15 +153,15 @@ const Debts = {
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
 
-    let html = matches.map(c =>
-      `<div class="dc-opt" onclick="Debts.selectCustomer('${c.id}','${Utils.escape(c.name)}')">
-        ${Utils.escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
-      </div>`
-    ).join('');
+    dd.innerHTML = [
+      ...matches.map(c =>
+        `<div class="dc-opt" data-id="${c.id}" data-name="${Utils.escape(c.name)}" onclick="Debts.selectCustomer(this.dataset.id,this.dataset.name)">
+          ${Utils.escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
+        </div>`
+      ),
+      `<div class="dc-opt new" data-name="${Utils.escape(val.trim())}" onclick="Debts.selectNew(this.dataset.name)">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`
+    ].join('');
 
-    html += `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}')">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`;
-
-    dd.innerHTML = html;
     dd.style.display = 'block';
     newWrap.style.display = 'none';
   },
