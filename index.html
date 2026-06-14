@@ -275,6 +275,8 @@ table.sa-dt tr:hover td{background:#f8fafc;}
 .pt{font-size:17px;font-weight:800;}
 .sec-title{font-size:14px;font-weight:800;color:var(--g6);margin-bottom:8px;margin-top:4px;}
 .sec-title-lg{font-size:15px;font-weight:800;margin-bottom:.6rem;}
+.ph-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;min-width:0;}
 .sg.c4{grid-template-columns:repeat(2,1fr);}
 .sg.c3{grid-template-columns:repeat(3,1fr);}
@@ -386,7 +388,7 @@ table.dt tr:hover td{background:var(--g0);}
   .inv-modal-body{flex-direction:column;}
   .inv-modal-sidebar{width:100%;min-width:unset;border-right:none;border-top:1px solid var(--br);}
 }
-.inv-header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0 .75rem;flex-wrap:wrap;gap:8px;}
+.inv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;}
 .inv-header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .inv-header-left{display:flex;align-items:center;gap:8px;}
 .inv-export-btn{font-size:12px;padding:6px 10px;}
@@ -522,6 +524,9 @@ body.dark .ni.active{background:#1e3a5f;}
   .pt{font-size:16px;}
   .sec-title{font-size:13px;margin-bottom:6px;margin-top:2px;}
   .sec-title-lg{font-size:14px;margin-bottom:.5rem;}
+  .ph-tabs{gap:6px;margin-bottom:10px;}
+  .filter-row{gap:6px;margin-bottom:8px;}
+  .inv-header{margin-bottom:.6rem;}
 
   /* Tables - internal scroll */
   table.dt{font-size:12px;min-width:480px;}
@@ -1141,7 +1146,7 @@ PalPay" style="resize:none;"></textarea>
    <div class="page" id="page-inventory">
     <div class="ph"><span class="pt">المخزون</span><button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة منتج</button></div>
     <!-- فلتر سريع -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+    <div class="filter-row">
       <input class="inp" id="inventory-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
       <select class="inp" id="inv-filter-status" onchange="Inventory.filterList()" style="min-width:120px;">
         <option value="">كل المنتجات</option>
@@ -1249,7 +1254,7 @@ PalPay" style="resize:none;"></textarea>
     <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="Modal.open('m-pur')"><i class="ti ti-plus"></i> تسجيل</button></div>
 
     <!-- تبويبات -->
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <div class="ph-tabs">
       <button id="pur-tab-all" onclick="Purchases.switchTab('all')"
         style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--p);background:var(--p);color:#fff;font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">
         📋 كل المشتريات
@@ -1345,7 +1350,7 @@ PalPay" style="resize:none;"></textarea>
 
    <!-- SETTINGS -->
    <div class="page" id="page-settings">
-    <div class="pt" style="margin-bottom:1rem;">الإعدادات</div>
+    <div class="ph"><span class="pt">الإعدادات</span></div>
     <div class="card" style="margin-bottom:.75rem;"><div style="padding:1.25rem;">
      <div class="fg"><label class="lbl">اسم المحل</label><input class="inp" id="set1"></div>
      <div class="fg"><label class="lbl">اسم صاحب المحل</label><input class="inp" id="set2"></div>
