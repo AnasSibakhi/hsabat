@@ -444,21 +444,25 @@ select.inp{appearance:none;cursor:pointer;}
 .spin{display:inline-block;animation:spin 1s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes bell-shake{
-  0%,100%{transform:rotate(0);}
-  10%{transform:rotate(18deg);}
-  20%{transform:rotate(-16deg);}
-  30%{transform:rotate(14deg);}
-  40%{transform:rotate(-10deg);}
-  50%{transform:rotate(6deg);}
-  60%{transform:rotate(-4deg);}
-  70%{transform:rotate(2deg);}
-  80%{transform:rotate(0);}
+  0%,100%{transform:rotate(0) scale(1);}
+  10%{transform:rotate(25deg) scale(1.2);}
+  20%{transform:rotate(-22deg) scale(1.2);}
+  30%{transform:rotate(18deg) scale(1.15);}
+  40%{transform:rotate(-14deg) scale(1.1);}
+  50%{transform:rotate(10deg) scale(1.05);}
+  60%{transform:rotate(-6deg) scale(1);}
+  70%{transform:rotate(4deg);}
+  80%{transform:rotate(-2deg);}
 }
 @keyframes badge-pulse{
-  0%,100%{transform:scale(1);opacity:1;}
-  50%{transform:scale(1.4);opacity:0.7;}
+  0%,100%{transform:scale(1);opacity:1;box-shadow:0 0 0 0 rgba(220,38,38,0.7);}
+  50%{transform:scale(1.5);opacity:0.9;box-shadow:0 0 0 6px rgba(220,38,38,0);}
 }
-.bell-ringing{animation:bell-shake 0.8s ease forwards;transform-origin:top center;}
+.bell-ringing{
+  animation:bell-shake 0.9s cubic-bezier(.36,.07,.19,.97) forwards;
+  transform-origin:top center;
+  color:#dc2626!important;
+}
 /* bottom-nav defined in responsive section */
 input[type="number"]{direction:ltr;text-align:right;}
 
