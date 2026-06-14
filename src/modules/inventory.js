@@ -79,18 +79,32 @@ const Inventory = {
     if (!item) return;
     window._prodId = id;
 
-    // تعبئة البيانات الأساسية
-    document.getElementById('prod-title').textContent    = item.name;
-    document.getElementById('prod-name').textContent     = item.name;
-    document.getElementById('prod-barcode').textContent  = item.barcode ? '📊 ' + item.barcode : 'لا يوجد باركود';
-    document.getElementById('prod-sale-price').textContent = item.sale_price ? '₪' + item.sale_price.toFixed(2) : '-';
-    document.getElementById('prod-cost-price').textContent = item.cost_price ? '₪' + item.cost_price.toFixed(2) : '-';
-    document.getElementById('prod-qty').textContent      = item.quantity + ' ' + (item.unit || '');
-    document.getElementById('prod-category').textContent = item.category || 'عام';
-    document.getElementById('prod-unit').textContent     = item.unit || '';
+    // المعلومات الأساسية
+    document.getElementById('prod-title').textContent     = item.name;
+    document.getElementById('prod-name').textContent      = item.name;
+    document.getElementById('prod-barcode').textContent   = item.barcode ? '📊 ' + item.barcode : '';
+    document.getElementById('prod-sale-price').textContent= item.sale_price ? '₪' + item.sale_price.toFixed(2) : '-';
+    document.getElementById('prod-cost-price').textContent= item.cost_price ? '₪' + item.cost_price.toFixed(2) : '-';
+    document.getElementById('prod-qty').textContent       = item.quantity + ' ' + (item.unit || '');
+    document.getElementById('prod-category').textContent  = item.category || '';
+
+    // الشركة/العلامة التجارية
+    const brandEl = document.getElementById('prod-brand');
+    if (brandEl) {
+      if (item.brand) {
+        brandEl.textContent    = '🏭 ' + item.brand;
+        brandEl.style.display  = 'inline-block';
+      } else {
+        brandEl.style.display  = 'none';
+      }
+    }
+
+    // الوحدة
+    const unitEl = document.getElementById('prod-unit');
+    if (unitEl) unitEl.textContent = item.unit || '';
 
     // هامش الربح
-    const margin = item.sale_price && item.cost_price
+    const margin = item.sale_price && item.cost_price && item.cost_price > 0
       ? (((item.sale_price - item.cost_price) / item.cost_price) * 100).toFixed(1) + '%'
       : '-';
     document.getElementById('prod-margin').textContent = margin;
@@ -104,15 +118,15 @@ const Inventory = {
     else
       statusEl.innerHTML = '<span style="background:#dcfce7;color:#16a34a;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟢 متوفر</span>';
 
-    // إخفاء زر الطباعة لو ما في باركود
+    // زر الطباعة
     const printBtn = document.getElementById('prod-print-btn');
     if (printBtn) printBtn.style.display = item.barcode ? 'flex' : 'none';
 
     Nav.goTo('product');
 
-    // جلب سجل المشتريات
+    // سجل المشتريات — مع سعر البيع
     const { data: purchases } = await DB.purchases()
-      .select('supplier, quantity, cost, purchase_date')
+      .select('supplier, quantity, cost, sale_price, purchase_date')
       .eq('product_name', item.name)
       .order('purchase_date', { ascending: false })
       .limit(10);
@@ -122,44 +136,42 @@ const Inventory = {
           <td style="color:#1e293b;font-weight:600;">${Utils.escape(p.supplier)}</td>
           <td>${p.quantity}</td>
           <td>₪${p.cost.toFixed(2)}</td>
+          <td style="color:var(--p);font-weight:700;">${p.sale_price ? '₪'+p.sale_price.toFixed(2) : '-'}</td>
           <td style="color:#64748b;">${p.purchase_date}</td>
         </tr>`).join('')
-      : '<tr class="er"><td colspan="4">لا يوجد سجل مشتريات</td></tr>';
+      : '<tr class="er"><td colspan="5">لا يوجد سجل مشتريات</td></tr>';
 
-    // جلب سجل المبيعات من الفواتير
-    const { data: invoices } = await DB.invoices()
-      .select('id,invoice_date,items,total')
-      .order('invoice_date', { ascending: false })
-      .limit(50);
+    // سجل المبيعات
+    const { data: soldItems } = await sb.from('invoice_items')
+      .select('quantity, price, invoices(id, invoice_date, invoice_number)')
+      .eq('inventory_id', id)
+      .order('created_at', { ascending: false })
+      .limit(15);
 
     let totalSold = 0, totalRevenue = 0, totalProfit = 0;
     const salesRows = [];
 
-    (invoices || []).forEach(inv => {
-      const items = Array.isArray(inv.items) ? inv.items : [];
-      items.forEach(it => {
-        if (it.product_id === id) {
-          const qty = it.qty || it.quantity || 1;
-          const price = it.price || 0;
-          const profit = (price - (item.cost_price || 0)) * qty;
-          totalSold    += qty;
-          totalRevenue += price * qty;
-          totalProfit  += profit;
-          salesRows.push(`<tr>
-            <td style="color:#6366f1;font-weight:700;">#${inv.id?.slice(-4) || '-'}</td>
-            <td>${qty}</td>
-            <td>₪${price.toFixed(2)}</td>
-            <td style="color:#64748b;">${inv.invoice_date}</td>
-          </tr>`);
-        }
-      });
+    (soldItems || []).forEach(it => {
+      const qty    = it.quantity || 1;
+      const price  = it.price   || 0;
+      const profit = (price - (item.cost_price || 0)) * qty;
+      totalSold    += qty;
+      totalRevenue += price * qty;
+      totalProfit  += profit;
+      const inv    = it.invoices;
+      salesRows.push(`<tr>
+        <td style="color:var(--p);font-weight:700;">${inv?.invoice_number || '#' + (inv?.id?.slice(-4) || '-')}</td>
+        <td>${qty}</td>
+        <td style="color:var(--s);font-weight:700;">₪${price.toFixed(2)}</td>
+        <td style="color:#64748b;">${inv?.invoice_date || '-'}</td>
+      </tr>`);
     });
 
     document.getElementById('prod-total-sold').textContent    = totalSold + ' وحدة';
     document.getElementById('prod-total-revenue').textContent = '₪' + totalRevenue.toFixed(2);
     document.getElementById('prod-total-profit').textContent  = '₪' + totalProfit.toFixed(2);
-    document.getElementById('prod-sales-list').innerHTML = salesRows.length
-      ? salesRows.slice(0, 15).join('')
+    document.getElementById('prod-sales-list').innerHTML      = salesRows.length
+      ? salesRows.join('')
       : '<tr class="er"><td colspan="4">لا يوجد مبيعات</td></tr>';
   },
 
@@ -275,6 +287,7 @@ const Inventory = {
         store_id:        State.user.id,
         name,
         barcode:         DOM.val('inb') || null,
+        brand:           DOM.val('inbrand') || null,
         category:        DOM.val('inc'),
         unit:            DOM.val('inu'),
         quantity:        parseFloat(DOM.val('inq')) || 0,
@@ -296,6 +309,7 @@ const Inventory = {
     if (!item) { Notify.error('لم يُوجد المنتج'); return; }
     document.getElementById('einvid').value       = id;
     document.getElementById('einvname').value     = item.name || '';
+    document.getElementById('einvbrand').value    = item.brand || '';
     document.getElementById('einvbarcode').value  = item.barcode || '';
     document.getElementById('einvqty').value      = item.quantity || 0;
     document.getElementById('einvqty-add').value  = '';
@@ -375,7 +389,7 @@ const Inventory = {
     const finalQty = qty + addQty;
     try {
       const { error } = await DB.inventory().update({
-        name, barcode, category: cat, unit,
+        name, barcode, brand: DOM.val('einvbrand') || null, category: cat, unit,
         quantity:        finalQty,
         sale_price:      price,
         cost_price:      cost,
