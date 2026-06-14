@@ -133,17 +133,21 @@ const Debts = {
   },
 
   // ── Customer Search ──
-  async searchCustomer(val) {
+  searchCustomer(val) {
     const dd = DOM.get('dc-dropdown');
     const newWrap = DOM.get('dc-new-wrap');
     DOM.get('dc').value = '';
     _newCustName = null;
     if (!val.trim()) { dd.style.display = 'none'; newWrap.style.display = 'none'; return; }
 
-    // جيب الزبائن من DB لو ما محمّلين
+    // لو ما في زبائن محمّلين — اطلبهم وأعد البحث
     if (!State.customers?.length) {
-      const { data } = await sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name');
-      State.customers = data || [];
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => {
+          State.customers = data || [];
+          Debts.searchCustomer(val);
+        });
+      return;
     }
 
     const q = val.trim().toLowerCase();
