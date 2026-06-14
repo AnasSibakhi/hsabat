@@ -1003,7 +1003,7 @@ ${r.custName && r.custName !== 'زبون عادي' ? `<div class="row"><span>ا�
 <tbody>${itemsHtml}</tbody></table>
 <div class="total"><span>الإجمالي</span><span>₪${r.total.toFixed(2)}</span></div>
 <div class="footer">شكراً لتعاملكم معنا</div>
-<script>window.onload=()=>{window.print()}<\/script>
+<script>window.onload=()=>{window.print();window.onafterprint=()=>{window.close();}}<\/script>
 </body></html>`;
     const w = window.open('', '_blank');
     w.document.write(html);
