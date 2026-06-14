@@ -97,7 +97,7 @@ const Debts = {
           : '<button class="ibb" onclick="Debts.unarchive(\'' + id + '\')">إلغاء أرشفة</button>')
         + '</td>'
         + '<td>'
-        + (invNum ? '<button class="ibb" onclick="Debts.openInvoiceDetails(\'' + invNum + '\')" style="margin-left:4px;">📋 تفاصيل البيع</button>' : '')
+        + '<button class="ibb" onclick="Debts.openInvoiceDetails(\'' + (invNum || '') + '\',\'' + id + '\')" style="margin-left:4px;">📋 تفاصيل</button>'
         + ' <button class="ibr" onclick="Debts.delete(\'' + id + '\')">حذف</button>'
         + '</td>'
         + '</tr>';
@@ -195,13 +195,30 @@ const Debts = {
     window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
   },
 
-  async openInvoiceDetails(invoiceNumber) {
+  async openInvoiceDetails(invoiceNumber, debtId) {
     let inv;
-    if (invoiceNumber && invoiceNumber !== 'by-id') {
-      const { data } = await sb.from('invoices').select('*').eq('invoice_number', invoiceNumber).single();
+
+    if (invoiceNumber) {
+      const { data } = await sb.from('invoices').select('*').eq('invoice_number', invoiceNumber).maybeSingle();
       inv = data;
     }
-    if (!inv) { Notify.error('تعذّر تحميل تفاصيل الفاتورة'); return; }
+
+    // لو ما في رقم فاتورة — نبحث عن فاتورة مرتبطة بالدين
+    if (!inv && debtId) {
+      const { data: debt } = await sb.from('debts').select('notes, amount, debt_date, customer_id').eq('id', debtId).maybeSingle();
+      if (debt?.notes) {
+        const num = (debt.notes).match(/INV-\d+/)?.[0];
+        if (num) {
+          const { data } = await sb.from('invoices').select('*').eq('invoice_number', num).maybeSingle();
+          inv = data;
+        }
+      }
+    }
+
+    if (!inv) {
+      Notify.error('لا توجد فاتورة مرتبطة بهذا الدين');
+      return;
+    }
     const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', inv.id);
 
     const payLabel = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' }[inv.payment_type] || inv.payment_type;
