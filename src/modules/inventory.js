@@ -244,25 +244,7 @@ const Inventory = {
   },
 
   scanBarcode() {
-    const overlay = document.getElementById('inv-scanner-overlay');
-    if (overlay) overlay.style.display = 'flex';
-    const container = document.getElementById('inv-scanner-container');
-    if (container) { container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
-
-    import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
-      BarcodeScanner.start('inv-scanner-container', (code) => {
-        const el = document.getElementById('inb');
-        if (el) {
-          el.value = code;
-          Inventory.onBarcodeInput(code); // trigger lookup
-        }
-        Inventory.stopScanner();
-        Notify.success('✅ تم مسح الباركود: ' + code);
-      }, (err) => {
-        Notify.error(err);
-        Inventory.stopScanner();
-      });
-    });
+    Inventory._scanBarcodeTo('inb', 'امسح باركود المنتج');
   },
 
   stopScanner() {
@@ -341,34 +323,32 @@ const Inventory = {
   },
 
   scanBarcodeEdit() {
+    // نستخدم نفس overlay المخزون مع تغيير الـ target
+    Inventory._scanBarcodeTo('einvbarcode', 'تعبئة باركود المنتج');
+  },
+
+  _scanBarcodeTo(targetId, hint) {
+    const overlay   = document.getElementById('inv-scanner-overlay');
+    const container = document.getElementById('inv-scanner-container');
+    const hintEl    = document.querySelector('#inv-scanner-overlay p');
+
+    if (hintEl)   hintEl.textContent = hint || 'وجّه الكاميرا على الباركود';
+    if (overlay)  overlay.style.display = 'flex';
+    if (container){ container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
+
     import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;';
-      overlay.innerHTML = `
-        <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
-          <div id="inv-edit-bc-cont" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
-          <div style="position:absolute;inset:0;pointer-events:none;">
-            <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-            <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-            <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
-              <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:3px 0 0 0;"></div>
-              <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 3px 0 0;"></div>
-              <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 3px;"></div>
-              <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 3px 0;"></div>
-              <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
-            </div>
-          </div>
-          <button onclick="this.closest('[style*=fixed]').remove();arguments[0].stopPropagation();" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;">✕</button>
-        </div>
-        <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
-          <p style="color:#fff;font-size:13px;margin:0;">وجّه الكاميرا على الباركود</p>
-        </div>`;
-      document.body.appendChild(overlay);
-      BarcodeScanner.start('inv-edit-bc-cont', (code) => {
-        document.getElementById('einvbarcode').value = code;
-        BarcodeScanner.stop(); overlay.remove();
-        Notify.success('✅ ' + code);
-      }, (err) => { Notify.error(err); overlay.remove(); });
+      BarcodeScanner.start('inv-scanner-container', (code) => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.value = code;
+          if (targetId === 'inb') Inventory.onBarcodeInput(code);
+        }
+        Inventory.stopScanner();
+        Notify.success('✅ تم مسح الباركود: ' + code);
+      }, (err) => {
+        Notify.error(err);
+        Inventory.stopScanner();
+      });
     });
   },
 
