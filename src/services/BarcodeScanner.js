@@ -67,8 +67,10 @@ export const BarcodeScanner = {
         _stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
-            width:  { ideal: 1280 },
-            height: { ideal: 720  },
+            width:  { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720  },
+            focusMode: { ideal: 'continuous' },
+            zoom: { ideal: 1 },
           },
           audio: false,
         });
@@ -87,6 +89,15 @@ export const BarcodeScanner = {
       _video.srcObject = _stream;
       el.appendChild(_video);
       try { await _video.play(); } catch {}
+
+      // تركيز تلقائي مستمر
+      try {
+        const track = _stream.getVideoTracks()[0];
+        const caps  = track.getCapabilities?.();
+        if (caps?.focusMode?.includes('continuous')) {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+        }
+      } catch { /* not supported */ }
 
       _active = true;
       BarcodeScanner._boostNative();
@@ -141,8 +152,9 @@ export const BarcodeScanner = {
           target: el,
           constraints: {
             facingMode: 'environment',
-            width:  { ideal: 1280 },
-            height: { ideal: 720  },
+            width:  { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720  },
+            focusMode: { ideal: 'continuous' },
           },
           area: {
             top:    '25%',
