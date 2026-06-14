@@ -23,7 +23,6 @@ import { Expenses }   from './modules/expenses.js';
 import { Reports }    from './modules/reports.js';
 import { QuickSale }      from './modules/quicksale.js';
 import { Notifications }  from './modules/notifications.js';
-import { GlobalSearch }   from './modules/globalSearch.js';
 import { AdminPanel } from './admin/admin-panel.js';
 import { Registry }   from './core/registry.js';
 
@@ -104,7 +103,7 @@ Object.assign(window, {
   // Modules
   Dashboard, Customers, Debts, Invoices,
   Sales, Inventory, Purchases, NetCards,
-  Returns, Expenses, Reports, QuickSale, Notifications, GlobalSearch,
+  Returns, Expenses, Reports, QuickSale, Notifications,
   AdminPanel,
 
   // Convenience wrappers for inline onclick
