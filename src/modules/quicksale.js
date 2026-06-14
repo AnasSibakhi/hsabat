@@ -119,7 +119,19 @@ export const QuickSale = {
 
     if (!res.length) {
       grid.style.display = 'block';
-      grid.innerHTML = `<div style="padding:18px;text-align:center;color:#94a3b8;font-size:13px;">لا توجد نتائج لـ "${q}"</div>`;
+      grid.innerHTML = `
+        <div style="padding:16px;text-align:center;">
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:10px;">المنتج غير موجود في المخزون</div>
+          <button onclick="
+            const bc=document.getElementById('qs-barcode-input').value.trim();
+            document.getElementById('qs-product-grid').style.display='none';
+            document.getElementById('qs-barcode-input').value='';
+            Nav.goTo('inventory');
+            setTimeout(()=>{Modal.open('m-inv');const el=document.getElementById('inb');if(el){el.value=bc;Inventory.onBarcodeInput(bc);}},300);
+          " style="background:#6366f1;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;width:100%;">
+            ➕ إضافة للمخزون
+          </button>
+        </div>`;
       return;
     }
 
@@ -455,17 +467,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (product) {
       QuickSale.addToCart(product.id);
       QuickSale._beep('success');
-      // Zoom animation
       const c = DOM.get('qs-scanner-container');
       if (c) { c.style.transition='transform .15s'; c.style.transform='scale(1.15)'; setTimeout(()=>c.style.transform='scale(1)',200); }
     } else {
       QuickSale._beep('error');
       QuickSale.stopScanner();
-      const bc = DOM.get('qs-new-barcode'); if (bc) bc.value = code;
-      const nm = DOM.get('qs-new-name');   if (nm) nm.value = '';
-      Modal.open('m-new-product');
-      setTimeout(() => DOM.get('qs-new-name')?.focus(), 300);
-      Notify.error('المنتج غير موجود — أضفه الآن');
+      // رسالة + زر إضافة في المخزون
+      QuickSale._showNotFound(code);
     }
 
     // Re-focus للصنف التالي
@@ -506,49 +514,43 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Add new product from scanner ──
 
-  async saveNewProduct() {
-    const toNum = s => parseFloat((s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
-    const name  = DOM.val('qs-new-name');
-    const sell  = toNum(DOM.val('qs-new-sell'));
-    const qty   = toNum(DOM.val('qs-new-qty'))  || 0;
-    const bc    = DOM.val('qs-new-barcode');
+  _showNotFound(barcode) {
+    // نشيل أي رسالة سابقة
+    document.getElementById('qs-not-found-toast')?.remove();
 
-    if (!name)              { Notify.error('أدخل اسم المنتج'); return; }
-    if (!sell || sell <= 0) { Notify.error('أدخل سعر البيع');  return; }
+    const toast = document.createElement('div');
+    toast.id = 'qs-not-found-toast';
+    toast.style.cssText = `
+      position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+      background:#1e293b;color:#fff;border-radius:14px;padding:14px 18px;
+      z-index:999;min-width:280px;max-width:340px;text-align:center;
+      box-shadow:0 8px 24px rgba(0,0,0,0.3);
+      animation:fadeInUp .2s ease;
+    `;
+    toast.innerHTML = `
+      <div style="font-size:22px;margin-bottom:6px;">❌</div>
+      <div style="font-weight:800;font-size:15px;margin-bottom:4px;">المنتج غير موجود</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;font-family:monospace;">${barcode || ''}</div>
+      <button onclick="
+        document.getElementById('qs-not-found-toast').remove();
+        Nav.goTo('inventory');
+        setTimeout(() => {
+          Modal.open('m-inv');
+          const el = document.getElementById('inb');
+          if(el){ el.value='${barcode || ''}'; Inventory.onBarcodeInput('${barcode || ''}'); }
+        }, 300);
+      " style="background:#6366f1;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
+        ➕ إضافة للمخزون
+      </button>
+      <button onclick="document.getElementById('qs-not-found-toast').remove();"
+        style="background:transparent;color:#94a3b8;border:none;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;margin-top:8px;width:100%;">
+        إغلاق
+      </button>
+    `;
+    document.body.appendChild(toast);
 
-    // لو الباركود موجود — اسأل المستخدم
-    if (bc) {
-      const { data: existing } = await DB.inventory().select('id,name').eq('barcode', bc).maybeSingle();
-      if (existing) {
-        const ok = window.confirm('⚠️ الباركود مسجّل للمنتج:\n"' + existing.name + '"\n\nأضفه للسلة مباشرة؟');
-        if (ok) {
-          Modal.close('m-new-product');
-          QuickSale.addToCart(existing.id);
-          Notify.success('تم إضافة "' + existing.name + '" للسلة');
-        }
-        return;
-      }
-    }
-
-    try {
-      const { data, error } = await DB.inventory().insert({
-        store_id:        State.user.id,
-        name,
-        barcode:         bc || null,
-        category:        DOM.get('qs-new-cat')?.value  || 'عام',
-        unit:            DOM.get('qs-new-unit')?.value || 'قطعة (pcs)',
-        quantity:        qty,
-        sale_price:      sell,
-        low_stock_alert: 10,
-      }).select().single();
-      if (error) throw error;
-
-      State.inventory.push(data);
-      Modal.close('m-new-product');
-      QuickSale.addToCart(data.id);
-      DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
-      Notify.success('تم إضافة "' + name + '" للمخزون وللسلة');
-    } catch (err) { Notify.error(err.message); }
+    // يختفي تلقائياً بعد 8 ثواني
+    setTimeout(() => toast.remove(), 8000);
   },
 
   // ── Debt modal ──
