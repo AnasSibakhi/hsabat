@@ -74,7 +74,7 @@ const Debts = {
 
     DOM.setHTML('dlist', list.map(d => {
       const remaining   = d.amount - d.paid;
-      const invNum      = (d.notes || '').match(/INV-\d+/)?.[0] || '';
+      const invNum      = (d.notes || '').match(/INV-\d+/)?.[0] || (d.invoice_id || '');
       const days        = Utils.daysSince(d.debt_date);
       const isLate      = days >= CONFIG.debtLateDays;
       const id          = d.id;
@@ -97,7 +97,7 @@ const Debts = {
           : '<button class="ibb" onclick="Debts.unarchive(\'' + id + '\')">إلغاء أرشفة</button>')
         + '</td>'
         + '<td>'
-        + (invNum ? '<button class="ibb" onclick="Debts.openInvoiceDetails(\'' + invNum + '\')" style="margin-left:4px;">تفاصيل</button>' : '')
+        + (invNum ? '<button class="ibb" onclick="Debts.openInvoiceDetails(\'' + invNum + '\')" style="margin-left:4px;">📋 تفاصيل البيع</button>' : '')
         + ' <button class="ibr" onclick="Debts.delete(\'' + id + '\')">حذف</button>'
         + '</td>'
         + '</tr>';
@@ -196,8 +196,12 @@ const Debts = {
   },
 
   async openInvoiceDetails(invoiceNumber) {
-    const { data: inv } = await sb.from('invoices').select('*').eq('invoice_number', invoiceNumber).single();
-    if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
+    let inv;
+    if (invoiceNumber && invoiceNumber !== 'by-id') {
+      const { data } = await sb.from('invoices').select('*').eq('invoice_number', invoiceNumber).single();
+      inv = data;
+    }
+    if (!inv) { Notify.error('تعذّر تحميل تفاصيل الفاتورة'); return; }
     const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', inv.id);
 
     const payLabel = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' }[inv.payment_type] || inv.payment_type;
