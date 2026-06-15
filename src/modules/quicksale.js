@@ -919,10 +919,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   selectDebtCustomerById(id) {
+    // ابحث في الـ dropdown مباشرة عن الاسم
+    const opt = document.querySelector(`[data-cid="${id}"]`);
+    const name = opt ? opt.textContent.trim().split(' — ')[0].trim() : '';
+
+    // أو من State.customers
     const c = (State.customers || []).find(x => x.id === id);
-    if (!c) return;
-    DOM.get('qs-debt-cust').value   = c.id;
-    DOM.get('qs-debt-search').value = c.name;
+
+    const finalName = c?.name || name;
+    if (!finalName) return;
+
+    DOM.get('qs-debt-cust').value   = id;
+    DOM.get('qs-debt-search').value = finalName;
     DOM.get('qs-debt-dropdown').style.display = 'none';
     DOM.get('qs-debt-new-wrap').style.display = 'none';
     QuickSale._debtNewCust = null;
@@ -959,23 +967,35 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const deferName = (
         deferData.name ||
         DOM.val('qs-debt-search') ||
+        QuickSale._debtNewCust ||
         DOM.val('qs-buyer-name-df') ||
         ''
       ).trim();
+
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
-      const existing = (State.customers || []).find(c => c.name.toLowerCase() === deferName.toLowerCase());
-      if (existing) {
-        custId = existing.id;
+
+      // جيب الـ customer_id
+      const custFromField = DOM.val('qs-debt-cust');
+      if (custFromField) {
+        custId = custFromField;
       } else {
-        const { Customers } = await import('./customers.js');
-        const newC = await Customers.createInline(
-          deferName,
-          deferData.phone || DOM.val('qs-buyer-phone-df') || ''
+        const existing = (State.customers || []).find(c =>
+          c.name.toLowerCase() === deferName.toLowerCase()
         );
-        if (newC?.id) custId = newC.id;
+        if (existing) {
+          custId = existing.id;
+        } else {
+          const { Customers } = await import('./customers.js');
+          const newC = await Customers.createInline(
+            deferName,
+            deferData.phone || DOM.val('qs-debt-new-phone') || DOM.val('qs-buyer-phone-df') || ''
+          );
+          if (newC?.id) custId = newC.id;
+        }
       }
-      QuickSale._deferData = null;
+      QuickSale._deferData  = null;
+      QuickSale._debtNewCust = null;
     }
 
     State.isMutating = true;
