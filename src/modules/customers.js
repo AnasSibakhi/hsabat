@@ -9,6 +9,7 @@ import { Notify }      from '../core/notify.js';
 import * as DOM        from '../core/dom.js';
 import { escape }      from '../core/utils.js';
 import * as Modal      from '../nav/modal.js';
+import { Debts }       from './debts.js';
 
 export const Customers = {
   /** Load all customers into State.customers cache */
@@ -106,13 +107,22 @@ export const Customers = {
 
           <!-- أزرار الزبون -->
           <div class="flex-gap6" style="margin-top:${hasDebt?'8px':'0'};">
-            <button class="ibb" onclick="Modal.open('m-debt');document.getElementById('dc-search').value='${escape(c.name)}';Debts.selectCustomer('${c.id}','${escape(c.name)}')" style="font-size:11px;">+ دين جديد</button>
+            <button class="ibb" onclick="Customers.openNewDebt('${c.id}','${escape(c.name)}')" style="font-size:11px;">+ دين جديد</button>
             ${c.phone ? `<button class="ibb" onclick="window.open('tel:${c.phone}')" style="font-size:11px;">📞 اتصال</button>` : ''}
             <button class="ibr" onclick="Customers.delete('${c.id}')" style="font-size:11px;">حذف</button>
           </div>
         </div>
       </div>`;
     }).join('');
+  },
+
+  openNewDebt(customerId, customerName) {
+    Modal.open('m-debt');
+    setTimeout(() => {
+      const search = document.getElementById('dc-search');
+      if (search) search.value = customerName;
+      Debts.selectCustomer(customerId, customerName);
+    }, 100);
   },
 
   filterUnified(q) {
