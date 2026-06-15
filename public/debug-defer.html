@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فحص مشكلة الدين</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Cairo,sans-serif;background:#0f172a;color:#e2e8f0;padding:1rem;font-size:13px;}
+h2{color:#818cf8;margin-bottom:1rem;}
+.step{background:#1e293b;border-radius:10px;padding:12px;margin-bottom:8px;}
+.step-title{font-weight:700;color:#94a3b8;margin-bottom:8px;font-size:11px;text-transform:uppercase;}
+.log{font-family:monospace;font-size:12px;padding:4px 0;}
+.ok{color:#34d399;} .err{color:#f87171;} .warn{color:#fbbf24;}
+button{background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:Cairo,sans-serif;cursor:pointer;margin:4px;}
+input{background:#334155;border:1px solid #475569;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-family:Cairo,sans-serif;width:100%;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<h2>🔍 فحص مشكلة "أدخل اسم الزبون"</h2>
+
+<div class="step">
+  <div class="step-title">١. اكتب اسم هنا واضغط "فحص"</div>
+  <input id="test-name" placeholder="اكتب اسم زبون...">
+  <button onclick="testInput()">فحص DOM.val</button>
+  <button onclick="testModal()">فتح iframe وفحص</button>
+</div>
+
+<div class="step">
+  <div class="step-title">٢. النتائج</div>
+  <div id="results"></div>
+</div>
+
+<script>
+function log(msg, type='ok') {
+  const d = document.getElementById('results');
+  d.innerHTML += `<div class="log ${type}">${msg}</div>`;
+}
+
+function testInput() {
+  const val = document.getElementById('test-name').value;
+  log(`القيمة المكتوبة: "${val}"`, val ? 'ok' : 'err');
+  log(`بعد .trim(): "${val.trim()}"`, val.trim() ? 'ok' : 'err');
+  log(`بعد || '': "${val.trim() || ''}"`, val.trim() ? 'ok' : 'err');
+}
+
+function testModal() {
+  document.getElementById('results').innerHTML = '';
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = '/';
+  iframe.style.cssText = 'width:375px;height:700px;border:2px solid #6366f1;border-radius:10px;display:block;margin-bottom:1rem;';
+  document.body.appendChild(iframe);
+  
+  iframe.onload = () => {
+    const w = iframe.contentWindow;
+    const d = iframe.contentDocument;
+    
+    setTimeout(() => {
+      // Step 1: Open defer modal
+      log('▶ فتح modal الدين...', 'warn');
+      
+      try {
+        w.Modal.open('m-qs-pay-defer');
+        log('✅ modal مفتوح', 'ok');
+      } catch(e) {
+        log('❌ خطأ في فتح modal: ' + e.message, 'err');
+        return;
+      }
+      
+      setTimeout(() => {
+        // Step 2: Check input exists
+        const input = d.getElementById('qs-buyer-name-df');
+        if (!input) { log('❌ input#qs-buyer-name-df غير موجود!', 'err'); return; }
+        log(`✅ input موجود | display: ${w.getComputedStyle(input).display}`, 'ok');
+        
+        // Step 3: Set value directly
+        input.value = 'محمود تجريبي';
+        log(`✅ تم تعيين value = "${input.value}"`, 'ok');
+        
+        // Step 4: Check DOM.val
+        const domVal = d.getElementById('qs-buyer-name-df')?.value?.trim() ?? '';
+        log(`DOM.val result: "${domVal}"`, domVal ? 'ok' : 'err');
+        
+        // Step 5: Check if confirmDefer reads it
+        const name = (d.getElementById('qs-buyer-name-df')?.value?.trim() || '');
+        log(`confirmDefer يقرأ: "${name}"`, name ? 'ok' : 'err');
+        
+        // Step 6: Check if modal is actually open (CSS class)
+        const modal = d.getElementById('m-qs-pay-defer');
+        const isOpen = modal?.classList.contains('open');
+        log(`modal.classList: ${modal?.className}`, isOpen ? 'ok' : 'err');
+        log(`modal مفتوح؟ ${isOpen}`, isOpen ? 'ok' : 'warn');
+        
+        // Step 7: Check if there's ANOTHER modal wrapping
+        log('--- تحقق إضافي ---', 'warn');
+        const allDefer = d.querySelectorAll('[id*="defer"]');
+        allDefer.forEach(el => {
+          log(`عنصر: #${el.id} | tag: ${el.tagName} | display: ${w.getComputedStyle(el).display.substring(0,20)}`, 'warn');
+        });
+        
+        log('--- input IDs تحتوي "name-df" ---', 'warn');
+        const allInputs = d.querySelectorAll('input[id*="name"]');
+        allInputs.forEach(el => {
+          log(`input#${el.id} | value: "${el.value}" | display: ${w.getComputedStyle(el).display}`, 'ok');
+        });
+        
+      }, 500);
+    }, 1000);
+  };
+}
+</script>
+</body>
+</html>
