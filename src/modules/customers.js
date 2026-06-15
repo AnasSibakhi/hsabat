@@ -4,6 +4,7 @@
  */
 
 import { DB }          from '../core/db.js';
+import { sb }          from '../core/db.js';
 import { State }       from '../core/state.js';
 import { Notify }      from '../core/notify.js';
 import * as DOM        from '../core/dom.js';
@@ -213,10 +214,30 @@ export const Customers = {
 
   /** Create a customer inline (called from Invoices/QuickSale) */
   async createInline(name, phone) {
+    // تحقق أولاً — لو الاسم موجود مسبقاً ارجعه بدون إضافة
+    const existing = (State.customers || []).find(c =>
+      c.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    if (existing) return existing;
+
+    // تحقق من DB كمان لو ما محمّلين
+    const { data: found } = await sb.from('customers')
+      .select('*').eq('store_id', State.user.id)
+      .ilike('name', name.trim()).maybeSingle();
+    if (found) {
+      // أضفه للـ cache
+      if (!State.customers) State.customers = [];
+      if (!State.customers.find(c => c.id === found.id)) State.customers.push(found);
+      return found;
+    }
+
+    // أضف جديد
     const { data, error } = await DB.customers().insert({
-      store_id: State.user.id, name, phone: phone ?? '',
+      store_id: State.user.id, name: name.trim(), phone: phone ?? '',
     }).select().single();
     if (error) throw error;
+    if (!State.customers) State.customers = [];
+    State.customers.push(data);
     return data;
   },
 
