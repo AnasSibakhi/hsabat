@@ -884,14 +884,48 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale._debtNewCust = null;
     if (!val.trim()) { dd.style.display = 'none'; nw.style.display = 'none'; return; }
     const q = val.trim().toLowerCase();
-    const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
+
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; QuickSale.searchDebtCustomer(val); });
+      return;
+    }
+
+    const matches = (State.customers || []).filter(c =>
+      c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
+    );
+
+    // مطابقة تامة — اختر مباشرة
+    const exact = matches.find(c => c.name.toLowerCase() === q);
+    if (exact) {
+      DOM.get('qs-debt-cust').value   = exact.id;
+      DOM.get('qs-debt-search').value = exact.name;
+      dd.style.display = 'none';
+      nw.style.display = 'none';
+      return;
+    }
+
     let html = matches.map(c =>
-      `<div class="dc-opt" onclick="QuickSale.selectDebtCustomer('${c.id}','${escape(c.name)}')">${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}</div>`
+      `<div class="dc-opt" data-cid="${c.id}" onclick="QuickSale.selectDebtCustomerById(this.dataset.cid)">
+        ${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
+      </div>`
     ).join('');
-    html += `<div class="dc-opt new" onclick="QuickSale.selectDebtNew('${escape(val.trim())}')">+ إضافة &quot;${escape(val.trim())}&quot; كزبون جديد</div>`;
+    html += `<div class="dc-opt new" data-name="${val.trim()}" onclick="QuickSale.selectDebtNew(this.dataset.name)">
+      + إضافة "${escape(val.trim())}" كزبون جديد
+    </div>`;
     dd.innerHTML = html;
     dd.style.display = 'block';
     nw.style.display = 'none';
+  },
+
+  selectDebtCustomerById(id) {
+    const c = (State.customers || []).find(x => x.id === id);
+    if (!c) return;
+    DOM.get('qs-debt-cust').value   = c.id;
+    DOM.get('qs-debt-search').value = c.name;
+    DOM.get('qs-debt-dropdown').style.display = 'none';
+    DOM.get('qs-debt-new-wrap').style.display = 'none';
+    QuickSale._debtNewCust = null;
   },
 
   selectDebtCustomer(id, name) {
