@@ -133,6 +133,29 @@ const Debts = {
   },
 
   // ── Customer Search ──
+  showAllCustomers() {
+    const dd  = document.getElementById('dc-dropdown');
+    const inp = document.getElementById('dc-search');
+    if (!dd || !inp) return;
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; Debts.showAllCustomers(); });
+      return;
+    }
+    const r = inp.getBoundingClientRect();
+    dd.style.top   = r.bottom + 4 + 'px';
+    dd.style.right = (window.innerWidth - r.right) + 'px';
+    dd.style.left  = r.left + 'px';
+    dd.style.width = r.width + 'px';
+    dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
+      `<div class="dc-opt" data-id="${c.id}" data-name="${Utils.escape(c.name)}" data-phone="${c.phone||''}"
+        onclick="Debts.selectCustomer(this.dataset.id,this.dataset.name)">
+        <b>${Utils.escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
+      </div>`
+    ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن</div>`;
+    dd.style.display = 'block';
+  },
+
   async openModal() {
     // تحميل الزبائن مسبقاً لضمان البحث الفوري
     if (!State.customers?.length) {

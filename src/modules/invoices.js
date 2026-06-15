@@ -100,6 +100,28 @@ const Invoices = {
     DOM.get('new-cust-wrap')?.classList.add('hidden');
   },
 
+  showAllCustomers() {
+    const dd  = document.getElementById('inv-cust-dropdown');
+    const inp = document.getElementById('inv-cust-search');
+    if (!dd || !inp) return;
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; Invoices.showAllCustomers(); });
+      return;
+    }
+    const r = inp.getBoundingClientRect();
+    dd.style.top   = r.bottom + 4 + 'px';
+    dd.style.right = (window.innerWidth - r.right) + 'px';
+    dd.style.left  = r.left + 'px';
+    dd.style.width = r.width + 'px';
+    dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
+      `<div class="dc-opt" onclick="Invoices.selectCustomer('${c.id}','${escape(c.name)}','${c.phone||''}')">
+        <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
+      </div>`
+    ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن</div>`;
+    dd.style.display = 'block';
+  },
+
   selectCustomer(id, name, phone) {
     const cs = DOM.get('inv-cust-search'); if (cs) cs.value = name;
     const ic = DOM.get('ic'); if (ic) ic.value = id;

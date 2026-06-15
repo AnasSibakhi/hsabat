@@ -611,13 +611,53 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
   },
 
+  _positionDropdown(dd, inputId) {
+    const inp = document.getElementById(inputId);
+    if (!inp || !dd) return;
+    const r = inp.getBoundingClientRect();
+    dd.style.top   = r.bottom + 4 + 'px';
+    dd.style.right = (window.innerWidth - r.right) + 'px';
+    dd.style.left  = r.left + 'px';
+    dd.style.width = r.width + 'px';
+  },
+
+  showAllCustomers(nameId, phoneId, ddId) {
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; QuickSale.showAllCustomers(nameId, phoneId, ddId); });
+      return;
+    }
+    const dd = DOM.get(ddId);
+    if (!dd) return;
+    QuickSale._positionDropdown(dd, nameId);
+    dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
+      `<div class="dc-opt" data-id="${c.id}" data-name="${escape(c.name)}" data-phone="${c.phone||''}"
+        onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}',this.dataset.name,this.dataset.phone)">
+        <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
+      </div>`
+    ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن مسجّلين</div>`;
+    dd.style.display = 'block';
+  },
+
   searchBuyerField(nameId, phoneId, ddId, val) {
     const dd = DOM.get(ddId);
-    if (!val.trim()) { dd.style.display = 'none'; return; }
+    if (!dd) return;
+
+    if (!val.trim()) {
+      QuickSale.showAllCustomers(nameId, phoneId, ddId);
+      return;
+    }
+
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
+      return;
+    }
+
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c =>
       c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)
-    ).slice(0, 6);
+    ).slice(0, 8);
 
     // لو مطابق تماماً — اختره تلقائياً
     const exact = matches.find(c => c.name.toLowerCase() === q);
@@ -626,17 +666,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       return;
     }
 
-    let html = matches.map(c =>
-      `<div class="dc-opt" onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}','${escape(c.name)}','${c.phone||''}')">
-        <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
+    QuickSale._positionDropdown(dd, nameId);
+    dd.innerHTML = [
+      ...matches.map(c =>
+        `<div class="dc-opt" data-name="${escape(c.name)}" data-phone="${c.phone||''}"
+          onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}',this.dataset.name,this.dataset.phone)">
+          <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
+        </div>`
+      ),
+      `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;" onclick="QuickSale.useName('${nameId}','${ddId}')">
+        ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
       </div>`
-    ).join('');
-
-    html += `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;" onclick="QuickSale.useName('${nameId}','${ddId}')">
-      ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
-    </div>`;
-
-    dd.innerHTML = html;
+    ].join('');
     dd.style.display = 'block';
   },
 
