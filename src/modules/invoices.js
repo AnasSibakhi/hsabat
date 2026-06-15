@@ -33,11 +33,17 @@ const Invoices = {
     const now = new Date();
     DOM.setText('inv-date-preview', now.toLocaleDateString('ar-EG'));
     DOM.setText('inv-cashier-preview', State.user?.owner || '');
-    // reset customer search
     const cs = DOM.get('inv-cust-search'); if (cs) cs.value = '';
     const ic = DOM.get('ic'); if (ic) ic.value = '';
     const dd = DOM.get('inv-cust-dropdown'); if (dd) dd.style.display = 'none';
     Invoices.resetForm();
+
+    // تحميل الزبائن مسبقاً
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; });
+    }
+
     setTimeout(() => { const s = DOM.get('inv-prod-search'); if (s) s.focus(); }, 300);
   },
 

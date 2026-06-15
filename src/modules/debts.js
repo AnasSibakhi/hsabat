@@ -133,6 +133,17 @@ const Debts = {
   },
 
   // ── Customer Search ──
+  async openModal() {
+    // تحميل الزبائن مسبقاً لضمان البحث الفوري
+    if (!State.customers?.length) {
+      const { data } = await sb.from('customers')
+        .select('id,name,phone').eq('store_id', State.user.id).order('name');
+      State.customers = data || [];
+    }
+    Modal.open('m-debt');
+    setTimeout(() => DOM.get('dc-search')?.focus(), 150);
+  },
+
   searchCustomer(val) {
     const dd = DOM.get('dc-dropdown');
     const newWrap = DOM.get('dc-new-wrap');

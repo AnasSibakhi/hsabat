@@ -289,7 +289,7 @@ PalPay" style="resize:none;"></textarea>
     <div class="qa">
      <div class="qab" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
      <div class="qab" onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
-     <div class="qab" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i><span>دين جديد</span></div>
+     <div class="qab" onclick="Debts.openModal()"><i class="ti ti-plus"></i><span>دين جديد</span></div>
     </div>
 
     <!-- المنتجات الناقصة والمنتهية -->
@@ -419,7 +419,7 @@ PalPay" style="resize:none;"></textarea>
       <div class="flex-gap6">
         <button class="btn btn-o" id="d-archive-btn" onclick="Debts.toggleArchive()" style="font-size:12px;padding:7px 10px;">🗄 الأرشيف</button>
         <button class="btn btn-o" onclick="Debts.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i> طباعة</button>
-        <button class="btn btn-s" onclick="Modal.open('m-debt')"><i class="ti ti-plus"></i> إضافة</button>
+        <button class="btn btn-s" onclick="Debts.openModal()"><i class="ti ti-plus"></i> إضافة</button>
       </div>
     </div>
 
@@ -820,7 +820,7 @@ PalPay" style="resize:none;"></textarea>
 <div id="add-menu-overlay" onclick="closeAddMenu()" style="display:none;position:fixed;inset:0;z-index:299;"></div>
 <div id="add-menu" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;min-width:220px;border:1px solid var(--br);">
   <button onclick="closeAddMenu();Modal.open('m-invoice');Invoices.initModal()" class="add-menu-item"><i class="ti ti-receipt" style="color:var(--p);"></i> فاتورة جديدة</button>
-  <button onclick="closeAddMenu();Modal.open('m-debt')" class="add-menu-item"><i class="ti ti-credit-card-off" style="color:var(--d);"></i> إضافة دين</button>
+  <button onclick="closeAddMenu();Debts.openModal()" class="add-menu-item"><i class="ti ti-credit-card-off" style="color:var(--d);"></i> إضافة دين</button>
   <button onclick="closeAddMenu();Modal.open('m-inv')" class="add-menu-item"><i class="ti ti-box" style="color:var(--w);"></i> صنف جديد</button>
   <button onclick="closeAddMenu();Modal.open('m-expense')" class="add-menu-item"><i class="ti ti-cash" style="color:#0e9f6e;"></i> مصروف جديد</button>
 </div>
