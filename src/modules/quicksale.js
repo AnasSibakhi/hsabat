@@ -950,8 +950,22 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       }
 
       // Create debt if needed
-      if (paymentType === PAYMENT.DEFER && custId) {
-        await DB.debts().insert({ store_id: State.user.id, customer_id: custId, amount: total, paid: 0, debt_date: Utils.today(), notes: 'فاتورة ' + invNum });
+      if (paymentType === PAYMENT.DEFER) {
+        const debtCustId = custId || null;
+        await DB.debts().insert({
+          store_id:    State.user.id,
+          customer_id: debtCustId,
+          amount:      total,
+          paid:        0,
+          debt_date:   Utils.today(),
+          notes:       'فاتورة ' + invNum,
+          cust_phone:  buyerPhone || null,
+        });
+        // لو ما عنده customer_id — أضفه للـ customers
+        if (!debtCustId && custName && custName !== 'زبون عادي') {
+          const { Customers } = await import('./customers.js');
+          await Customers.createInline(custName, buyerPhone);
+        }
         await getDebts()?.loadBadge();
       }
 
