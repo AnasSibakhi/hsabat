@@ -46,7 +46,7 @@ export const Store = {
     // Register nav loaders
     Nav.register('home',      () => Dashboard.load());
     Nav.register('quicksale', () => QuickSale.init());
-    Nav.register('customers', () => Customers.loadTable());
+    Nav.register('customers', () => Customers.loadUnified());
     Nav.register('debts',     () => Debts.load());
     Nav.register('invoices',  () => Invoices.load());
     Nav.register('sales',     () => { Sales.load('day'); Sales.loadDailyReport(); });

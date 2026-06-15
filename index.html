@@ -35,6 +35,7 @@
   <div class="ni" onclick="closeDrawer();Nav.go('invoices',this)"><i class="ti ti-receipt"></i> الفواتير</div>
   <div class="ni" onclick="closeDrawer();Nav.go('sales',this)"><i class="ti ti-chart-bar"></i> المبيعات</div>
   <div class="nl">الزبائن</div>
+  <div class="ni" onclick="closeDrawer();Nav.go('customers',this)"><i class="ti ti-users"></i> الزبائن والديون</div>
   <div class="ni owner-only" onclick="closeDrawer();Nav.go('debts',this)"><i class="ti ti-credit-card-off"></i> الديون</div>
   <div class="nl">المخزون</div>
   <div class="ni" onclick="closeDrawer();Nav.go('inventory',this)"><i class="ti ti-box"></i> المخزون</div>
@@ -255,6 +256,7 @@ PalPay" style="resize:none;"></textarea>
    <div class="ni" onclick="Nav.go('invoices',this)"><i class="ti ti-receipt"></i> الفواتير</div>
    <div class="ni" onclick="Nav.go('sales',this)"><i class="ti ti-chart-bar"></i> المبيعات</div>
    <div class="nl">الزبائن</div>
+   <div class="ni" onclick="Nav.go('customers',this)"><i class="ti ti-users"></i> الزبائن والديون</div>
    <div class="ni owner-only" id="nav-debts" onclick="Nav.go('debts',this)"><i class="ti ti-credit-card-off"></i> الديون <span class="nbadge hidden" id="dbadge">0</span></div>
    <div class="nl">المخزون</div>
    <div class="ni" onclick="Nav.go('inventory',this)"><i class="ti ti-box"></i> المخزون</div>
@@ -388,11 +390,27 @@ PalPay" style="resize:none;"></textarea>
 
 <!-- CUSTOMERS -->
    <div class="page" id="page-customers">
-    <div class="ph"><span class="pt">الزبائن</span><button class="btn btn-s" onclick="Modal.open('m-customer')"><i class="ti ti-plus"></i> إضافة</button></div>
-    <input class="srch" placeholder="🔍 بحث..." oninput="Customers.filter(this.value)">
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>الدين</th><th></th><th></th></tr></thead><tbody id="clist"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
-   </div>
+    <div class="ph">
+      <span class="pt">الزبائن والديون</span>
+      <div class="flex-gap6">
+        <button class="btn btn-o" onclick="Customers.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i></button>
+        <button class="btn btn-s" onclick="Modal.open('m-customer')"><i class="ti ti-plus"></i> إضافة</button>
+      </div>
+    </div>
 
+    <!-- Stats -->
+    <div class="sg c3">
+      <div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="cu-total">-</div></div>
+      <div class="sc amber"><div class="sc-l">متأخرون +يومين</div><div class="sc-v" id="cu-late">-</div></div>
+      <div class="sc green"><div class="sc-l">مسدَّد الشهر</div><div class="sc-v" id="cu-paid">-</div></div>
+    </div>
+
+    <!-- Search -->
+    <input class="srch" id="cu-search" placeholder="🔍 ابحث عن زبون..." oninput="Customers.filterUnified(this.value)">
+
+    <!-- Customers + Debts List -->
+    <div id="cu-list"></div>
+   </div>
    <!-- DEBTS -->
    <div class="page" id="page-debts">
     <!-- Header -->

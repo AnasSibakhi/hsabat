@@ -18,10 +18,110 @@ export const Customers = {
     Customers.fillSelects();
   },
 
-  /** Load and render customers table */
-  async loadTable() {
-    const { data } = await DB.customers().select('*,debts(amount,paid)').order('name');
-    Customers._render(data ?? []);
+  /** Unified customers + debts page */
+  async loadUnified() {
+    const list = DOM.get('cu-list');
+    if (list) list.innerHTML = '<div class="empty-state"><span class="spin">↻</span></div>';
+
+    const [custRes, debtsRes] = await Promise.all([
+      DB.customers().select('*').order('name'),
+      DB.debts().select('*').eq('archived', false).order('debt_date', { ascending: false }),
+    ]);
+
+    State.customers = custRes.data || [];
+    const debts     = debtsRes.data || [];
+    const today     = new Date().toISOString().split('T')[0];
+
+    // حساب الإحصائيات
+    const totalDebt = debts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
+    const lateCount = debts.filter(d => {
+      const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
+      return (d.amount - (d.paid||0)) > 0 && days >= 2;
+    }).length;
+    const paidMonth = debts.filter(d => d.paid > 0 && d.debt_date >= today.slice(0,7)+'-01')
+      .reduce((s,d) => s + (d.paid||0), 0);
+
+    DOM.setText('cu-total', '₪' + totalDebt.toFixed(2));
+    DOM.setText('cu-late',  lateCount);
+    DOM.setText('cu-paid',  '₪' + paidMonth.toFixed(2));
+
+    Customers._allData = { customers: State.customers, debts };
+    Customers._renderUnified(State.customers, debts);
+  },
+
+  _renderUnified(customers, debts) {
+    const list = DOM.get('cu-list');
+    if (!list) return;
+
+    if (!customers.length) {
+      list.innerHTML = '<div class="empty-state">لا يوجد زبائن مسجّلين</div>';
+      return;
+    }
+
+    // بناء map الديون لكل زبون
+    const debtMap = {};
+    debts.forEach(d => {
+      if (!debtMap[d.customer_id]) debtMap[d.customer_id] = [];
+      debtMap[d.customer_id].push(d);
+    });
+
+    list.innerHTML = customers.map(c => {
+      const custDebts = debtMap[c.id] || [];
+      const totalRem  = custDebts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
+      const hasDebt   = totalRem > 0;
+
+      return `
+      <div class="card" style="margin-bottom:.6rem;">
+        <div style="padding:12px 14px;">
+          <!-- اسم + جوال + إجمالي -->
+          <div class="flex-between" style="margin-bottom:${hasDebt ? '10px' : '0'};">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#1e293b;">${escape(c.name)}</div>
+              ${c.phone ? `<div style="font-size:12px;color:var(--g5);margin-top:2px;">📞 ${c.phone}</div>` : ''}
+            </div>
+            <div style="text-align:left;">
+              ${hasDebt
+                ? `<div style="font-size:16px;font-weight:900;color:var(--r);">₪${totalRem.toFixed(2)}</div><div style="font-size:10px;color:var(--g4);">إجمالي الديون</div>`
+                : `<span style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">✅ صافي</span>`
+              }
+            </div>
+          </div>
+
+          <!-- قائمة الديون -->
+          ${custDebts.filter(d => d.amount - (d.paid||0) > 0).map(d => {
+            const rem  = d.amount - (d.paid||0);
+            const days = Math.floor((new Date().setHours(0,0,0,0) - new Date(d.debt_date)) / 86400000);
+            return `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:${days>=2?'#fff5f5':'#f8fafc'};border-radius:8px;margin-bottom:4px;">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#1e293b;">₪${rem.toFixed(2)}</div>
+                <div style="font-size:10px;color:var(--g4);">${d.debt_date} ${days>0?'· متأخر '+days+' يوم':''}</div>
+              </div>
+              <div class="flex-gap6">
+                ${d.notes ? `<span style="font-size:10px;color:var(--g5);">${escape(d.notes)}</span>` : ''}
+                <button class="ibg" onclick="Debts.openPayModal('${d.id}','${escape(c.name)}',${rem})" style="font-size:11px;padding:5px 10px;">تسديد</button>
+              </div>
+            </div>`;
+          }).join('')}
+
+          <!-- أزرار الزبون -->
+          <div class="flex-gap6" style="margin-top:${hasDebt?'8px':'0'};">
+            <button class="ibb" onclick="Modal.open('m-debt');document.getElementById('dc-search').value='${escape(c.name)}';Debts.selectCustomer('${c.id}','${escape(c.name)}')" style="font-size:11px;">+ دين جديد</button>
+            ${c.phone ? `<button class="ibb" onclick="window.open('tel:${c.phone}')" style="font-size:11px;">📞 اتصال</button>` : ''}
+            <button class="ibr" onclick="Customers.delete('${c.id}')" style="font-size:11px;">حذف</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  filterUnified(q) {
+    if (!Customers._allData) return;
+    const { customers, debts } = Customers._allData;
+    const filtered = q.trim()
+      ? customers.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || (c.phone||'').includes(q))
+      : customers;
+    Customers._renderUnified(filtered, debts);
   },
 
   /** Filter customers by search query */
