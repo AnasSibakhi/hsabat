@@ -460,6 +460,19 @@ const Debts = {
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
+  async quickPay(id, name, remaining) {
+    // تأكيد سريع
+    const ok = confirm(`تسديد كامل ₪${parseFloat(remaining).toFixed(2)} من ${name}؟`);
+    if (!ok) return;
+
+    try {
+      const { data: debt } = await DB.debts().select('amount').eq('id', id).single();
+      await DB.debts().update({ paid: debt.amount }).eq('id', id);
+      Notify.success('✅ تم التسديد');
+      await Promise.all([Customers.loadUnified(), Debts.loadBadge()]);
+    } catch { Notify.error('فشل التسديد'); }
+  },
+
   openPayModal(id, name, remaining) {
     DOM.get('pid').value = id;
     DOM.setText('pname', name);
@@ -476,7 +489,7 @@ const Debts = {
   async pay() {
     const id   = DOM.val('pid');
     const type = document.querySelector('input[name="pt"]:checked').value;
-    const { data: debt } = await DB.debts().select('amount,paid').eq('id', id).single();
+    const { data: debt } = await DB.debts().select('amount,paid,customer_id').eq('id', id).single();
     const newPaid = type === 'full'
       ? debt.amount
       : Math.min(debt.paid + (parseFloat(DOM.val('pamt')) || 0), debt.amount);
@@ -488,11 +501,35 @@ const Debts = {
       await DB.debts().update({ paid: newPaid }).eq('id', id);
       Notify.success('تم التسديد ✅');
       Modal.close('m-pay');
-      // تحديث الصفحة الحالية
       await Debts.loadBadge();
+
+      // تحديث لايف — بدون إعادة تحميل كاملة
+      const newRem = debt.amount - newPaid;
+
       if (window.State?.currentPage === 'customers') {
+        // حدّث بطاقة الزبون مباشرة
+        const debtRow = document.querySelector(`[data-debt-id="${id}"]`);
+        if (debtRow) {
+          if (newRem <= 0) {
+            // الدين سُدّد كاملاً — أزل الصف
+            debtRow.style.transition = 'opacity .3s';
+            debtRow.style.opacity = '0';
+            setTimeout(() => {
+              debtRow.remove();
+              // لو ما في ديون للزبون — حدّث البطاقة
+              Customers._updateCustomerCard(debt.customer_id);
+            }, 300);
+          } else {
+            // دفع جزئي — حدّث المبلغ
+            const remEl = debtRow.querySelector('[data-rem]');
+            if (remEl) remEl.textContent = '₪' + newRem.toFixed(2);
+            const btnEl = debtRow.querySelector('.ibg');
+            if (btnEl) btnEl.setAttribute('onclick', `Debts.openPayModal('${id}','${DOM.val("pname")}',${newRem})`);
+          }
+        }
+        // حدّث الإجماليات
         const { Customers } = await import('./customers.js');
-        await Customers.loadUnified();
+        Customers._refreshStats();
       } else {
         await Debts.load();
       }

@@ -157,7 +157,7 @@ export const Customers = {
       const hasDebt   = totalRem > 0;
 
       return `
-      <div class="card" style="margin-bottom:.6rem;">
+      <div class="card" data-customer-id="${c.id}" style="margin-bottom:.6rem;">
         <div style="padding:12px 14px;">
           <!-- اسم + جوال + إجمالي -->
           <div class="flex-between" style="margin-bottom:${hasDebt ? '10px' : '0'};">
@@ -165,7 +165,7 @@ export const Customers = {
               <div style="font-size:15px;font-weight:800;color:#1e293b;">${escape(c.name)}</div>
               ${c.phone ? `<div style="font-size:12px;color:var(--g5);margin-top:2px;">📞 ${c.phone}</div>` : ''}
             </div>
-            <div style="text-align:left;">
+            <div style="text-align:left;" data-cust-total>
               ${hasDebt
                 ? `<div style="font-size:16px;font-weight:900;color:var(--r);">₪${totalRem.toFixed(2)}</div><div style="font-size:10px;color:var(--g4);">إجمالي الديون</div>`
                 : `<span style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">✅ صافي</span>`
@@ -178,9 +178,9 @@ export const Customers = {
             const rem  = d.amount - (d.paid||0);
             const days = Math.floor((new Date().setHours(0,0,0,0) - new Date(d.debt_date)) / 86400000);
             return `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:${days>=2?'#fff5f5':'#f8fafc'};border-radius:8px;margin-bottom:4px;">
+            <div data-debt-id="${d.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:${days>=2?'#fff5f5':'#f8fafc'};border-radius:8px;margin-bottom:4px;">
               <div>
-                <div style="font-size:12px;font-weight:700;color:#1e293b;">₪${rem.toFixed(2)}</div>
+                <div data-rem style="font-size:12px;font-weight:700;color:#1e293b;">₪${rem.toFixed(2)}</div>
                 <div style="font-size:10px;color:var(--g4);">${d.debt_date} ${days>0?'· متأخر '+days+' يوم':''}</div>
               </div>
               <div class="flex-gap6">
@@ -199,6 +199,34 @@ export const Customers = {
         </div>
       </div>`;
     }).join('');
+  },
+
+  // تحديث الإجماليات بدون إعادة تحميل
+  _refreshStats() {
+    if (!Customers._allData) return;
+    const { debts } = Customers._allData;
+    const today = new Date().toISOString().split('T')[0];
+    const totalDebt = debts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
+    const lateCount = debts.filter(d => {
+      const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
+      return (d.amount - (d.paid||0)) > 0 && days >= 2;
+    }).length;
+    DOM.setText('cu-total', '₪' + totalDebt.toFixed(2));
+    DOM.setText('cu-late',  lateCount);
+  },
+
+  // تحديث بطاقة زبون معين
+  _updateCustomerCard(customerId) {
+    if (!Customers._allData) return;
+    const { debts } = Customers._allData;
+    const custDebts = debts.filter(d => d.customer_id === customerId && d.amount - (d.paid||0) > 0);
+    const card = document.querySelector(`[data-customer-id="${customerId}"]`);
+    if (!card) return;
+    if (custDebts.length === 0) {
+      // لا ديون — غيّر الإجمالي لـ "✅ صافي"
+      const totalEl = card.querySelector('[data-cust-total]');
+      if (totalEl) totalEl.innerHTML = '<span style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">✅ صافي</span>';
+    }
   },
 
   openNewDebt(customerId, customerName) {
