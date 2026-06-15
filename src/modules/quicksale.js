@@ -690,8 +690,24 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   selectBuyerById(nameId, phoneId, ddId, customerId) {
-    const c = (State.customers || []).find(x => x.id === customerId);
-    if (!c) return;
+    // ابحث في State.customers
+    let c = (State.customers || []).find(x => x.id === customerId);
+    
+    // لو ما لقيناه — ابحث في الـ dropdown نفسه
+    if (!c) {
+      const dd = DOM.get(ddId);
+      const opt = dd?.querySelector(`[data-cid="${customerId}"]`);
+      if (opt) {
+        const nameEl  = DOM.get(nameId);
+        const phoneEl = DOM.get(phoneId);
+        if (nameEl)  nameEl.value  = opt.textContent.trim().split(' — ')[0].trim();
+        if (phoneEl) phoneEl.value = '';
+        if (dd)      dd.style.display = 'none';
+        return;
+      }
+      return;
+    }
+
     const nameEl  = DOM.get(nameId);
     const phoneEl = DOM.get(phoneId);
     const dd      = DOM.get(ddId);
@@ -719,14 +735,16 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   confirmDefer() {
-    const name  = DOM.val('qs-buyer-name-df')?.trim() || DOM.val('qs-buyer-name')?.trim();
-    const phone = DOM.val('qs-buyer-phone-df') || DOM.val('qs-buyer-phone');
+    // اقرأ الاسم قبل إغلاق أي modal
+    const name  = (DOM.val('qs-buyer-name-df') || '').trim();
+    const phone = DOM.val('qs-buyer-phone-df') || '';
+    const date  = DOM.val('qs-defer-date')     || '';
+
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
-    DOM.get('qs-buyer-name').value  = name;
-    DOM.get('qs-buyer-phone').value = phone;
-    // sync back to df fields
-    DOM.get('qs-buyer-name-df').value  = name;
-    DOM.get('qs-buyer-phone-df').value = phone;
+
+    // احفظ مؤقتاً
+    QuickSale._deferData = { name, phone, date };
+
     Modal.close('m-qs-pay-defer');
     QuickSale.sell('defer');
   },
@@ -898,18 +916,19 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     let   custId   = null, custName = 'زبون عادي';
 
     if (paymentType === PAYMENT.DEFER) {
-      const deferName = (DOM.val('qs-buyer-name-df') || DOM.val('qs-buyer-name') || '').trim();
+      const deferData = QuickSale._deferData || {};
+      const deferName = (deferData.name || DOM.val('qs-buyer-name-df') || '').trim();
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
-      // لو الاسم مطابق لزبون موجود — استخدم ID، وإلا أضفه
       const existing = (State.customers || []).find(c => c.name.toLowerCase() === deferName.toLowerCase());
       if (existing) {
         custId = existing.id;
       } else {
         const { Customers } = await import('./customers.js');
-        const newC = await Customers.createInline(deferName, DOM.val('qs-buyer-phone-df') || '');
+        const newC = await Customers.createInline(deferName, deferData.phone || DOM.val('qs-buyer-phone-df') || '');
         if (newC?.id) custId = newC.id;
       }
+      QuickSale._deferData = null;
     }
 
     State.isMutating = true;
