@@ -429,9 +429,16 @@ const Debts = {
     State.isMutating = true;
     try {
       await DB.debts().update({ paid: newPaid }).eq('id', id);
-      Notify.success('تم التسديد');
+      Notify.success('تم التسديد ✅');
       Modal.close('m-pay');
-      await Promise.all([Debts.load(), Debts.loadBadge(), getDashboard().load()]);
+      // تحديث الصفحة الحالية
+      await Debts.loadBadge();
+      if (window.State?.currentPage === 'customers') {
+        const { Customers } = await import('./customers.js');
+        await Customers.loadUnified();
+      } else {
+        await Debts.load();
+      }
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
