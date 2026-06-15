@@ -633,8 +633,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!dd) return;
     QuickSale._positionDropdown(dd, nameId);
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
-      `<div class="dc-opt" data-id="${c.id}" data-name="${escape(c.name)}" data-phone="${c.phone||''}"
-        onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}',this.dataset.name,this.dataset.phone)">
+      `<div class="dc-opt" data-cid="${c.id}"
+        onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)">
         <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
       </div>`
     ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن مسجّلين</div>`;
@@ -664,15 +664,15 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     // لو مطابق تماماً — اختره تلقائياً
     const exact = matches.find(c => c.name.toLowerCase() === q);
     if (exact) {
-      QuickSale.selectBuyerField(nameId, phoneId, ddId, exact.name, exact.phone || '');
+      QuickSale.selectBuyerById(nameId, phoneId, ddId, exact.id);
       return;
     }
 
     QuickSale._positionDropdown(dd, nameId);
     dd.innerHTML = [
       ...matches.map(c =>
-        `<div class="dc-opt" data-name="${escape(c.name)}" data-phone="${c.phone||''}"
-          onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}',this.dataset.name,this.dataset.phone)">
+        `<div class="dc-opt" data-cid="${c.id}"
+          onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)">
           <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
         </div>`
       ),
@@ -687,6 +687,17 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const dd = DOM.get(ddId);
     dd.style.display = 'none';
     DOM.get(nameId)?.focus();
+  },
+
+  selectBuyerById(nameId, phoneId, ddId, customerId) {
+    const c = (State.customers || []).find(x => x.id === customerId);
+    if (!c) return;
+    const nameEl  = DOM.get(nameId);
+    const phoneEl = DOM.get(phoneId);
+    const dd      = DOM.get(ddId);
+    if (nameEl)  nameEl.value  = c.name;
+    if (phoneEl) phoneEl.value = c.phone || '';
+    if (dd)      dd.style.display = 'none';
   },
 
   selectBuyerField(nameId, phoneId, ddId, name, phone) {

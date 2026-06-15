@@ -149,8 +149,7 @@ const Debts = {
     dd.style.width    = r.width + 'px';
     dd.style.maxWidth = '340px';
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
-      `<div class="dc-opt" data-id="${c.id}" data-name="${Utils.escape(c.name)}" data-phone="${c.phone||''}"
-        onclick="Debts.selectCustomer(this.dataset.id,this.dataset.name)">
+      `<div class="dc-opt" data-id="${c.id}" onclick="Debts.selectCustomerById(this.dataset.id)">
         <b>${Utils.escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
       </div>`
     ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن</div>`;
@@ -197,11 +196,11 @@ const Debts = {
 
     dd.innerHTML = [
       ...matches.map(c =>
-        `<div class="dc-opt" data-id="${c.id}" data-name="${Utils.escape(c.name)}" onclick="Debts.selectCustomer(this.dataset.id,this.dataset.name)">
+        `<div class="dc-opt" data-id="${c.id}" onclick="Debts.selectCustomerById(this.dataset.id)">
           ${Utils.escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
         </div>`
       ),
-      `<div class="dc-opt new" data-name="${Utils.escape(val.trim())}" onclick="Debts.selectNew(this.dataset.name)">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`
+      `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}')">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`
     ].join('');
 
     // تحديد موقع الـ dropdown بـ fixed بناءً على موقع الـ input
@@ -221,6 +220,12 @@ const Debts = {
   _closeDropdown() {
     const dd = document.getElementById('dc-dropdown');
     if (dd) dd.style.display = 'none';
+  },
+
+  selectCustomerById(id) {
+    const c = (State.customers || []).find(x => x.id === id);
+    if (!c) return;
+    Debts.selectCustomer(c.id, c.name);
   },
 
   selectCustomer(id, name) {

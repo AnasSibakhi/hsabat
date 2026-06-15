@@ -82,7 +82,7 @@ const Invoices = {
       return;
     }
     dd.innerHTML = matches.map(c =>
-      `<div class="dc-opt" onclick="Invoices.selectCustomer('${c.id}','${escape(c.name)}','${c.phone||''}')">
+      `<div class="dc-opt" data-id="${c.id}" onclick="Invoices.selectCustomerById(this.dataset.id)">
         ${escape(c.name)}${c.phone ? ' — '+c.phone : ''}
       </div>`
     ).join('');
@@ -116,11 +116,17 @@ const Invoices = {
     dd.style.width    = r.width + 'px';
     dd.style.maxWidth = '340px';
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
-      `<div class="dc-opt" onclick="Invoices.selectCustomer('${c.id}','${escape(c.name)}','${c.phone||''}')">
+      `<div class="dc-opt" data-id="${c.id}" onclick="Invoices.selectCustomerById(this.dataset.id)">
         <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
       </div>`
     ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن</div>`;
     dd.style.display = 'block';
+  },
+
+  selectCustomerById(id) {
+    const c = (State.customers || []).find(x => x.id === id);
+    if (!c) return;
+    Invoices.selectCustomer(c.id, c.name, c.phone || '');
   },
 
   selectCustomer(id, name, phone) {
