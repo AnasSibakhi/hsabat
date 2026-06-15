@@ -708,11 +708,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   confirmDefer() {
-    const name  = DOM.val('qs-buyer-name-df');
-    const phone = DOM.val('qs-buyer-phone-df');
-    // sync to main buyer fields
+    const name  = DOM.val('qs-buyer-name-df')?.trim() || DOM.val('qs-buyer-name')?.trim();
+    const phone = DOM.val('qs-buyer-phone-df') || DOM.val('qs-buyer-phone');
+    if (!name) { Notify.error('أدخل اسم الزبون'); return; }
     DOM.get('qs-buyer-name').value  = name;
     DOM.get('qs-buyer-phone').value = phone;
+    // sync back to df fields
+    DOM.get('qs-buyer-name-df').value  = name;
+    DOM.get('qs-buyer-phone-df').value = phone;
     Modal.close('m-qs-pay-defer');
     QuickSale.sell('defer');
   },
@@ -884,7 +887,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     let   custId   = null, custName = 'زبون عادي';
 
     if (paymentType === PAYMENT.DEFER) {
-      const deferName = DOM.val('qs-buyer-name-df')?.trim();
+      const deferName = (DOM.val('qs-buyer-name-df') || DOM.val('qs-buyer-name') || '').trim();
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
       // لو الاسم مطابق لزبون موجود — استخدم ID، وإلا أضفه
