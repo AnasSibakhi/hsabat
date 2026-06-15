@@ -122,10 +122,13 @@ if ('serviceWorker' in navigator) {
 
 // إغلاق الـ dropdowns عند الضغط خارجها
 document.addEventListener('click', e => {
+  // لو الضغط على خيار في dropdown — لا تغلقه
+  if (e.target.closest('.dc-opt')) return;
+
   ['dc-dropdown','inv-cust-dropdown','qs-buyer-dropdown','qs-buyer-dd-tr','qs-buyer-dd-df','qs-debt-pay-dd'].forEach(id => {
-    const dd  = document.getElementById(id);
-    const inp = document.getElementById(id === 'dc-dropdown' ? 'dc-search' : 'inv-cust-search');
-    if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && !inp?.contains(e.target)) {
+    const dd = document.getElementById(id);
+    if (!dd || dd.style.display === 'none') return;
+    if (!dd.contains(e.target)) {
       dd.style.display = 'none';
     }
   });
