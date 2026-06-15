@@ -86,6 +86,16 @@ const Invoices = {
         ${escape(c.name)}${c.phone ? ' — '+c.phone : ''}
       </div>`
     ).join('');
+    // fixed position
+    const inp = document.getElementById('inv-cust-search');
+    if (inp) {
+      const r = inp.getBoundingClientRect();
+      dd.style.position = 'fixed';
+      dd.style.top   = r.bottom + 4 + 'px';
+      dd.style.right = (window.innerWidth - r.right) + 'px';
+      dd.style.left  = r.left + 'px';
+      dd.style.zIndex = '99999';
+    }
     dd.style.display = 'block';
     DOM.get('new-cust-wrap')?.classList.add('hidden');
   },

@@ -180,8 +180,23 @@ const Debts = {
       `<div class="dc-opt new" data-name="${Utils.escape(val.trim())}" onclick="Debts.selectNew(this.dataset.name)">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`
     ].join('');
 
+    // تحديد موقع الـ dropdown بـ fixed بناءً على موقع الـ input
+    const inp = document.getElementById('dc-search');
+    if (inp) {
+      const r = inp.getBoundingClientRect();
+      dd.style.position = 'fixed';
+      dd.style.top  = r.bottom + 4 + 'px';
+      dd.style.right = (window.innerWidth - r.right) + 'px';
+      dd.style.left  = r.left + 'px';
+      dd.style.zIndex = '99999';
+    }
     dd.style.display = 'block';
     newWrap.style.display = 'none';
+  },
+
+  _closeDropdown() {
+    const dd = document.getElementById('dc-dropdown');
+    if (dd) dd.style.display = 'none';
   },
 
   selectCustomer(id, name) {
