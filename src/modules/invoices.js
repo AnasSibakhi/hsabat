@@ -90,11 +90,11 @@ const Invoices = {
     const inp = document.getElementById('inv-cust-search');
     if (inp) {
       const r = inp.getBoundingClientRect();
-      dd.style.position = 'fixed';
-      dd.style.top   = r.bottom + 4 + 'px';
-      dd.style.right = (window.innerWidth - r.right) + 'px';
-      dd.style.left  = r.left + 'px';
-      dd.style.zIndex = '99999';
+      dd.style.top      = r.bottom + 'px';
+      dd.style.left     = r.left + 'px';
+      dd.style.right    = 'auto';
+      dd.style.width    = r.width + 'px';
+      dd.style.maxWidth = '340px';
     }
     dd.style.display = 'block';
     DOM.get('new-cust-wrap')?.classList.add('hidden');
@@ -110,10 +110,11 @@ const Invoices = {
       return;
     }
     const r = inp.getBoundingClientRect();
-    dd.style.top   = r.bottom + 4 + 'px';
-    dd.style.right = (window.innerWidth - r.right) + 'px';
-    dd.style.left  = r.left + 'px';
-    dd.style.width = r.width + 'px';
+    dd.style.top      = r.bottom + 'px';
+    dd.style.left     = r.left + 'px';
+    dd.style.right    = 'auto';
+    dd.style.width    = r.width + 'px';
+    dd.style.maxWidth = '340px';
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
       `<div class="dc-opt" onclick="Invoices.selectCustomer('${c.id}','${escape(c.name)}','${c.phone||''}')">
         <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}

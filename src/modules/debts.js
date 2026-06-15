@@ -143,10 +143,11 @@ const Debts = {
       return;
     }
     const r = inp.getBoundingClientRect();
-    dd.style.top   = r.bottom + 4 + 'px';
-    dd.style.right = (window.innerWidth - r.right) + 'px';
-    dd.style.left  = r.left + 'px';
-    dd.style.width = r.width + 'px';
+    dd.style.top      = r.bottom + 'px';
+    dd.style.left     = r.left + 'px';
+    dd.style.right    = 'auto';
+    dd.style.width    = r.width + 'px';
+    dd.style.maxWidth = '340px';
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
       `<div class="dc-opt" data-id="${c.id}" data-name="${Utils.escape(c.name)}" data-phone="${c.phone||''}"
         onclick="Debts.selectCustomer(this.dataset.id,this.dataset.name)">
@@ -207,11 +208,11 @@ const Debts = {
     const inp = document.getElementById('dc-search');
     if (inp) {
       const r = inp.getBoundingClientRect();
-      dd.style.position = 'fixed';
-      dd.style.top  = r.bottom + 4 + 'px';
-      dd.style.right = (window.innerWidth - r.right) + 'px';
-      dd.style.left  = r.left + 'px';
-      dd.style.zIndex = '99999';
+      dd.style.top      = r.bottom + 'px';
+      dd.style.left     = r.left + 'px';
+      dd.style.right    = 'auto';
+      dd.style.width    = r.width + 'px';
+      dd.style.maxWidth = '340px';
     }
     dd.style.display = 'block';
     newWrap.style.display = 'none';

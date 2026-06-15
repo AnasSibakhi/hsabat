@@ -615,10 +615,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const inp = document.getElementById(inputId);
     if (!inp || !dd) return;
     const r = inp.getBoundingClientRect();
-    dd.style.top   = r.bottom + 4 + 'px';
-    dd.style.right = (window.innerWidth - r.right) + 'px';
-    dd.style.left  = r.left + 'px';
-    dd.style.width = r.width + 'px';
+    const top = r.bottom + window.scrollY;
+    dd.style.top    = r.bottom + 'px';
+    dd.style.left   = r.left + 'px';
+    dd.style.right  = 'auto';
+    dd.style.width  = r.width + 'px';
+    dd.style.maxWidth = '340px';
   },
 
   showAllCustomers(nameId, phoneId, ddId) {
