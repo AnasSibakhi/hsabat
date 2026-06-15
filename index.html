@@ -850,11 +850,10 @@ PalPay" style="resize:none;"></textarea>
 <!-- Debt -->
 <div class="mo" id="m-debt"><div class="modal">
  <div class="mhdr"><span class="mtitle">إضافة دين</span><button class="mclose" onclick="Modal.close('m-debt')">✕</button></div>
- <div class="fg" class="pos-rel">
+ <div class="fg">
   <label class="lbl">الزبون *</label>
   <input class="inp" id="dc-search" placeholder="ابحث أو أدخل اسم جديد..." autocomplete="off" oninput="Debts.searchCustomer(this.value)">
   <input type="hidden" id="dc">
-  <div id="dc-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:180px;overflow-y:auto;"></div>
  </div>
  <div id="dc-new-wrap" style="display:none;background:var(--g0);border-radius:10px;padding:10px;margin-top:4px;">
   <div style="font-size:12px;color:var(--g5);margin-bottom:8px;">زبون جديد — سيُضاف تلقائياً</div>
@@ -910,7 +909,6 @@ PalPay" style="resize:none;"></textarea>
   <input class="inp" id="inv-cust-search" placeholder="ابحث باسم أو جوال..." autocomplete="off"
     oninput="Invoices.searchCustomer(this.value)">
   <input type="hidden" id="ic" value="">
-  <div id="inv-cust-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;max-height:180px;overflow-y:auto;margin-top:2px;"></div>
  </div>
  <div id="new-cust-wrap" class="hidden">
   <div style="background:var(--pl);border-radius:8px;padding:10px;margin-bottom:.75rem;">
@@ -1589,5 +1587,8 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv-details')">إغلاق</button></div>
 </div></div>
 
+<!-- Global Customer Dropdown - outside modals for proper z-index -->
+<div id="dc-dropdown" onclick="event.stopPropagation()" style="display:none;position:fixed;background:#fff;border:1px solid var(--br);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:99999;max-height:220px;overflow-y:auto;min-width:240px;"></div>
+<div id="inv-cust-dropdown" onclick="event.stopPropagation()" style="display:none;position:fixed;background:#fff;border:1px solid var(--br);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:99999;max-height:220px;overflow-y:auto;min-width:240px;"></div>
 </body>
 </html>

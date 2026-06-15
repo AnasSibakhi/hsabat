@@ -119,3 +119,14 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+
+// إغلاق الـ dropdowns عند الضغط خارجها
+document.addEventListener('click', e => {
+  ['dc-dropdown','inv-cust-dropdown'].forEach(id => {
+    const dd  = document.getElementById(id);
+    const inp = document.getElementById(id === 'dc-dropdown' ? 'dc-search' : 'inv-cust-search');
+    if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && !inp?.contains(e.target)) {
+      dd.style.display = 'none';
+    }
+  });
+});
