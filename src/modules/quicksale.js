@@ -838,9 +838,15 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const deferName = DOM.val('qs-buyer-name-df')?.trim();
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
-      // لو الاسم مطابق لزبون موجود — استخدم ID
-      const existing = State.customers.find(c => c.name.toLowerCase() === deferName.toLowerCase());
-      if (existing) custId = existing.id;
+      // لو الاسم مطابق لزبون موجود — استخدم ID، وإلا أضفه
+      const existing = (State.customers || []).find(c => c.name.toLowerCase() === deferName.toLowerCase());
+      if (existing) {
+        custId = existing.id;
+      } else {
+        const { Customers } = await import('./customers.js');
+        const newC = await Customers.createInline(deferName, DOM.val('qs-buyer-phone-df') || '');
+        if (newC?.id) custId = newC.id;
+      }
     }
 
     State.isMutating = true;

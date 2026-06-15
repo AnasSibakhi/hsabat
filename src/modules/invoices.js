@@ -610,15 +610,16 @@ const Invoices = {
     let customerId = DOM.val('ic'), customerName = 'زبون عادي', customerPhone = '';
     State.isMutating = true;
     try {
-      if (customerId === '__new__') {
-        const newName = DOM.val('inv-new-name');
-        if (!newName) { Notify.error('أدخل اسم الزبون الجديد'); return; }
+      const searchVal = DOM.val('inv-cust-search')?.trim();
+
+      if (customerId === '__new__' || (!customerId && searchVal)) {
+        const newName = DOM.val('inv-new-name') || searchVal;
+        if (!newName) { Notify.error('أدخل اسم الزبون'); State.isMutating = false; return; }
         const newCustomer = await getCustomers().createInline(newName, DOM.val('inv-new-phone'));
-        customerId = newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone');
-        await getCustomers().loadAll();
+        customerId = newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone') || newCustomer.phone || '';
       } else if (customerId) {
         const found = State.customers.find(c => c.id === customerId);
-        customerName = found?.name || ''; customerPhone = found?.phone || '';
+        customerName = found?.name || searchVal || ''; customerPhone = found?.phone || '';
       }
 
       const invoiceNumber = await Invoices._generateInvoiceNumber();
