@@ -20,6 +20,23 @@ export const Customers = {
     Customers.fillSelects();
   },
 
+  _sortMode:    'date',
+  _showArchived: false,
+
+  setSort(mode) {
+    Customers._sortMode = mode;
+    document.querySelectorAll('.d-sort-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('cusort-' + mode)?.classList.add('active');
+    if (Customers._allData) Customers._renderUnified(Customers._allData.customers, Customers._allData.debts);
+  },
+
+  toggleArchive() {
+    Customers._showArchived = !Customers._showArchived;
+    const btn = document.getElementById('cu-archive-btn');
+    if (btn) btn.textContent = Customers._showArchived ? '✅ نشط' : '🗄 الأرشيف';
+    Customers.loadUnified();
+  },
+
   /** Unified customers + debts page */
   async loadUnified() {
     const list = DOM.get('cu-list');
@@ -27,25 +44,67 @@ export const Customers = {
 
     const [custRes, debtsRes] = await Promise.all([
       DB.customers().select('*').order('name'),
-      DB.debts().select('*').eq('archived', false).order('debt_date', { ascending: false }),
+      DB.debts().select('*,customers(name,phone)')
+        .eq('archived', Customers._showArchived)
+        .order('debt_date', { ascending: false }),
     ]);
 
     State.customers = custRes.data || [];
     const debts     = debtsRes.data || [];
     const today     = new Date().toISOString().split('T')[0];
+    const monthStart= today.slice(0,7) + '-01';
 
-    // حساب الإحصائيات
+    // إحصائيات
     const totalDebt = debts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
-    const lateCount = debts.filter(d => {
+    const lateDebts = debts.filter(d => {
       const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
       return (d.amount - (d.paid||0)) > 0 && days >= 2;
-    }).length;
-    const paidMonth = debts.filter(d => d.paid > 0 && d.debt_date >= today.slice(0,7)+'-01')
+    });
+    const paidMonth = debts.filter(d => d.paid > 0 && d.debt_date >= monthStart)
       .reduce((s,d) => s + (d.paid||0), 0);
 
     DOM.setText('cu-total', '₪' + totalDebt.toFixed(2));
-    DOM.setText('cu-late',  lateCount);
+    DOM.setText('cu-late',  lateDebts.length);
     DOM.setText('cu-paid',  '₪' + paidMonth.toFixed(2));
+
+    // تنبيهات المتأخرين
+    const alerts = DOM.get('cu-alerts');
+    if (alerts) {
+      alerts.innerHTML = lateDebts.length
+        ? `<div class="card mb-8" style="border-right:4px solid var(--r);padding:10px 14px;">
+            <div style="font-size:13px;font-weight:800;color:var(--r);margin-bottom:6px;">⚠️ متأخرون عن السداد (${lateDebts.length})</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${lateDebts.slice(0,5).map(d => {
+                const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
+                return `<span style="background:var(--rl);color:var(--r);padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700;">
+                  ${escape(d.customers?.name||'-')} (${days} يوم)
+                </span>`;
+              }).join('')}
+            </div>
+          </div>` : '';
+    }
+
+    // تقرير التأخر
+    const aging = { current:0, d2:0, d7:0, d30:0, old:0 };
+    debts.forEach(d => {
+      const rem  = d.amount - (d.paid||0);
+      if (rem <= 0) return;
+      const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
+      if (days < 2)       aging.current += rem;
+      else if (days < 7)  aging.d2      += rem;
+      else if (days < 30) aging.d7      += rem;
+      else if (days < 90) aging.d30     += rem;
+      else                aging.old     += rem;
+    });
+    const agingEl = DOM.get('cu-aging');
+    if (agingEl) agingEl.innerHTML = `
+      <div class="sg c2">
+        <div><div class="text-sm c-muted">أقل من يومين</div><div class="fw-700 c-success">₪${aging.current.toFixed(2)}</div></div>
+        <div><div class="text-sm c-muted">2-7 أيام</div><div class="fw-700 c-primary">₪${aging.d2.toFixed(2)}</div></div>
+        <div><div class="text-sm c-muted">7-30 يوم</div><div class="fw-700" style="color:var(--w);">₪${aging.d7.toFixed(2)}</div></div>
+        <div><div class="text-sm c-muted">30-90 يوم</div><div class="fw-700 c-danger">₪${aging.d30.toFixed(2)}</div></div>
+        <div><div class="text-sm c-muted">أكثر من 90 يوم</div><div class="fw-700" style="color:#7c3aed;">₪${aging.old.toFixed(2)}</div></div>
+      </div>`;
 
     Customers._allData = { customers: State.customers, debts };
     Customers._renderUnified(State.customers, debts);
@@ -54,20 +113,45 @@ export const Customers = {
   _renderUnified(customers, debts) {
     const list = DOM.get('cu-list');
     if (!list) return;
-
-    if (!customers.length) {
-      list.innerHTML = '<div class="empty-state">لا يوجد زبائن مسجّلين</div>';
-      return;
-    }
+    const today = new Date().toISOString().split('T')[0];
 
     // بناء map الديون لكل زبون
     const debtMap = {};
     debts.forEach(d => {
-      if (!debtMap[d.customer_id]) debtMap[d.customer_id] = [];
-      debtMap[d.customer_id].push(d);
+      const cid = d.customer_id;
+      if (!debtMap[cid]) debtMap[cid] = [];
+      debtMap[cid].push(d);
     });
 
-    list.innerHTML = customers.map(c => {
+    // ترتيب الزبائن حسب الـ sort mode
+    let sorted = [...customers];
+    if (Customers._sortMode === 'amount') {
+      sorted.sort((a,b) => {
+        const ra = (debtMap[a.id]||[]).reduce((s,d)=>s+Math.max(0,d.amount-(d.paid||0)),0);
+        const rb = (debtMap[b.id]||[]).reduce((s,d)=>s+Math.max(0,d.amount-(d.paid||0)),0);
+        return rb - ra;
+      });
+    } else if (Customers._sortMode === 'overdue') {
+      sorted.sort((a,b) => {
+        const da = (debtMap[a.id]||[]).reduce((s,d)=>Math.min(s,new Date(d.debt_date)),Infinity);
+        const db = (debtMap[b.id]||[]).reduce((s,d)=>Math.min(s,new Date(d.debt_date)),Infinity);
+        return da - db;
+      });
+    }
+
+    // الزبائن عندهم ديون أولاً
+    sorted.sort((a,b) => {
+      const ha = (debtMap[a.id]||[]).some(d => d.amount-(d.paid||0) > 0);
+      const hb = (debtMap[b.id]||[]).some(d => d.amount-(d.paid||0) > 0);
+      return hb - ha;
+    });
+
+    if (!sorted.length) {
+      list.innerHTML = '<div class="empty-state">لا يوجد زبائن مسجّلين</div>';
+      return;
+    }
+
+    list.innerHTML = sorted.map(c => {
       const custDebts = debtMap[c.id] || [];
       const totalRem  = custDebts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
       const hasDebt   = totalRem > 0;
