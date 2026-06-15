@@ -58,6 +58,13 @@ const Invoices = {
       c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
     ).slice(0, 6);
 
+    // لو مطابق تماماً — اختره تلقائياً
+    const exact = matches.find(c => c.name.toLowerCase() === q);
+    if (exact) {
+      Invoices.selectCustomer(exact.id, exact.name, exact.phone || '');
+      return;
+    }
+
     if (!dd) return;
     if (!matches.length) {
       dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--g5);">لا يوجد زبون — سيُضاف كزبون جديد</div>`;

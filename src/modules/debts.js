@@ -153,6 +153,13 @@ const Debts = {
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
 
+    // لو مطابق تماماً — اختره تلقائياً
+    const exact = matches.find(c => c.name.toLowerCase() === q);
+    if (exact) {
+      Debts.selectCustomer(exact.id, exact.name);
+      return;
+    }
+
     dd.innerHTML = [
       ...matches.map(c =>
         `<div class="dc-opt" data-id="${c.id}" data-name="${Utils.escape(c.name)}" onclick="Debts.selectCustomer(this.dataset.id,this.dataset.name)">

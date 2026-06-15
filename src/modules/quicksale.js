@@ -619,13 +619,19 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)
     ).slice(0, 6);
 
+    // لو مطابق تماماً — اختره تلقائياً
+    const exact = matches.find(c => c.name.toLowerCase() === q);
+    if (exact) {
+      QuickSale.selectBuyerField(nameId, phoneId, ddId, exact.name, exact.phone || '');
+      return;
+    }
+
     let html = matches.map(c =>
       `<div class="dc-opt" onclick="QuickSale.selectBuyerField('${nameId}','${phoneId}','${ddId}','${escape(c.name)}','${c.phone||''}')">
         <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
       </div>`
     ).join('');
 
-    // زر "استخدم هذا الاسم" دائماً
     html += `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;" onclick="QuickSale.useName('${nameId}','${ddId}')">
       ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
     </div>`;
