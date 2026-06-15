@@ -646,7 +646,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!dd) return;
 
     if (!val.trim()) {
-      QuickSale.showAllCustomers(nameId, phoneId, ddId);
+      dd.style.display = 'none';
       return;
     }
 
@@ -661,10 +661,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)
     ).slice(0, 8);
 
-    // لو مطابق تماماً — اختره تلقائياً
+    // لو مطابق تماماً — عبّي الحقل مباشرة بدون dropdown
     const exact = matches.find(c => c.name.toLowerCase() === q);
     if (exact) {
-      QuickSale.selectBuyerById(nameId, phoneId, ddId, exact.id);
+      const nameEl  = DOM.get(nameId);
+      const phoneEl = DOM.get(phoneId);
+      if (nameEl)  nameEl.value  = exact.name;
+      if (phoneEl && exact.phone) phoneEl.value = exact.phone;
+      dd.style.display = 'none';
       return;
     }
 
@@ -676,7 +680,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
         </div>`
       ),
-      `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;" onclick="QuickSale.useName('${nameId}','${ddId}')">
+      `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;"
+        onclick="document.getElementById('${ddId}').style.display='none'">
         ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
       </div>`
     ].join('');

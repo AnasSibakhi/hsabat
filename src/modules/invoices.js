@@ -64,10 +64,16 @@ const Invoices = {
       c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
     ).slice(0, 6);
 
-    // لو مطابق تماماً — اختره تلقائياً
+    // لو مطابق تماماً — عبّي الحقل مباشرة
     const exact = matches.find(c => c.name.toLowerCase() === q);
     if (exact) {
-      Invoices.selectCustomer(exact.id, exact.name, exact.phone || '');
+      const cs = document.getElementById('inv-cust-search');
+      const ic = document.getElementById('ic');
+      const dd = document.getElementById('inv-cust-dropdown');
+      if (cs) cs.value = exact.name;
+      if (ic) ic.value = exact.id;
+      if (dd) dd.style.display = 'none';
+      document.getElementById('new-cust-wrap')?.classList.add('hidden');
       return;
     }
 

@@ -187,10 +187,13 @@ const Debts = {
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
 
-    // لو مطابق تماماً — اختره تلقائياً
+    // لو مطابق تماماً — عبّي الحقل مباشرة
     const exact = matches.find(c => c.name.toLowerCase() === q);
     if (exact) {
-      Debts.selectCustomer(exact.id, exact.name);
+      DOM.get('dc-search').value = exact.name;
+      DOM.get('dc').value = exact.id;
+      document.getElementById('dc-dropdown').style.display = 'none';
+      document.getElementById('dc-new-wrap').style.display = 'none';
       return;
     }
 
