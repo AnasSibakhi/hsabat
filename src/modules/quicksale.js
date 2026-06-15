@@ -922,7 +922,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     if (paymentType === PAYMENT.DEFER) {
       const deferData = QuickSale._deferData || {};
-      const deferName = (deferData.name || DOM.val('qs-buyer-name-df') || '').trim();
+      const deferName = (
+        deferData.name ||
+        DOM.val('qs-debt-search') ||
+        DOM.val('qs-buyer-name-df') ||
+        ''
+      ).trim();
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
       const existing = (State.customers || []).find(c => c.name.toLowerCase() === deferName.toLowerCase());
@@ -930,7 +935,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         custId = existing.id;
       } else {
         const { Customers } = await import('./customers.js');
-        const newC = await Customers.createInline(deferName, deferData.phone || DOM.val('qs-buyer-phone-df') || '');
+        const newC = await Customers.createInline(
+          deferName,
+          deferData.phone || DOM.val('qs-buyer-phone-df') || ''
+        );
         if (newC?.id) custId = newC.id;
       }
       QuickSale._deferData = null;
