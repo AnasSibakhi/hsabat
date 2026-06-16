@@ -881,10 +881,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   async confirmDebtPay() {
-    const name = DOM.val('qs-debt-pay-name');
-    const phone = DOM.val('qs-debt-pay-phone');
+    const name  = DOM.val('qs-debt-pay-name').trim();
+    const phone = DOM.val('qs-debt-pay-phone').trim();
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
-
     QuickSale._deferData = { name, phone };
     Modal.close('m-qs-pay-debt');
     await QuickSale.sell('defer');
