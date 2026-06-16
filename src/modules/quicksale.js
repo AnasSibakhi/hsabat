@@ -1205,16 +1205,16 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         inventory_id: c.id, quantity: c.qty, price: c.price,
       })));
 
-      // Deduct inventory + FIFO tracking
-      for (const item of _cart) {
+      // Deduct inventory + FIFO tracking — كل شي بـ Promise.all بدل loop
+      await Promise.all(_cart.map(async item => {
         const p = State.inventory.find(x => x.id === item.id);
         if (p) {
           const newQty = Math.max(0, p.quantity - item.qty);
           await DB.inventory().update({ quantity: newQty }).eq('id', item.id);
           p.quantity = newQty;
-          if (newQty <= p.low_stock_alert && newQty > 0) Notify.warn('"' + p.name + '" — المخزون منخفض: ' + newQty);
+          if (newQty <= p.low_stock_alert && newQty > 0)
+            Notify.warn('"' + p.name + '" — المخزون منخفض: ' + newQty);
         }
-        // FIFO — استهلك من الـ batches الأقدم
         if (item.id) {
           try {
             await FIFOService.consumeFIFO({
@@ -1226,7 +1226,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
             console.warn('FIFO consume (non-critical):', fifoErr.message);
           }
         }
-      }
+      }));
 
       // Create debt if needed
       if (paymentType === PAYMENT.DEFER) {
