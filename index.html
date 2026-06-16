@@ -1602,43 +1602,49 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 </div></div>
 
 <!-- Defer Modal -->
-<div class="mo" id="m-qs-pay-defer"><div class="modal" style="max-width:400px;">
- <div class="mhdr"><span class="mtitle">🕐 تطبيق لاحق</span><button class="mclose" onclick="Modal.close('m-qs-pay-defer')">✕</button></div>
+<div class="mo" id="m-qs-pay-defer"><div class="modal" style="max-width:420px;">
+ <div class="mhdr"><span class="mtitle">تطبيق لاحق</span><button class="mclose" onclick="Modal.close('m-qs-pay-defer')">✕</button></div>
 
- <div class="fg pos-rel">
-  <label class="lbl">اسم الزبون *</label>
-  <input class="inp" id="qs-buyer-name-df" placeholder="ابحث أو اكتب الاسم..." autocomplete="off"
-    oninput="QuickSale.searchBuyerField('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df',this.value)"
-    onfocus="QuickSale.showAllCustomers('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df')">
- </div>
-
- <div class="fg">
-  <label class="lbl">رقم الجوال <span class="text-xs c-muted">(اختياري)</span></label>
-  <input class="inp" id="qs-buyer-phone-df" placeholder="05X-XXXXXXX" inputmode="tel">
- </div>
-
- <div class="fg">
-  <label class="lbl">طريقة السداد</label>
-  <div style="display:flex;gap:8px;">
-   <button type="button" class="debt-remind-btn2 active" id="qs-defer-pay-cash" onclick="QuickSale.setDeferPayMethod('cash')"><i class="ti ti-cash"></i> كاش</button>
-   <button type="button" class="debt-remind-btn2" id="qs-defer-pay-transfer" onclick="QuickSale.setDeferPayMethod('transfer')"><i class="ti ti-building-bank"></i> تحويل</button>
+ <!-- صف: اسم الزبون + رقم الجوال -->
+ <div class="fr" style="gap:10px;margin-bottom:12px;">
+  <div class="fg" style="flex:1;margin:0;">
+   <label class="lbl">اسم الزبون *</label>
+   <input class="inp" id="qs-buyer-name-df" placeholder="ابحث أو اكتب..." autocomplete="off"
+     oninput="QuickSale.searchBuyerField('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df',this.value)"
+     onfocus="QuickSale.showAllCustomers('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df')">
+  </div>
+  <div class="fg" style="flex:1;margin:0;">
+   <label class="lbl">رقم الجوال</label>
+   <input class="inp" id="qs-buyer-phone-df" placeholder="05X-XXXXXXX" inputmode="tel">
   </div>
  </div>
 
- <div class="fg">
-  <label class="lbl">تاريخ السداد <span class="text-xs c-muted">(اختياري)</span></label>
-  <input class="inp" type="date" id="qs-defer-date">
+ <!-- صف: على أي حساب سيحوّل + تاريخ السداد -->
+ <div class="fr" style="gap:10px;margin-bottom:12px;">
+  <div class="fg" style="flex:1;margin:0;">
+   <label class="lbl">على أي حساب سيحوّل؟</label>
+   <select class="inp" id="qs-defer-pay-method" style="cursor:pointer;">
+    <option value="cash">كاش</option>
+    <option value="bank">دفع تطبيق بنك</option>
+    <option value="transfer">تحويل بنكي</option>
+    <option value="other">أخرى</option>
+   </select>
+  </div>
+  <div class="fg" style="flex:1;margin:0;">
+   <label class="lbl">تاريخ السداد (اختياري)</label>
+   <input class="inp" type="date" id="qs-defer-date">
+  </div>
  </div>
 
- <div style="background:var(--pl);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+ <!-- الإجمالي -->
+ <div style="background:var(--pl);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+  <span id="qs-defer-total" style="font-weight:900;color:var(--p);font-size:20px;">₪0</span>
   <span style="font-size:13px;color:var(--p);font-weight:700;">الإجمالي</span>
-  <span id="qs-defer-total" style="font-weight:900;color:var(--p);font-size:18px;">₪0</span>
  </div>
 
- <div class="mfoot">
-  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-defer')">رجوع</button>
-  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDefer()">
-   <i class="ti ti-check"></i> تأكيد
+ <div class="mfoot" style="gap:0;">
+  <button class="btn" style="flex:1;justify-content:center;background:var(--w);color:#fff;border:none;font-size:15px;padding:13px;" onclick="QuickSale.confirmDefer()">
+   <i class="ti ti-check"></i> حفظ كدين تطبيق لاحق
   </button>
  </div>
 </div></div>
