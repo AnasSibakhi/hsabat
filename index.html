@@ -87,94 +87,94 @@
 
 <!-- ══ SUPER ADMIN ══ -->
 <div id="superadmin-wrap">
+
+ <!-- Topbar -->
  <div class="sa-topbar">
   <div class="sa-brand">
    <div class="sa-brand-icon"><i class="ti ti-shield-check"></i></div>
-   <span class="sa-brand-name">لوحة التحكم</span>
+   <span class="sa-brand-name">حسابات</span>
    <span class="sa-badge">Super Admin</span>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;">
-   <span style="font-size:13px;color:#94a3b8;" id="sa-admin-name">Admin</span>
-   <button onclick="Auth.confirmLogout()" style="background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-family:'Cairo',sans-serif;cursor:pointer;">خروج</button>
+  <div class="sa-topbar-right">
+   <span class="sa-admin-chip" id="sa-admin-name">Admin</span>
+   <button class="sa-menu-btn" onclick="AdminPanel.toggleSidebar()"><i class="ti ti-menu-2"></i></button>
+   <button class="sa-logout-btn" onclick="Auth.confirmLogout()"><i class="ti ti-logout"></i> خروج</button>
   </div>
  </div>
- <!-- Mobile Admin Nav -->
+
+ <div class="sa-overlay" id="sa-sidebar-overlay" onclick="AdminPanel.closeSidebar()"></div>
+
  <div class="sa-layout">
-  <div class="sa-sidebar">
-   <div class="sa-nl">الرئيسية</div>
-   <div class="sa-nav-item active" onclick="AdminPanel.showPage('sa-dashboard')"><i class="ti ti-dashboard"></i> Dashboard</div>
-   <div class="sa-nl">الإدارة</div>
-   <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-stores')"><i class="ti ti-building-store"></i> المحلات</div>
-   <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-subscriptions')"><i class="ti ti-credit-card"></i> الاشتراكات</div>
-   <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-users')"><i class="ti ti-users"></i> المستخدمين</div>
-   <div class="sa-nl">التواصل</div>
-   <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-notifications')"><i class="ti ti-bell"></i> الإشعارات</div>
-   <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-transfer-entities');AdminPanel.loadTransferEntities()"><i class="ti ti-building-bank"></i> جهات التحويل</div>
+  <div class="sa-sidebar" id="sa-sidebar">
+   <div class="sa-sidebar-inner">
+    <div class="sa-nl">الرئيسية</div>
+    <div class="sa-nav-item active" onclick="AdminPanel.showPage('sa-dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="sa-nl">الإدارة</div>
+    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-stores')"><i class="ti ti-building-store"></i> المحلات</div>
+    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-subscriptions')"><i class="ti ti-credit-card"></i> الاشتراكات</div>
+    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-users')"><i class="ti ti-users"></i> المستخدمين</div>
+    <div class="sa-nl">التواصل</div>
+    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-notifications')"><i class="ti ti-bell"></i> الإشعارات</div>
+    <div class="sa-nav-item" onclick="AdminPanel.showPage('sa-transfer-entities');AdminPanel.loadTransferEntities()"><i class="ti ti-building-bank"></i> جهات التحويل</div>
+   </div>
   </div>
+
   <div class="sa-content">
 
    <!-- DASHBOARD -->
    <div class="sa-page active" id="sa-dashboard">
-    <div class="sa-title">📊 لوحة التحكم</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;">
-     <div class="sa-stat"><div class="sa-stat-label">إجمالي المحلات</div><div class="sa-stat-value" id="sa-stat-stores">-</div></div>
-     <div class="sa-stat"><div class="sa-stat-label">إجمالي المبيعات</div><div class="sa-stat-value" id="sa-stat-sales" style="color:#4ade80;">-</div></div>
-     <div class="sa-stat"><div class="sa-stat-label">محلات نشطة</div><div class="sa-stat-value" id="sa-stat-active" style="color:#4ade80;">-</div></div>
-     <div class="sa-stat"><div class="sa-stat-label">اشتراكات منتهية</div><div class="sa-stat-value" id="sa-stat-expired" style="color:#f87171;">-</div></div>
+    <div class="sa-page-header">
+     <div><div class="sa-title">لوحة التحكم 📊</div><div class="sa-title-sub">نظرة عامة على النظام</div></div>
+     <button class="sa-btn sa-btn-p" onclick="Modal.open('m-new-store')"><i class="ti ti-plus"></i> محل جديد</button>
+    </div>
+    <div class="sa-stats-grid">
+     <div class="sa-stat" style="--sa-accent:#6366f1;"><div class="sa-stat-label">إجمالي المحلات</div><div class="sa-stat-value" id="sa-stat-stores">-</div><i class="ti ti-building-store sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:#10b981;"><div class="sa-stat-label">إجمالي المبيعات</div><div class="sa-stat-value" id="sa-stat-sales" style="color:#10b981;">-</div><i class="ti ti-cash sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:#10b981;"><div class="sa-stat-label">محلات نشطة</div><div class="sa-stat-value" id="sa-stat-active" style="color:#10b981;">-</div><i class="ti ti-check sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:#ef4444;"><div class="sa-stat-label">اشتراكات منتهية</div><div class="sa-stat-value" id="sa-stat-expired" style="color:#ef4444;">-</div><i class="ti ti-alert-circle sa-stat-icon"></i></div>
     </div>
     <div class="sa-card">
-     <div class="sa-card-header">
-      <span>آخر المحلات</span>
-      <button class="sa-btn sa-btn-p" onclick="Modal.open('m-new-store')"><i class="ti ti-plus"></i> محل جديد</button>
-     </div>
-     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-stores-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div class="sa-card-header"><span>آخر المحلات</span><button class="sa-btn sa-btn-p" onclick="Modal.open('m-new-store')"><i class="ti ti-plus"></i> محل جديد</button></div>
+     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-stores-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
     </div>
    </div>
 
    <!-- STORES -->
    <div class="sa-page" id="sa-stores">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-     <div class="sa-title" style="margin:0;">🏪 إدارة المحلات</div>
+    <div class="sa-page-header">
+     <div><div class="sa-title">إدارة المحلات 🏪</div><div class="sa-title-sub">كل المحلات المسجلة</div></div>
      <button class="sa-btn sa-btn-p" onclick="Modal.open('m-new-store')"><i class="ti ti-plus"></i> محل جديد</button>
     </div>
     <div class="sa-card">
-     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الجوال</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-all-stores"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الجوال</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-all-stores"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
     </div>
    </div>
 
    <!-- SUBSCRIPTIONS -->
    <div class="sa-page" id="sa-subscriptions">
-    <div class="sa-title">💳 الاشتراكات</div>
+    <div class="sa-page-header"><div><div class="sa-title">الاشتراكات 💳</div><div class="sa-title-sub">إدارة اشتراكات المحلات</div></div></div>
     <div class="sa-card">
-     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الحالة</th><th>ينتهي</th><th>تجديد</th></tr></thead><tbody id="sa-subs-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الحالة</th><th>ينتهي</th><th>تجديد</th></tr></thead><tbody id="sa-subs-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
     </div>
    </div>
 
    <!-- USERS -->
    <div class="sa-page" id="sa-users">
-    <div class="sa-title">👥 المستخدمين</div>
+    <div class="sa-page-header"><div><div class="sa-title">المستخدمين 👥</div><div class="sa-title-sub">كل مستخدمي النظام</div></div></div>
     <div class="sa-card">
-     <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="sa-users-list"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="sa-users-list"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
     </div>
    </div>
 
    <!-- NOTIFICATIONS -->
    <div class="sa-page" id="sa-notifications">
-    <div class="sa-title">🔔 إرسال إشعار</div>
-    <div class="sa-card">
-     <div style="padding:1.25rem;">
-      <div class="mb-16">
-       <label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">نوع الإشعار</label>
-       <select class="inp" id="notif-type" class="inp sa-inp-dark">
-        <option value="info">📢 إعلان عام</option>
-        <option value="update">🆕 تحديث جديد</option>
-        <option value="feature">✨ ميزة جديدة</option>
-        <option value="warning">⚠️ تنبيه</option>
-       </select>
-      </div>
-      <div class="mb-16"><label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">العنوان</label><input class="inp" id="notif-title" placeholder="عنوان الإشعار" class="inp sa-inp-dark"></div>
-      <div class="mb-16"><label style="font-size:13px;color:#94a3b8;margin-bottom:5px;display:block;">الرسالة</label><textarea class="inp" id="notif-msg" rows="4" placeholder="نص الإشعار..." style="background:#334155;border-color:#475569;color:#f1f5f9;resize:none;"></textarea></div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;margin-bottom:1rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>
+    <div class="sa-page-header"><div><div class="sa-title">إرسال إشعار 🔔</div><div class="sa-title-sub">أرسل إشعار لكل المحلات</div></div></div>
+    <div class="sa-card" style="max-width:560px;">
+     <div class="sa-card-body">
+      <div class="sa-form-group"><label class="sa-label">نوع الإشعار</label><select class="sa-select" id="notif-type"><option value="info">📢 إعلان عام</option><option value="update">🆕 تحديث جديد</option><option value="feature">✨ ميزة جديدة</option><option value="warning">⚠️ تنبيه</option></select></div>
+      <div class="sa-form-group"><label class="sa-label">العنوان</label><input class="sa-input" id="notif-title" placeholder="عنوان الإشعار"></div>
+      <div class="sa-form-group"><label class="sa-label">الرسالة</label><textarea class="sa-input" id="notif-msg" rows="4" placeholder="نص الإشعار..." style="resize:none;"></textarea></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;margin-bottom:1.25rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>
       <button class="sa-btn sa-btn-p" onclick="AdminPanel.sendNotification()"><i class="ti ti-send"></i> إرسال الإشعار</button>
      </div>
     </div>
@@ -182,27 +182,17 @@
 
    <!-- TRANSFER ENTITIES -->
    <div class="sa-page" id="sa-transfer-entities">
-    <div class="sa-page-header">
-     <div><div class="sa-title">🏦 جهات التحويل</div><div class="sa-title-sub">إدارة جهات التحويل لكل محل</div></div>
-    </div>
+    <div class="sa-page-header"><div><div class="sa-title">جهات التحويل 🏦</div><div class="sa-title-sub">إدارة جهات التحويل لكل محل</div></div></div>
     <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
      <div class="sa-card">
       <div class="sa-card-header"><span id="te-form-title">إضافة جهات</span></div>
       <div class="sa-card-body">
        <input type="hidden" id="te-edit-id">
        <div class="sa-form-group"><label class="sa-label">المحل *</label><select class="sa-select" id="te-store-id"><option value="">-- اختر المحل --</option></select></div>
-       <div class="sa-form-group">
-        <label class="sa-label">اسم المجموعة * <span style="font-size:11px;color:#94a3b8;font-weight:400;">(اسم مرجعي)</span></label>
-        <input class="sa-input" id="te-name" placeholder="مثال: طرق الدفع">
-       </div>
-       <div class="sa-form-group">
-        <label class="sa-label">الجهات * <span style="font-size:11px;color:#94a3b8;font-weight:400;">(كل جهة في سطر)</span></label>
-        <textarea class="sa-input" id="te-names" rows="4" placeholder="بنك فلسطين
-جوال بي
-PalPay" style="resize:none;"></textarea>
-       </div>
-       <div class="sa-form-group"><label class="sa-label">تفاصيل (اختياري — تنطبق على الكل)</label><input class="sa-input" id="te-details" placeholder="ملاحظات إضافية..."></div>
-       <div class="flex-gap8">
+       <div class="sa-form-group"><label class="sa-label">اسم المجموعة *</label><input class="sa-input" id="te-name" placeholder="مثال: طرق الدفع"></div>
+       <div class="sa-form-group"><label class="sa-label">الجهات * <span style="font-size:11px;color:#94a3b8;">(كل جهة في سطر)</span></label><textarea class="sa-input" id="te-names" rows="4" placeholder="بنك فلسطين" style="resize:none;"></textarea></div>
+       <div class="sa-form-group"><label class="sa-label">تفاصيل (اختياري)</label><input class="sa-input" id="te-details" placeholder="ملاحظات..."></div>
+       <div style="display:flex;gap:8px;">
         <button class="sa-btn sa-btn-p" onclick="AdminPanel.saveTransferEntity()"><i class="ti ti-device-floppy"></i> حفظ</button>
         <button class="sa-btn sa-btn-o" onclick="AdminPanel.resetTransferForm()"><i class="ti ti-x"></i> إلغاء</button>
        </div>
@@ -210,7 +200,7 @@ PalPay" style="resize:none;"></textarea>
      </div>
      <div class="sa-card">
       <div class="sa-card-header"><span>قائمة جهات التحويل</span><button class="sa-btn sa-btn-o" style="padding:5px 10px;font-size:12px;" onclick="AdminPanel.loadTransferEntities()"><i class="ti ti-refresh"></i></button></div>
-      <div style="overflow-x:auto;"><table class="sa-dt"><thead><tr><th>المحل</th><th>الاسم</th><th>الجهات</th><th>تفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#94a3b8;">اضغط تحديث للتحميل</td></tr></tbody></table></div>
+      <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الاسم</th><th>الجهات</th><th>تفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#94a3b8;">اضغط تحديث للتحميل</td></tr></tbody></table></div>
      </div>
     </div>
    </div>
