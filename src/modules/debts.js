@@ -24,7 +24,10 @@ let _newCustName = null;
 const Debts = {
 
   async load() {
-    const { data } = await DB.debts().select('*,customers(name,phone)').order('debt_date', { ascending: false });
+    const { data } = await DB.debts()
+      .select('*,customers(name,phone)')
+      .order('debt_date', { ascending: false })
+      .limit(200); // أكثر من كافي لأي محل
     _allDebts = data || [];
     Debts._renderStats();
     Debts._renderList();
