@@ -24,6 +24,7 @@ import { Expenses }   from './modules/expenses.js';
 import { Reports }    from './modules/reports.js';
 import { QuickSale }      from './modules/quicksale.js';
 import { Notifications }  from './modules/notifications.js';
+import { Settings }       from './nav/store-boot.js';
 import { AdminPanel } from './admin/admin-panel.js';
 import { Registry }   from './core/registry.js';
 
@@ -92,7 +93,8 @@ function toggleDark() {
 // In a future refactor, replace with event delegation
 // ─────────────────────────────────────────
 // Backward compat — UI object
-window.UI = { toggleDarkMode: () => toggleDark() };
+window.UI       = { toggleDarkMode: () => toggleDark() };
+window.Settings = Settings;
 
 Object.assign(window, {
   // Auth
