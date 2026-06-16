@@ -100,18 +100,17 @@ window.UI = {
   toggleProfileMenu() {
     const menu = document.getElementById('profile-menu');
     if (!menu) return;
-    const isOpen = menu.style.display === 'block';
-    menu.style.display = isOpen ? 'none' : 'block';
-    // إغلاق عند الضغط خارج
-    if (!isOpen) {
+    const open = menu.style.display === 'block';
+    menu.style.display = open ? 'none' : 'block';
+    if (!open) {
       setTimeout(() => {
-        document.addEventListener('click', function handler(e) {
-          if (!document.getElementById('profile-btn')?.contains(e.target)) {
+        document.addEventListener('click', function h(e) {
+          if (!document.getElementById('profile-wrap')?.contains(e.target)) {
             menu.style.display = 'none';
-            document.removeEventListener('click', handler);
+            document.removeEventListener('click', h);
           }
         });
-      }, 10);
+      }, 0);
     }
   },
 };
