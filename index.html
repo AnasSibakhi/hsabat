@@ -794,7 +794,10 @@ PalPay" style="resize:none;"></textarea>
      <div class="fg"><label class="lbl">اسم المحل</label><input class="inp" id="set1"></div>
      <div class="fg"><label class="lbl">اسم صاحب المحل</label><input class="inp" id="set2"></div>
      <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="set3" inputmode="tel"></div>
-     <div class="flex-between"><button class="btn btn-s" onclick="Notify.show('تم حفظ الإعدادات')">حفظ</button></div>
+     <div class="flex-between">
+      <button class="btn btn-s" onclick="Settings.save()">حفظ</button>
+      <span id="set-save-msg" style="font-size:12px;color:var(--s);display:none;">✅ تم الحفظ</span>
+     </div>
     </div></div>
     <div class="card"><div class="p-16">
      <div class="sec-title-lg">الاشتراك</div>
