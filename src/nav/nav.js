@@ -31,5 +31,12 @@ export const go = (pageId, activeElement = null) => {
 export const goTo = (pageId) => {
   go(pageId);
   document.querySelectorAll('.bn').forEach(b => b.classList.remove('active'));
-  document.getElementById('bn-' + pageId)?.classList.add('active');
+
+  // الصفحات اللي تفتح من الشريط الجانبي — تضيء "المزيد"
+  const drawerPages = ['invoices','sales','inventory','purchases','netcards','expenses','reports','returns','settings'];
+  if (drawerPages.includes(pageId)) {
+    document.getElementById('bn-more')?.classList.add('active');
+  } else {
+    document.getElementById('bn-' + pageId)?.classList.add('active');
+  }
 };
