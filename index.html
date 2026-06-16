@@ -784,7 +784,7 @@ PalPay" style="resize:none;"></textarea>
    <!-- RETURNS -->
    <div class="page" id="page-returns">
     <div class="ph"><span class="pt">الإرجاعات</span></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>المبلغ</th><th>النوع</th><th>ملاحظات</th></tr></thead><tbody id="ret-list"><tr class="er"><td colspan="5"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>الزبون</th><th>المبلغ</th><th>النوع</th><th>ملاحظات</th></tr></thead><tbody id="ret-list"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
 
    <!-- SETTINGS -->
@@ -1226,6 +1226,7 @@ PalPay" style="resize:none;"></textarea>
 <div class="mo" id="m-return"><div class="modal">
  <div class="mhdr"><span class="mtitle">إرجاع بضاعة</span><button class="mclose" onclick="Modal.close('m-return')">✕</button></div>
  <input type="hidden" id="ret-inv-id">
+ <input type="hidden" id="ret-buyer-name">
  <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;color:var(--g6);" id="ret-inv-info"></div>
  <div class="fg"><label class="lbl">مبلغ الإرجاع (₪)</label><input class="inp" type="number" id="ret-amount" inputmode="decimal"></div>
  <div class="fg"><label class="lbl">طريقة الإرجاع</label>
@@ -1236,7 +1237,7 @@ PalPay" style="resize:none;"></textarea>
   </div>
  </div>
  <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="ret-notes" placeholder="سبب الإرجاع..."></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد الإرجاع</button></div>
 </div></div>
 
 <script type="module" src="/src/ui/drawer.js"></script>
