@@ -39,7 +39,8 @@ export const QuickSale = {
     const grid = DOM.get('qs-product-grid');
     if (grid) grid.style.display = 'none';
     QuickSale._loadSmartCards();
-    setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 300);
+    // load stats and best selling
+    QuickSale._loadStats();
   },
 
   // ── Physical Scanner ──
@@ -56,13 +57,6 @@ export const QuickSale = {
       }
     });
 
-    // Re-focus when user clicks elsewhere
-    document.addEventListener('click', (e) => {
-      if (!_active) return;
-      const ignore = ['INPUT','SELECT','TEXTAREA','BUTTON'];
-      if (ignore.includes(e.target.tagName)) return;
-      DOM.get('qs-barcode-input')?.focus();
-    });
   },
 
   // Called on every input change
