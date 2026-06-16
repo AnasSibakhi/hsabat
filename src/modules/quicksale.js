@@ -623,6 +623,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       DOM.get('qs-buyer-name-df').value  = '';
       DOM.get('qs-buyer-phone-df').value = '';
       DOM.get('qs-defer-date').value     = '';
+      QuickSale._deferPayMethod = 'cash';
+      document.getElementById('qs-defer-pay-cash')?.classList.add('active');
+      document.getElementById('qs-defer-pay-transfer')?.classList.remove('active');
       Modal.open('m-qs-pay-defer');
       setTimeout(() => DOM.get('qs-buyer-name-df')?.focus(), 150);
     }
@@ -756,16 +759,21 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale.sell('transfer');
   },
 
+  setDeferPayMethod(method) {
+    QuickSale._deferPayMethod = method;
+    document.getElementById('qs-defer-pay-cash').classList.toggle('active', method === 'cash');
+    document.getElementById('qs-defer-pay-transfer').classList.toggle('active', method === 'transfer');
+  },
+
   confirmDefer() {
-    // اقرأ الاسم قبل إغلاق أي modal
     const name  = (DOM.val('qs-buyer-name-df') || '').trim();
     const phone = DOM.val('qs-buyer-phone-df') || '';
     const date  = DOM.val('qs-defer-date')     || '';
+    const payMethod = QuickSale._deferPayMethod || 'cash';
 
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
 
-    // احفظ مؤقتاً
-    QuickSale._deferData = { name, phone, date };
+    QuickSale._deferData = { name, phone, date, payMethod };
 
     Modal.close('m-qs-pay-defer');
     QuickSale.sell('defer');
