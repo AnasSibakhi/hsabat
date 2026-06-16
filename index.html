@@ -694,38 +694,64 @@
 
    <!-- PURCHASES -->
    <div class="page" id="page-purchases">
-    <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="Modal.open('m-pur');Purchases.initModal()"><i class="ti ti-plus"></i> تسجيل</button></div>
+
+    <!-- Header -->
+    <div class="ph">
+     <span class="pt">المشتريات</span>
+     <button class="btn btn-s" onclick="Modal.open('m-pur');Purchases.initModal()">
+      <i class="ti ti-plus"></i> تسجيل
+     </button>
+    </div>
+
+    <!-- بحث -->
+    <div style="position:relative;margin-bottom:10px;">
+     <i class="ti ti-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--g4);font-size:16px;"></i>
+     <input class="srch" id="pur-search" placeholder="ابحث بالمورد أو المنتج..." style="padding-right:36px;margin-bottom:0;" oninput="Purchases.filterList(this.value)">
+    </div>
 
     <!-- تبويبات -->
-    <div class="ph-tabs">
-      <button id="pur-tab-all" onclick="Purchases.switchTab('all')"
-        style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--p);background:var(--p);color:#fff;font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">
-        📋 كل المشتريات
-      </button>
-      <button id="pur-tab-debts" onclick="Purchases.switchTab('debts')"
-        style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--br);background:#fff;color:var(--g7);font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">
-        ⏳ ديون الموردين
-      </button>
+    <div class="ph-tabs" style="margin-bottom:10px;">
+     <button id="pur-tab-all" class="ptab active" onclick="Purchases.switchTab('all')">
+      كل المشتريات
+     </button>
+     <button id="pur-tab-debts" class="ptab" onclick="Purchases.switchTab('debts')">
+      ديون الموردين
+     </button>
     </div>
 
     <!-- كل المشتريات -->
     <div id="pur-section-all">
-      <div class="card"><div class="tw"><table class="dt"><thead><tr><th>المورد</th><th>الجوال</th><th>فاتورة</th><th>البضاعة</th><th>الكمية</th><th>التكلفة</th><th>سعر البيع</th><th>الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody id="purlist"><tr class="er"><td colspan="10"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+     <div class="card">
+      <div class="tw">
+       <table class="dt">
+        <thead>
+         <tr>
+          <th>المورد</th>
+          <th>المنتج</th>
+          <th>الكمية</th>
+          <th>التكلفة</th>
+          <th>سعر البيع</th>
+          <th>الدفع</th>
+          <th>التاريخ</th>
+          <th></th>
+         </tr>
+        </thead>
+        <tbody id="purlist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
+       </table>
+      </div>
+     </div>
     </div>
 
     <!-- ديون الموردين -->
     <div id="pur-section-debts" style="display:none;">
-      <!-- إجماليات -->
-      <div class="sg c2 mb-14">
-        <div class="card sc red"><div class="sc-l">إجمالي ديون الموردين</div><div class="sc-v" id="sup-debt-total">-</div></div>
-        <div class="card sc green"><div class="sc-l">إجمالي المدفوع</div><div class="sc-v" id="sup-debt-paid">-</div></div>
-      </div>
-
-      <!-- جدول الموردين المدينين -->
-      <div class="card"><div class="tw"><table class="dt">
-        <thead><tr><th>المورد</th><th>الجوال</th><th>البضاعة</th><th>الكلي</th><th>المدفوع</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
-        <tbody id="sup-debt-list"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
-      </table></div></div>
+     <div class="sg c2 mb-14">
+      <div class="sc red"><div class="sc-l">إجمالي ديون الموردين</div><div class="sc-v" id="sup-debt-total">-</div></div>
+      <div class="sc green"><div class="sc-l">إجمالي المدفوع</div><div class="sc-v" id="sup-debt-paid">-</div></div>
+     </div>
+     <div class="card"><div class="tw"><table class="dt">
+      <thead><tr><th>المورد</th><th>الجوال</th><th>البضاعة</th><th>الكلي</th><th>المدفوع</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
+      <tbody id="sup-debt-list"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
+     </table></div></div>
     </div>
    </div>
 
