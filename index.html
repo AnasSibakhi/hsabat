@@ -133,7 +133,7 @@
      <div class="sa-stat" style="--sa-accent:#ef4444;"><div class="sa-stat-label">اشتراكات منتهية</div><div class="sa-stat-value" id="sa-stat-expired" style="color:#ef4444;">-</div><i class="ti ti-alert-circle sa-stat-icon"></i></div>
     </div>
     <div class="sa-card">
-     <div class="sa-card-header"><span>آخر المحلات</span><button class="sa-btn sa-btn-p" onclick="document.getElementById('m-new-store').style.display='flex'"><i class="ti ti-plus"></i> محل جديد</button></div>
+     <div class="sa-card-header"><span>آخر المحلات</span><button class="sa-btn sa-btn-p" onclick="AdminPanel.openNewStore()"><i class="ti ti-plus"></i> محل جديد</button></div>
      <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-stores-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
     </div>
    </div>
@@ -142,7 +142,7 @@
    <div class="sa-page" id="sa-stores">
     <div class="sa-page-header">
      <div><div class="sa-title">إدارة المحلات 🏪</div><div class="sa-title-sub">كل المحلات المسجلة</div></div>
-     <button class="sa-btn sa-btn-p" onclick="document.getElementById('m-new-store').style.display='flex'"><i class="ti ti-plus"></i> محل جديد</button>
+     <button class="sa-btn sa-btn-p" onclick="AdminPanel.openNewStore()"><i class="ti ti-plus"></i> محل جديد</button>
     </div>
     <div class="sa-card">
      <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الجوال</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-all-stores"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
