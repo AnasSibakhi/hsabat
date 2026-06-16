@@ -834,20 +834,7 @@
 </div>
 
 <!-- MODALS -->
-<!-- New Store (Super Admin) -->
-<div class="mo" id="m-new-store" style="position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.5);">
- <div class="modal" style="background:#1e293b;max-width:420px;width:100%;">
-  <div class="mhdr"><span class="mtitle" style="color:#f1f5f9;">إنشاء محل جديد</span><button class="mclose" onclick="document.getElementById('m-new-store').style.display='none'" style="background:#334155;color:#94a3b8;">✕</button></div>
-  <div class="fg"><label class="lbl" style="color:#94a3b8;">اسم المحل *</label><input class="inp" id="sa-new-store" placeholder="بقالة أبو أحمد"></div>
-  <div class="fg"><label class="lbl" style="color:#94a3b8;">اسم صاحب المحل *</label><input class="inp" id="sa-new-owner"></div>
-  <div class="fg"><label class="lbl" style="color:#94a3b8;">رقم الجوال</label><input class="inp" id="sa-new-phone" inputmode="tel"></div>
-  <div class="fg"><label class="lbl" style="color:#94a3b8;">اسم المستخدم (البريد) *</label><input class="inp" id="sa-new-user" type="email" placeholder="store@mail.com" inputmode="email"></div>
-  <div class="fg"><label class="lbl" style="color:#94a3b8;">كلمة المرور *</label><input class="inp" id="sa-new-pass" type="password"></div>
-  <div class="fg"><label class="lbl" style="color:#94a3b8;">مدة الاشتراك (أشهر)</label><select class="inp" id="sa-new-months"><option value="1">شهر</option><option value="3">3 أشهر</option><option value="6">6 أشهر</option><option value="12" selected>سنة كاملة</option><option value="24">سنتين</option></select></div>
-  <div class="mfoot">
-   <button class="btn btn-o" onclick="document.getElementById('m-new-store').style.display='none'">إلغاء</button>
-   <button class="sa-btn sa-btn-p" onclick="AdminPanel.createStore()" style="font-family:'Cairo',sans-serif;"><i class="ti ti-plus"></i> إنشاء المحل</button>
-  </div>
+<!-- New Store modal is created dynamically by AdminPanel.openNewStore() -->
  </div>
 </div>
 
