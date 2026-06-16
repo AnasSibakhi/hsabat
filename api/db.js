@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   const storeId = req.headers['x-store-id'];
   if (!storeId) return res.status(401).json({ error: 'Missing store_id' });
 
-  const { table, action, data, filters, select, order, limit, gte, gt, in: inFilter } = req.body;
+  const { table, action, data, filters, select, order, limit, offset, gte, gt, in: inFilter } = req.body;
 
   if (!table || !action) return res.status(400).json({ error: 'Missing table or action' });
 
