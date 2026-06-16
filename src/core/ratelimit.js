@@ -1,42 +1,53 @@
 /**
- * ratelimit.js — Client-side Rate Limiter
- * يمنع إرسال طلبات كثيرة في وقت قصير
+ * ratelimit.js — Global Submit Guard + Rate Limiter
+ * يمنع تكرار البيانات في كل الموقع
+ * 
+ * الاستخدام في HTML:
+ *   onclick="Guard.run('save-debt', () => Debts.save(), this)"
  */
 
+// ── Global Submit Guard ──
+const _active = new Set();
+
+export const Guard = {
+  /**
+   * run — ينفذ الدالة مرة واحدة فقط حتى تنتهي
+   * @param {string} key   — مفتاح العملية
+   * @param {Function} fn  — الدالة المراد تنفيذها
+   * @param {HTMLElement} btn — الزر (اختياري)
+   */
+  async run(key, fn, btn = null) {
+    if (_active.has(key)) return; // مشغول — تجاهل
+    _active.add(key);
+
+    const origText = btn?.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = 'جاري...'; }
+
+    try {
+      return await fn();
+    } finally {
+      _active.delete(key);
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
+    }
+  },
+
+  isRunning: (key) => _active.has(key),
+};
+
+// ── Rate Limiter ──
 const _limits = new Map();
 
-/**
- * checkRate — يتحقق من معدل الطلبات
- * @param {string} key — مفتاح العملية (مثل 'sell', 'save-debt')
- * @param {number} maxCalls — أقصى عدد طلبات
- * @param {number} windowMs — النافذة الزمنية بالميلي ثانية
- */
 export function checkRate(key, maxCalls = 10, windowMs = 5000) {
   const now   = Date.now();
-  const entry = _limits.get(key) || { calls: [], blocked: false };
-
-  // احذف الطلبات القديمة خارج النافذة
+  const entry = _limits.get(key) || { calls: [] };
   entry.calls = entry.calls.filter(t => now - t < windowMs);
-
-  if (entry.calls.length >= maxCalls) {
-    _limits.set(key, entry);
-    return false; // محظور
-  }
-
+  if (entry.calls.length >= maxCalls) { _limits.set(key, entry); return false; }
   entry.calls.push(now);
   _limits.set(key, entry);
-  return true; // مسموح
+  return true;
 }
 
-/**
- * rateGuard — wrapper جاهز للاستخدام
- * @param {string} key
- * @param {Function} fn
- * @param {string} errorMsg
- */
 export async function rateGuard(key, fn, errorMsg = 'الرجاء الانتظار قبل المحاولة مجدداً') {
-  if (!checkRate(key)) {
-    throw new Error(errorMsg);
-  }
+  if (!checkRate(key)) throw new Error(errorMsg);
   return await fn();
 }
