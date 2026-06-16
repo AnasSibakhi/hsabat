@@ -315,18 +315,28 @@ const Invoices = {
   // ── Load invoices — server-side pagination ──
   async load(serverPage = 1) {
     _serverPage  = serverPage;
-    _page        = 1; // reset UI page
+    _page        = 1;
 
-    // جلب 50 فاتورة من السيرفر حسب الصفحة
     const offset = (serverPage - 1) * PAGE_SIZE;
-    const { data } = await DB.invoices()
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(PAGE_SIZE)
-      .offset(offset);
+    const [invRes, retRes] = await Promise.all([
+      DB.invoices()
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE)
+        .offset(offset),
+      // جلب IDs الفواتير المُرجَعة
+      DB.returns().select('invoice_id'),
+    ]);
 
-    _allInvoices = data || [];
-    _totalCount  = _allInvoices.length;
+    // بناء Set من IDs المُرجَعة للبحث السريع
+    const returnedIds = new Set((retRes.data || []).map(r => r.invoice_id));
+
+    _allInvoices = (invRes.data || []).map(inv => ({
+      ...inv,
+      _returned: returnedIds.has(inv.id),
+    }));
+
+    _totalCount = _allInvoices.length;
     Invoices.applyFilters();
   },
 
@@ -413,9 +423,12 @@ const Invoices = {
           const payClass = PAY_CLASS[inv.payment_type] || '';
           const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
           const discount = inv.discount > 0 ? `<span style="color:var(--d);font-size:11px;">-₪${inv.discount.toFixed(2)}</span>` : '<span style="color:var(--g4);">—</span>';
-          const itemsCount = inv._items_count ?? '...';
-          return `<tr>
-            <td><strong style="color:var(--p);">${escape(inv.invoice_number || '-')}</strong></td>
+          const isReturned = inv._returned;
+          return `<tr${isReturned ? ' style="opacity:0.7;"' : ''}>
+            <td>
+              <strong style="color:var(--p);">${escape(inv.invoice_number || '-')}</strong>
+              ${isReturned ? '<br><span class="br" style="font-size:10px;">مُرجَعة</span>' : ''}
+            </td>
             <td>
               <div style="font-weight:600;">${buyer}</div>
               ${inv.buyer_phone ? `<div style="font-size:11px;color:var(--g5);">${escape(inv.buyer_phone)}</div>` : ''}
@@ -431,7 +444,7 @@ const Invoices = {
             <td>
               <div class="inv-actions">
                 <button class="inv-action-btn" onclick="Invoices.openDetails('${inv.id}')"><i class="ti ti-eye"></i> عرض</button>
-                <button class="ibb" onclick="Returns.openModal('${inv.id}','${escape(inv.customer_name || '')}',${inv.total})" style="padding:4px 7px;font-size:11px;">إرجاع</button>
+                ${!isReturned ? `<button class="ibb" onclick="Returns.openModal('${inv.id}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})" style="padding:4px 7px;font-size:11px;">إرجاع</button>` : '<span style="font-size:11px;color:var(--g4);">مُرجَعة</span>'}
                 <button class="inv-del-btn" onclick="Invoices.delete('${inv.id}')"><i class="ti ti-trash"></i></button>
               </div>
             </td>
@@ -495,9 +508,14 @@ const Invoices = {
 
   // ── Invoice Details Modal ──
   async openDetails(invId) {
-    const { data: inv }   = await sb.from('invoices').select('*').eq('id', invId).single();
-    const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', invId);
+    const [{ data: inv }, { data: items }, { data: retData }] = await Promise.all([
+      sb.from('invoices').select('*').eq('id', invId).single(),
+      sb.from('invoice_items').select('*').eq('invoice_id', invId),
+      sb.from('returns').select('*').eq('store_id', State.user?.id).eq('invoice_id', invId).maybeSingle(),
+    ]);
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
+
+    const ret = retData; // معلومات الإرجاع لو موجودة
 
     const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
     const payClass = PAY_CLASS[inv.payment_type]  || '';
@@ -527,6 +545,20 @@ const Invoices = {
     const waUrl = phone ? `https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
     DOM.setHTML('inv-details-body', `
+      <!-- معلومات الإرجاع لو موجودة -->
+      ${ret ? `
+      <div style="background:var(--dl);border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid #fecaca;">
+        <div style="font-size:13px;font-weight:800;color:var(--d);margin-bottom:8px;">⚠️ هذه الفاتورة مُرجَعة</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;">
+          <span>تاريخ الإرجاع</span><strong>${ret.return_date}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;">
+          <span>مبلغ الإرجاع</span><strong>₪${ret.amount?.toFixed(2)}</strong>
+        </div>
+        ${ret.buyer_name ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;"><span>الزبون</span><strong>${escape(ret.buyer_name)}</strong></div>` : ''}
+        ${ret.notes ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);"><span>ملاحظات</span><strong>${escape(ret.notes)}</strong></div>` : ''}
+      </div>` : ''}
+
       <!-- معلومات الفاتورة -->
       <div style="background:var(--g0);border-radius:12px;padding:12px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--br);">
@@ -597,6 +629,10 @@ const Invoices = {
           <i class="ti ti-brand-whatsapp"></i> واتساب
         </a>
       </div>
+      ${!ret ? `
+      <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px;" onclick="Modal.close('m-inv-details');Returns.openModal('${invId}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})">
+        <i class="ti ti-arrow-back-up"></i> إرجاع هذه الفاتورة
+      </button>` : ''}
     `);
     Modal.open('m-inv-details');
   },
