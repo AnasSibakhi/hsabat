@@ -19,8 +19,9 @@ let _filtered     = [];
 let _period       = 'all';
 let _page         = 1;
 let _totalCount   = 0;
-let _searchQuery  = '';
-const PAGE_SIZE   = 20;
+let _serverPage   = 1;  // صفحة السيرفر
+const PAGE_SIZE   = 50; // عدد الفواتير لكل طلب من السيرفر
+const UI_SIZE     = 20; // عدد الفواتير لكل صفحة في الـ UI
 
 const PAY_LABELS  = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
 const PAY_CLASS   = { cash: 'inv-pay-cash', transfer: 'inv-pay-transfer', defer: 'inv-pay-defer', partial: 'inv-pay-partial' };
@@ -312,23 +313,31 @@ const Invoices = {
   },
 
   // ── Reset form (override) ──
-  // ── Load all invoices ──
-  async load(page = 1) {
-    _page = page;
-    const offset = (page - 1) * PAGE_SIZE;
+  // ── Load invoices — server-side pagination ──
+  async load(serverPage = 1) {
+    _serverPage  = serverPage;
+    _page        = 1; // reset UI page
 
-    // جلب العدد الكلي
-    const countRes = await DB.invoices().select('id').order('created_at', { ascending: false });
-    _totalCount = (countRes.data || []).length;
-
-    // جلب الصفحة الحالية فقط
+    // جلب 50 فاتورة من السيرفر حسب الصفحة
+    const offset = (serverPage - 1) * PAGE_SIZE;
     const { data } = await DB.invoices()
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(PAGE_SIZE);
+      .limit(PAGE_SIZE)
+      .offset(offset);
 
     _allInvoices = data || [];
+    _totalCount  = _allInvoices.length;
     Invoices.applyFilters();
+  },
+
+  // ── تحميل المزيد من السيرفر ──
+  async loadMore() {
+    await Invoices.load(_serverPage + 1);
+  },
+
+  async loadPrev() {
+    if (_serverPage > 1) await Invoices.load(_serverPage - 1);
   },
 
   // ── Period filter ──
@@ -394,10 +403,10 @@ const Invoices = {
 
   // ── Render table with pagination ──
   _renderTable() {
-    const start  = (_page - 1) * PAGE_SIZE;
-    const page   = _filtered.slice(start, start + PAGE_SIZE);
+    const start  = (_page - 1) * UI_SIZE;
+    const page   = _filtered.slice(start, start + UI_SIZE);
     const total  = _filtered.length;
-    const pages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const pages  = Math.max(1, Math.ceil(total / UI_SIZE));
 
     DOM.setHTML('ilist', page.length
       ? page.map(inv => {
@@ -432,13 +441,13 @@ const Invoices = {
       : '<tr class="er"><td colspan="8">لا توجد فواتير</td></tr>'
     );
 
-    // Pagination
+    // Pagination UI
     const pag = DOM.get('inv-pagination');
     if (pag) {
       const from = total ? start + 1 : 0;
-      const to   = Math.min(start + PAGE_SIZE, total);
+      const to   = Math.min(start + UI_SIZE, total);
       pag.innerHTML = `
-        <span>${from}–${to} من ${total} فاتورة</span>
+        <span>${from}–${to} من ${total} ظاهر</span>
         <div class="inv-page-btns">
           <button class="inv-page-btn" onclick="Invoices.goPage(${_page-1})" ${_page<=1?'disabled':''}>‹</button>
           ${Array.from({length:Math.min(pages,5)},(_,i)=>{
@@ -446,6 +455,10 @@ const Invoices = {
             return `<button class="inv-page-btn${p===_page?' active':''}" onclick="Invoices.goPage(${p})">${p}</button>`;
           }).join('')}
           <button class="inv-page-btn" onclick="Invoices.goPage(${_page+1})" ${_page>=pages?'disabled':''}>›</button>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${_serverPage > 1 ? `<button class="inv-page-btn" onclick="Invoices.loadPrev()">‹ الأحدث</button>` : ''}
+          ${_allInvoices.length === PAGE_SIZE ? `<button class="inv-page-btn" onclick="Invoices.loadMore()">الأقدم ›</button>` : ''}
         </div>`;
     }
 
@@ -454,7 +467,7 @@ const Invoices = {
   },
 
   goPage(p) {
-    const pages = Math.ceil(_filtered.length / PAGE_SIZE);
+    const pages = Math.ceil(_filtered.length / UI_SIZE);
     if (p < 1 || p > pages) return;
     _page = p;
     Invoices._renderTable();
