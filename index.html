@@ -1542,30 +1542,36 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 <!-- Debt Modal -->
 <div class="mo" id="m-qs-pay-debt"><div class="modal" style="max-width:420px;">
  <div class="mhdr"><span class="mtitle">إضافة دين</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
+ <!-- صف: اسم الزبون -->
  <div class="fg pos-rel">
   <label class="lbl">الزبون *</label>
   <input class="inp" id="qs-debt-pay-name" placeholder="ابحث أو أدخل اسم جديد..." autocomplete="off"
    oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)"
    onfocus="QuickSale.showAllCustomers('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd')">
  </div>
+ <!-- صف: جوال + تاريخ -->
  <div class="fr">
   <div class="fg">
-   <label class="lbl">المبلغ (₪) *</label>
-   <input class="inp" type="number" id="qs-debt-pay-amount" inputmode="decimal" readonly>
+   <label class="lbl">رقم الجوال (اختياري)</label>
+   <input class="inp" id="qs-debt-pay-phone" placeholder="05X-XXXXXXX" inputmode="tel">
   </div>
   <div class="fg">
    <label class="lbl">التاريخ</label>
    <input class="inp" type="date" id="qs-debt-pay-date">
   </div>
  </div>
- <div class="fg">
-  <label class="lbl">وصف البضاعة / ملاحظات</label>
-  <input class="inp" id="qs-debt-pay-note" placeholder="مثال: خضروات، بضاعة متنوعة...">
+ <!-- صف: وصف + مبلغ -->
+ <div class="fr">
+  <div class="fg">
+   <label class="lbl">وصف / ملاحظات</label>
+   <input class="inp" id="qs-debt-pay-note" placeholder="مثال: خضروات...">
+  </div>
+  <div class="fg">
+   <label class="lbl">المبلغ (₪)</label>
+   <input class="inp" type="number" id="qs-debt-pay-amount" inputmode="decimal" readonly>
+  </div>
  </div>
- <div class="fg">
-  <label class="lbl">رقم الجوال (اختياري)</label>
-  <input class="inp" id="qs-debt-pay-phone" placeholder="05X-XXXXXXX" inputmode="tel">
- </div>
+ <!-- تذكير واتساب -->
  <div class="fg">
   <label class="lbl">تذكير واتساب (اختياري)</label>
   <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1576,6 +1582,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
    <button type="button" class="debt-remind-btn2" data-days="7" onclick="QuickSale.setDebtRemind(7)">أسبوع</button>
   </div>
  </div>
+ <!-- إجمالي -->
  <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
   <span style="font-size:13px;color:var(--p);">الإجمالي</span><span id="qs-debt-pay-total" style="font-weight:900;color:var(--p);">₪0</span>
  </div>
