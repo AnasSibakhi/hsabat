@@ -8,6 +8,8 @@ import { ROLES }    from '../config/constants.js';
 import * as DOM     from '../core/dom.js';
 import * as Nav     from './nav.js';
 import { Realtime } from './realtime.js';
+import { sbAdmin }  from '../core/db.js';
+import { Notify }   from '../core/notify.js';
 
 // Module imports
 import { Dashboard }     from '../modules/dashboard.js';
@@ -33,8 +35,9 @@ export const Store = {
     // Set UI labels
     DOM.setText('store-pill', account.store_name);
     DOM.setText('hgreet',     'مرحباً، ' + account.owner + ' 👋');
-    DOM.setVal?.('set1', account.store_name);
-    DOM.setVal?.('set2', account.owner);
+    DOM.setVal?.('set1', account.store_name  || '');
+    DOM.setVal?.('set2', account.owner       || '');
+    DOM.setVal?.('set3', account.phone       || '');
     DOM.setText('set-sub', account.subscription_end
       ? new Date(account.subscription_end).toLocaleDateString('en-US')
       : 'غير محدود'
@@ -103,6 +106,46 @@ export const Store = {
     // Employee — hide financial sections
     if (role === ROLES.EMPLOYEE) {
       ['nav-debts', 'nav-expenses', 'nav-reports'].forEach(id => DOM.show(id, false));
+    }
+  },
+};
+
+// ── Settings Module ──
+export const Settings = {
+  async save() {
+    const storeName = (document.getElementById('set1')?.value || '').trim();
+    const owner     = (document.getElementById('set2')?.value || '').trim();
+    const phone     = (document.getElementById('set3')?.value || '').trim();
+
+    if (!storeName) { Notify.error('اسم المحل مطلوب'); return; }
+    if (!owner)     { Notify.error('اسم صاحب المحل مطلوب'); return; }
+
+    try {
+      const { error } = await sbAdmin
+        .from('app_accounts')
+        .update({ store_name: storeName, owner_name: owner, phone })
+        .eq('store_id', State.user.id);
+
+      if (error) throw new Error(error.message);
+
+      // حدّث الـ State والـ UI
+      State.user.store_name = storeName;
+      State.user.owner      = owner;
+      State.user.phone      = phone;
+
+      DOM.setText('store-pill', storeName);
+      DOM.setText('hgreet', 'مرحباً، ' + owner + ' 👋');
+
+      // أظهر رسالة نجاح
+      const msg = document.getElementById('set-save-msg');
+      if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { msg.style.display = 'none'; }, 3000);
+      }
+
+      Notify.success('تم حفظ الإعدادات');
+    } catch (e) {
+      Notify.error('فشل الحفظ: ' + e.message);
     }
   },
 };
