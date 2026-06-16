@@ -8,6 +8,7 @@ import * as Nav       from './nav/nav.js';
 import * as Modal     from './nav/modal.js';
 import { Notify }     from './core/notify.js';
 import * as DOM       from './core/dom.js';
+import './core/errors.js';
 
 // Modules
 import { Dashboard }  from './modules/dashboard.js';
