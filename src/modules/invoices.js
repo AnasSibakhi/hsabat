@@ -18,6 +18,8 @@ let _allInvoices  = [];
 let _filtered     = [];
 let _period       = 'all';
 let _page         = 1;
+let _totalCount   = 0;
+let _searchQuery  = '';
 const PAGE_SIZE   = 20;
 
 const PAY_LABELS  = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
@@ -311,8 +313,20 @@ const Invoices = {
 
   // ── Reset form (override) ──
   // ── Load all invoices ──
-  async load() {
-    const { data } = await DB.invoices().select('*').order('created_at', { ascending: false });
+  async load(page = 1) {
+    _page = page;
+    const offset = (page - 1) * PAGE_SIZE;
+
+    // جلب العدد الكلي
+    const countRes = await DB.invoices().select('id').order('created_at', { ascending: false });
+    _totalCount = (countRes.data || []).length;
+
+    // جلب الصفحة الحالية فقط
+    const { data } = await DB.invoices()
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE);
+
     _allInvoices = data || [];
     Invoices.applyFilters();
   },
