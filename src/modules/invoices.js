@@ -2,11 +2,10 @@
  * invoices.js — Invoice Management Dashboard
  */
 
-import { DB }     from '../core/db.js';
+import { DB, sb } from '../core/db.js';
 import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
 import * as DOM   from '../core/dom.js';
-import { sb }     from '../core/db.js';
 import * as Utils from '../core/utils.js';
 import { escape, currency } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
