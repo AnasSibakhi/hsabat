@@ -1,5 +1,5 @@
 /**
- * drawer.js — Bottom Sheet Navigation
+ * drawer.js — Side Drawer Navigation
  */
 
 import { State } from '../core/state.js';
@@ -19,7 +19,7 @@ export function openDrawer() {
   const drawer  = document.getElementById('mobile-drawer');
   if (!overlay || !drawer) return;
 
-  // حدّث اسم المحل والصاحب
+  // حدّث معلومات المحل
   const nameEl  = document.getElementById('bs-store-name');
   const ownerEl = document.getElementById('bs-owner-name');
   if (nameEl  && State.user?.store_name) nameEl.textContent  = State.user.store_name;
@@ -28,9 +28,8 @@ export function openDrawer() {
   overlay.style.display = 'block';
   drawer.style.display  = 'block';
 
-  // animation من الأسفل
   requestAnimationFrame(() => {
-    drawer.style.transform = 'translateY(0)';
+    drawer.style.transform = 'translateX(0)';
   });
 }
 
@@ -39,14 +38,13 @@ export function closeDrawer() {
   const drawer  = document.getElementById('mobile-drawer');
   if (!drawer) return;
 
-  drawer.style.transform = 'translateY(100%)';
+  drawer.style.transform = 'translateX(100%)';
   setTimeout(() => {
-    overlay.style.display = 'none';
-    drawer.style.display  = 'none';
-  }, 280);
+    if (overlay) overlay.style.display = 'none';
+    drawer.style.display = 'none';
+  }, 300);
 }
 
-// تسجيل على window
 window.openAddMenu  = openAddMenu;
 window.closeAddMenu = closeAddMenu;
 window.openDrawer   = openDrawer;
