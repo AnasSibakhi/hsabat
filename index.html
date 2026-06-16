@@ -1541,24 +1541,44 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 
 <!-- Debt Modal -->
 <div class="mo" id="m-qs-pay-debt"><div class="modal" style="max-width:400px;">
- <div class="mhdr"><span class="mtitle">⏰ بيع آجل — دين</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
+ <div class="mhdr"><span class="mtitle">إضافة دين</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
  <div class="fg pos-rel">
-  <label class="lbl">اسم الزبون *</label>
-  <input class="inp" id="qs-debt-pay-name" placeholder="اكتب الاسم أو اختر من القائمة..." autocomplete="off"
+  <label class="lbl">الزبون *</label>
+  <input class="inp" id="qs-debt-pay-name" placeholder="ابحث أو أدخل اسم جديد..." autocomplete="off"
    oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)"
    onfocus="QuickSale.showAllCustomers('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd')">
+ </div>
+ <div class="fr">
+  <div class="fg">
+   <label class="lbl">المبلغ (₪) *</label>
+   <input class="inp" type="number" id="qs-debt-pay-amount" inputmode="decimal" readonly>
+  </div>
+  <div class="fg">
+   <label class="lbl">التاريخ</label>
+   <input class="inp" type="date" id="qs-debt-pay-date">
+  </div>
+ </div>
+ <div class="fg">
+  <label class="lbl">وصف البضاعة / ملاحظات</label>
+  <input class="inp" id="qs-debt-pay-note" placeholder="مثال: خضروات، بضاعة متنوعة...">
  </div>
  <div class="fg">
   <label class="lbl">رقم الجوال (اختياري)</label>
   <input class="inp" id="qs-debt-pay-phone" placeholder="05X-XXXXXXX" inputmode="tel">
  </div>
- <div style="background:var(--dl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
-  <span style="font-size:13px;color:var(--d);">إجمالي الدين</span>
-  <span id="qs-debt-pay-total" style="font-weight:900;color:var(--d);">₪0</span>
+ <div class="fg">
+  <label class="lbl">تذكير واتساب (اختياري)</label>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+   <button type="button" class="debt-remind-btn2 active" data-days="0" onclick="QuickSale.setDebtRemind(0)">بلا</button>
+   <button type="button" class="debt-remind-btn2" data-days="1" onclick="QuickSale.setDebtRemind(1)">يوم</button>
+   <button type="button" class="debt-remind-btn2" data-days="2" onclick="QuickSale.setDebtRemind(2)">يومان</button>
+   <button type="button" class="debt-remind-btn2" data-days="3" onclick="QuickSale.setDebtRemind(3)">٣ أيام</button>
+   <button type="button" class="debt-remind-btn2" data-days="7" onclick="QuickSale.setDebtRemind(7)">أسبوع</button>
+  </div>
  </div>
  <div class="mfoot">
-  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-debt')">رجوع</button>
-  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDebtPay()"><i class="ti ti-check"></i> تسجيل الدين</button>
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-debt')">إلغاء</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDebtPay()"><i class="ti ti-check"></i> حفظ</button>
  </div>
 </div></div>
 
