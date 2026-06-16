@@ -13,6 +13,7 @@ import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodS
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 import { getDashboard, getDebts, getInvoices, getInventory } from '../core/registry.js';
+import { FIFOService } from '../services/FIFOService.js';
 
 
 
@@ -58,6 +59,13 @@ const Returns = {
       const retQty = (retAmount / invoice.total) * item.quantity;
       const { data: inv } = await DB.inventory().select('quantity').eq('id', item.inventory_id).single();
       if (inv) await DB.inventory().update({ quantity: inv.quantity + retQty }).eq('id', item.inventory_id);
+    }
+
+    // FIFO — عكس الاستهلاك
+    try {
+      await FIFOService.reverseFIFO(invId);
+    } catch (fifoErr) {
+      console.warn('FIFO reverse (non-critical):', fifoErr.message);
     }
 
     // Reduce debt if debt-type return
