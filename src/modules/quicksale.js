@@ -617,6 +617,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       }
       Modal.open('m-qs-pay-debt');
       setTimeout(() => DOM.get('qs-debt-pay-name')?.focus(), 150);
+
+    } else if (type === 'transfer2defer') {
+      DOM.setText('qs-defer-total', '₪' + total.toFixed(2));
+      DOM.get('qs-buyer-name-df').value  = '';
+      DOM.get('qs-buyer-phone-df').value = '';
+      DOM.get('qs-defer-date').value     = '';
+      Modal.open('m-qs-pay-defer');
+      setTimeout(() => DOM.get('qs-buyer-name-df')?.focus(), 150);
     }
   },
 
