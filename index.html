@@ -314,34 +314,14 @@
     </div>
    </div>
    <span class="store-pill" id="store-pill">...</span>
-
-   <!-- Profile Dropdown -->
-   <div style="position:relative;">
-    <button id="profile-btn" onclick="UI.toggleProfileMenu()" style="
-      width:34px;height:34px;border-radius:10px;
-      background:var(--pl);border:1.5px solid var(--p);
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;flex-shrink:0;
-    ">
-      <i class="ti ti-user" style="font-size:16px;color:var(--p);"></i>
+   <div style="position:relative;" id="profile-wrap">
+    <button onclick="UI.toggleProfileMenu()" style="width:34px;height:34px;border-radius:10px;background:var(--pl);border:1.5px solid var(--p);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+     <i class="ti ti-user" style="font-size:16px;color:var(--p);"></i>
     </button>
-
-    <!-- Dropdown -->
-    <div id="profile-menu" style="
-      display:none;position:absolute;top:calc(100% + 8px);left:0;
-      background:#fff;border:1px solid var(--br);border-radius:12px;
-      box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:600;
-      min-width:160px;overflow:hidden;
-    ">
-      <button onclick="UI.toggleProfileMenu();Auth.confirmLogout()" style="
-        width:100%;padding:11px 14px;border:none;background:none;
-        font-family:Cairo,sans-serif;font-size:13px;font-weight:700;
-        color:var(--d);cursor:pointer;display:flex;align-items:center;
-        gap:8px;text-align:right;
-      " onmouseover="this.style.background='var(--dl)'" onmouseout="this.style.background='none'">
-        <i class="ti ti-logout" style="font-size:15px;"></i>
-        تسجيل الخروج
-      </button>
+    <div id="profile-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:150px;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:9999;overflow:hidden;">
+     <button onclick="UI.toggleProfileMenu();Auth.confirmLogout()" style="width:100%;padding:12px 14px;border:none;background:none;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;color:var(--d);cursor:pointer;display:flex;align-items:center;gap:8px;direction:rtl;" onmouseover="this.style.background='var(--dl)'" onmouseout="this.style.background='none'">
+      <i class="ti ti-logout"></i> تسجيل الخروج
+     </button>
     </div>
    </div>
   </div>
