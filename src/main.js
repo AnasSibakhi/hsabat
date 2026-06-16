@@ -95,7 +95,26 @@ function toggleDark() {
 // In a future refactor, replace with event delegation
 // ─────────────────────────────────────────
 // Backward compat — UI object
-window.UI       = { toggleDarkMode: () => toggleDark() };
+window.UI = {
+  toggleDarkMode: () => toggleDark(),
+  toggleProfileMenu() {
+    const menu = document.getElementById('profile-menu');
+    if (!menu) return;
+    const isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+    // إغلاق عند الضغط خارج
+    if (!isOpen) {
+      setTimeout(() => {
+        document.addEventListener('click', function handler(e) {
+          if (!document.getElementById('profile-btn')?.contains(e.target)) {
+            menu.style.display = 'none';
+            document.removeEventListener('click', handler);
+          }
+        });
+      }, 10);
+    }
+  },
+};
 window.Settings = Settings;
 window.Guard    = Guard;
 
