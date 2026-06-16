@@ -169,31 +169,104 @@ export const Auth = {
   },
 
   confirmLogout() {
+    document.getElementById('logout-overlay')?.remove();
+
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);';
+    overlay.id = 'logout-overlay';
+    overlay.style.cssText = [
+      'position:fixed;inset:0;z-index:999999',
+      'display:flex;align-items:center;justify-content:center',
+      'background:rgba(0,0,0,0.45);backdrop-filter:blur(6px)',
+      'padding:1rem;animation:fadeIn .2s ease',
+    ].join(';');
+
     overlay.innerHTML = `
-      <div style="background:#fff;border-radius:24px 24px 0 0;padding:32px 24px 40px;width:100%;max-width:480px;text-align:center;box-shadow:0 -8px 40px rgba(0,0,0,0.15);animation:slideUp .25s ease;">
-        <!-- أيقونة -->
-        <div style="width:64px;height:64px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;">🚪</div>
+      <div style="
+        background:#fff;border-radius:24px;padding:0;
+        width:100%;max-width:360px;overflow:hidden;
+        box-shadow:0 24px 64px rgba(0,0,0,0.2);
+        animation:slideUp .25s cubic-bezier(.34,1.56,.64,1);
+      ">
+        <!-- Header gradient -->
+        <div style="
+          background:linear-gradient(135deg,#1e293b 0%,#334155 100%);
+          padding:28px 24px 24px;text-align:center;position:relative;
+        ">
+          <!-- Avatar -->
+          <div style="
+            width:64px;height:64px;border-radius:50%;
+            background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.2);
+            display:flex;align-items:center;justify-content:center;
+            margin:0 auto 14px;font-size:26px;
+          ">👤</div>
 
-        <!-- اسم المستخدم -->
-        <div style="font-size:13px;color:#94a3b8;margin-bottom:4px;">تسجيل الخروج من حساب</div>
-        <div style="font-size:17px;font-weight:900;color:#1e293b;margin-bottom:6px;">${State.user?.owner || 'المستخدم'}</div>
-        <div style="font-size:13px;color:#94a3b8;margin-bottom:28px;">${State.user?.store_name || ''}</div>
+          <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px;">
+            ${State.user?.owner || 'المستخدم'}
+          </div>
+          <div style="
+            display:inline-flex;align-items:center;gap:5px;
+            background:rgba(255,255,255,0.1);border-radius:20px;
+            padding:4px 12px;font-size:12px;color:#94a3b8;margin-top:2px;
+          ">
+            <i class="ti ti-building-store" style="font-size:13px;"></i>
+            ${State.user?.store_name || ''}
+          </div>
+        </div>
 
-        <!-- أزرار -->
-        <button onclick="this.closest('[style*=fixed]').remove();Auth.logout()"
-          style="width:100%;padding:14px;border-radius:14px;border:none;background:#dc2626;color:#fff;font-family:Cairo,sans-serif;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:10px;">
-          تأكيد الخروج
-        </button>
-        <button onclick="this.closest('[style*=fixed]').remove()"
-          style="width:100%;padding:14px;border-radius:14px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-family:Cairo,sans-serif;font-weight:700;font-size:15px;cursor:pointer;">
-          إلغاء
-        </button>
-      </div>`;
+        <!-- Body -->
+        <div style="padding:24px;">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="
+              width:48px;height:48px;border-radius:14px;
+              background:#fee2e2;display:flex;align-items:center;
+              justify-content:center;margin:0 auto 12px;
+            ">
+              <i class="ti ti-logout" style="font-size:22px;color:#dc2626;"></i>
+            </div>
+            <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:6px;">
+              تسجيل الخروج
+            </div>
+            <div style="font-size:13px;color:#94a3b8;line-height:1.6;">
+              هل أنت متأكد من تسجيل الخروج؟<br>سيتم إنهاء جلستك الحالية
+            </div>
+          </div>
 
-    // إغلاق بالضغط خارج
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+          <!-- Buttons -->
+          <button onclick="document.getElementById('logout-overlay').remove();Auth.logout()"
+            style="
+              width:100%;padding:14px;border-radius:14px;border:none;
+              background:linear-gradient(135deg,#dc2626,#b91c1c);
+              color:#fff;font-family:Cairo,sans-serif;font-weight:800;
+              font-size:15px;cursor:pointer;margin-bottom:10px;
+              display:flex;align-items:center;justify-content:center;gap:8px;
+              box-shadow:0 4px 14px rgba(220,38,38,0.35);
+              transition:transform .15s;
+            "
+            onmousedown="this.style.transform='scale(.97)'"
+            onmouseup="this.style.transform='scale(1)'">
+            <i class="ti ti-logout" style="font-size:17px;"></i>
+            تأكيد الخروج
+          </button>
+
+          <button onclick="document.getElementById('logout-overlay').remove()"
+            style="
+              width:100%;padding:13px;border-radius:14px;
+              border:1.5px solid #e2e8f0;background:#f8fafc;
+              color:#64748b;font-family:Cairo,sans-serif;font-weight:700;
+              font-size:14px;cursor:pointer;transition:background .15s;
+            "
+            onmouseenter="this.style.background='#f1f5f9'"
+            onmouseleave="this.style.background='#f8fafc'">
+            إلغاء
+          </button>
+        </div>
+      </div>
+    `;
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.remove();
+    });
+
     document.body.appendChild(overlay);
   },
 
