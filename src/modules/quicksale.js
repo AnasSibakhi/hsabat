@@ -877,6 +877,25 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Modal.open('m-qs-debt');
   },
 
+  initDebtModal() {
+    // reset
+    DOM.get('qs-debt-search').value    = '';
+    DOM.get('qs-debt-cust').value      = '';
+    DOM.get('qs-debt-new-phone').value = '';
+    DOM.get('qs-debt-note').value      = '';
+    DOM.get('qs-debt-new-wrap').style.display  = 'none';
+    DOM.get('qs-debt-dropdown').style.display  = 'none';
+    QuickSale._debtNewCust = null;
+    QuickSale._deferData   = null;
+    // preload customers
+    if (!State.customers?.length) {
+      sb.from('customers').select('id,name,phone')
+        .eq('store_id', State.user.id).order('name')
+        .then(({ data }) => { State.customers = data || []; });
+    }
+    setTimeout(() => DOM.get('qs-debt-search')?.focus(), 150);
+  },
+
   closeDebtModal() {
     Modal.close('m-qs-debt');
     const dd = DOM.get('qs-debt-dropdown');
