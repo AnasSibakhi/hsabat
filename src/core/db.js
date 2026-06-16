@@ -55,6 +55,7 @@ function storeTable(table) {
       let _filters = {};
       let _order   = null;
       let _limit   = null;
+      let _offset  = null;
       let _gte     = null;
       let _in      = null;
       let _gt      = null;
@@ -65,7 +66,8 @@ function storeTable(table) {
         gt:    (col, val)  => { _gt  = { col, val }; return builder; },
         in:    (col, vals) => { _in  = { col, vals }; return builder; },
         order: (col, opts) => { _order = { column: col, ascending: opts?.ascending ?? true }; return builder; },
-        limit: (n)         => { _limit = n; return builder; },
+        limit:  (n)        => { _limit  = n; return builder; },
+        offset: (n)        => { _offset = n; return builder; },
         single:() => builder.then(r => ({ data: r.data?.[0] ?? null, error: null })),
         maybeSingle: () => builder.then(r => ({ data: r.data?.[0] ?? null, error: null })),
         then:  (resolve, reject) => {
@@ -74,6 +76,7 @@ function storeTable(table) {
             filters: _filters,
             order:   _order,
             limit:   _limit,
+            offset:  _offset,
             gte:     _gte,
             gt:      _gt,
             in:      _in,
