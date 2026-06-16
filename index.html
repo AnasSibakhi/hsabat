@@ -694,7 +694,7 @@
 
    <!-- PURCHASES -->
    <div class="page" id="page-purchases">
-    <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="Modal.open('m-pur')"><i class="ti ti-plus"></i> تسجيل</button></div>
+    <div class="ph"><span class="pt">المشتريات</span><button class="btn btn-s" onclick="Modal.open('m-pur');Purchases.initModal()"><i class="ti ti-plus"></i> تسجيل</button></div>
 
     <!-- تبويبات -->
     <div class="ph-tabs">
@@ -1114,7 +1114,7 @@
  <!-- 1. الصنف مع بحث -->
  <div class="fg" class="pos-rel">
    <label class="lbl">اسم الصنف * <span id="pur-match-badge" style="display:none;background:var(--sl);color:var(--s);font-size:11px;padding:2px 8px;border-radius:6px;margin-right:6px;">موجود في المخزون ✓</span></label>
-   <input class="inp" id="pup" placeholder="ابحث أو أدخل اسم جديد..." oninput="Purchases.searchInventory(this.value)" autocomplete="off">
+   <input class="inp" id="pup" placeholder="ابحث أو أدخل اسم جديد..." oninput="Purchases.searchInventory(this.value)" onfocus="Purchases.searchInventory(this.value)" autocomplete="off">
    <div id="pur-suggestions" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1.5px solid var(--p);border-radius:10px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
  </div>
  <input type="hidden" id="pur-inv-sel" value="">
