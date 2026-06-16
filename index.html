@@ -22,30 +22,112 @@
 <div id="toast"></div>
 
 <!-- Mobile Drawer -->
-<div id="mobile-drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;"></div>
-<div id="mobile-drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(260px,100vw);background:#fff;z-index:301;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,0.15);padding:.6rem;transform:translateX(100%);transition:transform .25s ease;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:.5rem;border-bottom:1px solid #e5e7eb;">
-    <span style="font-weight:800;font-size:16px;">القائمة</span>
-    <button onclick="closeDrawer()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">✕</button>
+<!-- Drawer Overlay -->
+<div id="mobile-drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(3px);"></div>
+
+<!-- Side Drawer -->
+<div id="mobile-drawer" style="
+  display:none;position:fixed;top:0;right:0;bottom:0;
+  width:min(280px,85vw);background:#fff;z-index:301;
+  overflow-y:auto;overflow-x:hidden;
+  transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.34,1.05,.64,1);
+  box-shadow:-12px 0 40px rgba(0,0,0,0.15);
+">
+  <!-- Header -->
+  <div style="
+    background:linear-gradient(135deg,var(--p) 0%,var(--pd) 100%);
+    padding:48px 20px 20px;position:relative;
+  ">
+    <!-- زر الإغلاق -->
+    <button onclick="closeDrawer()" style="
+      position:absolute;top:14px;left:14px;
+      background:rgba(255,255,255,0.15);border:none;
+      border-radius:10px;width:34px;height:34px;
+      cursor:pointer;color:#fff;font-size:18px;
+      display:flex;align-items:center;justify-content:center;
+    ">✕</button>
+
+    <!-- معلومات المحل -->
+    <div style="
+      width:52px;height:52px;background:rgba(255,255,255,0.2);
+      border-radius:14px;display:flex;align-items:center;
+      justify-content:center;margin-bottom:12px;
+    ">
+      <i class="ti ti-building-store" style="font-size:26px;color:#fff;"></i>
+    </div>
+    <div style="font-size:16px;font-weight:900;color:#fff;" id="bs-store-name">المحل</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:3px;" id="bs-owner-name"></div>
   </div>
-  <div class="nl">الرئيسية</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('home',this)"><i class="ti ti-home"></i> لوحة التحكم</div>
-  <div class="nl">المبيعات</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('quicksale',this)"><i class="ti ti-bolt"></i> بيع سريع</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('invoices',this)"><i class="ti ti-receipt"></i> الفواتير</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('sales',this)"><i class="ti ti-chart-bar"></i> المبيعات</div>
-  <div class="nl">الزبائن</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('customers',this)"><i class="ti ti-users"></i> الزبائن والديون</div>
-  <div class="nl">المخزون</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('inventory',this)"><i class="ti ti-box"></i> المخزون</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('purchases',this)"><i class="ti ti-truck"></i> المشتريات</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('netcards',this)"><i class="ti ti-wifi"></i> بطاقات نت</div>
-  <div class="nl owner-only">المالية</div>
-  <div class="ni owner-only" onclick="closeDrawer();Nav.go('expenses',this)"><i class="ti ti-cash"></i> المصاريف</div>
-  <div class="ni owner-only" onclick="closeDrawer();Nav.go('reports',this)"><i class="ti ti-report"></i> التقارير</div>
-  <div class="nl">أخرى</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('returns',this)"><i class="ti ti-arrow-back-up"></i> الإرجاعات</div>
-  <div class="ni" onclick="closeDrawer();Nav.go('settings',this)"><i class="ti ti-settings"></i> الإعدادات</div>
+
+  <!-- القائمة -->
+  <div style="padding:10px 12px;">
+
+    <div class="dr-label">المبيعات</div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('invoices',this)">
+      <div class="dr-icon" style="background:#eff6ff;"><i class="ti ti-receipt" style="color:var(--p);"></i></div>
+      <span>الفواتير</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('sales',this)">
+      <div class="dr-icon" style="background:#f0fdf4;"><i class="ti ti-chart-bar" style="color:var(--s);"></i></div>
+      <span>المبيعات</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+
+    <div class="dr-label">الزبائن</div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('customers',this)">
+      <div class="dr-icon" style="background:#eff6ff;"><i class="ti ti-users" style="color:var(--p);"></i></div>
+      <span>الزبائن</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('debts',this)">
+      <div class="dr-icon" style="background:#fef2f2;"><i class="ti ti-credit-card-off" style="color:var(--d);"></i></div>
+      <span>الديون</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+
+    <div class="dr-label">المخزون</div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('purchases',this)">
+      <div class="dr-icon" style="background:#fef3c7;"><i class="ti ti-truck" style="color:var(--w);"></i></div>
+      <span>المشتريات</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('netcards',this)">
+      <div class="dr-icon" style="background:#eff6ff;"><i class="ti ti-wifi" style="color:var(--p);"></i></div>
+      <span>بطاقات نت</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+
+    <div class="dr-label owner-only">المالية</div>
+    <div class="dr-item owner-only" onclick="closeDrawer();Nav.go('expenses',this)">
+      <div class="dr-icon" style="background:#fef2f2;"><i class="ti ti-cash" style="color:var(--d);"></i></div>
+      <span>المصاريف</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+    <div class="dr-item owner-only" onclick="closeDrawer();Nav.go('reports',this)">
+      <div class="dr-icon" style="background:#f0fdf4;"><i class="ti ti-report" style="color:var(--s);"></i></div>
+      <span>التقارير</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+
+    <div class="dr-label">أخرى</div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('returns',this)">
+      <div class="dr-icon" style="background:#f5f3ff;"><i class="ti ti-arrow-back-up" style="color:#7c3aed;"></i></div>
+      <span>الإرجاعات</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+    <div class="dr-item" onclick="closeDrawer();Nav.go('settings',this)">
+      <div class="dr-icon" style="background:#f8fafc;"><i class="ti ti-settings" style="color:#64748b;"></i></div>
+      <span>الإعدادات</span><i class="ti ti-chevron-left dr-arrow"></i>
+    </div>
+
+    <!-- تسجيل الخروج -->
+    <div style="margin:12px 0 8px;">
+      <button onclick="closeDrawer();Auth.confirmLogout()" style="
+        width:100%;padding:12px;border-radius:12px;
+        border:1.5px solid var(--dl);background:var(--dl);
+        color:var(--d);font-family:Cairo,sans-serif;font-weight:700;
+        font-size:13px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:8px;
+      ">
+        <i class="ti ti-logout" style="font-size:16px;"></i>
+        تسجيل الخروج
+      </button>
+    </div>
+    <div style="height:env(safe-area-inset-bottom,12px);"></div>
+  </div>
 </div>
 
 
@@ -276,7 +358,7 @@
     <div class="qa">
      <div class="qab" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
      <div class="qab" onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
-     <div class="qab" onclick="Debts.openModal()"><i class="ti ti-plus"></i><span>دين جديد</span></div>
+     
     </div>
 
     <!-- المنتجات الناقصة والمنتهية -->
@@ -383,7 +465,7 @@
       <div class="flex-gap6">
         <button class="btn btn-o" id="cu-archive-btn" onclick="Customers.toggleArchive()" style="font-size:12px;padding:7px 10px;">🗄 الأرشيف</button>
         <button class="btn btn-o" onclick="Customers.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i></button>
-        <button class="btn btn-s" onclick="Debts.openModal()"><i class="ti ti-plus"></i> دين</button>
+        
       </div>
     </div>
 
@@ -421,7 +503,7 @@
       <div class="flex-gap6">
         <button class="btn btn-o" id="d-archive-btn" onclick="Debts.toggleArchive()" style="font-size:12px;padding:7px 10px;">🗄 الأرشيف</button>
         <button class="btn btn-o" onclick="Debts.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i> طباعة</button>
-        <button class="btn btn-s" onclick="Debts.openModal()"><i class="ti ti-plus"></i> إضافة</button>
+        
       </div>
     </div>
 
@@ -828,7 +910,7 @@
 <div id="add-menu-overlay" onclick="closeAddMenu()" style="display:none;position:fixed;inset:0;z-index:299;"></div>
 <div id="add-menu" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;min-width:220px;border:1px solid var(--br);">
   <button onclick="closeAddMenu();Modal.open('m-invoice');Invoices.initModal()" class="add-menu-item"><i class="ti ti-receipt" style="color:var(--p);"></i> فاتورة جديدة</button>
-  <button onclick="closeAddMenu();Debts.openModal()" class="add-menu-item"><i class="ti ti-credit-card-off" style="color:var(--d);"></i> إضافة دين</button>
+  
   <button onclick="closeAddMenu();Modal.open('m-inv')" class="add-menu-item"><i class="ti ti-box" style="color:var(--w);"></i> صنف جديد</button>
   <button onclick="closeAddMenu();Modal.open('m-expense')" class="add-menu-item"><i class="ti ti-cash" style="color:#0e9f6e;"></i> مصروف جديد</button>
 </div>
