@@ -1646,8 +1646,13 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
    </select>
   </div>
   <div class="fg">
-   <label class="lbl">تاريخ السداد (اختياري)</label>
-   <input class="inp" type="date" id="qs-defer-date">
+   <label class="lbl">تاريخ السداد</label>
+   <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <button type="button" class="debt-remind-btn2 active" data-defer-days="0" onclick="QuickSale.setDeferDate(0)">بلا</button>
+    <button type="button" class="debt-remind-btn2" data-defer-days="1" onclick="QuickSale.setDeferDate(1)">بكرا</button>
+    <button type="button" class="debt-remind-btn2" data-defer-days="7" onclick="QuickSale.setDeferDate(7)">أسبوع</button>
+    <button type="button" class="debt-remind-btn2" data-defer-days="30" onclick="QuickSale.setDeferDate(30)">شهر</button>
+   </div>
   </div>
  </div>
  <!-- الإجمالي -->
