@@ -505,12 +505,12 @@ const Invoices = {
     const store    = State.user?.store_name || 'حسابات';
     const itemsHtml = (items || []).map(it =>
       `<tr>
-        <td>${escape(it.product_name || '-')}</td>
-        <td style="text-align:center;">${it.quantity}</td>
-        <td style="text-align:left;">₪${parseFloat(it.price).toFixed(2)}</td>
-        <td style="text-align:left;font-weight:700;">₪${(it.quantity * it.price).toFixed(2)}</td>
+        <td style="padding:9px 12px;border-bottom:1px solid var(--g1);font-size:13px;">${escape(it.product_name || '-')}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--g1);font-size:13px;text-align:center;">${it.quantity}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--g1);font-size:13px;text-align:center;">₪${parseFloat(it.price).toFixed(2)}</td>
+        <td style="padding:9px 12px;border-bottom:1px solid var(--g1);font-size:13px;text-align:left;font-weight:700;color:var(--p);">₪${(it.quantity * it.price).toFixed(2)}</td>
       </tr>`
-    ).join('') || '<tr><td colspan="4" style="color:var(--g4);">لا توجد منتجات</td></tr>';
+    ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--g4);padding:1rem;">لا توجد منتجات</td></tr>';
 
     // واتساب
     const phone = inv.buyer_phone || '';
@@ -527,30 +527,73 @@ const Invoices = {
     const waUrl = phone ? `https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
     DOM.setHTML('inv-details-body', `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
-        <div class="inv-det-row"><span>رقم الفاتورة</span><strong>${escape(inv.invoice_number || '-')}</strong></div>
-        <div class="inv-det-row"><span>التاريخ والوقت</span><strong>${inv.invoice_date} ${inv.sale_time || ''}</strong></div>
-        <div class="inv-det-row"><span>اسم المشتري</span><strong>${escape(inv.buyer_name || inv.customer_name || '-')}</strong></div>
-        <div class="inv-det-row"><span>رقم الجوال</span><strong>${escape(inv.buyer_phone || '-')}</strong></div>
-        <div class="inv-det-row"><span>طريقة الدفع</span><strong><span class="inv-pay-badge ${payClass}">${payLabel}</span></strong></div>
-        ${inv.transfer_entity_name ? `<div class="inv-det-row"><span>جهة التحويل</span><strong>${escape(inv.transfer_entity_name)}</strong></div>` : ''}
-      </div>
-      <table class="dt" style="margin-bottom:.75rem;">
-        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
-        <tbody>${itemsHtml}</tbody>
-      </table>
-      <div style="background:var(--g0);border-radius:10px;padding:12px;font-size:13px;margin-bottom:1rem;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--g5);">
-          <span>إجمالي الأصناف</span><span>${(items||[]).length} صنف · ${totalQty} قطعة</span>
+      <!-- معلومات الفاتورة -->
+      <div style="background:var(--g0);border-radius:12px;padding:12px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--br);">
+          <span style="font-size:12px;color:var(--g5);">رقم الفاتورة</span>
+          <strong style="font-size:13px;color:var(--p);">${escape(inv.invoice_number || '-')}</strong>
         </div>
-        ${inv.discount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--d);"><span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span></div>` : ''}
-        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px;margin-top:6px;padding-top:6px;border-top:1px solid var(--br);">
-          <span>الإجمالي النهائي</span><span>₪${inv.total.toFixed(2)}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--br);">
+          <span style="font-size:12px;color:var(--g5);">التاريخ والوقت</span>
+          <strong style="font-size:13px;">${inv.invoice_date} ${inv.sale_time || ''}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--br);">
+          <span style="font-size:12px;color:var(--g5);">اسم المشتري</span>
+          <strong style="font-size:13px;">${escape(inv.buyer_name || inv.customer_name || '-')}</strong>
+        </div>
+        ${inv.buyer_phone ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--br);">
+          <span style="font-size:12px;color:var(--g5);">رقم الجوال</span>
+          <strong style="font-size:13px;">${escape(inv.buyer_phone)}</strong>
+        </div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${inv.transfer_entity_name ? 'border-bottom:1px solid var(--br);' : ''}">
+          <span style="font-size:12px;color:var(--g5);">طريقة الدفع</span>
+          <span class="inv-pay-badge ${payClass}">${payLabel}</span>
+        </div>
+        ${inv.transfer_entity_name ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+          <span style="font-size:12px;color:var(--g5);">جهة التحويل</span>
+          <strong style="font-size:13px;">${escape(inv.transfer_entity_name)}</strong>
+        </div>` : ''}
+      </div>
+
+      <!-- جدول المنتجات -->
+      <div style="border:1px solid var(--br);border-radius:12px;overflow:hidden;margin-bottom:12px;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:var(--g0);">
+              <th style="padding:9px 12px;font-size:11px;color:var(--g6);font-weight:700;text-align:right;border-bottom:1px solid var(--br);">المنتج</th>
+              <th style="padding:9px 8px;font-size:11px;color:var(--g6);font-weight:700;text-align:center;border-bottom:1px solid var(--br);">الكمية</th>
+              <th style="padding:9px 8px;font-size:11px;color:var(--g6);font-weight:700;text-align:center;border-bottom:1px solid var(--br);">السعر</th>
+              <th style="padding:9px 12px;font-size:11px;color:var(--g6);font-weight:700;text-align:left;border-bottom:1px solid var(--br);">الإجمالي</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+      </div>
+
+      <!-- الملخص -->
+      <div style="background:var(--g0);border-radius:12px;padding:12px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--g5);margin-bottom:4px;">
+          <span>عدد الأصناف</span>
+          <span>${(items||[]).length} صنف · ${totalQty} قطعة</span>
+        </div>
+        ${inv.discount > 0 ? `
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--d);margin-bottom:4px;">
+          <span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span>
+        </div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:17px;margin-top:8px;padding-top:8px;border-top:1.5px solid var(--br);">
+          <span>الإجمالي النهائي</span>
+          <span style="color:var(--p);">₪${inv.total.toFixed(2)}</span>
         </div>
       </div>
+
+      <!-- أزرار -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button class="btn btn-s" onclick="Invoices.printInvoice('${invId}')" style="justify-content:center;gap:6px;"><i class="ti ti-printer"></i> طباعة</button>
-        <a href="${waUrl}" target="_blank" class="btn" style="background:#25d366;color:#fff;justify-content:center;gap:6px;text-decoration:none;display:flex;align-items:center;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;padding:10px;">
+        <button class="btn btn-s" onclick="Invoices.printInvoice('${invId}')" style="justify-content:center;gap:6px;padding:12px;">
+          <i class="ti ti-printer"></i> طباعة
+        </button>
+        <a href="${waUrl}" target="_blank" class="btn" style="background:#25d366;color:#fff;justify-content:center;gap:6px;text-decoration:none;display:flex;align-items:center;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;padding:12px;">
           <i class="ti ti-brand-whatsapp"></i> واتساب
         </a>
       </div>
