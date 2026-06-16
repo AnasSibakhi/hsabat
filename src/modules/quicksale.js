@@ -623,9 +623,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       DOM.get('qs-buyer-name-df').value  = '';
       DOM.get('qs-buyer-phone-df').value = '';
       DOM.get('qs-defer-date').value     = '';
-      QuickSale._deferPayMethod = 'cash';
-      document.getElementById('qs-defer-pay-cash')?.classList.add('active');
-      document.getElementById('qs-defer-pay-transfer')?.classList.remove('active');
+      const sel = DOM.get('qs-defer-pay-method');
+      if (sel) sel.value = 'cash';
+      if (!State.customers?.length) {
+        sb.from('customers').select('id,name,phone')
+          .eq('store_id', State.user.id).order('name')
+          .then(({ data }) => { State.customers = data || []; });
+      }
       Modal.open('m-qs-pay-defer');
       setTimeout(() => DOM.get('qs-buyer-name-df')?.focus(), 150);
     }
@@ -761,15 +765,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   setDeferPayMethod(method) {
     QuickSale._deferPayMethod = method;
-    document.getElementById('qs-defer-pay-cash').classList.toggle('active', method === 'cash');
-    document.getElementById('qs-defer-pay-transfer').classList.toggle('active', method === 'transfer');
   },
 
   confirmDefer() {
-    const name  = (DOM.val('qs-buyer-name-df') || '').trim();
-    const phone = DOM.val('qs-buyer-phone-df') || '';
-    const date  = DOM.val('qs-defer-date')     || '';
-    const payMethod = QuickSale._deferPayMethod || 'cash';
+    const name      = (DOM.val('qs-buyer-name-df') || '').trim();
+    const phone     = DOM.val('qs-buyer-phone-df') || '';
+    const date      = DOM.val('qs-defer-date')     || '';
+    const payMethod = DOM.val('qs-defer-pay-method') || 'cash';
 
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
 
