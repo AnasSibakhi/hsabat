@@ -14,6 +14,7 @@ import * as Modal          from '../nav/modal.js';
 import { getDashboard, getDebts, getInventory } from '../core/registry.js';
 import { Customers }       from './customers.js';
 import { FIFOService }     from '../services/FIFOService.js';
+import { rateGuard }       from '../core/ratelimit.js';
 import { BarcodeScanner }  from '../services/BarcodeScanner.js';
 
 // ── State ──
@@ -1135,6 +1136,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Checkout ──
   async sell(paymentType) {
+    // Rate limiting — منع 3 مبيعات في ثانية واحدة
+    try {
+      await rateGuard('sell', () => {}, 'الرجاء الانتظار قبل إتمام بيع آخر');
+    } catch (e) {
+      Notify.warn(e.message);
+      return;
+    }
     if (!_cart.length) { Notify.error('السلة فارغة'); return; }
     Modal.close('m-qs-checkout');
 
