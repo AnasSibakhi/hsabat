@@ -18,7 +18,7 @@ let _handler = null;
 // نظام التأكيد المزدوج — يمنع القراءات الخاطئة
 let _pendingCode  = null;
 let _pendingCount = 0;
-const CONFIRM_NEEDED = 2; // قراءتان متطابقتان قبل القبول
+const CONFIRM_NEEDED = 1; // قراءة واحدة تكفي — الـ checksum يتحقق
 
 const DEBOUNCE = 1200;
 
@@ -67,8 +67,8 @@ export const BarcodeScanner = {
         _stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
-            width:  { ideal: 1280 },
-            height: { ideal: 720  },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
           },
           audio: false,
         });
@@ -127,6 +127,7 @@ export const BarcodeScanner = {
         if (c.exposureMode?.includes('continuous'))     s.exposureMode = 'continuous';
         if (c.whiteBalanceMode?.includes('continuous')) s.whiteBalanceMode = 'continuous';
         if (c.sharpness) s.sharpness = c.sharpness.max;
+        if (c.zoom && c.zoom.min) s.zoom = Math.min(c.zoom.min * 1.5, c.zoom.max || 2);
         if (Object.keys(s).length) t.applyConstraints({ advanced:[s] }).catch(()=>{});
       } catch {}
     }, 800);
@@ -141,8 +142,8 @@ export const BarcodeScanner = {
           target: el,
           constraints: {
             facingMode: 'environment',
-            width:  { ideal: 1280 },
-            height: { ideal: 720  },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
           },
           area: {
             top:    '25%',
@@ -153,7 +154,7 @@ export const BarcodeScanner = {
         },
         locator: { patchSize: 'medium', halfSample: true },
         numOfWorkers: 2,
-        frequency: 15,
+        frequency: 20,
         decoder: {
           readers: [
             'ean_reader',
