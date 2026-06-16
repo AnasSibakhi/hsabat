@@ -1621,24 +1621,22 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 <!-- Defer Modal -->
 <div class="mo" id="m-qs-pay-defer"><div class="modal" style="max-width:420px;">
  <div class="mhdr"><span class="mtitle">تطبيق لاحق</span><button class="mclose" onclick="Modal.close('m-qs-pay-defer')">✕</button></div>
-
  <!-- صف: اسم الزبون + رقم الجوال -->
- <div class="fr" style="gap:10px;margin-bottom:12px;">
-  <div class="fg" style="flex:1;margin:0;">
+ <div class="fr">
+  <div class="fg">
    <label class="lbl">اسم الزبون *</label>
    <input class="inp" id="qs-buyer-name-df" placeholder="ابحث أو اكتب..." autocomplete="off"
      oninput="QuickSale.searchBuyerField('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df',this.value)"
      onfocus="QuickSale.showAllCustomers('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df')">
   </div>
-  <div class="fg" style="flex:1;margin:0;">
+  <div class="fg">
    <label class="lbl">رقم الجوال</label>
    <input class="inp" id="qs-buyer-phone-df" placeholder="05X-XXXXXXX" inputmode="tel">
   </div>
  </div>
-
- <!-- صف: على أي حساب سيحوّل + تاريخ السداد -->
- <div class="fr" style="gap:10px;margin-bottom:12px;">
-  <div class="fg" style="flex:1;margin:0;">
+ <!-- صف: طريقة السداد + تاريخ السداد -->
+ <div class="fr">
+  <div class="fg">
    <label class="lbl">على أي حساب سيحوّل؟</label>
    <select class="inp" id="qs-defer-pay-method" style="cursor:pointer;">
     <option value="cash">كاش</option>
@@ -1647,22 +1645,19 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
     <option value="other">أخرى</option>
    </select>
   </div>
-  <div class="fg" style="flex:1;margin:0;">
+  <div class="fg">
    <label class="lbl">تاريخ السداد (اختياري)</label>
    <input class="inp" type="date" id="qs-defer-date">
   </div>
  </div>
-
  <!-- الإجمالي -->
- <div style="background:var(--pl);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-  <span id="qs-defer-total" style="font-weight:900;color:var(--p);font-size:20px;">₪0</span>
-  <span style="font-size:13px;color:var(--p);font-weight:700;">الإجمالي</span>
+ <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
+  <span style="font-size:13px;color:var(--p);">الإجمالي</span>
+  <span id="qs-defer-total" style="font-weight:900;color:var(--p);">₪0</span>
  </div>
-
- <div class="mfoot" style="gap:0;">
-  <button class="btn" style="flex:1;justify-content:center;background:var(--w);color:#fff;border:none;font-size:15px;padding:13px;" onclick="QuickSale.confirmDefer()">
-   <i class="ti ti-check"></i> حفظ كدين تطبيق لاحق
-  </button>
+ <div class="mfoot">
+  <button class="btn btn-o" onclick="Modal.close('m-qs-pay-defer')">رجوع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDefer()"><i class="ti ti-check"></i> حفظ تطبيق لاحق</button>
  </div>
 </div></div>
 
