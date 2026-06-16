@@ -12,6 +12,7 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
+import { FIFOService } from '../services/FIFOService.js';
 
 // ─────────────────────────────────────────
 // 18. INVENTORY MODULE
@@ -173,6 +174,50 @@ const Inventory = {
     document.getElementById('prod-sales-list').innerHTML      = salesRows.length
       ? salesRows.join('')
       : '<tr class="er"><td colspan="4">لا يوجد مبيعات</td></tr>';
+
+    // ── FIFO: طبقات المخزون ──
+    const batchesSection = document.getElementById('prod-fifo-section');
+    if (batchesSection) {
+      try {
+        const batches = await FIFOService.getBatches(id);
+        if (batches.length) {
+          let totalVal = 0;
+          const rows = batches.map((b, i) => {
+            const val = b.quantity_remaining * b.cost_price;
+            totalVal += val;
+            return `<tr>
+              <td style="font-weight:700;color:var(--p);">طبقة ${i + 1}</td>
+              <td style="color:#64748b;">${b.purchase_date}</td>
+              <td style="font-weight:700;">${b.quantity_remaining}</td>
+              <td style="color:var(--d);font-weight:700;">₪${b.cost_price.toFixed(2)}</td>
+              <td style="color:var(--s);font-weight:700;">₪${val.toFixed(2)}</td>
+            </tr>`;
+          }).join('');
+          batchesSection.innerHTML = `
+            <div class="sec-hdr" style="margin-top:16px;">
+              <span class="sec-title">🏷️ طبقات المخزون (FIFO)</span>
+              <span style="font-size:12px;color:var(--g5);">القيمة الإجمالية: ₪${totalVal.toFixed(2)}</span>
+            </div>
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead><tr>
+                  <th>الطبقة</th><th>تاريخ الشراء</th>
+                  <th>المتبقي</th><th>تكلفة الوحدة</th><th>القيمة</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>`;
+        } else {
+          batchesSection.innerHTML = `
+            <div class="sec-hdr" style="margin-top:16px;">
+              <span class="sec-title">🏷️ طبقات المخزون (FIFO)</span>
+            </div>
+            <p style="color:var(--g4);font-size:13px;padding:8px 0;">لا توجد طبقات — سيُضاف تلقائياً عند الشراء</p>`;
+        }
+      } catch (e) {
+        if (batchesSection) batchesSection.innerHTML = '';
+      }
+    }
   },
 
   filterList(q) {
