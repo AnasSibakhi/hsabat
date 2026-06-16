@@ -204,15 +204,11 @@ export const Auth = {
 
         <!-- Body -->
         <div style="padding:20px;">
-          <div style="
-            background:#f8fafc;border-radius:12px;padding:14px;
-            text-align:center;margin-bottom:16px;
-            border:1px solid #e2e8f0;
-          ">
-            <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px;">
-              تسجيل الخروج؟
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:6px;">
+              هل تريد تسجيل الخروج؟
             </div>
-            <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            <div style="font-size:13px;color:#94a3b8;">
               سيتم إنهاء جلستك الحالية
             </div>
           </div>
