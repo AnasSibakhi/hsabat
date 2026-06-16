@@ -288,7 +288,16 @@ const Inventory = {
   },
 
   scanBarcode() {
-    Inventory._scanBarcodeTo('inb', 'امسح باركود المنتج');
+    // أغلق modal الإضافة مؤقتاً عشان الـ scanner يظهر فوق كل شي
+    import('../nav/modal.js').then(({ close, open }) => {
+      close('m-inv');
+      setTimeout(() => {
+        Inventory._scanBarcodeTo('inb', 'امسح باركود المنتج', () => {
+          // بعد المسح ارجع للـ modal
+          open('m-inv');
+        });
+      }, 200);
+    });
   },
 
   stopScanner() {
@@ -378,7 +387,7 @@ const Inventory = {
 
     if (hintEl)   hintEl.textContent = hint || 'وجّه الكاميرا على الباركود';
     if (overlay)  overlay.style.display = 'flex';
-    if (container){ container.innerHTML = ''; container.style.height = '100%'; container.style.minHeight = 'calc(100vh - 50px)'; }
+    if (container){ container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
 
     import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
       BarcodeScanner.start('inv-scanner-container', (code) => {
