@@ -22,6 +22,26 @@ const AdminPanel = {
     AdminPanel.showPage('sa-dashboard');
   },
 
+  // ── Sidebar للموبايل ──
+  toggleSidebar() {
+    const sidebar  = document.getElementById('sa-sidebar');
+    const overlay  = document.getElementById('sa-sidebar-overlay');
+    const isOpen   = sidebar?.classList.contains('open');
+    if (isOpen) {
+      sidebar?.classList.remove('open');
+      overlay.style.display = 'none';
+    } else {
+      sidebar?.classList.add('open');
+      overlay.style.display = 'block';
+    }
+  },
+
+  closeSidebar() {
+    document.getElementById('sa-sidebar')?.classList.remove('open');
+    const overlay = document.getElementById('sa-sidebar-overlay');
+    if (overlay) overlay.style.display = 'none';
+  },
+
   showPage(id) {
     document.querySelectorAll('.sa-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sa-nav-item').forEach(n => n.classList.remove('active'));
@@ -29,7 +49,7 @@ const AdminPanel = {
     document.querySelectorAll('.sa-nav-item').forEach(n => {
       if (n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
     });
-    AdminPanel.closeDrawer();
+    AdminPanel.closeSidebar();
     const loaders = { 'sa-stores': AdminPanel.loadStores, 'sa-subscriptions': AdminPanel.loadSubscriptions, 'sa-users': AdminPanel.loadUsers, 'sa-dashboard': AdminPanel.loadDashboard, 'sa-transfer-entities': async () => { await AdminPanel._fillStoresDropdown('te-store-id'); await AdminPanel.loadTransferEntities(); } };
     loaders[id]?.();
   },
