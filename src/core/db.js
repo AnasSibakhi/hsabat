@@ -1,8 +1,5 @@
 /**
- * db.js — Database Layer
- * sb      → للعمليات العادية
- * sbAdmin → للـ Super Admin فقط
- * storeTable → كل عمليات المحل مع RLS
+ * db.js - Database Layer
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -20,26 +17,23 @@ export const sbAdmin = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKe
   },
 });
 
-// كل عمليات المحل — RLS في Supabase تحمي البيانات
 function storeTable(table) {
-  const base = () => sbAdmin.from(table).eq('store_id', State.user?.id ?? '');
-
   return {
-    select: (cols = '*') => {
-      let q = sbAdmin.from(table).select(cols).eq('store_id', State.user?.id ?? '');
-      const builder = {
-        eq:          (c, v)  => { q = q.eq(c, v);                                    return builder; },
-        gte:         (c, v)  => { q = q.gte(c, v);                                   return builder; },
-        gt:          (c, v)  => { q = q.gt(c, v);                                    return builder; },
-        in:          (c, vs) => { q = q.in(c, vs);                                   return builder; },
-        order:       (c, o)  => { q = q.order(c, o);                                 return builder; },
-        limit:       (n)     => { q = q.limit(n);                                    return builder; },
-        offset:      (n)     => { q = q.range(n, n + 49);                            return builder; },
-        single:      ()      => q.single(),
-        maybeSingle: ()      => q.maybeSingle(),
-        then:        (res, rej) => q.then(res, rej),
+    select: (cols) => {
+      let q = sbAdmin.from(table).select(cols || '*').eq('store_id', State.user?.id ?? '');
+      const b = {
+        eq:          (c, v) => { q = q.eq(c, v);    return b; },
+        gte:         (c, v) => { q = q.gte(c, v);   return b; },
+        gt:          (c, v) => { q = q.gt(c, v);    return b; },
+        in:          (c, v) => { q = q.in(c, v);    return b; },
+        order:       (c, o) => { q = q.order(c, o); return b; },
+        limit:       (n)    => { q = q.limit(n);    return b; },
+        offset:      (n)    => { q = q.range(n, n + 49); return b; },
+        single:      ()     => q.single(),
+        maybeSingle: ()     => q.maybeSingle(),
+        then:        (r, j) => q.then(r, j),
       };
-      return builder;
+      return b;
     },
 
     insert: (data) => {
@@ -48,16 +42,16 @@ function storeTable(table) {
         : { ...data, store_id: State.user?.id };
       let q = sbAdmin.from(table).insert(d);
       return {
-        select:      ()      => { q = q.select(); return { single: () => q.single(), then: (r, j) => q.then(r, j) }; },
-        single:      ()      => q.select().single(),
-        then:        (r, j)  => q.then(r, j),
+        select:      ()     => { q = q.select(); return { single: () => q.single(), then: (r,j) => q.then(r,j) }; },
+        single:      ()     => q.select().single(),
+        then:        (r, j) => q.then(r, j),
       };
     },
 
     update: (data) => {
       let q = sbAdmin.from(table).update(data).eq('store_id', State.user?.id ?? '');
       return {
-        eq:   (c, v) => { q = q.eq(c, v); return { then: (r, j) => q.then(r, j) }; },
+        eq:   (c, v) => { q = q.eq(c, v); return { then: (r,j) => q.then(r,j) }; },
         then: (r, j) => q.then(r, j),
       };
     },
@@ -65,7 +59,7 @@ function storeTable(table) {
     delete: () => {
       let q = sbAdmin.from(table).delete().eq('store_id', State.user?.id ?? '');
       return {
-        eq:   (c, v) => { q = q.eq(c, v); return { then: (r, j) => q.then(r, j) }; },
+        eq:   (c, v) => { q = q.eq(c, v); return { then: (r,j) => q.then(r,j) }; },
         then: (r, j) => q.then(r, j),
       };
     },
@@ -89,9 +83,7 @@ export const DB = {
   returns:          () => storeTable('returns'),
   inventoryBatches: () => storeTable('inventory_batches'),
   saleAllocations:  () => storeTable('sale_inventory_allocations'),
-
-  // Admin only
-  accounts:      () => sbAdmin.from('app_accounts'),
-  stores:        () => sbAdmin.from('stores'),
-  notifications: () => sbAdmin.from('notifications'),
+  accounts:         () => sbAdmin.from('app_accounts'),
+  stores:           () => sbAdmin.from('stores'),
+  notifications:    () => sbAdmin.from('notifications'),
 };
