@@ -877,26 +877,69 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Modal.open('m-qs-debt');
   },
 
+  closeDebtModal() {
+    Modal.close('m-qs-debt');
+    const dd = DOM.get('qs-debt-dropdown');
+    if (dd) dd.style.display = 'none';
+    DOM.get('qs-debt-search').value  = '';
+    DOM.get('qs-debt-cust').value    = '';
+    DOM.get('qs-debt-new-phone').value = '';
+    DOM.get('qs-debt-note').value    = '';
+    DOM.get('qs-debt-new-wrap').style.display = 'none';
+    QuickSale._debtNewCust = null;
+  },
+
+  async confirmDebtModal() {
+    const name = DOM.val('qs-debt-search');
+    const custId = DOM.val('qs-debt-cust');
+
+    if (!name) { Notify.error('أدخل اسم الزبون'); return; }
+
+    // حفظ البيانات
+    QuickSale._deferData = {
+      name,
+      custId,
+      phone: DOM.val('qs-debt-new-phone'),
+      note:  DOM.val('qs-debt-note'),
+    };
+
+    QuickSale.closeDebtModal();
+    await QuickSale.sell('defer');
+  },
+
   searchDebtCustomer(val) {
     const dd = DOM.get('qs-debt-dropdown');
     const nw = DOM.get('qs-debt-new-wrap');
     DOM.get('qs-debt-cust').value = '';
     QuickSale._debtNewCust = null;
-    if (!val.trim()) { dd.style.display = 'none'; nw.style.display = 'none'; return; }
-    const q = val.trim().toLowerCase();
 
     if (!State.customers?.length) {
       sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; QuickSale.searchDebtCustomer(val); });
-      return;
+        .then(({ data }) => {
+          State.customers = data || [];
+          QuickSale.searchDebtCustomer(val);
+        });
+      if (!val.trim()) { dd.style.display = 'none'; return; }
     }
 
-    const matches = (State.customers || []).filter(c =>
-      c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
-    );
+    const inp = DOM.get('qs-debt-search');
+    const r = inp?.getBoundingClientRect();
+    if (r) {
+      dd.style.top   = r.bottom + 4 + 'px';
+      dd.style.left  = r.left + 'px';
+      dd.style.width = r.width + 'px';
+    }
 
-    // مطابقة تامة — اختر مباشرة
-    const exact = matches.find(c => c.name.toLowerCase() === q);
+    const q = val.trim().toLowerCase();
+    const all = State.customers || [];
+    const matches = q
+      ? all.filter(c => c.name.toLowerCase().includes(q) || (c.phone||'').includes(q))
+      : all.slice(0, 8);
+
+    if (!val.trim() && !matches.length) { dd.style.display = 'none'; return; }
+
+    // مطابقة تامة
+    const exact = q ? matches.find(c => c.name.toLowerCase() === q) : null;
     if (exact) {
       DOM.get('qs-debt-cust').value   = exact.id;
       DOM.get('qs-debt-search').value = exact.name;
@@ -905,32 +948,26 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       return;
     }
 
-    let html = matches.map(c =>
-      `<div class="dc-opt" data-cid="${c.id}" onclick="QuickSale.selectDebtCustomerById(this.dataset.cid)">
-        ${escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
-      </div>`
-    ).join('');
-    html += `<div class="dc-opt new" data-name="${val.trim()}" onclick="QuickSale.selectDebtNew(this.dataset.name)">
-      + إضافة "${escape(val.trim())}" كزبون جديد
-    </div>`;
-    dd.innerHTML = html;
-    dd.style.display = 'block';
+    dd.innerHTML = [
+      ...matches.slice(0,8).map(c =>
+        `<div class="dc-opt" data-cid="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}"
+          onclick="QuickSale.selectDebtCustomerById(this.dataset.cid, this.dataset.name)">
+          <b>${escape(c.name)}</b>${c.phone ? ' — <span style=color:#94a3b8>' + c.phone + '</span>' : ''}
+        </div>`
+      ),
+      val.trim() ? `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);margin-top:4px;"
+        onclick="QuickSale.selectDebtNew('${val.trim().replace(/'/g,'\\\'')}')" >
+        ➕ إضافة "<b>${escape(val.trim())}</b>" كزبون جديد
+      </div>` : '',
+    ].join('');
+
+    dd.style.display = matches.length || val.trim() ? 'block' : 'none';
     nw.style.display = 'none';
   },
 
-  selectDebtCustomerById(id) {
-    // ابحث في الـ dropdown مباشرة عن الاسم
-    const opt = document.querySelector(`[data-cid="${id}"]`);
-    const name = opt ? opt.textContent.trim().split(' — ')[0].trim() : '';
-
-    // أو من State.customers
-    const c = (State.customers || []).find(x => x.id === id);
-
-    const finalName = c?.name || name;
-    if (!finalName) return;
-
+  selectDebtCustomerById(id, name) {
     DOM.get('qs-debt-cust').value   = id;
-    DOM.get('qs-debt-search').value = finalName;
+    DOM.get('qs-debt-search').value = name;
     DOM.get('qs-debt-dropdown').style.display = 'none';
     DOM.get('qs-debt-new-wrap').style.display = 'none';
     QuickSale._debtNewCust = null;
@@ -963,22 +1000,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     let   custId   = null, custName = 'زبون عادي';
 
     if (paymentType === PAYMENT.DEFER) {
-      const deferData = QuickSale._deferData || {};
-      const deferName = (
-        deferData.name ||
-        DOM.val('qs-debt-search') ||
-        QuickSale._debtNewCust ||
-        DOM.val('qs-buyer-name-df') ||
-        ''
-      ).trim();
+      const d        = QuickSale._deferData || {};
+      const deferName = (d.name || '').trim();
 
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
 
-      // جيب الـ customer_id
-      const custFromField = DOM.val('qs-debt-cust');
-      if (custFromField) {
-        custId = custFromField;
+      if (d.custId) {
+        custId = d.custId;
       } else {
         const existing = (State.customers || []).find(c =>
           c.name.toLowerCase() === deferName.toLowerCase()
@@ -987,14 +1016,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           custId = existing.id;
         } else {
           const { Customers } = await import('./customers.js');
-          const newC = await Customers.createInline(
-            deferName,
-            deferData.phone || DOM.val('qs-debt-new-phone') || DOM.val('qs-buyer-phone-df') || ''
-          );
+          const newC = await Customers.createInline(deferName, d.phone || '');
           if (newC?.id) custId = newC.id;
         }
       }
-      QuickSale._deferData  = null;
+      QuickSale._deferData   = null;
       QuickSale._debtNewCust = null;
     }
 
