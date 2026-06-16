@@ -378,7 +378,7 @@ const Inventory = {
 
     if (hintEl)   hintEl.textContent = hint || 'وجّه الكاميرا على الباركود';
     if (overlay)  overlay.style.display = 'flex';
-    if (container){ container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
+    if (container){ container.innerHTML = ''; container.style.height = '100%'; container.style.minHeight = 'calc(100vh - 50px)'; }
 
     import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
       BarcodeScanner.start('inv-scanner-container', (code) => {
