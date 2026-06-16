@@ -1236,39 +1236,7 @@ PalPay" style="resize:none;"></textarea>
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد</button></div>
 </div></div>
 
-<script>
-function fixLayout(){
-  // intentionally empty - layout handled by CSS flexbox
-}
-function openAddMenu(){
-  document.getElementById('add-menu-overlay').style.display='block';
-  document.getElementById('add-menu').style.display='block';
-}
-function closeAddMenu(){
-  document.getElementById('add-menu-overlay').style.display='none';
-  document.getElementById('add-menu').style.display='none';
-}
-function openDrawer(){
-  const overlay = document.getElementById('mobile-drawer-overlay');
-  const drawer  = document.getElementById('mobile-drawer');
-  overlay.style.display = 'block';
-  drawer.style.display  = 'block';
-  setTimeout(() => drawer.classList.add('open'), 10);
-}
-function closeDrawer(){
-  const overlay = document.getElementById('mobile-drawer-overlay');
-  const drawer  = document.getElementById('mobile-drawer');
-  drawer.classList.remove('open');
-  setTimeout(() => {
-    overlay.style.display = 'none';
-    drawer.style.display  = 'none';
-  }, 250);
-}
-
-window.addEventListener('resize', fixLayout);
-window.addEventListener('orientationchange', fixLayout);
-document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
-</script>
+<script type="module" src="/src/ui/drawer.js"></script>
 <script type="module" src="/src/main.js"></script>
 
 <!-- Best Selling Modal -->
