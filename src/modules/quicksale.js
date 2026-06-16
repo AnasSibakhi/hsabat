@@ -877,6 +877,16 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Modal.open('m-qs-debt');
   },
 
+  async confirmDebtPay() {
+    const name = DOM.val('qs-debt-pay-name');
+    const phone = DOM.val('qs-debt-pay-phone');
+    if (!name) { Notify.error('أدخل اسم الزبون'); return; }
+
+    QuickSale._deferData = { name, phone };
+    Modal.close('m-qs-pay-debt');
+    await QuickSale.sell('defer');
+  },
+
   initDebtModal() {
     // reset
     DOM.get('qs-debt-search').value    = '';
