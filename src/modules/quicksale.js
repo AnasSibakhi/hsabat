@@ -597,13 +597,19 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       Modal.open('m-qs-pay-transfer');
 
     } else if (type === 'defer') {
-      const debtTotal = DOM.get('qs-debt-pay-total');
-      if (debtTotal) debtTotal.textContent = '₪' + total.toFixed(2);
       DOM.get('qs-debt-pay-name').value  = '';
       DOM.get('qs-debt-pay-phone').value = '';
+      DOM.get('qs-debt-pay-note').value  = '';
+      const amountEl = DOM.get('qs-debt-pay-amount');
+      if (amountEl) amountEl.value = total.toFixed(2);
+      const dateEl = DOM.get('qs-debt-pay-date');
+      if (dateEl) dateEl.value = Utils.today();
       DOM.get('qs-debt-pay-dd').style.display = 'none';
+      QuickSale._debtRemindDays = 0;
+      document.querySelectorAll('.debt-remind-btn2').forEach((b, i) =>
+        b.classList.toggle('active', i === 0)
+      );
       QuickSale._deferData = null;
-      // preload customers
       if (!State.customers?.length) {
         sb.from('customers').select('id,name,phone')
           .eq('store_id', State.user.id).order('name')
@@ -883,10 +889,85 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   async confirmDebtPay() {
     const name  = DOM.val('qs-debt-pay-name').trim();
     const phone = DOM.val('qs-debt-pay-phone').trim();
+    const note  = DOM.val('qs-debt-pay-note').trim();
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
-    QuickSale._deferData = { name, phone };
+    QuickSale._deferData = { name, phone, note, remindDays: QuickSale._debtRemindDays || 0 };
     Modal.close('m-qs-pay-debt');
     await QuickSale.sell('defer');
+  },
+
+  setDebtRemind(days) {
+    QuickSale._debtRemindDays = days;
+    document.querySelectorAll('.debt-remind-btn2').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.days) === days)
+    );
+  },
+
+  async openDebtFromPOS() {
+    const name  = DOM.val('qs-debt-pay-name').trim();
+    const phone = DOM.val('qs-debt-pay-phone').trim();
+    if (!name) { Notify.error('أدخل اسم الزبون'); return; }
+
+    const total = _cart.reduce((s, c) => s + c.price * c.qty, 0) * (1 - _discount / 100);
+
+    // حفظ بيانات البيع للاستخدام بعد تأكيد الدين
+    QuickSale._deferData = { name, phone };
+    QuickSale._pendingDebtTotal = total;
+
+    Modal.close('m-qs-pay-debt');
+
+    // تحميل الزبائن إذا لم تكن محملة
+    if (!State.customers?.length) {
+      const { data } = await sb.from('customers')
+        .select('id,name,phone').eq('store_id', State.user.id).order('name');
+      State.customers = data || [];
+    }
+
+    // ملء حقول m-debt مسبقاً
+    const searchEl = DOM.get('dc-search');
+    const amountEl = DOM.get('da');
+    const phoneEl  = DOM.get('dc-new-phone');
+    const dateEl   = DOM.get('dd');
+    const noteEl   = DOM.get('dn');
+    const dcEl     = DOM.get('dc');
+    const newWrap  = DOM.get('dc-new-wrap');
+    const dd       = DOM.get('dc-dropdown');
+
+    if (searchEl) searchEl.value = name;
+    if (amountEl) amountEl.value = total.toFixed(2);
+    if (dateEl)   dateEl.value   = Utils.today();
+    if (noteEl)   noteEl.value   = '';
+    if (dcEl)     dcEl.value     = '';
+
+    // البحث عن زبون موجود بنفس الاسم
+    const existing = (State.customers || []).find(c =>
+      c.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (existing) {
+      if (dcEl)     dcEl.value     = existing.id;
+      if (phoneEl)  phoneEl.value  = existing.phone || phone || '';
+      if (newWrap)  newWrap.style.display = 'none';
+      if (dd)       dd.style.display      = 'none';
+    } else {
+      // زبون جديد
+      if (phoneEl)  phoneEl.value  = phone || '';
+      if (newWrap)  newWrap.style.display = 'block';
+      if (dd)       dd.style.display      = 'none';
+      // اجعل debts.js يعرف إنه اسم جديد
+      window._debtFromPOSNewName = name;
+    }
+
+    // علامة أن الـ modal قادم من POS
+    window._debtFromPOS = true;
+
+    // إعادة ضبط أزرار التذكير
+    document.querySelectorAll('.debt-remind-btn').forEach((b, i) =>
+      b.classList.toggle('active', i === 0)
+    );
+
+    Modal.open('m-debt');
+    setTimeout(() => amountEl?.focus(), 200);
   },
 
   initDebtModal() {
@@ -1105,15 +1186,21 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
       // Create debt if needed
       if (paymentType === PAYMENT.DEFER) {
-        const debtCustId = custId || null;
+        const debtCustId  = custId || null;
+        const debtData    = QuickSale._deferData || {};
+        const remindDays  = debtData.remindDays || 0;
+        const remindDate  = remindDays > 0
+          ? new Date(Date.now() + remindDays * 86400000).toISOString().split('T')[0]
+          : null;
         await DB.debts().insert({
           store_id:    State.user.id,
           customer_id: debtCustId,
           amount:      total,
           paid:        0,
           debt_date:   Utils.today(),
-          notes:       'فاتورة ' + invNum,
+          notes:       debtData.note || ('فاتورة ' + invNum),
           cust_phone:  buyerPhone || null,
+          remind_date: remindDate,
         });
         // لو ما عنده customer_id — أضفه للـ customers
         if (!debtCustId && custName && custName !== 'زبون عادي') {
