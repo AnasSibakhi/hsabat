@@ -23,35 +23,11 @@ import { FIFOService } from '../services/FIFOService.js';
 const Purchases = {
   async load() {
     const { data } = await DB.purchases().select('*').order('purchase_date', { ascending: false });
-    // Cache for edit
     Purchases._cache = {};
+    Purchases._allData = data || [];
     (data || []).forEach(p => { Purchases._cache[p.id] = p; });
 
-    DOM.setHTML('purlist', (data || []).length
-      ? data.map(p => {
-          const statusLabel = { cash: '💵 كاش', transfer: '🏦 تحويل', defer: '⏳ آجل' }[p.payment_status] || '💵 كاش';
-          const statusColor = { cash: 'var(--s)', transfer: 'var(--p)', defer: 'var(--r)' }[p.payment_status] || 'var(--s)';
-          const remaining   = p.remaining > 0 ? '<br><small style="color:var(--r);">متبقي: ₪' + p.remaining.toFixed(2) + '</small>' : '';
-          const salePrice   = p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-';
-          return '<tr>'
-            + '<td style="font-weight:800;color:#1e293b;">' + Utils.escape(p.supplier) + '</td>'
-            + '<td style="color:#2563eb;">' + (p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" style="color:#2563eb;">' + Utils.escape(p.supplier_phone) + '</a>' : '-') + '</td>'
-            + '<td style="color:#475569;">' + Utils.escape(p.invoice_ref || '-') + '</td>'
-            + '<td style="color:#1e293b;font-weight:600;">' + Utils.escape(p.product_name) + '</td>'
-            + '<td style="color:#1e293b;">' + p.quantity + '</td>'
-            + '<td style="color:#1e293b;font-weight:600;">₪' + p.cost.toFixed(2) + '</td>'
-            + '<td style="color:#6366f1;font-weight:700;">' + salePrice + '</td>'
-            + '<td><span style="color:' + statusColor + ';font-weight:700;">' + statusLabel + '</span>' + remaining + '</td>'
-            + '<td style="color:#64748b;">' + p.purchase_date + '</td>'
-            + '<td style="white-space:nowrap;">'
-            + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')" style="margin-left:4px;">تعديل</button>'
-            + '<button class="ibb" onclick="Purchases.openReturn(\'' + p.id + '\')" style="margin-left:4px;background:var(--rl);color:var(--r);border-color:var(--r);">🔄</button>'
-            + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
-            + '</td>'
-            + '</tr>';
-        }).join('')
-      : '<tr class="er"><td colspan="9">لا توجد مشتريات</td></tr>'
-    );
+    Purchases._renderRows(Purchases._allData);
   },
 
   searchInventory(query) {
@@ -276,6 +252,9 @@ const Purchases = {
 
 
   switchTab(tab) {
+    // بحث
+    const searchEl = document.getElementById('pur-search');
+    if (searchEl) searchEl.value = '';
     const isAll = tab === 'all';
     const secAll   = document.getElementById('pur-section-all');
     const secDebts = document.getElementById('pur-section-debts');
