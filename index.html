@@ -1513,14 +1513,21 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 <!-- Cash Modal -->
 <div class="mo" id="m-qs-pay-cash"><div class="modal" style="max-width:400px;">
  <div class="mhdr"><span class="mtitle">💵 كاش</span><button class="mclose" onclick="Modal.close('m-qs-pay-cash')">✕</button></div>
- <div class="fg" class="pos-rel">
+ <div class="fg pos-rel">
   <label class="lbl">اسم المشتري (اختياري)</label>
-  <input class="inp" id="qs-buyer-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off" oninput="QuickSale.searchBuyer(this.value)">
-  
+  <input class="inp" id="qs-buyer-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off"
+   oninput="QuickSale.searchBuyerField('qs-buyer-name','qs-buyer-phone','qs-buyer-dropdown',this.value)"
+   onfocus="QuickSale.showAllCustomers('qs-buyer-name','qs-buyer-phone','qs-buyer-dropdown')">
  </div>
- <div class="fg"><label class="lbl">رقم الجوال (اختياري)</label><input class="inp" id="qs-buyer-phone" placeholder="05X-XXXXXXX" inputmode="tel"></div>
- <div class="fg"><label class="lbl">المبلغ المستلم (₪)</label><input class="inp" type="number" id="qs-cash-received" inputmode="decimal" placeholder="0.00" oninput="QuickSale.calcCashChange()"></div>
- <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;justify-content:space-between;margin-bottom:10px;">
+ <div class="fg">
+  <label class="lbl">رقم الجوال (اختياري)</label>
+  <input class="inp" id="qs-buyer-phone" placeholder="05X-XXXXXXX" inputmode="tel">
+ </div>
+ <div class="fg">
+  <label class="lbl">المبلغ المستلم (₪)</label>
+  <input class="inp" type="number" id="qs-cash-received" inputmode="decimal" placeholder="0.00" oninput="QuickSale.calcCashChange()">
+ </div>
+ <div id="qs-cash-change-row" style="display:none;background:var(--sl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:10px;">
   <span>الباقي للزبون</span><span id="qs-cash-change-val" style="font-weight:900;color:var(--s);">₪0</span>
  </div>
  <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
@@ -1534,10 +1541,12 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 
 <!-- Debt Modal -->
 <div class="mo" id="m-qs-pay-debt"><div class="modal" style="max-width:400px;">
- <div class="mhdr"><span class="mtitle">👥 دين / آجل</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
- <div class="fg">
+ <div class="mhdr"><span class="mtitle">⏰ بيع آجل — دين</span><button class="mclose" onclick="Modal.close('m-qs-pay-debt')">✕</button></div>
+ <div class="fg pos-rel">
   <label class="lbl">اسم الزبون *</label>
-  <input class="inp" id="qs-debt-pay-name" placeholder="ابحث أو اكتب الاسم..." autocomplete="off" oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)">
+  <input class="inp" id="qs-debt-pay-name" placeholder="اكتب الاسم أو اختر من القائمة..." autocomplete="off"
+   oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)"
+   onfocus="QuickSale.showAllCustomers('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd')">
  </div>
  <div class="fg">
   <label class="lbl">رقم الجوال (اختياري)</label>
