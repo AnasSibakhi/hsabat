@@ -54,48 +54,38 @@ const Purchases = {
     );
   },
 
-  async searchInventory(query) {
+  searchInventory(query) {
     const suggestions = document.getElementById('pur-suggestions');
     const badge       = document.getElementById('pur-match-badge');
     const hiddenSel   = document.getElementById('pur-inv-sel');
 
     if (!query || query.length < 1) {
-      if (suggestions) suggestions.style.display = 'none';
-      if (badge)       badge.style.display       = 'none';
-      if (hiddenSel)   hiddenSel.value           = '';
+      suggestions.style.display = 'none';
+      badge.style.display = 'none';
+      if (hiddenSel) hiddenSel.value = '';
       return;
-    }
-
-    // لو State.inventory فاضي — حمّله من DB
-    if (!State.inventory?.length) {
-      const { data } = await DB.inventory().select('id,name,unit,quantity').order('name');
-      State.inventory = data || [];
     }
 
     const q       = query.toLowerCase();
-    const matches = State.inventory.filter(p =>
-      p.name.toLowerCase().includes(q) || (p.barcode || '').includes(q)
-    );
+    const matches = State.inventory.filter(p => p.name.toLowerCase().includes(q));
 
     if (!matches.length) {
-      if (suggestions) suggestions.style.display = 'none';
-      if (badge)       badge.style.display       = 'none';
-      if (hiddenSel)   hiddenSel.value           = '';
+      suggestions.style.display = 'none';
+      badge.style.display = 'none';
+      if (hiddenSel) hiddenSel.value = '';
       return;
     }
 
-    if (suggestions) {
-      suggestions.style.display = 'block';
-      suggestions.innerHTML = matches.slice(0, 8).map(p => {
-        const id   = p.id;
-        const name = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const unit = (p.unit || '').replace(/'/g, "\\'");
-        return '<div class="pur-sugg-item" onclick="Purchases.selectInventoryItem(\'' + id + '\',\'' + name + '\',\'' + unit + '\')">'
-          + '<span>' + p.name + ' <small style="color:var(--g4);">(' + (p.unit || '') + ')</small></span>'
-          + '<span style="color:var(--g5);font-size:12px;">كمية: ' + p.quantity + '</span>'
-          + '</div>';
-      }).join('');
-    }
+    suggestions.style.display = 'block';
+    suggestions.innerHTML = matches.slice(0, 8).map(p => {
+      const id   = p.id;
+      const name = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const unit = (p.unit || '').replace(/'/g, "\\'");
+      return '<div class="pur-sugg-item" onclick="Purchases.selectInventoryItem(\'' + id + '\',\'' + name + '\',\'' + unit + '\')">'
+        + '<span>' + p.name + ' <small style="color:var(--g4);">(' + (p.unit || '') + ')</small></span>'
+        + '<span style="color:var(--g5);font-size:12px;">كمية: ' + p.quantity + '</span>'
+        + '</div>';
+    }).join('');
   },
 
   selectInventoryItem(id, name, unit) {
