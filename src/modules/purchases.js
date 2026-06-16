@@ -13,6 +13,7 @@ import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodS
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 import { getDashboard, getInventory } from '../core/registry.js';
+import { FIFOService } from '../services/FIFOService.js';
 
 
 
@@ -207,7 +208,9 @@ const Purchases = {
         existing = data;
       }
 
+      let productId = null;
       if (existing) {
+        productId = existing.id;
         // صنف موجود — أضف الكمية وحدّث سعر البيع
         await DB.inventory().update({
           quantity:   existing.quantity + qty,
@@ -216,7 +219,7 @@ const Purchases = {
         Notify.success('تم — المجموع: ' + (existing.quantity + qty) + ' — سعر البيع: ₪' + salePrice);
       } else {
         // صنف جديد — أنشئه في المخزون
-        await DB.inventory().insert({
+        const { data: newProd } = await DB.inventory().insert({
           store_id:        State.user.id,
           name:            productName,
           category:        'عام',
@@ -224,10 +227,27 @@ const Purchases = {
           quantity:        qty,
           sale_price:      salePrice,
           low_stock_alert: CONFIG.lowStockDefault,
-        });
+        }).select().single();
+        productId = newProd?.id;
         Notify.success('تم — أُضيف "' + productName + '" — سعر البيع: ₪' + salePrice);
       }
 
+      // ── FIFO: أنشئ batch جديد لهاد الشراء ──
+      if (productId) {
+        const unitCost = qty > 0 ? cost / qty : cost;
+        try {
+          await FIFOService.addBatch({
+            productId,
+            quantity:         qty,
+            costPrice:        unitCost,
+            sellingPrice:     salePrice,
+            supplierId:       supplier || null,
+            purchaseDate:     DOM.val('pud'),
+          });
+        } catch (fifoErr) {
+          console.warn('FIFO batch creation failed (non-critical):', fifoErr.message);
+        }
+      }
       // تحديث كاش المخزون
       await getInventory()?.loadList();
 
