@@ -22,7 +22,45 @@ const AdminPanel = {
     AdminPanel.showPage('sa-dashboard');
   },
 
-  // ── Sidebar للموبايل ──
+  // ── فتح modal إضافة محل جديد ──
+  openNewStore() {
+    // احذف أي modal قديم
+    document.getElementById('m-new-store-dynamic')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'm-new-store-dynamic';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.55);';
+    modal.innerHTML = `
+      <div style="background:#1e293b;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+          <span style="font-size:16px;font-weight:800;color:#f1f5f9;">إنشاء محل جديد</span>
+          <button onclick="document.getElementById('m-new-store-dynamic').remove()" style="background:#334155;border:none;color:#94a3b8;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;">✕</button>
+        </div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">اسم المحل *</label><input id="sa-new-store" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;" placeholder="بقالة أبو أحمد"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">اسم صاحب المحل *</label><input id="sa-new-owner" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">رقم الجوال</label><input id="sa-new-phone" inputmode="tel" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">البريد الإلكتروني *</label><input id="sa-new-user" type="email" inputmode="email" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:ltr;box-sizing:border-box;" placeholder="store@mail.com"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">كلمة المرور *</label><input id="sa-new-pass" type="password" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:ltr;box-sizing:border-box;"></div>
+        <div style="margin-bottom:1rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">مدة الاشتراك</label>
+          <select id="sa-new-months" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;">
+            <option value="1">شهر</option><option value="3">3 أشهر</option><option value="6">6 أشهر</option><option value="12" selected>سنة كاملة</option><option value="24">سنتين</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button onclick="document.getElementById('m-new-store-dynamic').remove()" style="padding:8px 14px;border-radius:9px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer;">إلغاء</button>
+          <button onclick="AdminPanel.createStore()" style="padding:8px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="ti ti-plus"></i> إنشاء المحل</button>
+        </div>
+      </div>
+    `;
+
+    // إغلاق عند الضغط على الخلفية
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('sa-new-store')?.focus(), 100);
+  },
   toggleSidebar() {
     const sidebar  = document.getElementById('sa-sidebar');
     const overlay  = document.getElementById('sa-sidebar-overlay');
@@ -189,6 +227,7 @@ const AdminPanel = {
       await db_netCards_init(storeId);
 
       Notify.success('✅ تم إنشاء محل "' + store + '" — يمكن الدخول بـ: ' + email);
+      document.getElementById('m-new-store-dynamic')?.remove();
       Modal.close('m-new-store');
       DOM.clearInputs('sa-new-store', 'sa-new-owner', 'sa-new-phone', 'sa-new-user', 'sa-new-pass');
       await AdminPanel.loadDashboard();
