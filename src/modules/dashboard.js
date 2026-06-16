@@ -24,9 +24,9 @@ const Dashboard = {
       // جلب فواتير اليوم + عناصرها + المخزون + الديون
       const [todayInv, debts, inventory, purchasesRes] = await Promise.all([
         DB.invoices().select('id,total').eq('invoice_date', todayStr),
-        DB.debts().select('amount,paid'),
-        DB.inventory().select('id,name,quantity,low_stock_alert,cost_price'),
-        DB.purchases().select('*').eq('payment_status','defer').gt('remaining',0),
+        DB.debts().select('amount,paid').limit(500),
+        DB.inventory().select('id,name,quantity,low_stock_alert,cost_price').limit(1000),
+        DB.purchases().select('*').eq('payment_status','defer').gt('remaining',0).limit(100),
       ]);
 
       // ١. مبيعات اليوم
