@@ -57,6 +57,10 @@ export const DB = {
   expenses:     () => storeTable('expenses'),
   returns:      () => storeTable('returns'),
 
+  // FIFO
+  inventoryBatches: () => storeTable('inventory_batches'),
+  saleAllocations:  () => storeTable('sale_inventory_allocations'),
+
   // Admin (no store scope)
   accounts:      () => sbAdmin.from('app_accounts'),
   stores:        () => sbAdmin.from('stores'),
