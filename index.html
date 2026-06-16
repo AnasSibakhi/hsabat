@@ -1516,8 +1516,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  <div class="fg pos-rel">
   <label class="lbl">اسم المشتري (اختياري)</label>
   <input class="inp" id="qs-buyer-name" placeholder="ابحث أو اكتب يدوي..." autocomplete="off"
-   oninput="QuickSale.searchBuyerField('qs-buyer-name','qs-buyer-phone','qs-buyer-dropdown',this.value)"
-   onfocus="QuickSale.showAllCustomers('qs-buyer-name','qs-buyer-phone','qs-buyer-dropdown')">
+   oninput="QuickSale.searchBuyerField('qs-buyer-name','qs-buyer-phone','qs-buyer-dropdown',this.value)">
  </div>
  <div class="fg">
   <label class="lbl">رقم الجوال (اختياري)</label>
@@ -1546,8 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
  <div class="fg pos-rel">
   <label class="lbl">الزبون *</label>
   <input class="inp" id="qs-debt-pay-name" placeholder="ابحث أو أدخل اسم جديد..." autocomplete="off"
-   oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)"
-   onfocus="QuickSale.showAllCustomers('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd')">
+   oninput="QuickSale.searchBuyerField('qs-debt-pay-name','qs-debt-pay-phone','qs-debt-pay-dd',this.value)">
  </div>
  <!-- صف: جوال + تاريخ -->
  <div class="fr">
@@ -1621,41 +1619,33 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(fixLayout, 100));
 <!-- Defer Modal -->
 <div class="mo" id="m-qs-pay-defer"><div class="modal" style="max-width:420px;">
  <div class="mhdr"><span class="mtitle">تطبيق لاحق</span><button class="mclose" onclick="Modal.close('m-qs-pay-defer')">✕</button></div>
- <!-- صف: اسم الزبون + رقم الجوال -->
- <div class="fr">
-  <div class="fg">
-   <label class="lbl">اسم الزبون *</label>
-   <input class="inp" id="qs-buyer-name-df" placeholder="ابحث أو اكتب..." autocomplete="off"
-     oninput="QuickSale.searchBuyerField('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df',this.value)"
-     onfocus="QuickSale.showAllCustomers('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df')">
-  </div>
-  <div class="fg">
-   <label class="lbl">رقم الجوال</label>
-   <input class="inp" id="qs-buyer-phone-df" placeholder="05X-XXXXXXX" inputmode="tel">
+ <div class="fg pos-rel">
+  <label class="lbl">اسم الزبون *</label>
+  <input class="inp" id="qs-buyer-name-df" placeholder="ابحث أو اكتب..." autocomplete="off"
+    oninput="QuickSale.searchBuyerField('qs-buyer-name-df','qs-buyer-phone-df','qs-buyer-dd-df',this.value)">
+ </div>
+ <div class="fg">
+  <label class="lbl">رقم الجوال</label>
+  <input class="inp" id="qs-buyer-phone-df" placeholder="05X-XXXXXXX" inputmode="tel">
+ </div>
+ <div class="fg">
+  <label class="lbl">على أي حساب سيحوّل؟</label>
+  <select class="inp" id="qs-defer-pay-method" style="cursor:pointer;">
+   <option value="cash">كاش</option>
+   <option value="bank">دفع تطبيق بنك</option>
+   <option value="transfer">تحويل بنكي</option>
+   <option value="other">أخرى</option>
+  </select>
+ </div>
+ <div class="fg">
+  <label class="lbl">تاريخ السداد</label>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+   <button type="button" class="debt-remind-btn2 active" data-defer-days="0" onclick="QuickSale.setDeferDate(0)">بلا</button>
+   <button type="button" class="debt-remind-btn2" data-defer-days="1" onclick="QuickSale.setDeferDate(1)">بكرا</button>
+   <button type="button" class="debt-remind-btn2" data-defer-days="7" onclick="QuickSale.setDeferDate(7)">أسبوع</button>
+   <button type="button" class="debt-remind-btn2" data-defer-days="30" onclick="QuickSale.setDeferDate(30)">شهر</button>
   </div>
  </div>
- <!-- صف: طريقة السداد + تاريخ السداد -->
- <div class="fr">
-  <div class="fg">
-   <label class="lbl">على أي حساب سيحوّل؟</label>
-   <select class="inp" id="qs-defer-pay-method" style="cursor:pointer;">
-    <option value="cash">كاش</option>
-    <option value="bank">دفع تطبيق بنك</option>
-    <option value="transfer">تحويل بنكي</option>
-    <option value="other">أخرى</option>
-   </select>
-  </div>
-  <div class="fg">
-   <label class="lbl">تاريخ السداد</label>
-   <div style="display:flex;gap:6px;flex-wrap:wrap;">
-    <button type="button" class="debt-remind-btn2 active" data-defer-days="0" onclick="QuickSale.setDeferDate(0)">بلا</button>
-    <button type="button" class="debt-remind-btn2" data-defer-days="1" onclick="QuickSale.setDeferDate(1)">بكرا</button>
-    <button type="button" class="debt-remind-btn2" data-defer-days="7" onclick="QuickSale.setDeferDate(7)">أسبوع</button>
-    <button type="button" class="debt-remind-btn2" data-defer-days="30" onclick="QuickSale.setDeferDate(30)">شهر</button>
-   </div>
-  </div>
- </div>
- <!-- الإجمالي -->
  <div style="background:var(--pl);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:12px;">
   <span style="font-size:13px;color:var(--p);">الإجمالي</span>
   <span id="qs-defer-total" style="font-weight:900;color:var(--p);">₪0</span>
