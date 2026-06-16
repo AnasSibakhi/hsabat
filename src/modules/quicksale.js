@@ -622,9 +622,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       DOM.setText('qs-defer-total', '₪' + total.toFixed(2));
       DOM.get('qs-buyer-name-df').value  = '';
       DOM.get('qs-buyer-phone-df').value = '';
-      DOM.get('qs-defer-date').value     = '';
       const sel = DOM.get('qs-defer-pay-method');
       if (sel) sel.value = 'cash';
+      QuickSale._deferDays = 0;
+      document.querySelectorAll('[data-defer-days]').forEach((b, i) =>
+        b.classList.toggle('active', i === 0)
+      );
       if (!State.customers?.length) {
         sb.from('customers').select('id,name,phone')
           .eq('store_id', State.user.id).order('name')
@@ -763,6 +766,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale.sell('transfer');
   },
 
+  setDeferDate(days) {
+    QuickSale._deferDays = days;
+    document.querySelectorAll('[data-defer-days]').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.deferDays) === days)
+    );
+  },
+
   setDeferPayMethod(method) {
     QuickSale._deferPayMethod = method;
   },
@@ -770,8 +780,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   confirmDefer() {
     const name      = (DOM.val('qs-buyer-name-df') || '').trim();
     const phone     = DOM.val('qs-buyer-phone-df') || '';
-    const date      = DOM.val('qs-defer-date')     || '';
     const payMethod = DOM.val('qs-defer-pay-method') || 'cash';
+    const days      = QuickSale._deferDays || 0;
+    const date      = days > 0
+      ? new Date(Date.now() + days * 86400000).toISOString().split('T')[0]
+      : null;
 
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
 
