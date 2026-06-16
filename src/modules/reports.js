@@ -1,52 +1,72 @@
 /**
- * reports.js — Reports Module
- * Extracted from monolithic app.js into clean module
+ * reports.js — Reports Module (FIFO-aware)
  */
 
-import { DB }     from '../core/db.js';
-import { State }  from '../core/state.js';
-import { Notify } from '../core/notify.js';
-import * as DOM     from '../core/dom.js';
-import { sb }     from '../core/db.js';
-import * as Utils from '../core/utils.js';
-import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
-import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
-import * as Modal   from '../nav/modal.js';
+import { DB, sbAdmin } from '../core/db.js';
+import { State }       from '../core/state.js';
+import { Notify }      from '../core/notify.js';
+import * as DOM        from '../core/dom.js';
+import * as Utils      from '../core/utils.js';
+import { FIFOService } from '../services/FIFOService.js';
 
 // ─────────────────────────────────────────
-// 23. REPORTS MODULE
+// REPORTS MODULE
 // ─────────────────────────────────────────
 const Reports = {
   async load(period = 'month', btn = null) {
-    if (btn) { document.querySelectorAll('#page-reports .ptab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); }
+    if (btn) {
+      document.querySelectorAll('#page-reports .ptab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+    }
     const from  = Utils.periodStart(period);
     const label = { day: 'اليوم', week: 'الأسبوع', month: 'الشهر' }[period];
 
-    // جلب البيانات
-    const [invRes, expRes, invItemsRes] = await Promise.all([
+    // جلب الفواتير والمصاريف
+    const [invRes, expRes] = await Promise.all([
       DB.invoices().select('id,total').gte('invoice_date', from),
       DB.expenses().select('amount,exp_type').gte('exp_date', from),
-      // جلب عناصر الفواتير مع تكلفة المنتج من المخزون
-      sb.from('invoice_items')
-        .select('quantity, price, inventory_id, inventory(cost_price)')
-        .in('invoice_id',
-          // نجيب IDs الفواتير في الفترة
-          (await DB.invoices().select('id').gte('invoice_date', from)).data?.map(i => i.id) || []
-        ),
     ]);
 
-    const totalSales = Utils.sumBy(invRes.data, 'total');
+    const invoiceIds  = (invRes.data || []).map(i => i.id);
+    const totalSales  = Utils.sumBy(invRes.data, 'total');
 
-    // COGS = مجموع (تكلفة الوحدة × الكمية المباعة) لكل صنف بيع
-    const totalCOGS = (invItemsRes.data || []).reduce((sum, item) => {
-      const costPrice = item.inventory?.cost_price || 0;
-      return sum + (costPrice * (item.quantity || 1));
-    }, 0);
+    // COGS من FIFO allocations (أدق من تكلفة المنتج الحالية)
+    let totalCOGS = 0;
+    if (invoiceIds.length) {
+      const { data: allocs } = await sbAdmin
+        .from('sale_inventory_allocations')
+        .select('quantity_taken, cost_price')
+        .in('sale_invoice_id', invoiceIds)
+        .eq('store_id', State.user.id);
+
+      totalCOGS = (allocs || []).reduce(
+        (sum, a) => sum + a.quantity_taken * a.cost_price, 0
+      );
+
+      // Fallback: لو ما في FIFO allocations بعد — استخدم تكلفة المنتج
+      if (!totalCOGS && invoiceIds.length) {
+        const { data: items } = await sbAdmin
+          .from('invoice_items')
+          .select('quantity, price, inventory_id, inventory(cost_price)')
+          .in('invoice_id', invoiceIds);
+
+        totalCOGS = (items || []).reduce((sum, item) => {
+          const cost = item.inventory?.cost_price || 0;
+          return sum + cost * (item.quantity || 1);
+        }, 0);
+      }
+    }
 
     const expList   = expRes.data || [];
     const totalOpex = Utils.sumBy(expList, 'amount');
     const netProfit = totalSales - totalCOGS - totalOpex;
     const margin    = totalSales > 0 ? ((netProfit / totalSales) * 100) : 0;
+
+    // تقييم المخزون الحالي بـ FIFO
+    let inventoryValue = { costValue: 0, sellValue: 0 };
+    try {
+      inventoryValue = await FIFOService.getInventoryValue();
+    } catch (e) { /* non-critical */ }
 
     // Banner
     const banner = DOM.get('profit-banner');
@@ -73,6 +93,10 @@ const Reports = {
       eqProfit.textContent = Utils.currency(netProfit);
       eqProfit.style.color = netProfit >= 0 ? 'var(--s)' : 'var(--d)';
     }
+
+    // قيمة المخزون
+    const invValEl = DOM.get('r-inventory-value');
+    if (invValEl) invValEl.textContent = Utils.currency(inventoryValue.costValue);
 
     // تفاصيل المصاريف
     const byType = expList.reduce((acc, e) => {
