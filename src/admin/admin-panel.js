@@ -183,60 +183,52 @@ const AdminPanel = {
     if (!store || !owner || !email || !pass) { Notify.error('يرجى تعبئة الحقول المطلوبة'); return; }
     if (pass.length < 6) { Notify.error('كلمة المرور 6 أحرف على الأقل'); return; }
 
+    const btn = document.querySelector('#m-new-store-dynamic button:last-child');
+    const origText = btn?.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = 'جاري الإنشاء...'; }
+
     const storeId = 'store-' + Date.now().toString(36);
     const subEnd  = new Date(); subEnd.setMonth(subEnd.getMonth() + months);
     const subStr  = subEnd.toISOString().split('T')[0];
 
     try {
-      // 1. إنشاء المستخدم عبر Admin API — لا يغير الـ session الحالية
+      // 1. Auth User أولاً
       const { data: adminData, error: adminErr } = await sbAdmin.auth.admin.createUser({
-        email,
-        password: pass,
-        email_confirm: true,
+        email, password: pass, email_confirm: true,
         user_metadata: { store_name: store, owner_name: owner, role: ROLES.OWNER },
       });
-
       if (adminErr) throw adminErr;
       const authUserId = adminData?.user?.id;
       if (!authUserId) throw new Error('فشل إنشاء حساب المصادقة');
 
-      console.log('[createStore] auth user created:', authUserId);
+      // 2 + 3 بالتوازي
+      const [r1, r2] = await Promise.all([
+        sbAdmin.from('stores').insert({
+          id: storeId, store_name: store, owner_name: owner,
+          phone, is_active: true, subscription_end: subStr, auth_id: authUserId,
+        }),
+        sbAdmin.from('app_accounts').insert({
+          id: storeId, username: email, password: 'supabase-auth',
+          store_name: store, owner_name: owner, role: ROLES.OWNER,
+          is_active: true, subscription_end: subStr, auth_id: authUserId,
+        }),
+      ]);
+      if (r1.error) throw r1.error;
+      if (r2.error) throw r2.error;
 
-      // 2. إنشاء المحل — نستخدم sbAdmin لتجاوز RLS
-      const { error: e1 } = await sbAdmin.from('stores').insert({
-        id: storeId, store_name: store, owner_name: owner,
-        phone, is_active: true, subscription_end: subStr, auth_id: authUserId,
-      });
-      if (e1) throw e1;
-
-      // 3. إنشاء الحساب في app_accounts مع auth_id
-      const { error: e2 } = await sbAdmin.from('app_accounts').insert({
-        id:               storeId,
-        username:         email,
-        password:         'supabase-auth',
-        store_name:       store,
-        owner_name:       owner,
-        role:             ROLES.OWNER,
-        is_active:        true,
-        subscription_end: subStr,
-        auth_id:          authUserId,
-      });
-      if (e2) throw e2;
-
-      // 4. تهيئة مخزون البطاقات
-      await db_netCards_init(storeId);
+      // 4. تهيئة البطاقات في الخلفية
+      db_netCards_init(storeId).catch(() => {});
 
       Notify.success('✅ تم إنشاء محل "' + store + '" — يمكن الدخول بـ: ' + email);
       document.getElementById('m-new-store-dynamic')?.remove();
-      Modal.close('m-new-store');
       DOM.clearInputs('sa-new-store', 'sa-new-owner', 'sa-new-phone', 'sa-new-user', 'sa-new-pass');
-      await AdminPanel.loadDashboard();
-      await AdminPanel.loadStores();
+      await Promise.all([AdminPanel.loadDashboard(), AdminPanel.loadStores()]);
     } catch (err) {
-      console.error('[AdminPanel.createStore]', err);
       Notify.error(err.message);
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
     }
   },
+
 
   async toggleStore(storeId, currentActive) {
     const newState = !currentActive;
