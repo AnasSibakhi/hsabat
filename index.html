@@ -784,7 +784,7 @@ PalPay" style="resize:none;"></textarea>
    <!-- RETURNS -->
    <div class="page" id="page-returns">
     <div class="ph"><span class="pt">الإرجاعات</span></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>الزبون</th><th>المبلغ</th><th>النوع</th><th>ملاحظات</th></tr></thead><tbody id="ret-list"><tr class="er"><td colspan="6"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>المبلغ</th><th>النوع</th><th>ملاحظات</th></tr></thead><tbody id="ret-list"><tr class="er"><td colspan="5"><span class="spin">↻</span></td></tr></tbody></table></div></div>
    </div>
 
    <!-- SETTINGS -->
@@ -795,7 +795,7 @@ PalPay" style="resize:none;"></textarea>
      <div class="fg"><label class="lbl">اسم صاحب المحل</label><input class="inp" id="set2"></div>
      <div class="fg"><label class="lbl">رقم الجوال</label><input class="inp" id="set3" inputmode="tel"></div>
      <div class="flex-between">
-      <button class="btn btn-s" onclick="Settings.save()">حفظ</button>
+      <button class="btn btn-s" onclick="Guard.run('save-settings', () => Settings.save(), this)">حفظ</button>
       <span id="set-save-msg" style="font-size:12px;color:var(--s);display:none;">✅ تم الحفظ</span>
      </div>
     </div></div>
@@ -863,7 +863,7 @@ PalPay" style="resize:none;"></textarea>
  <div class="fg"><label class="lbl">الاسم *</label><input class="inp" id="cn" placeholder="اسم الزبون"></div>
  <div class="fr"><div class="fg"><label class="lbl">الجوال</label><input class="inp" id="cph" inputmode="tel" placeholder="059-..."></div><div class="fg"><label class="lbl">العنوان</label><input class="inp" id="cad"></div></div>
  <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="cno" placeholder="اختياري"></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-customer')">إلغاء</button><button class="btn btn-s" onclick="Customers.save()">إضافة</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-customer')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-customer', () => Customers.save(), this)">إضافة</button></div>
 </div></div>
 
 <!-- Debt -->
@@ -893,7 +893,7 @@ PalPay" style="resize:none;"></textarea>
    <button type="button" class="debt-remind-btn" data-days="7" onclick="Debts.setRemind(7)">أسبوع</button>
   </div>
  </div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-debt')">إلغاء</button><button class="btn btn-s" onclick="Debts.save()">حفظ</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-debt')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-debt', () => Debts.save(), this)">حفظ</button></div>
 </div></div>
 
 <!-- Pay -->
@@ -1003,7 +1003,7 @@ PalPay" style="resize:none;"></textarea>
 
  <div class="mfoot">
   <button class="btn btn-o" onclick="Modal.close('m-invoice')">إلغاء</button>
-  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="Invoices.save()"><i class="ti ti-device-floppy"></i> حفظ الفاتورة</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="Guard.run('save-invoice', () => Invoices.save(), this)"><i class="ti ti-device-floppy"></i> حفظ الفاتورة</button>
  </div>
 </div></div>
 
@@ -1068,7 +1068,7 @@ PalPay" style="resize:none;"></textarea>
  <div class="fr"><div class="fg"><label class="lbl">الفئة</label><select class="inp" id="inc"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>مشروبات</option><option>عام</option></select></div><div class="fg"><label class="lbl">النوع</label><select class="inp" id="inu"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div></div>
  <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="inq" value="0" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="insp" value="0" inputmode="decimal"></div></div>
  <div class="fr"><div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="incp" value="0" inputmode="decimal" placeholder="اختياري"></div><div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="ina" value="10" inputmode="decimal"></div></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv')">إلغاء</button><button class="btn btn-s" onclick="Inventory.save()">إضافة</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-inventory', () => Inventory.save(), this)">إضافة</button></div>
 </div></div>
 
 <!-- Edit Inventory -->
@@ -1113,7 +1113,7 @@ PalPay" style="resize:none;"></textarea>
  <div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="einvalert" inputmode="decimal"></div>
  <div class="mfoot">
    <button class="btn btn-o" onclick="Modal.close('m-editinv')">إلغاء</button>
-   <button class="btn btn-s" onclick="Inventory.update()">حفظ التعديل</button>
+   <button class="btn btn-s" onclick="Guard.run('update-inventory', () => Inventory.update(), this)">حفظ التعديل</button>
  </div>
 </div></div>
 
@@ -1185,7 +1185,7 @@ PalPay" style="resize:none;"></textarea>
    </div>
  </div>
 
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-pur')">إلغاء</button><button class="btn btn-s" onclick="Purchases.save()">حفظ وتحديث المخزون</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-pur')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-purchase', () => Purchases.save(), this)">حفظ وتحديث المخزون</button></div>
 </div></div>
 
 <!-- Net Sale -->
@@ -1195,7 +1195,7 @@ PalPay" style="resize:none;"></textarea>
  <div class="fr"><div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="nst" onchange="NetCards.calcTotal()"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div><div class="fg"><label class="lbl">العدد</label><input class="inp" type="number" id="nsq" value="1" oninput="NetCards.calcTotal()" inputmode="numeric"></div></div>
  <div style="display:flex;justify-content:space-between;background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:14px;"><span>المجموع:</span><strong id="nstotal">₪ 1</strong></div>
  <div class="fg"><label class="lbl">الدفع</label><div class="flex-gap8"><label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="nsp" value="full" checked> كلي</label><label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="nsp" value="partial"> جزئي</label></div></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-netsale')">إلغاء</button><button class="btn btn-s" onclick="NetCards.sell()">تأكيد</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-netsale')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('sell-netcard', () => NetCards.sell(), this)">تأكيد</button></div>
 </div></div>
 
 <!-- Add Net Stock -->
@@ -1212,7 +1212,7 @@ PalPay" style="resize:none;"></textarea>
  <div class="fg"><label class="lbl">نوع المصروف *</label><select class="inp" id="exp-type"><option>رواتب موظفين</option><option>كهرباء</option><option>إنترنت</option><option>إيجار</option><option>نقل وشحن</option><option>صيانة</option><option>تسويق وإعلان</option><option>مستلزمات مكتبية</option><option>أخرى</option></select></div>
  <div class="fr"><div class="fg"><label class="lbl">المبلغ (₪) *</label><input class="inp" type="number" id="exp-amount" inputmode="decimal" placeholder="0.00"></div><div class="fg"><label class="lbl">التاريخ</label><input class="inp" type="date" id="exp-date"></div></div>
  <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="exp-notes" placeholder="اختياري"></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-expense')">إلغاء</button><button class="btn btn-s" onclick="Expenses.save()">حفظ</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-expense')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-expense', () => Expenses.save(), this)">حفظ</button></div>
 </div></div>
 
 <!-- Statement -->
@@ -1226,7 +1226,6 @@ PalPay" style="resize:none;"></textarea>
 <div class="mo" id="m-return"><div class="modal">
  <div class="mhdr"><span class="mtitle">إرجاع بضاعة</span><button class="mclose" onclick="Modal.close('m-return')">✕</button></div>
  <input type="hidden" id="ret-inv-id">
- <input type="hidden" id="ret-buyer-name">
  <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;color:var(--g6);" id="ret-inv-info"></div>
  <div class="fg"><label class="lbl">مبلغ الإرجاع (₪)</label><input class="inp" type="number" id="ret-amount" inputmode="decimal"></div>
  <div class="fg"><label class="lbl">طريقة الإرجاع</label>
@@ -1237,7 +1236,7 @@ PalPay" style="resize:none;"></textarea>
   </div>
  </div>
  <div class="fg"><label class="lbl">ملاحظات</label><input class="inp" id="ret-notes" placeholder="سبب الإرجاع..."></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Returns.save()">تأكيد الإرجاع</button></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-return', () => Returns.save(), this)">تأكيد</button></div>
 </div></div>
 
 <script type="module" src="/src/ui/drawer.js"></script>
@@ -1509,7 +1508,7 @@ PalPay" style="resize:none;"></textarea>
  </div>
  <div class="mfoot">
   <button class="btn btn-o" onclick="Modal.close('m-qs-pay-cash')">رجوع</button>
-  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.sell('cash')"><i class="ti ti-check"></i> تأكيد البيع</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="Guard.run('sell-cash', () => QuickSale.sell('cash'), this)"><i class="ti ti-check"></i> تأكيد البيع</button>
  </div>
 </div></div>
 
@@ -1561,7 +1560,7 @@ PalPay" style="resize:none;"></textarea>
  </div>
  <div class="mfoot">
   <button class="btn btn-o" onclick="Modal.close('m-qs-pay-debt')">إلغاء</button>
-  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDebtPay()"><i class="ti ti-check"></i> حفظ الدين</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="Guard.run('sell-debt', () => QuickSale.confirmDebtPay(), this)"><i class="ti ti-check"></i> حفظ الدين</button>
  </div>
 </div></div>
 
@@ -1627,7 +1626,7 @@ PalPay" style="resize:none;"></textarea>
  </div>
  <div class="mfoot">
   <button class="btn btn-o" onclick="Modal.close('m-qs-pay-defer')">رجوع</button>
-  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="QuickSale.confirmDefer()"><i class="ti ti-check"></i> حفظ تطبيق لاحق</button>
+  <button class="btn btn-s" style="flex:1;justify-content:center;" onclick="Guard.run('sell-defer', () => QuickSale.confirmDefer(), this)"><i class="ti ti-check"></i> حفظ تطبيق لاحق</button>
  </div>
 </div></div>
 
