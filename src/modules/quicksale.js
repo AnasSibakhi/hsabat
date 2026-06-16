@@ -13,6 +13,7 @@ import { CONFIG, PAYMENT } from '../config/constants.js';
 import * as Modal          from '../nav/modal.js';
 import { getDashboard, getDebts, getInventory } from '../core/registry.js';
 import { Customers }       from './customers.js';
+import { FIFOService }     from '../services/FIFOService.js';
 import { BarcodeScanner }  from '../services/BarcodeScanner.js';
 
 // ── State ──
@@ -1204,7 +1205,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         inventory_id: c.id, quantity: c.qty, price: c.price,
       })));
 
-      // Deduct inventory
+      // Deduct inventory + FIFO tracking
       for (const item of _cart) {
         const p = State.inventory.find(x => x.id === item.id);
         if (p) {
@@ -1212,6 +1213,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           await DB.inventory().update({ quantity: newQty }).eq('id', item.id);
           p.quantity = newQty;
           if (newQty <= p.low_stock_alert && newQty > 0) Notify.warn('"' + p.name + '" — المخزون منخفض: ' + newQty);
+        }
+        // FIFO — استهلك من الـ batches الأقدم
+        if (item.id) {
+          try {
+            await FIFOService.consumeFIFO({
+              productId:      item.id,
+              quantityNeeded: item.qty,
+              invoiceId:      inv.id,
+            });
+          } catch (fifoErr) {
+            console.warn('FIFO consume (non-critical):', fifoErr.message);
+          }
         }
       }
 
