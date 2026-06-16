@@ -27,6 +27,7 @@ import { Notifications }  from './modules/notifications.js';
 import { Settings }       from './nav/store-boot.js';
 import { Guard }          from './core/ratelimit.js';
 import { AdminPanel } from './admin/admin-panel.js';
+window.AdminPanel = AdminPanel; // مباشرة — قبل DOMContentLoaded
 import { Registry }   from './core/registry.js';
 
 // ── Expose services globally ──
