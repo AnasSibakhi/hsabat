@@ -603,11 +603,20 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       Modal.open('m-qs-pay-transfer');
 
     } else if (type === 'defer') {
-      DOM.setText('qs-defer-total', '₪' + total.toFixed(2));
-      DOM.get('qs-buyer-name-df').value = '';
-      DOM.get('qs-buyer-phone-df').value = '';
-      DOM.get('qs-defer-date').value = '';
-      Modal.open('m-qs-pay-defer');
+      const debtTotal = DOM.get('qs-debt-pay-total');
+      if (debtTotal) debtTotal.textContent = '₪' + total.toFixed(2);
+      DOM.get('qs-debt-pay-name').value  = '';
+      DOM.get('qs-debt-pay-phone').value = '';
+      DOM.get('qs-debt-pay-dd').style.display = 'none';
+      QuickSale._deferData = null;
+      // preload customers
+      if (!State.customers?.length) {
+        sb.from('customers').select('id,name,phone')
+          .eq('store_id', State.user.id).order('name')
+          .then(({ data }) => { State.customers = data || []; });
+      }
+      Modal.open('m-qs-pay-debt');
+      setTimeout(() => DOM.get('qs-debt-pay-name')?.focus(), 150);
     }
   },
 
