@@ -2,7 +2,7 @@
  * debts.js — Debts Module
  */
 
-import { DB }     from '../core/db.js';
+import { DB, sb } from '../core/db.js';
 import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
 import * as DOM   from '../core/dom.js';
@@ -12,7 +12,6 @@ import { CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getDashboard } from '../core/registry.js';
 import { Customers }    from './customers.js';
-import { sb }           from '../core/db.js';
 
 // ── State ──
 let _allDebts    = [];
