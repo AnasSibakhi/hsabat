@@ -45,29 +45,46 @@ const Purchases = {
   },
 
   _renderRows(data) {
-    const STATUS = { cash:'كاش', transfer:'تحويل', defer:'آجل' };
-    const CLS    = { cash:'bg',  transfer:'bb',     defer:'ba'  };
+    const STATUS = { cash:{l:'كاش ✓',c:'sl',t:'s'}, transfer:{l:'تحويل',c:'pl',t:'p'}, defer:{l:'آجل',c:'wl',t:'w'} };
     DOM.setHTML('purlist', (data || []).length
       ? data.map(p => {
-          const rem = p.remaining > 0
-            ? '<br><small style="color:var(--d);">متبقي: ₪' + p.remaining.toFixed(2) + '</small>' : '';
-          return '<tr>'
-            + '<td><strong>' + Utils.escape(p.supplier) + '</strong>'
-            + (p.supplier_phone ? '<br><a href="tel:' + p.supplier_phone + '" style="font-size:11px;color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '')
-            + '</td>'
-            + '<td>' + Utils.escape(p.product_name) + '</td>'
-            + '<td>' + (p.invoice_ref || '-') + '</td>'
-            + '<td>' + p.quantity + '</td>'
-            + '<td><strong>₪' + p.cost.toFixed(2) + '</strong></td>'
-            + '<td style="color:var(--p);">' + (p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-') + '</td>'
-            + '<td><span class="' + (CLS[p.payment_status] || 'bg') + '">' + (STATUS[p.payment_status] || 'كاش') + '</span>' + rem + '</td>'
-            + '<td style="color:var(--g5);font-size:12px;">' + p.purchase_date + '</td>'
-            + '<td style="white-space:nowrap;">'
-            + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')">تعديل</button> '
-            + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
-            + '</td></tr>';
+          const st = STATUS[p.payment_status] || STATUS.cash;
+          const initials = (p.supplier || '؟').trim().slice(0, 2);
+          const remaining = p.remaining > 0
+            ? '<div style="font-size:10px;color:var(--d);margin-top:2px;">متبقي: ₪' + p.remaining.toFixed(2) + '</div>'
+            : '';
+          return `<div class="pur-card">
+            <div class="pur-card-top">
+              <div class="pur-supplier">
+                <div class="pur-avatar">${Utils.escape(initials)}</div>
+                <div style="min-width:0;">
+                  <div class="pur-sname">${Utils.escape(p.supplier)}</div>
+                  ${p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" class="pur-sphone">' + Utils.escape(p.supplier_phone) + '</a>' : ''}
+                </div>
+              </div>
+              <div>
+                <span class="pur-status" style="background:var(--${st.c});color:var(--${st.t});">${st.l}</span>
+                ${remaining}
+              </div>
+            </div>
+            <div class="pur-product-row">
+              <span class="pur-product-name">📦 ${Utils.escape(p.product_name)}</span>
+              <span class="pur-product-qty">${p.quantity} وحدة</span>
+            </div>
+            <div class="pur-grid2">
+              <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${p.cost.toFixed(2)}</div></div>
+              <div class="pur-stat"><div class="pur-stat-label">سعر البيع</div><div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div></div>
+            </div>
+            <div class="pur-footer">
+              <span>${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''}</span>
+              <div class="pur-actions">
+                <button class="ibb" onclick="Purchases.openEdit('${p.id}')">تعديل</button>
+                <button class="ibr" onclick="Purchases.delete('${p.id}')">حذف</button>
+              </div>
+            </div>
+          </div>`;
         }).join('')
-      : '<tr class="er"><td colspan="9">لا توجد مشتريات</td></tr>'
+      : '<div class="er" style="padding:30px;text-align:center;color:var(--g5);">لا توجد مشتريات</div>'
     );
   },
 
