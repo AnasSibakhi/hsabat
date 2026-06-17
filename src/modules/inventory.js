@@ -420,8 +420,6 @@ const Inventory = {
     }
   },
 
-  },
-
   async update() {
     const id      = DOM.val('einvid');
     const name    = DOM.val('einvname')?.trim();
