@@ -63,7 +63,7 @@ const Purchases = {
     const groups = Purchases._groupBySupplier(data || []);
     DOM.setHTML('purlist', groups.length
       ? groups.map((g, idx) => {
-          const total      = g.items.reduce((s, p) => s + (p.sale_price || p.cost || 0), 0);
+          const totalCost  = g.items.reduce((s, p) => s + (p.cost || 0), 0);
           const hasDebt     = g.items.some(p => p.remaining > 0);
           const initials    = (g.supplier || '؟').trim().slice(0, 2);
           const itemsHtml   = g.items.map(p => Purchases._renderItem(p)).join('');
@@ -79,10 +79,10 @@ const Purchases = {
               <div class="sup-summary">
                 <span class="sup-count">${g.items.length} ${g.items.length === 1 ? 'مشترى' : 'مشتريات'}</span>
                 <div class="pur-stat" style="background:none;padding:0;">
-                  <div class="pur-stat-label">الإجمالي</div>
-                  <div class="pur-stat-val" style="color:var(--p);">₪${total.toFixed(2)}</div>
+                  <div class="pur-stat-label">إجمالي ما اشتريتيه منه</div>
+                  <div class="pur-stat-val" style="color:var(--p);">₪${totalCost.toFixed(2)}</div>
                 </div>
-                ${hasDebt ? '<span class="sup-debt-dot" title="يوجد دين"></span>' : ''}
+                ${hasDebt ? '<span class="sup-debt-dot" title="يوجد مبلغ متبقٍ غير مدفوع لهذا المورد"></span>' : ''}
                 <span class="sup-chevron">‹</span>
               </div>
             </div>
@@ -98,19 +98,32 @@ const Purchases = {
     const STATUS = { cash:{l:'كاش ✓',c:'sl',t:'s'}, transfer:{l:'تحويل',c:'pl',t:'p'}, defer:{l:'آجل',c:'wl',t:'w'} };
     const st = STATUS[p.payment_status] || STATUS.cash;
     const showPaidRow = p.payment_status === 'defer';
+    const cost      = p.cost || 0;
+    const showUnit  = p.quantity > 1;
+    const unitCost  = showUnit ? (cost / p.quantity) : 0;
+    const unitSale  = (showUnit && p.sale_price) ? (p.sale_price / p.quantity) : 0;
+
     return `<div class="pur-item">
       <div class="pur-item-top">
         <span class="pur-product-name">${Utils.escape(p.product_name)}</span>
         <span class="pur-status" style="background:var(--${st.c});color:var(--${st.t});">${st.l}</span>
       </div>
-      <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية ${p.quantity} وحدة</div>
+      <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية المشتراة ${p.quantity} وحدة</div>
       <div class="pur-grid2">
-        <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${p.cost.toFixed(2)}</div></div>
-        <div class="pur-stat"><div class="pur-stat-label">سعر البيع</div><div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div></div>
+        <div class="pur-stat">
+          <div class="pur-stat-label">إجمالي التكلفة</div>
+          <div class="pur-stat-val">₪${cost.toFixed(2)}</div>
+          ${showUnit ? '<div class="pur-stat-sub">₪' + unitCost.toFixed(2) + ' / وحدة</div>' : ''}
+        </div>
+        <div class="pur-stat">
+          <div class="pur-stat-label">إجمالي سعر البيع</div>
+          <div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div>
+          ${showUnit && p.sale_price ? '<div class="pur-stat-sub">₪' + unitSale.toFixed(2) + ' / وحدة</div>' : ''}
+        </div>
       </div>
       ${showPaidRow ? `<div class="pur-grid2" style="margin-top:-2px;">
-        <div class="pur-stat"><div class="pur-stat-label">المدفوع</div><div class="pur-stat-val" style="color:var(--s);">₪${(p.paid_amount || 0).toFixed(2)}</div></div>
-        <div class="pur-stat"><div class="pur-stat-label">المتبقي</div><div class="pur-stat-val" style="color:var(--d);">₪${(p.remaining || 0).toFixed(2)}</div></div>
+        <div class="pur-stat"><div class="pur-stat-label">المدفوع لهذا المورد</div><div class="pur-stat-val" style="color:var(--s);">₪${(p.paid_amount || 0).toFixed(2)}</div></div>
+        <div class="pur-stat"><div class="pur-stat-label">المتبقي عليك</div><div class="pur-stat-val" style="color:var(--d);">₪${(p.remaining || 0).toFixed(2)}</div></div>
       </div>` : ''}
       <div class="pur-item-actions">
         <button class="ibb" onclick="event.stopPropagation();Purchases.openEdit('${p.id}')">تعديل</button>
