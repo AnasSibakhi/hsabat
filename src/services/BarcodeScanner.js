@@ -81,6 +81,15 @@ export const BarcodeScanner = {
     _cb = onSuccess; _last = null;
     el.innerHTML = '';
 
+    // مؤشر تحميل واضح بدل الشاشة السودا أثناء انتظار صلاحية الكاميرا
+    el.innerHTML = `
+      <div id="bc-loading-${containerId}" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:14px;z-index:1;">
+        <div style="width:42px;height:42px;border:3px solid rgba(255,255,255,0.2);border-top-color:#6366f1;border-radius:50%;animation:bc-spin 0.8s linear infinite;"></div>
+        <span style="color:#fff;font-size:14px;font-family:Cairo,sans-serif;opacity:0.85;">جاري فتح الكاميرا...</span>
+      </div>
+      <style>@keyframes bc-spin{to{transform:rotate(360deg)}}</style>
+    `;
+
     if ('BarcodeDetector' in window) {
       // ── Android Chrome: Native API ──
       _starting = true;
@@ -112,6 +121,7 @@ export const BarcodeScanner = {
       _video.setAttribute('muted','');
       _video.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;background:#000;';
       _video.srcObject = _stream;
+      document.getElementById(`bc-loading-${containerId}`)?.remove(); // امسح مؤشر التحميل
       el.appendChild(_video);
       try { await _video.play(); } catch {}
 
@@ -203,6 +213,9 @@ export const BarcodeScanner = {
             : 'لا يمكن فتح الكاميرا');
           return;
         }
+        // امسح مؤشر التحميل قبل ظهور فيديو Quagga
+        document.getElementById(`bc-loading-${el.id}`)?.remove();
+
         Quagga.start();
         _active = true;
 
