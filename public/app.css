@@ -678,14 +678,16 @@ body.dark .ni.active{background:#1e3a5f;}
 .prod-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;white-space:nowrap;}
 .prod-name{font-size:14px;font-weight:800;color:var(--g9);margin:6px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .prod-meta{font-size:11px;color:var(--g5);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.prod-price-row{display:flex;justify-content:space-between;align-items:flex-start;padding-top:8px;border-top:1px solid var(--g1);margin-bottom:8px;}
-.prod-price-label{font-size:9px;color:var(--g4);display:block;}
+.prod-price-row{display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;border-top:1px solid var(--g1);margin-bottom:8px;}
 .prod-price{font-size:15px;font-weight:900;color:var(--p);display:block;}
 .prod-cost{font-size:10px;color:var(--g5);display:block;margin-top:3px;}
 .prod-margin{font-size:10px;color:var(--s);font-weight:700;display:block;margin-top:2px;}
-.prod-qty{font-size:13px;color:var(--g6);font-weight:800;white-space:nowrap;}
+.prod-margin.loss{color:var(--d);}
+.prod-price-label{font-size:9px;color:var(--g4);display:block;}
+.prod-qty{font-size:11px;color:var(--g6);font-weight:700;white-space:nowrap;}
 .prod-actions{display:flex;gap:5px;}
 .prod-actions button{flex:1;padding:6px 4px;border-radius:8px;font-size:10px;}
+.prod-actions button.print-btn{flex:0 0 32px;padding:6px 0;}
 
 /* ── PURCHASES — مُجمّعة حسب المورد (Accordion) ── */
 .pur-grid{display:flex;flex-direction:column;gap:10px;}
@@ -714,6 +716,5 @@ body.dark .ni.active{background:#1e3a5f;}
 .pur-stat{text-align:center;background:#fff;border-radius:8px;padding:6px;}
 .pur-stat-label{font-size:10px;color:var(--g5);margin-bottom:2px;}
 .pur-stat-val{font-size:13px;font-weight:800;color:var(--g9);}
-.pur-stat-sub{font-size:9px;color:var(--g5);margin-top:2px;}
 .pur-item-actions{display:flex;gap:5px;}
 .pur-item-actions button{flex:1;padding:5px;border-radius:6px;font-size:10px;}
