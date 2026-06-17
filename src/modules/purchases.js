@@ -544,11 +544,12 @@ const Purchases = {
     const product   = document.getElementById('edit-pur-product').value.trim();
     const qty       = parseFloat(document.getElementById('edit-pur-qty').value) || 1;
     const cost      = parseFloat(document.getElementById('edit-pur-cost').value);
-    const salePrice = parseFloat(document.getElementById('edit-pur-sale-price').value) || null;
+    const salePrice = parseFloat(document.getElementById('edit-pur-sale-price').value);
     const date      = document.getElementById('edit-pur-date').value;
 
-    if (!supplier) { Notify.error('أدخل اسم المورد'); return; }
-    if (!cost || cost <= 0) { Notify.error('أدخل التكلفة'); return; }
+    if (!supplier)                    { Notify.error('أدخل اسم المورد'); return; }
+    if (!cost || cost <= 0)           { Notify.error('أدخل التكلفة'); return; }
+    if (!salePrice || salePrice <= 0) { Notify.error('أدخل سعر البيع'); return; }
 
     try {
       const phone = document.getElementById('edit-pur-phone').value.trim();
