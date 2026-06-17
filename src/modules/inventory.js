@@ -238,28 +238,52 @@ const Inventory = {
   },
 
   _renderList(list) {
-    const getStatus = (i) => {
-      if (i.quantity <= 0)                              return '<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🔴 نفد</span>';
-      if (i.quantity <= (i.low_stock_alert || 5))       return '<span style="background:#fef3c7;color:#d97706;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟡 منخفض</span>';
-      return '<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">🟢 متوفر</span>';
+    const getStatusBadge = (i) => {
+      if (i.quantity <= 0)                        return { cls: 'b-out', label: '🔴 نفد' };
+      if (i.quantity <= (i.low_stock_alert || 5))  return { cls: 'b-low', label: '🟡 منخفض' };
+      return { cls: 'b-ok', label: '🟢 متوفر' };
     };
+    const CAT_ICON = {
+      'مواد غذائية': '🌾', 'مشروبات': '🥤', 'حلويات': '🍫', 'منظفات': '🧼',
+      'مستلزمات شخصية': '🧴', 'خضار وفواكه': '🥦', 'ألبان': '🧀', 'لحوم': '🥩',
+      'مخبوزات': '🍞', 'بهارات': '🧂', 'معلبات': '🥫', 'مجمدات': '🧊',
+      'بقالة': '🛒', 'أدوات منزلية': '🏠', 'إلكترونيات': '🔌', 'ألعاب': '🧸',
+      'قرطاسية': '✏️', 'أدوية': '💊', 'عام': '📦',
+    };
+    const CAT_COLOR = {
+      'مواد غذائية': '#0e9f6e', 'مشروبات': '#c27803', 'حلويات': '#c81e1e',
+      'منظفات': '#1a56db', 'مستلزمات شخصية': '#7c3aed', 'خضار وفواكه': '#0e9f6e',
+      'ألبان': '#1a56db', 'لحوم': '#c81e1e', 'مخبوزات': '#c27803',
+    };
+
     DOM.setHTML('invlist', list.length
-      ? list.map(i => `<tr onclick="Inventory.openProduct('${i.id}')" style="cursor:pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-          <td style="font-weight:700;">${Utils.escape(i.name)}</td>
-          <td style="font-family:monospace;color:var(--g6);font-size:12px;">${i.barcode || '-'}</td>
-          <td>${Utils.escape(i.category || '-')}</td>
-          <td style="color:var(--p);font-weight:700;">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</td>
-          <td style="color:var(--g6);">${i.cost_price ? '₪' + i.cost_price.toFixed(2) : '-'}</td>
-          <td style="font-weight:700;">${i.quantity} ${Utils.escape(i.unit || '')}</td>
-          <td>${getStatus(i)}</td>
-          <td style="white-space:nowrap;display:flex;gap:4px;">
-            <button class="ibb" onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')">تعديل</button>
-            <button class="ibb" onclick="event.stopPropagation();Inventory.openProduct('${i.id}')">تفاصيل</button>
-            ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
-            <button class="ibr" onclick="event.stopPropagation();Inventory.delete('${i.id}')">حذف</button>
-          </td>
-        </tr>`).join('')
-      : '<tr class="er"><td colspan="8">لا يوجد منتجات</td></tr>'
+      ? list.map(i => {
+          const status = getStatusBadge(i);
+          const icon   = CAT_ICON[i.category] || '📦';
+          const color  = CAT_COLOR[i.category] || 'var(--p)';
+          return `<div class="prod-card" onclick="Inventory.openProduct('${i.id}')" style="--cat-color:${color};">
+            <div class="prod-card-top">
+              <div class="prod-icon" style="background:${color}1a;">${icon}</div>
+              <span class="prod-badge ${status.cls}">${status.label}</span>
+            </div>
+            <div class="prod-name">${Utils.escape(i.name)}</div>
+            <div class="prod-meta">${Utils.escape(i.category || '-')} · ${Utils.escape(i.unit || '-')}${i.barcode ? ' · <span style="font-family:monospace;">' + i.barcode + '</span>' : ''}</div>
+            <div class="prod-price-row">
+              <div>
+                <span class="prod-price">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</span>
+                ${i.cost_price ? '<span class="prod-cost">تكلفة ₪' + i.cost_price.toFixed(2) + '</span>' : ''}
+              </div>
+              <span class="prod-qty">${i.quantity} ${Utils.escape(i.unit || '')}</span>
+            </div>
+            <div class="prod-actions">
+              <button class="ibb" onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')">تعديل</button>
+              <button class="ibb" onclick="event.stopPropagation();Inventory.openProduct('${i.id}')">تفاصيل</button>
+              ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
+              <button class="ibr" onclick="event.stopPropagation();Inventory.delete('${i.id}')">حذف</button>
+            </div>
+          </div>`;
+        }).join('')
+      : '<div class="er" style="grid-column:1/-1;padding:30px;text-align:center;color:var(--g5);">لا يوجد منتجات</div>'
     );
   },
 
