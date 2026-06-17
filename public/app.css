@@ -28,6 +28,8 @@ body{
 }
 
 input[type="number"]{direction:ltr;text-align:right;}
+/* القيم الصفرية تظهر شفافة باهتة لتسهيل الكتابة فوقها بسرعة */
+input[type="number"].zero-val{color:var(--g3)!important;}
 .hidden{display:none!important;}
 /* ═══════════════════════════════════
    layout.css — App Shell + Navigation + Pages
