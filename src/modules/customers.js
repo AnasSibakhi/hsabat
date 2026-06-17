@@ -3,8 +3,7 @@
  * All customer-related operations
  */
 
-import { DB }          from '../core/db.js';
-import { sb }          from '../core/db.js';
+import { DB, sb } from '../core/db.js';
 import { State }       from '../core/state.js';
 import { Notify }      from '../core/notify.js';
 import * as DOM        from '../core/dom.js';
