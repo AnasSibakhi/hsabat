@@ -685,21 +685,32 @@ body.dark .ni.active{background:#1e3a5f;}
 .prod-actions{display:flex;gap:5px;}
 .prod-actions button{flex:1;padding:6px 4px;border-radius:8px;font-size:10px;}
 
-/* ── PURCHASE CARDS — صفحة المشتريات ── */
+/* ── PURCHASES — مُجمّعة حسب المورد (Accordion) ── */
 .pur-grid{display:flex;flex-direction:column;gap:10px;}
-.pur-card{background:#fff;border:1px solid var(--br);border-radius:14px;padding:14px;}
-.pur-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px;}
-.pur-supplier{display:flex;align-items:center;gap:10px;min-width:0;}
-.pur-avatar{width:40px;height:40px;border-radius:10px;background:var(--pl);color:var(--p);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0;}
-.pur-sname{font-size:13px;font-weight:800;color:var(--g9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sup-card{background:#fff;border:1px solid var(--br);border-radius:14px;overflow:hidden;}
+.sup-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;}
+.sup-header:hover{background:var(--g0);}
+.sup-info{display:flex;align-items:center;gap:10px;min-width:0;}
+.sup-name{font-size:13px;font-weight:800;color:var(--g9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sup-summary{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.sup-count{background:var(--pl);color:var(--p);font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.sup-debt-dot{width:8px;height:8px;border-radius:50%;background:var(--d);display:inline-block;}
+.sup-chevron{font-size:14px;color:var(--g4);transition:.2s;display:inline-block;}
+.sup-card.open .sup-chevron{transform:rotate(-90deg);}
+.sup-items{display:none;border-top:1px solid var(--g1);padding:8px;}
+.sup-card.open .sup-items{display:flex;flex-direction:column;gap:8px;}
+
+.pur-avatar{width:38px;height:38px;border-radius:10px;background:var(--pl);color:var(--p);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;}
 .pur-sphone{font-size:11px;color:var(--p);}
 .pur-status{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.pur-product-row{display:flex;justify-content:space-between;align-items:center;background:var(--g0);border-radius:10px;padding:8px 12px;margin-bottom:8px;}
+
+.pur-item{background:var(--g0);border-radius:10px;padding:10px 12px;}
+.pur-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;}
 .pur-product-name{font-size:12px;color:var(--g7);font-weight:700;}
-.pur-product-qty{font-size:11px;color:var(--g5);}
+.pur-item-meta{font-size:10px;color:var(--g5);margin-bottom:8px;}
 .pur-grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px;}
-.pur-stat{text-align:center;background:var(--g0);border-radius:8px;padding:6px;}
+.pur-stat{text-align:center;background:#fff;border-radius:8px;padding:6px;}
 .pur-stat-label{font-size:10px;color:var(--g5);margin-bottom:2px;}
 .pur-stat-val{font-size:13px;font-weight:800;color:var(--g9);}
-.pur-footer{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--g5);padding-top:8px;border-top:1px solid var(--g1);}
-.pur-actions{display:flex;gap:5px;}
+.pur-item-actions{display:flex;gap:5px;}
+.pur-item-actions button{flex:1;padding:5px;border-radius:6px;font-size:10px;}
