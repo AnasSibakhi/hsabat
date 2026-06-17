@@ -323,7 +323,7 @@ const Inventory = {
 
     if (hintEl)    hintEl.textContent = 'ضع الباركود داخل المربع';
     if (overlay)   overlay.style.display = 'flex';
-    if (container) { container.innerHTML = ''; container.style.height = '100%'; }
+    if (container) { container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
 
     BarcodeScanner.start('inv-scanner-container',
       (code) => {
