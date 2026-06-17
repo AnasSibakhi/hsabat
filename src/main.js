@@ -144,6 +144,36 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ── القيم الصفرية بحقول الأرقام تظهر شفافة باهتة بكل الموقع ──
+function _applyZeroFade(el) {
+  const v = el.value.trim();
+  el.classList.toggle('zero-val', v === '' || parseFloat(v) === 0);
+}
+
+// فحص فوري لكل حقل رقمي موجود حالياً (يشمل الحقول اللي تتفتح بـ modal لاحقاً عبر delegation)
+document.addEventListener('input', e => {
+  if (e.target.matches('input[type="number"]')) _applyZeroFade(e.target);
+});
+
+// مراقب خفيف يفحص فقط العناصر الجديدة المضافة للـ DOM (مودالز تُفتح ديناميكياً)
+const _zeroFadeObserver = new MutationObserver((mutations) => {
+  for (const m of mutations) {
+    if (m.addedNodes.length) {
+      m.addedNodes.forEach(node => {
+        if (node.nodeType !== 1) return;
+        if (node.matches?.('input[type="number"]')) _applyZeroFade(node);
+        node.querySelectorAll?.('input[type="number"]').forEach(_applyZeroFade);
+      });
+    }
+  }
+});
+_zeroFadeObserver.observe(document.body, { childList: true, subtree: true });
+
+// فحص أولي عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input[type="number"]').forEach(_applyZeroFade);
+});
+
 // إغلاق الـ dropdowns عند الضغط خارجها
 document.addEventListener('click', e => {
   // لو الضغط على خيار في dropdown — لا تغلقه
