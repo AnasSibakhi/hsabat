@@ -6,6 +6,7 @@
  */
 
 let _active  = false;
+let _paused  = false;
 let _cb      = null;
 let _last    = null;
 let _timer   = null;
@@ -31,6 +32,7 @@ const eanOk = (code) => {
 };
 
 const fire = (code) => {
+  if (_paused) return; // متوقف مؤقتاً — تجاهل كل القراءات
   if (!code || code === _last) return;
   // التأكيد المزدوج
   if (code === _pendingCode) {
@@ -53,6 +55,21 @@ const fire = (code) => {
 export const BarcodeScanner = {
   isActive: () => _active,
   get _flashOn() { return _flashOn; },
+
+  // ── Pause/Resume — للمسح المتتالي (Bulk Scan) ──
+  // الكاميرا تبقى شغالة، فقط معالجة القراءات تتوقف مؤقتاً
+  pause() {
+    _paused = true;
+    _last = null;
+    _pendingCode  = null;
+    _pendingCount = 0;
+  },
+  resume() {
+    _paused = false;
+    _last = null;
+    _pendingCode  = null;
+    _pendingCount = 0;
+  },
 
   async start(containerId, onSuccess, onError) {
     if (_active) await BarcodeScanner.stop();
@@ -241,6 +258,7 @@ export const BarcodeScanner = {
   // ── Stop ──
   async stop() {
     _active = false;
+    _paused = false;
     if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
     try {
       if (_flashOn) {
