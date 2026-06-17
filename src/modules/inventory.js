@@ -265,9 +265,13 @@ const Inventory = {
                 <span class="prod-price-label">سعر البيع (للوحدة)</span>
                 <span class="prod-price">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</span>
                 ${i.cost_price ? '<span class="prod-cost">تكلفة الشراء ₪' + i.cost_price.toFixed(2) + '</span>' : ''}
-                ${(i.sale_price && i.cost_price && i.cost_price > 0) ? '<span class="prod-margin">هامش الربح ' + (((i.sale_price - i.cost_price) / i.cost_price) * 100).toFixed(0) + '%</span>' : ''}
+                ${(i.sale_price && i.cost_price && i.cost_price > 0) ? (() => {
+                  const marginPct = ((i.sale_price - i.cost_price) / i.cost_price) * 100;
+                  const isLoss = marginPct < 0;
+                  return '<span class="prod-margin' + (isLoss ? ' loss' : '') + '">' + (isLoss ? '⚠ خسارة ' : 'هامش الربح ') + Math.abs(marginPct).toFixed(0) + '%</span>';
+                })() : ''}
               </div>
-              <div style="text-align:left;">
+              <div style="text-align:left;min-width:70px;">
                 <span class="prod-price-label">الكمية المتوفرة</span>
                 <span class="prod-qty">${i.quantity} ${Utils.escape(i.unit || '')}</span>
               </div>
@@ -275,7 +279,7 @@ const Inventory = {
             <div class="prod-actions">
               <button class="ibb" onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')">تعديل</button>
               <button class="ibb" onclick="event.stopPropagation();Inventory.openProduct('${i.id}')">تفاصيل</button>
-              ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
+              ${i.barcode ? `<button class="ibb print-btn" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
               <button class="ibr" onclick="event.stopPropagation();Inventory.delete('${i.id}')">حذف</button>
             </div>
           </div>`;
