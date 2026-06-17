@@ -50,9 +50,7 @@ const Purchases = {
       ? data.map(p => {
           const st = STATUS[p.payment_status] || STATUS.cash;
           const initials = (p.supplier || '؟').trim().slice(0, 2);
-          const remaining = p.remaining > 0
-            ? '<div style="font-size:10px;color:var(--d);margin-top:2px;">متبقي: ₪' + p.remaining.toFixed(2) + '</div>'
-            : '';
+          const showPaidRow = p.payment_status === 'defer'; // تفصيل الدفع يظهر فقط بحالة الآجل
           return `<div class="pur-card">
             <div class="pur-card-top">
               <div class="pur-supplier">
@@ -62,19 +60,20 @@ const Purchases = {
                   ${p.supplier_phone ? '<a href="tel:' + p.supplier_phone + '" class="pur-sphone">' + Utils.escape(p.supplier_phone) + '</a>' : ''}
                 </div>
               </div>
-              <div>
-                <span class="pur-status" style="background:var(--${st.c});color:var(--${st.t});">${st.l}</span>
-                ${remaining}
-              </div>
+              <span class="pur-status" style="background:var(--${st.c});color:var(--${st.t});">${st.l}</span>
             </div>
             <div class="pur-product-row">
-              <span class="pur-product-name">📦 ${Utils.escape(p.product_name)}</span>
+              <span class="pur-product-name">${Utils.escape(p.product_name)}</span>
               <span class="pur-product-qty">${p.quantity} وحدة</span>
             </div>
             <div class="pur-grid2">
               <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${p.cost.toFixed(2)}</div></div>
               <div class="pur-stat"><div class="pur-stat-label">سعر البيع</div><div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div></div>
             </div>
+            ${showPaidRow ? `<div class="pur-grid2" style="margin-top:-2px;">
+              <div class="pur-stat"><div class="pur-stat-label">المدفوع</div><div class="pur-stat-val" style="color:var(--s);">₪${(p.paid_amount || 0).toFixed(2)}</div></div>
+              <div class="pur-stat"><div class="pur-stat-label">المتبقي</div><div class="pur-stat-val" style="color:var(--d);">₪${(p.remaining || 0).toFixed(2)}</div></div>
+            </div>` : ''}
             <div class="pur-footer">
               <span>${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''}</span>
               <div class="pur-actions">
