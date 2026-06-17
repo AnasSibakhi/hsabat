@@ -375,8 +375,14 @@ table.inv-dt th{font-size:11px;padding:9px 12px;}
 
 /* ── SCANNER ── */
 #qs-scanner-container video,
-#qs-scanner-container canvas{width:100%!important;height:auto!important;display:block;}
-#qs-scanner-container canvas.drawingBuffer{position:absolute;top:0;left:0;}
+#qs-scanner-container canvas,
+#inv-scanner-container video,
+#inv-scanner-container canvas,
+#inv-bulk-container video,
+#inv-bulk-container canvas{width:100%!important;height:auto!important;display:block;}
+#qs-scanner-container canvas.drawingBuffer,
+#inv-scanner-container canvas.drawingBuffer,
+#inv-bulk-container canvas.drawingBuffer{position:absolute;top:0;left:0;}
 /* ═══════════════════════════════════
    admin.css — Super Admin Panel
    ═══════════════════════════════════ */
