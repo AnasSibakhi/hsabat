@@ -13,6 +13,7 @@ import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 import { FIFOService }    from '../services/FIFOService.js';
 import { BarcodeScanner } from '../services/BarcodeScanner.js';
+import { Guard }          from '../core/ratelimit.js';
 
 // ─────────────────────────────────────────
 // 18. INVENTORY MODULE
@@ -305,13 +306,15 @@ const Inventory = {
 
   scanBarcode() {
     if (BarcodeScanner.isActive()) return;
-    // أغلق modal وافتح الـ scanner مباشرة
+    // أمان: حرر أي قفل معلّق على زر الحفظ قبل فتح الكاميرا
+    Guard.release('save-inventory');
     Modal.close('m-inv');
     setTimeout(() => Inventory._openScanner('inb', 'm-inv'), 200);
   },
 
   scanBarcodeEdit() {
     if (BarcodeScanner.isActive()) return;
+    Guard.release('update-inventory');
     Modal.close('m-editinv');
     setTimeout(() => Inventory._openScanner('einvbarcode', 'm-editinv'), 200);
   },
