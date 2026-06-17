@@ -5,8 +5,9 @@
  * iOS Safari/Chrome: Quagga2 manages its own stream (no conflict)
  */
 
-let _active  = false;
-let _paused  = false;
+let _active   = false;
+let _starting = false; // true فقط أثناء انتظار صلاحية الكاميرا — يمنع الضغط المزدوج
+let _paused   = false;
 let _cb      = null;
 let _last    = null;
 let _timer   = null;
@@ -72,7 +73,9 @@ export const BarcodeScanner = {
   },
 
   async start(containerId, onSuccess, onError) {
+    if (_starting) return; // فتح سابق لسا قيد الانتظار — تجاهل الضغط المزدوج
     if (_active) await BarcodeScanner.stop();
+
     const el = document.getElementById(containerId);
     if (!el) { onError?.('container not found'); return; }
     _cb = onSuccess; _last = null;
@@ -80,6 +83,9 @@ export const BarcodeScanner = {
 
     if ('BarcodeDetector' in window) {
       // ── Android Chrome: Native API ──
+      _starting = true;
+      // أمان: لو استغرق طلب صلاحية الكاميرا أكثر من المعتاد، حرر القفل تلقائياً
+      const safetyRelease = setTimeout(() => { _starting = false; }, 12000);
       try {
         _stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -90,11 +96,15 @@ export const BarcodeScanner = {
           audio: false,
         });
       } catch(e) {
+        clearTimeout(safetyRelease);
+        _starting = false;
         onError?.(e.name === 'NotAllowedError'
           ? 'يرجى السماح بالوصول للكاميرا'
           : 'لا يمكن فتح الكاميرا');
         return;
       }
+      clearTimeout(safetyRelease);
+      _starting = false;
 
       _video = document.createElement('video');
       _video.setAttribute('autoplay','');
@@ -152,6 +162,8 @@ export const BarcodeScanner = {
 
   // ── Quagga manages its own stream ──
   _startQuagga(el, onError) {
+    _starting = true;
+    const safetyRelease = setTimeout(() => { _starting = false; }, 12000);
     const run = () => {
       Quagga.init({
         inputStream: {
@@ -183,6 +195,8 @@ export const BarcodeScanner = {
         },
         locate: true,
       }, (err) => {
+        clearTimeout(safetyRelease);
+        _starting = false;
         if (err) {
           onError?.(err?.message?.includes('ermission')
             ? 'يرجى السماح بالوصول للكاميرا'
@@ -257,8 +271,9 @@ export const BarcodeScanner = {
 
   // ── Stop ──
   async stop() {
-    _active = false;
-    _paused = false;
+    _active   = false;
+    _starting = false;
+    _paused   = false;
     if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
     try {
       if (_flashOn) {
