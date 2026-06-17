@@ -695,7 +695,6 @@
    <!-- PURCHASES -->
    <div class="page" id="page-purchases">
 
-    <!-- Header -->
     <div class="ph">
      <span class="pt">المشتريات</span>
      <button class="btn btn-s" onclick="Modal.open('m-pur');Purchases.initModal()">
@@ -705,41 +704,26 @@
 
     <!-- بحث -->
     <div style="position:relative;margin-bottom:10px;">
-     <i class="ti ti-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--g4);font-size:16px;"></i>
-     <input class="srch" id="pur-search" placeholder="ابحث بالمورد أو المنتج..." style="padding-right:36px;margin-bottom:0;" oninput="Purchases.filterList(this.value)">
+     <i class="ti ti-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--g4);font-size:16px;pointer-events:none;"></i>
+     <input class="srch" id="pur-search" placeholder="ابحث بالمورد أو المنتج أو الفاتورة..." style="padding-right:36px;margin-bottom:0;" oninput="Purchases.filterList(this.value)">
     </div>
 
     <!-- تبويبات -->
     <div class="ph-tabs" style="margin-bottom:10px;">
-     <button id="pur-tab-all" class="ptab active" onclick="Purchases.switchTab('all')">
-      كل المشتريات
-     </button>
-     <button id="pur-tab-debts" class="ptab" onclick="Purchases.switchTab('debts')">
-      ديون الموردين
-     </button>
+     <button id="pur-tab-all" class="ptab active" onclick="Purchases.switchTab('all')">كل المشتريات</button>
+     <button id="pur-tab-debts" class="ptab" onclick="Purchases.switchTab('debts')">ديون الموردين</button>
     </div>
 
     <!-- كل المشتريات -->
     <div id="pur-section-all">
-     <div class="card">
-      <div class="tw">
-       <table class="dt">
-        <thead>
-         <tr>
-          <th>المورد</th>
-          <th>المنتج</th>
-          <th>الكمية</th>
-          <th>التكلفة</th>
-          <th>سعر البيع</th>
-          <th>الدفع</th>
-          <th>التاريخ</th>
-          <th></th>
-         </tr>
-        </thead>
-        <tbody id="purlist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
-       </table>
-      </div>
-     </div>
+     <div class="card"><div class="tw"><table class="dt">
+      <thead><tr>
+       <th>المورد</th><th>المنتج</th><th>فاتورة</th>
+       <th>الكمية</th><th>التكلفة</th><th>سعر البيع</th>
+       <th>الدفع</th><th>التاريخ</th><th></th>
+      </tr></thead>
+      <tbody id="purlist"><tr class="er"><td colspan="9"><span class="spin">↻</span></td></tr></tbody>
+     </table></div></div>
     </div>
 
     <!-- ديون الموردين -->
@@ -753,6 +737,7 @@
       <tbody id="sup-debt-list"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
      </table></div></div>
     </div>
+
    </div>
 
    <!-- NET CARDS -->
