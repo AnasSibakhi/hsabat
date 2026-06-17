@@ -229,7 +229,8 @@ export const BarcodeScanner = {
       if (!t) { window.Notify?.error?.('الفلاش غير متاح'); return; }
       _flashOn = !_flashOn;
       await t.applyConstraints({ advanced: [{ torch: _flashOn }] });
-      const btn = document.getElementById('qs-flash-btn');
+      // يبحث عن أي زر فلاش ظاهر حالياً (qs أو inv) بدون الاعتماد على صفحة معينة
+      const btn = document.getElementById('qs-flash-btn') || document.getElementById('inv-flash-btn');
       if (btn) {
         btn.style.background = _flashOn ? '#fbbf24' : 'rgba(0,0,0,0.5)';
         btn.style.color = _flashOn ? '#000' : '#fff';
