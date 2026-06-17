@@ -105,7 +105,7 @@ const Purchases = {
       </div>
       <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية ${p.quantity} وحدة</div>
       <div class="pur-grid2">
-        <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${p.cost.toFixed(2)}</div></div>
+        <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${(p.cost || 0).toFixed(2)}</div></div>
         <div class="pur-stat"><div class="pur-stat-label">سعر البيع</div><div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div></div>
       </div>
       ${showPaidRow ? `<div class="pur-grid2" style="margin-top:-2px;">
@@ -386,7 +386,7 @@ const Purchases = {
         + '<td style="font-weight:800;color:#1e293b;">' + Utils.escape(p.supplier) + '</td>'
         + '<td style="color:#475569;">' + phone + '</td>'
         + '<td style="color:#475569;">' + Utils.escape(p.product_name) + '</td>'
-        + '<td style="font-weight:600;color:#1e293b;">₪' + p.cost.toFixed(2) + '</td>'
+        + '<td style="font-weight:600;color:#1e293b;">₪' + (p.cost || 0).toFixed(2) + '</td>'
         + '<td style="color:var(--s);font-weight:700;">₪' + paid.toFixed(2) + '</td>'
         + '<td style="color:var(--r);font-weight:800;">₪' + rem.toFixed(2) + '</td>'
         + '<td style="color:#64748b;">' + p.purchase_date + '</td>'
