@@ -530,6 +530,92 @@ const Inventory = {
     await Promise.all([Inventory.loadList(), Inventory.load()]);
   },
 
+  // ═══════════════════════════════════════════
+  // دمج المنتجات المكررة (نفس الاسم بعد التطبيع)
+  // ═══════════════════════════════════════════
+  async findDuplicates() {
+    const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const { data, error } = await DB.inventory().select('*').order('name');
+    if (error) { Notify.error('فشل جلب البيانات: ' + error.message); return; }
+
+    const groups = {};
+    (data || []).forEach(item => {
+      const key = normalize(item.name);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    });
+
+    const duplicates = Object.values(groups).filter(g => g.length > 1);
+    if (!duplicates.length) {
+      Notify.success('✅ لا يوجد منتجات مكررة — كل شي تمام');
+      return;
+    }
+
+    Inventory._dupGroups = duplicates;
+    Inventory._renderDupReview(duplicates);
+    Modal.open('m-dup-review');
+  },
+
+  _renderDupReview(duplicates) {
+    const html = duplicates.map((group, gi) => {
+      const totalQty = group.reduce((s, i) => s + (i.quantity || 0), 0);
+      const latest    = group.reduce((a, b) => (b.id > a.id ? b : a)); // آخر سجل مُنشأ = آخر سعر
+      const itemsHtml = group.map(i => `
+        <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--g0);border-radius:8px;margin-bottom:4px;font-size:12px;">
+          <span>${Utils.escape(i.name)}</span>
+          <span style="color:var(--g5);">كمية: ${i.quantity} · سعر: ₪${(i.sale_price||0).toFixed(2)}</span>
+        </div>`).join('');
+      return `
+        <div style="border:1px solid var(--br);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-weight:800;margin-bottom:8px;">"${Utils.escape(group[0].name)}" — ${group.length} سجلات مكررة</div>
+          ${itemsHtml}
+          <div style="background:var(--sl);color:var(--s);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:12px;font-weight:700;">
+            بعد الدمج: كمية ${totalQty} — سعر البيع ₪${(latest.sale_price||0).toFixed(2)} (آخر سعر مُسجّل)
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;cursor:pointer;">
+            <input type="checkbox" class="dup-confirm" data-gi="${gi}" checked>
+            دمج هذه المجموعة
+          </label>
+        </div>`;
+    }).join('');
+    document.getElementById('dup-review-body').innerHTML = html;
+  },
+
+  async confirmMerge() {
+    const groups = Inventory._dupGroups || [];
+    const checkboxes = document.querySelectorAll('.dup-confirm:checked');
+    const selectedIndexes = Array.from(checkboxes).map(c => parseInt(c.dataset.gi));
+
+    if (!selectedIndexes.length) { Notify.error('اختاري مجموعة واحدة على الأقل للدمج'); return; }
+
+    let mergedCount = 0;
+    try {
+      for (const gi of selectedIndexes) {
+        const group = groups[gi];
+        const totalQty = group.reduce((s, i) => s + (i.quantity || 0), 0);
+        const latest   = group.reduce((a, b) => (b.id > a.id ? b : a));
+
+        // حدّث السجل الأحدث بالكمية المجمّعة
+        await DB.inventory().update({ quantity: totalQty }).eq('id', latest.id);
+
+        // حدّث أي عمليات شراء (purchases) كانت مرتبطة بالسجلات القديمة لتشير للسجل الباقي (سلامة البيانات)
+        const oldIds = group.filter(i => i.id !== latest.id).map(i => i.id);
+
+        // احذف السجلات القديمة المكررة
+        for (const oldId of oldIds) {
+          await DB.inventory().delete().eq('id', oldId);
+        }
+        mergedCount++;
+      }
+
+      Notify.success('✅ تم دمج ' + mergedCount + ' مجموعة منتجات بنجاح');
+      Modal.close('m-dup-review');
+      await Promise.all([Inventory.loadList(), Inventory.load()]);
+    } catch (err) {
+      Notify.error('فشل الدمج: ' + err.message);
+    }
+  },
+
   openEditModal(id) {
     const item = State.inventory.find(i => i.id === id);
     if (!item) { Notify.error('لم يُوجد المنتج'); return; }
