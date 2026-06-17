@@ -63,8 +63,8 @@ const Purchases = {
             + '<td><span class="' + (CLS[p.payment_status] || 'bg') + '">' + (STATUS[p.payment_status] || 'كاش') + '</span>' + rem + '</td>'
             + '<td style="color:var(--g5);font-size:12px;">' + p.purchase_date + '</td>'
             + '<td style="white-space:nowrap;">'
-            + '<button class="ibb" onclick="Purchases.openEdit(\\'' + p.id + '\\')">تعديل</button> '
-            + '<button class="ibr" onclick="Purchases.delete(\\'' + p.id + '\\')">حذف</button>'
+            + '<button class="ibb" onclick="Purchases.openEdit(\'' + p.id + '\')">تعديل</button> '
+            + '<button class="ibr" onclick="Purchases.delete(\'' + p.id + '\')">حذف</button>'
             + '</td></tr>';
         }).join('')
       : '<tr class="er"><td colspan="9">لا توجد مشتريات</td></tr>'
