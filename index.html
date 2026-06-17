@@ -585,7 +585,15 @@
 
    <!-- INVENTORY -->
    <div class="page" id="page-inventory">
-    <div class="ph"><span class="pt">المخزون</span><button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة منتج</button></div>
+    <div class="ph">
+     <span class="pt">المخزون</span>
+     <div style="display:flex;gap:6px;">
+      <button class="btn btn-o" onclick="Inventory.startBulkScan()" style="padding:8px 12px;">
+       <i class="ti ti-scan"></i> مسح متتالي
+      </button>
+      <button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة منتج</button>
+     </div>
+    </div>
     <!-- فلتر سريع -->
     <div class="filter-row">
       <input class="inp" id="inventory-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
@@ -1425,6 +1433,60 @@
     <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">ضع الباركود داخل المربع</p>
   </div>
 </div>
+
+<!-- Bulk Scan Overlay — وضع المسح المتتالي -->
+<div id="inv-bulk-overlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;">
+  <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
+    <div id="inv-bulk-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
+
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
+      <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
+        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #10b981;border-left:4px solid #10b981;border-radius:3px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #10b981;border-right:4px solid #10b981;border-radius:0 3px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #10b981;border-left:4px solid #10b981;border-radius:0 0 0 3px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #10b981;border-right:4px solid #10b981;border-radius:0 0 3px 0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#10b981,#6ee7b7,#10b981,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:14px;right:50%;transform:translateX(50%);background:rgba(16,185,129,0.9);border-radius:99px;padding:8px 18px;display:flex;align-items:center;gap:8px;">
+      <i class="ti ti-check" style="color:#fff;font-size:16px;"></i>
+      <span style="color:#fff;font-weight:800;font-size:14px;">تمت إضافة <span id="inv-bulk-counter">0</span></span>
+    </div>
+
+    <button onclick="Inventory.stopBulkScan()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <i class="ti ti-x"></i>
+    </button>
+  </div>
+  <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
+    <p id="inv-bulk-hint" style="color:#fff;font-size:13px;margin:0;opacity:0.8;">ضع الباركود داخل المربع</p>
+  </div>
+</div>
+
+<!-- Bulk Scan — نموذج سريع لمنتج واحد بعد كل مسح -->
+<div class="mo" id="m-bulk-form"><div class="modal">
+  <div class="mhdr">
+    <span class="mtitle">🆕 منتج جديد</span>
+  </div>
+  <div style="background:var(--g0);border-radius:10px;padding:10px 14px;margin-bottom:.9rem;text-align:center;">
+    <div style="font-size:11px;color:var(--g5);margin-bottom:3px;">الباركود الممسوح</div>
+    <div id="bulk-code" style="font-family:monospace;font-size:16px;font-weight:800;color:var(--p);letter-spacing:1px;"></div>
+  </div>
+  <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="bulk-name" placeholder="سكر، أرز..." autocomplete="off"></div>
+  <div class="fr">
+    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="bulk-qty" value="1" inputmode="decimal"></div>
+    <div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="bulk-price" inputmode="decimal"></div>
+  </div>
+  <div class="fg"><label class="lbl">سعر التكلفة (₪) <span class="c-muted text-xs">(اختياري)</span></label><input class="inp" type="number" id="bulk-cost" inputmode="decimal"></div>
+  <div class="mfoot">
+    <button class="btn btn-o" onclick="Inventory.skipBulkItem()">تخطي</button>
+    <button class="btn btn-s" onclick="Guard.run('save-bulk-item', () => Inventory.saveBulkItem(), this)">حفظ والمسح التالي</button>
+  </div>
+</div></div>
 
 <!-- New Product Modal -->
 <div class="mo" id="m-new-product"><div class="modal">
