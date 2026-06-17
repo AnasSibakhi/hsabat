@@ -587,15 +587,16 @@
    <div class="page" id="page-inventory">
     <div class="ph">
      <span class="pt">المخزون</span>
-     <div style="display:flex;gap:6px;">
-      <button class="btn btn-o" onclick="Inventory.startBulkScan()" style="padding:8px 12px;">
+     <div class="flex-gap8">
+      <button class="btn btn-o" onclick="Inventory.startBulkScan()">
        <i class="ti ti-scan"></i> مسح متتالي
       </button>
       <button class="btn btn-s" onclick="Modal.open('m-inv')"><i class="ti ti-plus"></i> إضافة منتج</button>
      </div>
     </div>
+
     <!-- فلتر سريع -->
-    <div class="filter-row">
+    <div class="filter-row mb-14">
       <input class="inp" id="inventory-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
       <select class="inp" id="inv-filter-status" onchange="Inventory.filterList()" style="min-width:120px;">
         <option value="">كل المنتجات</option>
@@ -604,6 +605,7 @@
         <option value="ok">🟢 متوفر</option>
       </select>
     </div>
+
     <div class="card"><div class="tw"><table class="dt">
       <thead><tr>
         <th>المنتج</th>
@@ -702,7 +704,6 @@
 
    <!-- PURCHASES -->
    <div class="page" id="page-purchases">
-
     <div class="ph">
      <span class="pt">المشتريات</span>
      <button class="btn btn-s" onclick="Modal.open('m-pur');Purchases.initModal()">
@@ -711,10 +712,7 @@
     </div>
 
     <!-- بحث -->
-    <div style="position:relative;margin-bottom:10px;">
-     <i class="ti ti-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--g4);font-size:16px;pointer-events:none;"></i>
-     <input class="srch" id="pur-search" placeholder="ابحث بالمورد أو المنتج أو الفاتورة..." style="padding-right:36px;margin-bottom:0;" oninput="Purchases.filterList(this.value)">
-    </div>
+    <input class="srch" id="pur-search" placeholder="🔍 ابحث بالمورد أو المنتج أو الفاتورة..." oninput="Purchases.filterList(this.value)">
 
     <!-- تبويبات -->
     <div class="ph-tabs" style="margin-bottom:10px;">
