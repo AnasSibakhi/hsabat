@@ -239,16 +239,9 @@ const Inventory = {
 
   _renderList(list) {
     const getStatusBadge = (i) => {
-      if (i.quantity <= 0)                        return { cls: 'b-out', label: '🔴 نفد' };
-      if (i.quantity <= (i.low_stock_alert || 5))  return { cls: 'b-low', label: '🟡 منخفض' };
-      return { cls: 'b-ok', label: '🟢 متوفر' };
-    };
-    const CAT_ICON = {
-      'مواد غذائية': '🌾', 'مشروبات': '🥤', 'حلويات': '🍫', 'منظفات': '🧼',
-      'مستلزمات شخصية': '🧴', 'خضار وفواكه': '🥦', 'ألبان': '🧀', 'لحوم': '🥩',
-      'مخبوزات': '🍞', 'بهارات': '🧂', 'معلبات': '🥫', 'مجمدات': '🧊',
-      'بقالة': '🛒', 'أدوات منزلية': '🏠', 'إلكترونيات': '🔌', 'ألعاب': '🧸',
-      'قرطاسية': '✏️', 'أدوية': '💊', 'عام': '📦',
+      if (i.quantity <= 0)                        return { cls: 'b-out', label: 'نفد' };
+      if (i.quantity <= (i.low_stock_alert || 5))  return { cls: 'b-low', label: 'منخفض' };
+      return { cls: 'b-ok', label: 'متوفر' };
     };
     const CAT_COLOR = {
       'مواد غذائية': '#0e9f6e', 'مشروبات': '#c27803', 'حلويات': '#c81e1e',
@@ -259,15 +252,14 @@ const Inventory = {
     DOM.setHTML('invlist', list.length
       ? list.map(i => {
           const status = getStatusBadge(i);
-          const icon   = CAT_ICON[i.category] || '📦';
           const color  = CAT_COLOR[i.category] || 'var(--p)';
           return `<div class="prod-card" onclick="Inventory.openProduct('${i.id}')" style="--cat-color:${color};">
             <div class="prod-card-top">
-              <div class="prod-icon" style="background:${color}1a;">${icon}</div>
+              <span class="prod-cat-label" style="color:${color};">${Utils.escape(i.category || 'عام')}</span>
               <span class="prod-badge ${status.cls}">${status.label}</span>
             </div>
             <div class="prod-name">${Utils.escape(i.name)}</div>
-            <div class="prod-meta">${Utils.escape(i.category || '-')} · ${Utils.escape(i.unit || '-')}${i.barcode ? ' · <span style="font-family:monospace;">' + i.barcode + '</span>' : ''}</div>
+            <div class="prod-meta">${Utils.escape(i.unit || '-')}${i.barcode ? ' · <span style="font-family:monospace;">' + i.barcode + '</span>' : ''}</div>
             <div class="prod-price-row">
               <div>
                 <span class="prod-price">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</span>
