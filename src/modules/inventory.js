@@ -11,7 +11,8 @@ import * as Utils from '../core/utils.js';
 import { escape, currency, sumBy, daysSince, today, monthStart, daysAgo, periodStart, invoiceNumber, currentTime, formatDate } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
-import { FIFOService } from '../services/FIFOService.js';
+import { FIFOService }    from '../services/FIFOService.js';
+import { BarcodeScanner } from '../services/BarcodeScanner.js';
 
 // ─────────────────────────────────────────
 // 18. INVENTORY MODULE
@@ -287,21 +288,66 @@ const Inventory = {
     win.document.close();
   },
 
+  // ── Beep — نفس البيع السريع ──
+  _beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 1200;
+      g.gain.setValueAtTime(0.3, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + 0.12);
+    } catch {}
+  },
+
   scanBarcode() {
-    // أغلق modal الإضافة مؤقتاً عشان الـ scanner يظهر فوق كل شي
-    import('../nav/modal.js').then(({ close, open }) => {
-      close('m-inv');
-      setTimeout(() => {
-        Inventory._scanBarcodeTo('inb', 'امسح باركود المنتج', () => {
-          // بعد المسح ارجع للـ modal
-          open('m-inv');
-        });
-      }, 200);
-    });
+    if (BarcodeScanner.isActive()) return;
+    // أغلق modal وافتح الـ scanner مباشرة
+    Modal.close('m-inv');
+    setTimeout(() => Inventory._openScanner('inb', 'm-inv'), 200);
+  },
+
+  scanBarcodeEdit() {
+    if (BarcodeScanner.isActive()) return;
+    Modal.close('m-editinv');
+    setTimeout(() => Inventory._openScanner('einvbarcode', 'm-editinv'), 200);
+  },
+
+  _openScanner(targetId, returnModal) {
+    const overlay   = document.getElementById('inv-scanner-overlay');
+    const container = document.getElementById('inv-scanner-container');
+    const hintEl    = document.querySelector('#inv-scanner-overlay p');
+
+    if (hintEl)    hintEl.textContent = 'ضع الباركود داخل المربع';
+    if (overlay)   overlay.style.display = 'flex';
+    if (container) { container.innerHTML = ''; container.style.height = '100%'; }
+
+    BarcodeScanner.start('inv-scanner-container',
+      (code) => {
+        // نجح المسح
+        Inventory._beep();
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.value = code;
+          if (targetId === 'inb') Inventory.onBarcodeInput(code);
+        }
+        Inventory.stopScanner();
+        if (returnModal) setTimeout(() => Modal.open(returnModal), 150);
+        Notify.success('✅ ' + code);
+      },
+      (err) => {
+        Notify.error(err || 'لا يمكن فتح الكاميرا');
+        Inventory.stopScanner();
+        if (returnModal) setTimeout(() => Modal.open(returnModal), 150);
+      }
+    );
   },
 
   stopScanner() {
-    import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => BarcodeScanner.stop());
+    BarcodeScanner.stop();
     const overlay = document.getElementById('inv-scanner-overlay');
     if (overlay) overlay.style.display = 'none';
     const container = document.getElementById('inv-scanner-container');
@@ -309,7 +355,6 @@ const Inventory = {
   },
 
   async toggleFlash() {
-    const { BarcodeScanner } = await import('../services/BarcodeScanner.js');
     await BarcodeScanner.toggleFlash();
   },
 
@@ -375,34 +420,6 @@ const Inventory = {
     }
   },
 
-  scanBarcodeEdit() {
-    // نستخدم نفس overlay المخزون مع تغيير الـ target
-    Inventory._scanBarcodeTo('einvbarcode', 'تعبئة باركود المنتج');
-  },
-
-  _scanBarcodeTo(targetId, hint) {
-    const overlay   = document.getElementById('inv-scanner-overlay');
-    const container = document.getElementById('inv-scanner-container');
-    const hintEl    = document.querySelector('#inv-scanner-overlay p');
-
-    if (hintEl)   hintEl.textContent = hint || 'وجّه الكاميرا على الباركود';
-    if (overlay)  overlay.style.display = 'flex';
-    if (container){ container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
-
-    import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
-      BarcodeScanner.start('inv-scanner-container', (code) => {
-        const el = document.getElementById(targetId);
-        if (el) {
-          el.value = code;
-          if (targetId === 'inb') Inventory.onBarcodeInput(code);
-        }
-        Inventory.stopScanner();
-        Notify.success('✅ تم مسح الباركود: ' + code);
-      }, (err) => {
-        Notify.error(err);
-        Inventory.stopScanner();
-      });
-    });
   },
 
   async update() {
