@@ -1,34 +1,40 @@
 /**
  * ratelimit.js — Global Submit Guard + Rate Limiter
  * يمنع تكرار البيانات في كل الموقع
- * 
+ *
  * الاستخدام في HTML:
  *   onclick="Guard.run('save-debt', () => Debts.save(), this)"
  */
 
-// ── Global Submit Guard ──
 const _active = new Set();
+const HARD_TIMEOUT = 15000; // أمان: لو علقت أي عملية أكثر من 15 ثانية، حررها تلقائياً
 
 export const Guard = {
-  /**
-   * run — ينفذ الدالة مرة واحدة فقط حتى تنتهي
-   * @param {string} key   — مفتاح العملية
-   * @param {Function} fn  — الدالة المراد تنفيذها
-   * @param {HTMLElement} btn — الزر (اختياري)
-   */
   async run(key, fn, btn = null) {
-    if (_active.has(key)) return; // مشغول — تجاهل
+    if (_active.has(key)) return; // مشغول فعلاً — تجاهل
     _active.add(key);
 
     const origText = btn?.textContent;
     if (btn) { btn.disabled = true; btn.textContent = 'جاري...'; }
 
+    // أمان من التعليق الدائم — لو حصل خطأ غير متوقع ما يقفل الزر للأبد
+    const safety = setTimeout(() => {
+      _active.delete(key);
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
+    }, HARD_TIMEOUT);
+
     try {
       return await fn();
     } finally {
+      clearTimeout(safety);
       _active.delete(key);
       if (btn) { btn.disabled = false; btn.textContent = origText; }
     }
+  },
+
+  // تحرير يدوي فوري — يُستخدم بعد إغلاق/فتح modal بسبب الكاميرا
+  release(key) {
+    _active.delete(key);
   },
 
   isRunning: (key) => _active.has(key),
