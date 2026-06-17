@@ -253,23 +253,26 @@ const Inventory = {
       ? list.map(i => {
           const status = getStatusBadge(i);
           const color  = CAT_COLOR[i.category] || 'var(--p)';
+          const hasMargin = i.sale_price && i.cost_price && i.cost_price > 0;
+          let marginHtml = '<span class="prod-margin placeholder">-</span>';
+          if (hasMargin) {
+            const marginPct = ((i.sale_price - i.cost_price) / i.cost_price) * 100;
+            const isLoss = marginPct < 0;
+            marginHtml = '<span class="prod-margin' + (isLoss ? ' loss' : '') + '">' + (isLoss ? '⚠ خسارة ' : 'هامش الربح ') + Math.abs(marginPct).toFixed(0) + '%</span>';
+          }
           return `<div class="prod-card" onclick="Inventory.openProduct('${i.id}')" style="--cat-color:${color};">
             <div class="prod-card-top">
               <span class="prod-cat-label" style="color:${color};">${Utils.escape(i.category || 'عام')}</span>
               <span class="prod-badge ${status.cls}">${status.label}</span>
             </div>
             <div class="prod-name">${Utils.escape(i.name)}</div>
-            <div class="prod-meta">${Utils.escape(i.unit || '-')}${i.barcode ? ' · <span style="font-family:monospace;">' + i.barcode + '</span>' : ''}</div>
+            <div class="prod-meta">${Utils.escape(i.unit || '-')} · <span style="font-family:monospace;">${i.barcode || '—'}</span></div>
             <div class="prod-price-row">
               <div>
                 <span class="prod-price-label">سعر البيع (للوحدة)</span>
                 <span class="prod-price">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</span>
-                ${i.cost_price ? '<span class="prod-cost">تكلفة الشراء ₪' + i.cost_price.toFixed(2) + '</span>' : ''}
-                ${(i.sale_price && i.cost_price && i.cost_price > 0) ? (() => {
-                  const marginPct = ((i.sale_price - i.cost_price) / i.cost_price) * 100;
-                  const isLoss = marginPct < 0;
-                  return '<span class="prod-margin' + (isLoss ? ' loss' : '') + '">' + (isLoss ? '⚠ خسارة ' : 'هامش الربح ') + Math.abs(marginPct).toFixed(0) + '%</span>';
-                })() : ''}
+                <span class="prod-cost">${i.cost_price ? 'تكلفة الشراء ₪' + i.cost_price.toFixed(2) : 'تكلفة الشراء -'}</span>
+                ${marginHtml}
               </div>
               <div style="text-align:left;min-width:70px;">
                 <span class="prod-price-label">الكمية المتوفرة</span>
@@ -279,7 +282,7 @@ const Inventory = {
             <div class="prod-actions">
               <button class="ibb" onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')">تعديل</button>
               <button class="ibb" onclick="event.stopPropagation();Inventory.openProduct('${i.id}')">تفاصيل</button>
-              ${i.barcode ? `<button class="ibb print-btn" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
+              <button class="ibb print-btn${i.barcode ? '' : ' disabled'}" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();${i.barcode ? `Inventory.printBarcode('${i.id}')` : ''}">🖨️</button>
               <button class="ibr" onclick="event.stopPropagation();Inventory.delete('${i.id}')">حذف</button>
             </div>
           </div>`;
