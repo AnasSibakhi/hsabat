@@ -387,6 +387,132 @@ const Inventory = {
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
+  // ═══════════════════════════════════════════
+  // BULK SCAN — إضافة منتجات بالباركود أول بأول
+  // ═══════════════════════════════════════════
+  _bulkCount: 0,
+
+  startBulkScan() {
+    if (BarcodeScanner.isActive()) return;
+    Guard.release('save-inventory');
+    Modal.close('m-inv');
+    Inventory._bulkCount = 0;
+    Inventory._updateBulkCounter();
+    setTimeout(() => Inventory._openBulkScanner(), 200);
+  },
+
+  _openBulkScanner() {
+    const overlay   = document.getElementById('inv-bulk-overlay');
+    const container = document.getElementById('inv-bulk-container');
+    const hintEl    = document.getElementById('inv-bulk-hint');
+
+    if (hintEl)    hintEl.textContent = 'ضع الباركود داخل المربع';
+    if (overlay)   overlay.style.display = 'flex';
+    if (container) { container.innerHTML = ''; container.style.height = (window.innerHeight - 50) + 'px'; }
+
+    BarcodeScanner.start('inv-bulk-container',
+      (code) => Inventory._onBulkScanned(code),
+      (err)  => { Notify.error(err || 'لا يمكن فتح الكاميرا'); Inventory.stopBulkScan(); }
+    );
+  },
+
+  async _onBulkScanned(code) {
+    Inventory._beep();
+    BarcodeScanner.pause();
+
+    let found = State.inventory.find(i => i.barcode === code);
+    if (!found) {
+      const { data } = await DB.inventory().select('*').eq('barcode', code).maybeSingle();
+      found = data;
+    }
+
+    if (found) {
+      Notify.warn('⚠️ "' + found.name + '" موجود مسبقاً — تم تجاوزه');
+      setTimeout(() => BarcodeScanner.resume(), 900);
+      return;
+    }
+
+    Inventory._pendingBarcode = code;
+    Inventory._openBulkForm(code);
+  },
+
+  _openBulkForm(code) {
+    document.getElementById('inv-bulk-overlay').style.display = 'none';
+    document.getElementById('bulk-code').textContent = code;
+    document.getElementById('bulk-name').value  = '';
+    document.getElementById('bulk-price').value = '';
+    document.getElementById('bulk-cost').value  = '';
+    document.getElementById('bulk-qty').value   = '1';
+    Modal.open('m-bulk-form');
+    setTimeout(() => document.getElementById('bulk-name')?.focus(), 200);
+  },
+
+  async saveBulkItem() {
+    const name  = document.getElementById('bulk-name')?.value.trim();
+    const price = parseFloat(document.getElementById('bulk-price')?.value) || 0;
+    const cost  = parseFloat(document.getElementById('bulk-cost')?.value)  || 0;
+    const qty   = parseFloat(document.getElementById('bulk-qty')?.value)   || 0;
+    const code  = Inventory._pendingBarcode;
+
+    if (!name) { Notify.error('أدخل اسم المنتج'); return; }
+
+    try {
+      const { error } = await DB.inventory().insert({
+        store_id:        State.user.id,
+        name,
+        barcode:         code,
+        category:        'عام',
+        unit:            'قطعة (pcs)',
+        quantity:        qty,
+        sale_price:      price,
+        cost_price:      cost,
+        low_stock_alert: CONFIG.lowStockDefault,
+      });
+      if (error) throw error;
+
+      Inventory._bulkCount++;
+      Inventory._updateBulkCounter();
+      await Inventory.loadList();
+
+      Notify.success('✅ تمت إضافة "' + name + '"');
+      Modal.close('m-bulk-form');
+
+      setTimeout(() => {
+        document.getElementById('inv-bulk-overlay').style.display = 'flex';
+        BarcodeScanner.resume();
+      }, 250);
+
+    } catch (err) {
+      Notify.error('فشل الحفظ: ' + err.message);
+    }
+  },
+
+  skipBulkItem() {
+    Modal.close('m-bulk-form');
+    setTimeout(() => {
+      document.getElementById('inv-bulk-overlay').style.display = 'flex';
+      BarcodeScanner.resume();
+    }, 200);
+  },
+
+  _updateBulkCounter() {
+    const el = document.getElementById('inv-bulk-counter');
+    if (el) el.textContent = Inventory._bulkCount;
+  },
+
+  async stopBulkScan() {
+    BarcodeScanner.stop();
+    const overlay = document.getElementById('inv-bulk-overlay');
+    if (overlay) overlay.style.display = 'none';
+    const container = document.getElementById('inv-bulk-container');
+    if (container) { container.innerHTML = ''; container.style.height = ''; }
+
+    if (Inventory._bulkCount > 0) {
+      Notify.success('✅ تم إضافة ' + Inventory._bulkCount + ' منتج بنجاح');
+    }
+    await Promise.all([Inventory.loadList(), Inventory.load()]);
+  },
+
   openEditModal(id) {
     const item = State.inventory.find(i => i.id === id);
     if (!item) { Notify.error('لم يُوجد المنتج'); return; }
