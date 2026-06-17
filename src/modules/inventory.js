@@ -253,9 +253,10 @@ const Inventory = {
           <td style="font-weight:700;">${i.quantity} ${Utils.escape(i.unit || '')}</td>
           <td>${getStatus(i)}</td>
           <td style="white-space:nowrap;display:flex;gap:4px;">
-            <button class="ibb" onclick="Inventory.openEditModal('${i.id}')">تعديل</button>
-            ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
-            <button class="ibr" onclick="Inventory.delete('${i.id}')">حذف</button>
+            <button class="ibb" onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')">تعديل</button>
+            <button class="ibb" onclick="event.stopPropagation();Inventory.openProduct('${i.id}')">تفاصيل</button>
+            ${i.barcode ? `<button class="ibb" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')">🖨️</button>` : ''}
+            <button class="ibr" onclick="event.stopPropagation();Inventory.delete('${i.id}')">حذف</button>
           </td>
         </tr>`).join('')
       : '<tr class="er"><td colspan="8">لا يوجد منتجات</td></tr>'
@@ -576,7 +577,6 @@ const Inventory = {
       Notify.success('تم تحديث "' + name + '" — الكمية: ' + finalQty);
       Modal.close('m-editinv');
       await Inventory.load();
-      window.Nav.goTo('inventory'); // الرجوع لقائمة المخزون بعد الحفظ الناجح
     } catch (err) { Notify.error(err.message); }
   },
 
