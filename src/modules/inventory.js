@@ -576,6 +576,7 @@ const Inventory = {
       Notify.success('تم تحديث "' + name + '" — الكمية: ' + finalQty);
       Modal.close('m-editinv');
       await Inventory.load();
+      window.Nav.goTo('inventory'); // الرجوع لقائمة المخزون بعد الحفظ الناجح
     } catch (err) { Notify.error(err.message); }
   },
 
