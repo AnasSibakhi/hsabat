@@ -105,7 +105,7 @@ const Purchases = {
       </div>
       <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية ${p.quantity} وحدة</div>
       <div class="pur-grid2">
-        <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${(p.cost || 0).toFixed(2)}</div></div>
+        <div class="pur-stat"><div class="pur-stat-label">التكلفة</div><div class="pur-stat-val">₪${p.cost.toFixed(2)}</div></div>
         <div class="pur-stat"><div class="pur-stat-label">سعر البيع</div><div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div></div>
       </div>
       ${showPaidRow ? `<div class="pur-grid2" style="margin-top:-2px;">
@@ -259,17 +259,28 @@ const Purchases = {
       });
       if (error) throw error;
 
-      // ربط المخزون — ابحث عن الصنف بالاسم وأضف الكمية
+      // ربط المخزون — ابحث عن الصنف بالاسم (مع تطبيع النص لمنع التكرار بسبب مسافات/اختلاف بسيط)
       const unit = DOM.get('pu-unit')?.value || 'قطعة (pcs)';
-      // Use selected inventory ID or search by name
+      const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      const targetNorm = normalize(productName);
+
       let existing = null;
       if (invId) {
         const { data } = await DB.inventory().select('id,quantity').eq('id', invId).maybeSingle();
         existing = data;
       }
       if (!existing) {
-        const { data } = await DB.inventory().select('id,quantity').eq('name', productName).maybeSingle();
-        existing = data;
+        // تأكد إن المخزون محمّل بالكامل بالـ State قبل المقارنة
+        if (!State.inventory?.length) {
+          const { data } = await DB.inventory().select('id,name,quantity');
+          State.inventory = data || [];
+        }
+        existing = State.inventory.find(item => normalize(item.name) === targetNorm) || null;
+        // لو ما لقيناه بالكاش المحلي (احتمال قديم) — تأكيد أخير من قاعدة البيانات مباشرة
+        if (!existing) {
+          const { data: allInv } = await DB.inventory().select('id,name,quantity');
+          existing = (allInv || []).find(item => normalize(item.name) === targetNorm) || null;
+        }
       }
 
       let productId = null;
@@ -386,7 +397,7 @@ const Purchases = {
         + '<td style="font-weight:800;color:#1e293b;">' + Utils.escape(p.supplier) + '</td>'
         + '<td style="color:#475569;">' + phone + '</td>'
         + '<td style="color:#475569;">' + Utils.escape(p.product_name) + '</td>'
-        + '<td style="font-weight:600;color:#1e293b;">₪' + (p.cost || 0).toFixed(2) + '</td>'
+        + '<td style="font-weight:600;color:#1e293b;">₪' + p.cost.toFixed(2) + '</td>'
         + '<td style="color:var(--s);font-weight:700;">₪' + paid.toFixed(2) + '</td>'
         + '<td style="color:var(--r);font-weight:800;">₪' + rem.toFixed(2) + '</td>'
         + '<td style="color:#64748b;">' + p.purchase_date + '</td>'
