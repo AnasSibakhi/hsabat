@@ -595,10 +595,6 @@
      </div>
     </div>
 
-    <button class="btn btn-o mb-14" style="width:100%;justify-content:center;" onclick="Inventory.findDuplicates()">
-      <i class="ti ti-copy"></i> فحص المنتجات المكررة
-    </button>
-
     <!-- فلتر سريع -->
     <div class="filter-row mb-14">
       <input class="inp" id="inventory-search" placeholder="🔍 ابحث باسم أو باركود..." oninput="Inventory.filterList(this.value)" style="flex:1;min-width:150px;">
@@ -1468,22 +1464,6 @@
   <div class="mfoot">
     <button class="btn btn-o" onclick="Inventory.skipBulkItem()">تخطي</button>
     <button class="btn btn-s" onclick="Guard.run('save-bulk-item', () => Inventory.saveBulkItem(), this)">حفظ والمسح التالي</button>
-  </div>
-</div></div>
-
-<!-- Duplicate Products Review -->
-<div class="mo" id="m-dup-review"><div class="modal" style="max-width:480px;">
-  <div class="mhdr">
-    <span class="mtitle">مراجعة المنتجات المكررة</span>
-    <button class="mclose" onclick="Modal.close('m-dup-review')">✕</button>
-  </div>
-  <div style="background:var(--wl);color:var(--w);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;">
-    راجعي كل مجموعة بدقة قبل الدمج — الدمج يجمع الكميات ويحذف السجلات المكررة نهائياً.
-  </div>
-  <div id="dup-review-body" style="max-height:50vh;overflow-y:auto;"></div>
-  <div class="mfoot">
-    <button class="btn btn-o" onclick="Modal.close('m-dup-review')">إلغاء</button>
-    <button class="btn btn-s" onclick="Guard.run('confirm-merge', () => Inventory.confirmMerge(), this)">تأكيد الدمج</button>
   </div>
 </div></div>
 
