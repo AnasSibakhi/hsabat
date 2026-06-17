@@ -26,8 +26,49 @@ const Purchases = {
     Purchases._cache = {};
     Purchases._allData = data || [];
     (data || []).forEach(p => { Purchases._cache[p.id] = p; });
-
+    const srch = document.getElementById('pur-search');
+    if (srch) srch.value = '';
     Purchases._renderRows(Purchases._allData);
+  },
+
+  filterList(query) {
+    if (!Purchases._allData) return;
+    const q = (query || '').toLowerCase().trim();
+    const rows = q
+      ? Purchases._allData.filter(p =>
+          (p.supplier     || '').toLowerCase().includes(q) ||
+          (p.product_name || '').toLowerCase().includes(q) ||
+          (p.invoice_ref  || '').toLowerCase().includes(q)
+        )
+      : Purchases._allData;
+    Purchases._renderRows(rows);
+  },
+
+  _renderRows(data) {
+    const STATUS = { cash:'كاش', transfer:'تحويل', defer:'آجل' };
+    const CLS    = { cash:'bg',  transfer:'bb',     defer:'ba'  };
+    DOM.setHTML('purlist', (data || []).length
+      ? data.map(p => {
+          const rem = p.remaining > 0
+            ? '<br><small style="color:var(--d);">متبقي: ₪' + p.remaining.toFixed(2) + '</small>' : '';
+          return '<tr>'
+            + '<td><strong>' + Utils.escape(p.supplier) + '</strong>'
+            + (p.supplier_phone ? '<br><a href="tel:' + p.supplier_phone + '" style="font-size:11px;color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>' : '')
+            + '</td>'
+            + '<td>' + Utils.escape(p.product_name) + '</td>'
+            + '<td>' + (p.invoice_ref || '-') + '</td>'
+            + '<td>' + p.quantity + '</td>'
+            + '<td><strong>₪' + p.cost.toFixed(2) + '</strong></td>'
+            + '<td style="color:var(--p);">' + (p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-') + '</td>'
+            + '<td><span class="' + (CLS[p.payment_status] || 'bg') + '">' + (STATUS[p.payment_status] || 'كاش') + '</span>' + rem + '</td>'
+            + '<td style="color:var(--g5);font-size:12px;">' + p.purchase_date + '</td>'
+            + '<td style="white-space:nowrap;">'
+            + '<button class="ibb" onclick="Purchases.openEdit(\\'' + p.id + '\\')">تعديل</button> '
+            + '<button class="ibr" onclick="Purchases.delete(\\'' + p.id + '\\')">حذف</button>'
+            + '</td></tr>';
+        }).join('')
+      : '<tr class="er"><td colspan="9">لا توجد مشتريات</td></tr>'
+    );
   },
 
   searchInventory(query) {
@@ -252,26 +293,16 @@ const Purchases = {
 
 
   switchTab(tab) {
-    // بحث
-    const searchEl = document.getElementById('pur-search');
-    if (searchEl) searchEl.value = '';
     const isAll = tab === 'all';
-    const secAll   = document.getElementById('pur-section-all');
-    const secDebts = document.getElementById('pur-section-debts');
-    if (secAll)   secAll.style.display   = isAll ? 'block' : 'none';
-    if (secDebts) secDebts.style.display = isAll ? 'none'  : 'block';
-    const btnAll   = document.getElementById('pur-tab-all');
-    const btnDebts = document.getElementById('pur-tab-debts');
-    if (btnAll) {
-      btnAll.style.background  = isAll ? 'var(--p)' : '#fff';
-      btnAll.style.color       = isAll ? '#fff' : 'var(--g7)';
-      btnAll.style.borderColor = isAll ? 'var(--p)' : 'var(--br)';
-    }
-    if (btnDebts) {
-      btnDebts.style.background  = !isAll ? 'var(--r)' : '#fff';
-      btnDebts.style.color       = !isAll ? '#fff' : 'var(--g7)';
-      btnDebts.style.borderColor = !isAll ? 'var(--r)' : 'var(--br)';
-    }
+    // sections
+    document.getElementById('pur-section-all')?.style.setProperty('display',   isAll ? 'block' : 'none');
+    document.getElementById('pur-section-debts')?.style.setProperty('display', isAll ? 'none'  : 'block');
+    // tabs active
+    document.getElementById('pur-tab-all')?.classList.toggle('active', isAll);
+    document.getElementById('pur-tab-debts')?.classList.toggle('active', !isAll);
+    // صفر البحث
+    const srch = document.getElementById('pur-search');
+    if (srch) srch.value = '';
     if (!isAll) Purchases.loadDebts();
   },
 
