@@ -112,9 +112,12 @@ const Purchases = {
     // جلب الوحدة وسعر البيع الاحتياطي من المخزون بمطابقة الاسم (للسجلات القديمة الناقصة)
     const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
     const matched = (State.inventory || []).find(i => normalize(i.name) === normalize(p.product_name));
-    const unitLabel     = matched?.unit || 'وحدة';
-    const effectiveSale = p.sale_price || matched?.sale_price || null;
-    const unitSaleVal   = (showUnit && effectiveSale) ? (effectiveSale / p.quantity) : 0;
+    const unitLabel = matched?.unit || 'وحدة';
+
+    // p.sale_price هو الإجمالي للكمية كاملة. سعر المخزون (matched.sale_price) هو سعر الوحدة الواحدة فقط
+    // لذلك عند استخدامه كاحتياطي يجب ضربه بالكمية أولاً لمطابقة نفس المعنى (إجمالي)
+    const effectiveSale = p.sale_price || (matched?.sale_price ? matched.sale_price * p.quantity : null);
+    const unitSaleVal    = (showUnit && effectiveSale) ? (effectiveSale / p.quantity) : 0;
 
     return `<div class="pur-item">
       <div class="pur-item-top">
