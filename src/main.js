@@ -26,7 +26,7 @@ import { QuickSale }      from './modules/quicksale.js';
 import { Notifications }  from './modules/notifications.js';
 import { Settings }       from './nav/store-boot.js';
 import { Guard }          from './core/ratelimit.js';
-import { Registry }   from './core/registry.js';
+import { Registry, getQuickSale }   from './core/registry.js';
 
 // ── Expose services globally ──
 import { BarcodeScanner }   from './services/BarcodeScanner.js';
@@ -140,6 +140,25 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+
+// ── مزامنة عمليات البيع المعلّقة (Offline-First — Quick Sale) ──
+// تشتغل فوراً عند رجوع النت، ومحاولة احتياطية دورية كل دقيقة لضمان عدم تفويت أي عملية
+async function _trySyncOfflineQueue() {
+  try {
+    if (!navigator.onLine) return;
+    const QuickSale = getQuickSale();
+    if (QuickSale) await QuickSale.syncPendingQueue();
+  } catch (e) {
+    console.warn('[OfflineSync] محاولة المزامنة فشلت:', e.message);
+  }
+}
+
+window.addEventListener('online', _trySyncOfflineQueue);
+window.addEventListener('DOMContentLoaded', () => {
+  // فحص فوري لو فيه عمليات معلّقة من جلسة سابقة (مثلاً المستخدم أغلق الموقع وفتحه تاني)
+  _trySyncOfflineQueue();
+});
+setInterval(_trySyncOfflineQueue, 60000); // فحص احتياطي كل دقيقة
 
 // ── القيم الصفرية بحقول الأرقام تظهر شفافة باهتة بكل الموقع ──
 function _applyZeroFade(el) {
