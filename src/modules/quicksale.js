@@ -16,7 +16,6 @@ import { Customers }       from './customers.js';
 import { FIFOService }     from '../services/FIFOService.js';
 import { rateGuard }       from '../core/ratelimit.js';
 import { BarcodeScanner }  from '../services/BarcodeScanner.js';
-import { OfflineQueueService } from '../services/OfflineQueueService.js';
 
 // ── State ──
 let _cart     = [];   // [{id, name, barcode, unit, price, cost, qty, maxQty}]
@@ -44,8 +43,6 @@ export const QuickSale = {
     QuickSale._loadSmartCards();
     // load stats and best selling
     QuickSale._loadStats();
-    // عرض مؤشر العمليات المعلّقة لو فيه أي بيع لم يتزامن من جلسة سابقة
-    QuickSale.refreshPendingBadge();
   },
 
   // ── Physical Scanner ──
@@ -1139,234 +1136,154 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Checkout ──
   async sell(paymentType) {
-    if (!_cart.length) { Notify.error('السلة فارغة'); return; }
-
-    let custId = null, custName = 'زبون عادي';
-    let deferData = null;
-
-    if (paymentType === PAYMENT.DEFER) {
-      const d         = QuickSale._deferData || {};
-      const deferName = (d.name || '').trim();
-      if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
-      custName  = deferName;
-      custId    = d.custId || null;
-      deferData = { ...d };
-      QuickSale._deferData   = null;
-      QuickSale._debtNewCust = null;
+    // Rate limiting — منع 3 مبيعات في ثانية واحدة
+    try {
+      await rateGuard('sell', () => {}, 'الرجاء الانتظار قبل إتمام بيع آخر');
+    } catch (e) {
+      Notify.warn(e.message);
+      return;
     }
-
+    if (!_cart.length) { Notify.error('السلة فارغة'); return; }
     Modal.close('m-qs-checkout');
-    Modal.close('m-qs-pay-cash');
-    Modal.close('m-qs-pay-transfer');
-    Modal.close('m-qs-debt');
 
     const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
     const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
     const total    = Math.max(0, subtotal - discount);
+    let   custId   = null, custName = 'زبون عادي';
 
-    const buyerName  = DOM.val('qs-buyer-name') || custName || '';
-    const custRecord = custId ? State.customers.find(x => x.id === custId) : null;
-    const buyerPhone = DOM.val('qs-buyer-phone') || custRecord?.phone || '';
+    if (paymentType === PAYMENT.DEFER) {
+      const d        = QuickSale._deferData || {};
+      const deferName = (d.name || '').trim();
 
-    // ── محلي فوري: رقم فاتورة مؤقت مبني من الوقت — يُستبدل برقم رسمي وقت المزامنة ──
-    const localInvNum = 'LOCAL-' + Date.now().toString().slice(-6);
-    const localInv = {
-      invoice_number: localInvNum,
-      invoice_date:   Utils.today(),
-      sale_time:      new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-    };
+      if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
+      custName = deferName;
 
-    // احفظ نسخة من السلة قبل المسح (تُستخدم لعرض الفاتورة وللمزامنة بالخلفية)
-    const cartSnapshot = _cart.map(c => ({ ...c }));
-
-    // خصم الكمية من النسخة المحلية للمخزون فوراً — يخلي العرض يعكس الواقع بدون انتظار السيرفر
-    cartSnapshot.forEach(item => {
-      const p = State.inventory.find(x => x.id === item.id);
-      if (p) {
-        p.quantity = Math.max(0, p.quantity - item.qty);
-        if (p.quantity <= p.low_stock_alert && p.quantity > 0)
-          Notify.warn('"' + p.name + '" — المخزون منخفض: ' + p.quantity);
-      }
-    });
-
-    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-    QuickSale._beep('success');
-
-    QuickSale.clearCart();
-    DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display = 'none');
-    const invSvc = getInventory();
-    if (invSvc?._renderList) invSvc._renderList(State.inventory);
-
-    // عرض الفاتورة فوراً — بدون انتظار أي اتصال بالسيرفر
-    QuickSale._showReceipt(localInv, cartSnapshot, total, paymentType, custName, buyerPhone);
-
-    // ── حفظ العملية بالطابور المحلي ومحاولة مزامنتها بالخلفية (لا يعطّل المستخدم) ──
-    try {
-      const queueRecord = await OfflineQueueService.enqueue('quicksale', {
-        paymentType, subtotal, discount, total,
-        custId, custName, buyerName, buyerPhone,
-        deferData,
-        cart: cartSnapshot,
-        localInvoiceNumber: localInvNum,
-        transferEntityId:   _selectedTransferEntity?.id   || null,
-        transferEntityName: _selectedTransferEntity?.name || null,
-        invoiceDate: localInv.invoice_date,
-        saleTime:    localInv.sale_time,
-      });
-
-      await QuickSale.refreshPendingBadge();
-
-      QuickSale._syncOne(queueRecord)
-        .then(() => QuickSale.refreshPendingBadge())
-        .catch(() => {
-          // فشل المزامنة الفورية — تبقى بالطابور، syncPendingQueue تحاول لاحقاً عند رجوع النت
-          QuickSale.refreshPendingBadge();
-        });
-    } catch (queueErr) {
-      // فشل نادر بالتخزين المحلي نفسه — الفاتورة أصلاً ظهرت للمستخدم، فقط سجّل الخطأ بصمت
-      console.error('[OfflineQueue] enqueue failed:', queueErr);
-    }
-  },
-
-  // ── محاولة مزامنة عملية واحدة بالسيرفر (تُستدعى فوراً بعد البيع، وأيضاً لاحقاً عند رجوع النت) ──
-  // مجموعة محلية بالذاكرة تتابع أي localId قيد المزامنة الآن — تمنع تكرار نفس العملية
-  // لو استدعيت من مكانين بالتوازي (المزامنة الفورية وقت البيع + الفحص الدوري كل دقيقة)
-  _syncingIds: new Set(),
-
-  async _syncOne(queueRecord) {
-    if (!OfflineQueueService.isOnline()) return; // لا تحاول أصلاً بدون نت — وفّر وقت/بطارية
-    if (QuickSale._syncingIds.has(queueRecord.localId)) return; // قيد المزامنة فعلاً بمكان آخر
-    QuickSale._syncingIds.add(queueRecord.localId);
-
-    await OfflineQueueService.updateStatus(queueRecord.localId, 'syncing');
-
-    const p = queueRecord.payload;
-    try {
-      // Rate limiting — منع تضخّم الطلبات بحالة مزامنة جماعية
-      await rateGuard('sell-sync', () => {}, 'الرجاء الانتظار قبل إتمام بيع آخر');
-
-      let custId = p.custId;
-      // لو فيه دين وما عنده customer_id — أنشئه الآن (يحتاج نت)
-      if (p.paymentType === PAYMENT.DEFER && !custId) {
+      if (d.custId) {
+        custId = d.custId;
+      } else {
         const existing = (State.customers || []).find(c =>
-          c.name.toLowerCase() === p.custName.toLowerCase()
+          c.name.toLowerCase() === deferName.toLowerCase()
         );
         if (existing) {
           custId = existing.id;
         } else {
           const { Customers } = await import('./customers.js');
-          const newC = await Customers.createInline(p.custName, p.deferData?.phone || '');
+          const newC = await Customers.createInline(deferName, d.phone || '');
           if (newC?.id) custId = newC.id;
         }
       }
-      if (p.buyerName && p.buyerName !== 'زبون عادي' && !custId) {
-        const { Customers } = await import('./customers.js');
-        const saved = await Customers.createInline(p.buyerName, p.buyerPhone);
-        if (saved?.id) custId = saved.id;
-      }
+      QuickSale._deferData   = null;
+      QuickSale._debtNewCust = null;
+    }
 
+    State.isMutating = true;
+    try {
       const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
       const invNum = 'INV-' + String((count || 0) + 1).padStart(4, '0');
 
+      // Buyer info
+      const buyerName  = DOM.val('qs-buyer-name') || custName || '';
+      const custRecord = custId ? State.customers.find(x => x.id === custId) : null;
+      const buyerPhone = DOM.val('qs-buyer-phone') || custRecord?.phone || '';
+
+      // لو في اسم مشتري وما في customer_id — أضفه أو اربطه
+      if (buyerName && buyerName !== 'زبون عادي' && !custId) {
+        const { Customers } = await import('./customers.js');
+        const saved = await Customers.createInline(buyerName, buyerPhone);
+        if (saved?.id) custId = saved.id;
+      }
+
       const { data: inv, error } = await DB.invoices().insert({
         store_id: State.user.id, customer_id: custId || null,
-        customer_name: p.buyerName, total: p.total, subtotal: p.subtotal, discount: p.discount,
-        payment_type: p.paymentType,
-        invoice_date: p.invoiceDate,
-        sale_time:    p.saleTime,
+        customer_name: buyerName, total, subtotal, discount,
+        payment_type: paymentType,
+        invoice_date: Utils.today(),
+        sale_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
         invoice_number: invNum,
-        buyer_name:  p.buyerName,
-        buyer_phone: p.buyerPhone,
-        transfer_entity_id:   p.transferEntityId,
-        transfer_entity_name: p.transferEntityName,
+        buyer_name:  buyerName,
+        buyer_phone: buyerPhone,
+        transfer_entity_id:   _selectedTransferEntity?.id   || null,
+        transfer_entity_name: _selectedTransferEntity?.name || null,
       }).select().single();
       if (error) throw error;
 
-      await sb.from('invoice_items').insert(p.cart.map(c => ({
+      // Save line items
+      await sb.from('invoice_items').insert(_cart.map(c => ({
         invoice_id: inv.id, product_name: c.name,
         inventory_id: c.id, quantity: c.qty, price: c.price,
       })));
 
-      await Promise.all(p.cart.map(async item => {
-        if (!item.id) return;
-        const { data: fresh } = await DB.inventory().select('quantity,low_stock_alert,name').eq('id', item.id).maybeSingle();
-        if (fresh) {
-          const newQty = Math.max(0, fresh.quantity - item.qty);
+      // Deduct inventory + FIFO tracking — كل شي بـ Promise.all بدل loop
+      await Promise.all(_cart.map(async item => {
+        const p = State.inventory.find(x => x.id === item.id);
+        if (p) {
+          const newQty = Math.max(0, p.quantity - item.qty);
           await DB.inventory().update({ quantity: newQty }).eq('id', item.id);
+          p.quantity = newQty;
+          if (newQty <= p.low_stock_alert && newQty > 0)
+            Notify.warn('"' + p.name + '" — المخزون منخفض: ' + newQty);
         }
-        try {
-          await FIFOService.consumeFIFO({
-            productId:      item.id,
-            quantityNeeded: item.qty,
-            invoiceId:      inv.id,
-          });
-        } catch (fifoErr) {
-          console.warn('FIFO consume (non-critical):', fifoErr.message);
+        if (item.id) {
+          try {
+            await FIFOService.consumeFIFO({
+              productId:      item.id,
+              quantityNeeded: item.qty,
+              invoiceId:      inv.id,
+            });
+          } catch (fifoErr) {
+            console.warn('FIFO consume (non-critical):', fifoErr.message);
+          }
         }
       }));
 
-      if (p.paymentType === PAYMENT.DEFER) {
-        const remindDays = p.deferData?.remindDays || 0;
-        const remindDate = remindDays > 0
+      // Create debt if needed
+      if (paymentType === PAYMENT.DEFER) {
+        const debtCustId  = custId || null;
+        const debtData    = QuickSale._deferData || {};
+        const remindDays  = debtData.remindDays || 0;
+        const remindDate  = remindDays > 0
           ? new Date(Date.now() + remindDays * 86400000).toISOString().split('T')[0]
           : null;
         await DB.debts().insert({
           store_id:    State.user.id,
-          customer_id: custId || null,
-          amount:      p.total,
+          customer_id: debtCustId,
+          amount:      total,
           paid:        0,
-          debt_date:   p.invoiceDate,
-          notes:       p.deferData?.note || ('فاتورة ' + invNum),
-          cust_phone:  p.buyerPhone || null,
+          debt_date:   Utils.today(),
+          notes:       debtData.note || ('فاتورة ' + invNum),
+          cust_phone:  buyerPhone || null,
           remind_date: remindDate,
         });
-        if (!custId && p.custName && p.custName !== 'زبون عادي') {
+        // لو ما عنده customer_id — أضفه للـ customers
+        if (!debtCustId && custName && custName !== 'زبون عادي') {
           const { Customers } = await import('./customers.js');
-          await Customers.createInline(p.custName, p.buyerPhone);
+          await Customers.createInline(custName, buyerPhone);
         }
         await getDebts()?.loadBadge();
       }
 
-      await OfflineQueueService.updateStatus(queueRecord.localId, 'synced', { serverInvoiceNumber: invNum });
-      await OfflineQueueService.remove(queueRecord.localId);
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+      QuickSale._beep('success');
 
+      // إغلاق أي موديل دفع مفتوح فعلياً (كاش/تحويل/دين) قبل عرض الفاتورة
+      Modal.close('m-qs-pay-cash');
+      Modal.close('m-qs-pay-transfer');
+      Modal.close('m-qs-debt');
+
+      // احفظ نسخة من السلة قبل المسح
+      const cartSnapshot = _cart.map(c => ({ ...c }));
+
+      QuickSale.clearCart();
       await getDashboard()?.load();
       const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
+      DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
+      // عرض الفاتورة بعد البيع
+      QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone);
     } catch (err) {
-      await OfflineQueueService.updateStatus(queueRecord.localId, 'failed', { lastError: err.message });
-      throw err;
+      Notify.error(err.message);
     } finally {
-      QuickSale._syncingIds.delete(queueRecord.localId);
-    }
-  },
-
-  // ── تُستدعى من main.js عند رجوع النت — تزامن كل مبيعات Quick Sale المعلّقة بالطابور ──
-  async syncPendingQueue() {
-    if (!State.user?.id) return { processed: 0, failed: 0 }; // لا يوجد مستخدم مسجّل دخول بعد — لا تحاول
-
-    const result = await OfflineQueueService.processQueue(async (record) => {
-      if (record.type !== 'quicksale') return; // الطابور قابل للتوسع لأنواع عمليات أخرى لاحقاً
-      await QuickSale._syncOne(record);
-    });
-    if (result.processed > 0) {
-      Notify.success('تمت مزامنة ' + result.processed + ' عملية بيع معلّقة');
-    }
-    await QuickSale.refreshPendingBadge();
-    return result;
-  },
-
-  // ── تحديث مؤشر بصري بعدد عمليات البيع المعلّقة (يظهر فقط لو فيه عمليات لم تُزامن بعد) ──
-  async refreshPendingBadge() {
-    const count = await OfflineQueueService.getPendingCount();
-    const el = DOM.get('qs-pending-sync-badge');
-    if (!el) return;
-    if (count > 0) {
-      el.style.display = 'flex';
-      const span = el.querySelector('span');
-      if (span) span.textContent = count + ' عملية بانتظار المزامنة';
-    } else {
-      el.style.display = 'none';
+      setTimeout(() => { State.isMutating = false; }, 500);
     }
   },
 
