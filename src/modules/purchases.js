@@ -26,6 +26,13 @@ const Purchases = {
     Purchases._cache = {};
     Purchases._allData = data || [];
     (data || []).forEach(p => { Purchases._cache[p.id] = p; });
+
+    // تأكد من تحميل المخزون لاستخدامه بعرض الوحدة الصحيحة لكل عملية شراء
+    if (!State.inventory?.length) {
+      const { data: invData } = await DB.inventory().select('*');
+      State.inventory = invData || [];
+    }
+
     const srch = document.getElementById('pur-search');
     if (srch) srch.value = '';
     Purchases._renderRows(Purchases._allData);
@@ -101,24 +108,30 @@ const Purchases = {
     const cost      = p.cost || 0;
     const showUnit  = p.quantity > 1;
     const unitCost  = showUnit ? (cost / p.quantity) : 0;
-    const unitSale  = (showUnit && p.sale_price) ? (p.sale_price / p.quantity) : 0;
+
+    // جلب الوحدة وسعر البيع الاحتياطي من المخزون بمطابقة الاسم (للسجلات القديمة الناقصة)
+    const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const matched = (State.inventory || []).find(i => normalize(i.name) === normalize(p.product_name));
+    const unitLabel     = matched?.unit || 'وحدة';
+    const effectiveSale = p.sale_price || matched?.sale_price || null;
+    const unitSaleVal   = (showUnit && effectiveSale) ? (effectiveSale / p.quantity) : 0;
 
     return `<div class="pur-item">
       <div class="pur-item-top">
         <span class="pur-product-name">${Utils.escape(p.product_name)}</span>
         <span class="pur-status" style="background:var(--${st.c});color:var(--${st.t});">${st.l}</span>
       </div>
-      <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية المشتراة ${p.quantity} وحدة</div>
+      <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية المشتراة ${p.quantity} ${Utils.escape(unitLabel)}</div>
       <div class="pur-grid2">
         <div class="pur-stat">
           <div class="pur-stat-label">إجمالي التكلفة</div>
           <div class="pur-stat-val">₪${cost.toFixed(2)}</div>
-          ${showUnit ? '<div class="pur-stat-sub">₪' + unitCost.toFixed(2) + ' / وحدة</div>' : ''}
+          ${showUnit ? '<div class="pur-stat-sub">₪' + unitCost.toFixed(2) + ' / ' + Utils.escape(unitLabel) + '</div>' : ''}
         </div>
         <div class="pur-stat">
           <div class="pur-stat-label">إجمالي سعر البيع</div>
-          <div class="pur-stat-val" style="color:var(--p);">${p.sale_price ? '₪' + p.sale_price.toFixed(2) : '-'}</div>
-          ${showUnit && p.sale_price ? '<div class="pur-stat-sub">₪' + unitSale.toFixed(2) + ' / وحدة</div>' : ''}
+          <div class="pur-stat-val" style="color:var(--p);">${effectiveSale ? '₪' + effectiveSale.toFixed(2) : '-'}</div>
+          ${showUnit && effectiveSale ? '<div class="pur-stat-sub">₪' + unitSaleVal.toFixed(2) + ' / ' + Utils.escape(unitLabel) + '</div>' : ''}
         </div>
       </div>
       ${showPaidRow ? `<div class="pur-grid2" style="margin-top:-2px;">
