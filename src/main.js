@@ -26,8 +26,6 @@ import { QuickSale }      from './modules/quicksale.js';
 import { Notifications }  from './modules/notifications.js';
 import { Settings }       from './nav/store-boot.js';
 import { Guard }          from './core/ratelimit.js';
-import { AdminPanel } from './admin/admin-panel.js';
-window.AdminPanel = AdminPanel; // مباشرة — قبل DOMContentLoaded
 import { Registry }   from './core/registry.js';
 
 // ── Expose services globally ──
@@ -128,7 +126,6 @@ Object.assign(window, {
   Dashboard, Customers, Debts, Invoices,
   Sales, Inventory, Purchases, NetCards,
   Returns, Expenses, Reports, QuickSale, Notifications,
-  AdminPanel,
 
   // Convenience wrappers for inline onclick
   navGo:   (id, el) => Nav.go(id, el),
