@@ -155,6 +155,17 @@ document.addEventListener('input', e => {
   if (e.target.matches('input[type="number"]')) _applyZeroFade(e.target);
 });
 
+// عند الضغط على حقل قيمته 0 — حدد النص كامل تلقائياً، فأول رقم يُكتب يستبدله مباشرة بدون حذف يدوي
+document.addEventListener('focus', e => {
+  if (e.target.matches('input[type="number"]')) {
+    const v = e.target.value.trim();
+    if (v === '0' || v === '') {
+      // استخدام setTimeout لضمان التحديد يصير بعد أن يضع المتصفح نفسه مكان الكتابة الافتراضي
+      setTimeout(() => e.target.select(), 0);
+    }
+  }
+}, true); // capture:true لأن focus لا ينتشر (bubble) بشكل طبيعي
+
 // مراقب خفيف يفحص فقط العناصر الجديدة المضافة للـ DOM (مودالز تُفتح ديناميكياً)
 const _zeroFadeObserver = new MutationObserver((mutations) => {
   for (const m of mutations) {
