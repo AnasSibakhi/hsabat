@@ -127,14 +127,14 @@ const Purchases = {
       <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية المشتراة ${p.quantity} ${Utils.escape(unitLabel)}</div>
       <div class="pur-grid2">
         <div class="pur-stat">
-          <div class="pur-stat-label">إجمالي التكلفة</div>
+          <div class="pur-stat-label">التكلفة الكلية</div>
           <div class="pur-stat-val">₪${cost.toFixed(2)}</div>
-          ${showUnit ? '<div class="pur-stat-sub">₪' + unitCost.toFixed(2) + ' / ' + Utils.escape(unitLabel) + '</div>' : ''}
+          ${showUnit ? '<div class="pur-stat-sub">₪' + unitCost.toFixed(2) + ' لكل ' + Utils.escape(unitLabel) + '</div>' : ''}
         </div>
         <div class="pur-stat">
-          <div class="pur-stat-label">إجمالي سعر البيع</div>
+          <div class="pur-stat-label">سعر البيع الكلي</div>
           <div class="pur-stat-val" style="color:var(--p);">${effectiveSale ? '₪' + effectiveSale.toFixed(2) : '-'}</div>
-          ${showUnit && effectiveSale ? '<div class="pur-stat-sub">₪' + unitSaleVal.toFixed(2) + ' / ' + Utils.escape(unitLabel) + '</div>' : ''}
+          ${showUnit && effectiveSale ? '<div class="pur-stat-sub">₪' + unitSaleVal.toFixed(2) + ' لكل ' + Utils.escape(unitLabel) + '</div>' : ''}
         </div>
       </div>
       ${showPaidRow ? `<div class="pur-grid2" style="margin-top:-2px;">
