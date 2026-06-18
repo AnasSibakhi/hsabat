@@ -145,6 +145,7 @@ export const Auth = {
       // Boot panel — hide loading after boot
       if (State.isAdmin()) {
         const { AdminPanel } = await import('../admin/admin-panel.js');
+        window.AdminPanel = AdminPanel; // إتاحته لكل onclick بـ HTML بعد التحميل المؤجل
         await AdminPanel.boot();
       } else {
         const expiry = account.subscription_end;
