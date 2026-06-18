@@ -18,4 +18,3 @@ export const getInvoices   = () => _modules['Invoices'];
 export const getInventory  = () => _modules['Inventory'];
 export const getCustomers  = () => _modules['Customers'];
 export const getPurchases  = () => _modules['Purchases'];
-export const getQuickSale  = () => _modules['QuickSale'];
