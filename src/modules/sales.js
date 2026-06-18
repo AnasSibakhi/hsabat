@@ -3,7 +3,7 @@
  * Extracted from monolithic app.js into clean module
  */
 
-import { DB, sb } from '../core/db.js';
+import { DB, sb, sbAdmin } from '../core/db.js';
 import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
 import * as DOM     from '../core/dom.js';
@@ -35,14 +35,39 @@ const Sales = {
   },
 
   async loadDailyReport() {
-    const [{ data: invs }, { data: purs }] = await Promise.all([
-      DB.invoices().select('total,payment_type').eq('invoice_date', Utils.today()),
-      DB.purchases().select('cost').eq('purchase_date', Utils.today()),
+    const [{ data: invs }] = await Promise.all([
+      DB.invoices().select('id,total,payment_type').eq('invoice_date', Utils.today()),
     ]);
-    const totalSales = Utils.sumBy(invs, 'total');
-    const totalCost  = Utils.sumBy(purs, 'cost');
-    const profit     = totalSales - totalCost;
     const list       = invs || [];
+    const totalSales = Utils.sumBy(list, 'total');
+
+    // صافي الربح الصحيح = المبيعات - تكلفة البضاعة المباعة فعلياً (COGS من FIFO)
+    // وليس "المبيعات - مشتريات اليوم" (معادلة خاطئة لأن الشراء والبيع عمليتان منفصلتان زمنياً)
+    let totalCOGS = 0;
+    const invoiceIds = list.map(i => i.id);
+    if (invoiceIds.length) {
+      try {
+        const { data: allocs } = await sbAdmin
+          .from('sale_inventory_allocations')
+          .select('quantity_taken, cost_price')
+          .in('sale_invoice_id', invoiceIds)
+          .eq('store_id', State.user.id);
+        totalCOGS = (allocs || []).reduce((sum, a) => sum + a.quantity_taken * a.cost_price, 0);
+      } catch (e) { /* fallback أدناه */ }
+
+      // احتياط لو ما توجد سجلات FIFO — استخدم تكلفة المنتج الحالية من المخزون
+      if (!totalCOGS) {
+        try {
+          const { data: items } = await sbAdmin
+            .from('invoice_items')
+            .select('quantity, inventory_id, inventory(cost_price)')
+            .in('invoice_id', invoiceIds);
+          totalCOGS = (items || []).reduce((sum, item) => sum + (item.inventory?.cost_price || 0) * (item.quantity || 1), 0);
+        } catch (e) { /* يبقى 0 لو فشل أيضاً */ }
+      }
+    }
+
+    const profit     = totalSales - totalCOGS;
     const cash       = list.filter(r => r.payment_type === PAYMENT.CASH).reduce((s, r) => s + r.total, 0);
     const transfer   = list.filter(r => r.payment_type === PAYMENT.TRANSFER).reduce((s, r) => s + r.total, 0);
     const defer      = list.filter(r => [PAYMENT.DEFER, PAYMENT.PARTIAL].includes(r.payment_type)).reduce((s, r) => s + r.total, 0);
@@ -54,7 +79,7 @@ const Sales = {
         <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">نقدي</div><div style="font-size:16px;font-weight:700;">${Utils.currency(cash)}</div></div>
         <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">تحويل</div><div style="font-size:16px;font-weight:700;">${Utils.currency(transfer)}</div></div>
         <div style="background:var(--dl);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--d);">دين اليوم</div><div style="font-size:16px;font-weight:700;color:var(--d);">${Utils.currency(defer)}</div></div>
-        <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">مشتريات</div><div style="font-size:16px;font-weight:700;">${Utils.currency(totalCost)}</div></div>
+        <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">تكلفة البضاعة المباعة</div><div style="font-size:16px;font-weight:700;">${Utils.currency(totalCOGS)}</div></div>
       </div>`
     );
   },
