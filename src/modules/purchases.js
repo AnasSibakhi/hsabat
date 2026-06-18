@@ -313,16 +313,19 @@ const Purchases = {
       }
 
       let productId = null;
+      const unitCostForInv = qty > 0 ? (cost / qty) : cost; // سعر تكلفة الوحدة الواحدة — لازم يُحفظ بالمخزون لحساب هامش الربح
+
       if (existing) {
         productId = existing.id;
-        // صنف موجود — أضف الكمية وحدّث سعر البيع
+        // صنف موجود — أضف الكمية وحدّث سعر البيع وسعر التكلفة (آخر سعر مسجّل)
         await DB.inventory().update({
           quantity:   existing.quantity + qty,
           sale_price: salePrice,
+          cost_price: unitCostForInv,
         }).eq('id', existing.id);
         Notify.success('تم — المجموع: ' + (existing.quantity + qty) + ' — سعر البيع: ₪' + salePrice);
       } else {
-        // صنف جديد — أنشئه في المخزون
+        // صنف جديد — أنشئه في المخزون مع سعر التكلفة
         const { data: newProd } = await DB.inventory().insert({
           store_id:        State.user.id,
           name:            productName,
@@ -330,6 +333,7 @@ const Purchases = {
           unit:            unit,
           quantity:        qty,
           sale_price:      salePrice,
+          cost_price:      unitCostForInv,
           low_stock_alert: CONFIG.lowStockDefault,
         }).select().single();
         productId = newProd?.id;
@@ -578,10 +582,13 @@ const Purchases = {
       }).eq('id', id);
       if (error) throw error;
 
-      // تحديث سعر البيع في المخزون
-      if (salePrice) {
-        const { data: inv } = await DB.inventory().select('id').eq('name', product).maybeSingle();
-        if (inv) await DB.inventory().update({ sale_price: salePrice }).eq('id', inv.id);
+      // تحديث سعر البيع وسعر التكلفة في المخزون (لحساب هامش الربح بشكل صحيح)
+      const unitCost = qty > 0 ? (cost / qty) : cost;
+      const { data: inv } = await DB.inventory().select('id').eq('name', product).maybeSingle();
+      if (inv) {
+        const updates = { cost_price: unitCost };
+        if (salePrice) updates.sale_price = salePrice;
+        await DB.inventory().update(updates).eq('id', inv.id);
       }
 
       Notify.success('تم التعديل');
