@@ -76,15 +76,40 @@ export const QuickSale = {
 
   // Called on keydown
   onBarcodeKey(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const input = DOM.get('qs-barcode-input');
-      const code  = input?.value?.trim();
-      if (!code) return;
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const input = DOM.get('qs-barcode-input');
+    const code  = input?.value?.trim();
+    if (!code) return;
+
+    clearTimeout(QuickSale._barcodeTimer);
+
+    // لو القيمة باركود رقمي بحت — استخدم مسار الباركود السريع (دقيق ومباشر)
+    if (/^\d+$/.test(code)) {
       input.value = '';
-      clearTimeout(QuickSale._barcodeTimer);
-      QuickSale._renderGrid('');
+      QuickSale.onBarcodeInput('');
       QuickSale._onBarcode(code);
+      return;
+    }
+
+    // غير ذلك (اسم منتج) — طابقي بنفس منطق البحث المباشر (الاسم أو الباركود)
+    const low     = code.toLowerCase();
+    const matches = State.inventory.filter(p =>
+      (p.name    || '').toLowerCase().includes(low) ||
+      (p.barcode || '').includes(low)
+    );
+
+    if (matches.length === 1) {
+      // تطابق وحيد واضح — أضيفيه مباشرة، نفس سلوك الضغط على نتيجة البحث
+      QuickSale.selectFromSearch(matches[0].id);
+    } else if (matches.length > 1) {
+      // أكثر من تطابق — لا تخمّني، اعرضي القائمة لتختار المستخدمة بنفسها (نفس نتائج onBarcodeInput)
+      QuickSale._showSearchResults(code);
+    } else {
+      // لا يوجد تطابق فعلاً
+      input.value = '';
+      QuickSale.onBarcodeInput('');
+      QuickSale._showNotFound(code);
     }
   },
 
@@ -161,7 +186,7 @@ export const QuickSale = {
 
   search(val) {
     clearTimeout(QuickSale._searchTimer);
-    QuickSale._searchTimer = setTimeout(() => QuickSale._renderGrid(val), 200);
+    QuickSale._searchTimer = setTimeout(() => QuickSale._showSearchResults(val), 200);
   },
 
   // ── Smart Cards ──
