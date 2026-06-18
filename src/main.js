@@ -155,14 +155,14 @@ document.addEventListener('input', e => {
   if (e.target.matches('input[type="number"]')) _applyZeroFade(e.target);
 });
 
-// عند الضغط على حقل قيمته 0 — حدد النص كامل تلقائياً، فأول رقم يُكتب يستبدله مباشرة بدون حذف يدوي
+// عند الضغط على حقل أرقام أو باركود — حدد المحتوى كامل تلقائياً، فالكتابة تستبدله مباشرة بدون حذف يدوي
+// (لا يشمل حقول الاسم/البحث العامة لأن المستخدم قد يريد تعديل جزء منها فقط)
 document.addEventListener('focus', e => {
-  if (e.target.matches('input[type="number"]')) {
-    const v = e.target.value.trim();
-    if (v === '0' || v === '') {
-      // استخدام setTimeout لضمان التحديد يصير بعد أن يضع المتصفح نفسه مكان الكتابة الافتراضي
-      setTimeout(() => e.target.select(), 0);
-    }
+  const isNumberInput = e.target.tagName === 'INPUT' && e.target.type === 'number';
+  const isBarcodeField = e.target.id && /barcode|bc-|^inb$/i.test(e.target.id);
+  if (isNumberInput || isBarcodeField) {
+    // استخدام setTimeout لضمان التحديد يصير بعد أن يضع المتصفح نفسه مكان الكتابة الافتراضي
+    setTimeout(() => e.target.select(), 0);
   }
 }, true); // capture:true لأن focus لا ينتشر (bubble) بشكل طبيعي
 
