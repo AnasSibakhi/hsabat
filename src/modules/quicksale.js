@@ -1265,6 +1265,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
       QuickSale._beep('success');
 
+      // إغلاق أي موديل دفع مفتوح فعلياً (كاش/تحويل/دين) قبل عرض الفاتورة
+      // — السبب الجذري لتعليق الموديل: كان يُغلق m-qs-checkout فقط (مُغلق من قبل أصلاً)
+      // بينما الموديل المفتوح الحقيقي وقت الضغط على "تأكيد البيع" يختلف حسب نوع الدفع
+      Modal.close('m-qs-pay-cash');
+      Modal.close('m-qs-pay-transfer');
+      Modal.close('m-qs-debt');
+
       // احفظ نسخة من السلة قبل المسح
       const cartSnapshot = _cart.map(c => ({ ...c }));
 
