@@ -11,7 +11,6 @@ import { escape, currency } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getCustomers, getDebts, getInventory, getDashboard } from '../core/registry.js';
-import { BarcodeScanner } from '../services/BarcodeScanner.js';
 
 // ── State ──
 let _allInvoices  = [];
@@ -41,10 +40,14 @@ const Invoices = {
     const dd = DOM.get('inv-cust-dropdown'); if (dd) dd.style.display = 'none';
     Invoices.resetForm();
 
-    // تحميل الزبائن مسبقاً
+    // تحميل الزبائن والمخزون مسبقاً — المخزون ضروري لإضافة المنتجات بشكل صحيح
     if (!State.customers?.length) {
       sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; });
+    }
+    if (!State.inventory?.length) {
+      const inv = getInventory();
+      if (inv) await inv.loadList();
     }
 
     setTimeout(() => { const s = DOM.get('inv-prod-search'); if (s) s.focus(); }, 300);
@@ -189,7 +192,7 @@ const Invoices = {
 
   addProductById(id) {
     const p = (State.inventory||[]).find(i => i.id === id);
-    if (!p) return;
+    if (!p) { Notify.error('لم يتم العثور على المنتج — حاولي مرة أخرى'); return; }
     // Check if already in list
     const existing = document.querySelector(`#inv-items-list .inv-item-row[data-pid="${id}"]`);
     if (existing) {
@@ -225,54 +228,8 @@ const Invoices = {
     setTimeout(() => DOM.get('inv-prod-search')?.focus(), 100);
   },
 
-  // ── Camera Scanner — نفس نمط QuickSale بالضبط ──
-  async toggleFlash() {
-    await BarcodeScanner.toggleFlash();
-  },
-
-  async startScanner() {
-    if (BarcodeScanner.isActive()) return;
-
-    const overlay = DOM.get('invc-scanner-overlay');
-    if (overlay) overlay.style.display = 'flex';
-
-    const container = DOM.get('invc-scanner-container');
-    if (!container) return;
-    container.innerHTML = '';
-    container.style.height = (window.innerHeight - 50) + 'px';
-
-    await BarcodeScanner.start(
-      'invc-scanner-container',
-      (code) => Invoices._onScanned(code),
-      (err)  => { Notify.error(err || 'لا يمكن فتح الكاميرا'); Invoices.stopScanner(); }
-    );
-  },
-
-  stopScanner() {
-    BarcodeScanner.stop();
-    const overlay = DOM.get('invc-scanner-overlay');
-    if (overlay) overlay.style.display = 'none';
-    const container = DOM.get('invc-scanner-container');
-    if (container) { container.innerHTML = ''; container.style.height = ''; }
-    DOM.get('inv-prod-search')?.focus();
-  },
-
-  async _onScanned(code) {
-    if (!code) return;
-    const product = (State.inventory || []).find(p => p.barcode === code && p.quantity > 0);
-
-    if (product) {
-      Invoices.addProductById(product.id);
-      const c = DOM.get('invc-scanner-container');
-      if (c) { c.style.transition = 'transform .15s'; c.style.transform = 'scale(1.15)'; setTimeout(() => c.style.transform = 'scale(1)', 200); }
-    } else {
-      Notify.error('المنتج غير موجود أو نفد من المخزون');
-      Invoices.stopScanner();
-    }
-  },
-
   changeQty(btn, delta) {
-    const inp = btn.closest('.inv-qty-ctrl').querySelector('.inv-qty-inp');
+    const inp = btn.closest('.inv-item-ctrl').querySelector('.inv-qty-inp');
     const max = parseInt(inp.max) || 9999;
     const val = Math.min(max, Math.max(1, (parseInt(inp.value)||1) + delta));
     inp.value = val;
