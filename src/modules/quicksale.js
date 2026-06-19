@@ -373,13 +373,18 @@ export const QuickSale = {
     const el = DOM.get('qs-cart-items');
     if (!el) return;
 
+    const invoiceBtn = DOM.get('pos-invoice-btn');
+
     if (!_cart.length) {
       el.innerHTML = '<div class="pos-cart-empty"><i class="ti ti-shopping-cart"></i><p>السلة فارغة<br>اختر منتجاً أو امسح باركود</p></div>';
       DOM.setText('qs-items-count', '0');
       DOM.setText('qs-total-display', '₪ 0.00');
       const s = DOM.get('qs-summary-box'); if (s) s.innerHTML = '';
+      if (invoiceBtn) invoiceBtn.disabled = true;
       return;
     }
+
+    if (invoiceBtn) invoiceBtn.disabled = false;
 
     const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
     const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
