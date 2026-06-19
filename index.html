@@ -374,8 +374,8 @@
           <button class="pos-checkout-btn" onclick="QuickSale.openCheckout()">
             <i class="ti ti-check"></i> إتمام البيع
           </button>
-          <!-- Direct Invoice -->
-          <button class="pos-invoice-btn" onclick="Modal.open('m-invoice');Invoices.initModal()">
+          <!-- Direct Invoice — معطّل طالما السلة فاضية -->
+          <button id="pos-invoice-btn" class="pos-invoice-btn" disabled onclick="Modal.open('m-invoice');Invoices.initModal()">
             <i class="ti ti-file-invoice"></i> فاتورة مباشرة
           </button>
         </div>
