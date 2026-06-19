@@ -244,7 +244,7 @@ table.dt tr:hover td{background:var(--g0);}
    pages.css — Page-specific styles
    ═══════════════════════════════════ */
 
-/* ── INVOICE ITEMS LIST ── */
+/* ── INVOICE ITEMS LIST — عرض ثابت (نسخة مباشرة من سلة البيع السريع، غير قابل للتعديل) ── */
 .inv-item-row{padding:10px 12px;border-bottom:1px solid var(--g1);background:#fff;}
 .inv-item-row:last-child{border-bottom:none;}
 .inv-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
@@ -252,10 +252,7 @@ table.dt tr:hover td{background:var(--g0);}
 .inv-item-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .inv-item-ctrl{display:flex;align-items:center;gap:6px;}
 .inv-item-total{font-size:13px;font-weight:900;color:var(--p);min-width:60px;text-align:left;}
-.inv-qty-btn{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--br);background:var(--g0);font-size:18px;font-weight:800;color:var(--p);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.inv-qty-btn:active{transform:scale(.9);background:var(--pl);}
-.inv-qty-inp{width:44px;padding:5px;border:1.5px solid var(--br);border-radius:6px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;text-align:center;}
-.inv-del-row{background:var(--dl);color:var(--d);border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.inv-qty-fixed{font-size:13px;font-weight:800;color:var(--g7);background:var(--g0);border-radius:6px;padding:3px 10px;min-width:24px;text-align:center;}
 
 /* ── INVOICE MODAL ── */
 .inv-modal{max-width:560px!important;}
@@ -286,9 +283,7 @@ table.dt tr:hover td{background:var(--g0);}
 .inv-items-table tr:last-child td{border-bottom:none;}
 .inv-empty-row td{text-align:center;color:var(--g4);padding:1.5rem!important;font-size:13px;}
 .inv-disc-inp{width:60px;padding:5px 8px;border:1.5px solid var(--br);border-radius:6px;font-family:'Cairo',sans-serif;font-size:12px;text-align:center;}
-.inv-qty-inp:focus,.inv-disc-inp:focus{outline:none;border-color:var(--p);}
-.inv-del-row{background:none;border:none;color:var(--d);cursor:pointer;font-size:16px;padding:4px;border-radius:4px;}
-.inv-del-row:hover{background:var(--dl);}
+.inv-disc-inp:focus{outline:none;border-color:var(--p);}
 .inv-summary-card,.inv-pay-card{background:#fff;border:1px solid var(--br);border-radius:10px;padding:12px;}
 .inv-summary-title{font-size:12px;font-weight:800;color:var(--g7);margin-bottom:10px;}
 .inv-summary-rows{display:flex;flex-direction:column;gap:7px;}
@@ -302,10 +297,6 @@ table.dt tr:hover td{background:var(--g0);}
 .inv-change-row{display:flex;justify-content:space-between;font-size:13px;margin-top:8px;padding:8px;background:var(--g0);border-radius:8px;}
 .inv-action-btns{display:flex;flex-direction:column;gap:6px;margin-top:auto;position:sticky;bottom:0;background:var(--g0);padding-top:8px;}
 .inv-save-btn{width:100%;justify-content:center;font-size:14px;padding:12px;}
-.inv-qty-ctrl{display:flex;align-items:center;gap:4px;}
-.inv-qty-btn{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--br);background:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--p);flex-shrink:0;}
-.inv-qty-btn:hover{background:var(--pl);border-color:var(--p);}
-.inv-qty-btn:active{transform:scale(.95);}
 
 /* Invoice filters & pagination */
 .inv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;}
