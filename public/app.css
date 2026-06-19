@@ -720,3 +720,6 @@ body.dark .ni.active{background:#1e3a5f;}
 .pur-stat-val{font-size:13px;font-weight:800;color:var(--g9);}
 .pur-item-actions{display:flex;gap:5px;}
 .pur-item-actions button{flex:1;padding:5px;border-radius:6px;font-size:10px;}
+
+/* زر "فاتورة مباشرة" — معطّل بصرياً طالما السلة فاضية */
+.pos-invoice-btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.3);}
