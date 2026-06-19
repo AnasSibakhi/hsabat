@@ -445,6 +445,11 @@ export const QuickSale = {
     el.style.color = change >= 0 ? 'var(--s)' : 'var(--d)';
   },
 
+  // ── إتاحة قراءة محتوى السلة من خارج الملف (مثلاً موديل الفاتورة المباشرة) ──
+  getCart() {
+    return _cart.map(c => ({ ...c }));
+  },
+
   clearCart() {
     _cart = []; _discount = 0;
     _selectedTransferEntity = null;
