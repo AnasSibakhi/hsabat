@@ -308,7 +308,7 @@ export const Customers = {
       Modal.close('m-customer');
       DOM.clearInputs('cn', 'cph', 'cad', 'cno');
       await Customers.loadAll();
-      Customers.loadTable();
+      await Customers.loadUnified();
     });
   },
 
@@ -319,7 +319,7 @@ export const Customers = {
       await DB.customers().delete().eq('id', id);
       Notify.success('تم الحذف');
       await Customers.loadAll();
-      Customers.loadTable();
+      await Customers.loadUnified();
     });
   },
 
