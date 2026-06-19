@@ -10,7 +10,7 @@ import * as Utils from '../core/utils.js';
 import { escape, currency } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
-import { getCustomers, getDebts, getInventory, getDashboard } from '../core/registry.js';
+import { getCustomers, getDebts, getInventory, getDashboard, getQuickSale } from '../core/registry.js';
 
 // ── State ──
 let _allInvoices  = [];
@@ -50,7 +50,26 @@ const Invoices = {
       if (inv) await inv.loadList();
     }
 
-    setTimeout(() => { const s = DOM.get('inv-prod-search'); if (s) s.focus(); }, 300);
+    // استيراد منتجات سلة البيع السريع تلقائياً — الفاتورة المباشرة تكمل بيع جاري، لا تبدأ بحث جديد
+    Invoices._importFromCart();
+  },
+
+  // ── استيراد منتجات سلة البيع السريع لقائمة الفاتورة (نفس الكمية المضافة فعلياً) ──
+  _importFromCart() {
+    const list = DOM.get('inv-items-list');
+    if (list) list.innerHTML = ''; // تأكيد نظافة القائمة قبل الاستيراد (resetForm فعلت هذا أصلاً، لكن للتأكيد)
+
+    const qs = getQuickSale();
+    const cart = qs ? qs.getCart() : [];
+
+    if (!cart.length) {
+      Notify.warn('السلة فارغة — لا يوجد منتجات لاستيرادها');
+      return;
+    }
+
+    cart.forEach(item => {
+      if (item.id) Invoices.addProductById(item.id, item.qty || 1);
+    });
   },
 
   async searchCustomer(val) {
@@ -148,56 +167,14 @@ const Invoices = {
     DOM.get('new-cust-wrap')?.classList.add('hidden');
   },
 
-  // ── Product Search ──
-  onSearchKey(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const val = DOM.val('inv-prod-search').trim();
-      if (!val) return;
-      // Try exact barcode match first
-      const exact = (State.inventory||[]).find(p => p.barcode === val && p.quantity > 0);
-      if (exact) {
-        Invoices.addProductById(exact.id);
-        return;
-      }
-      // Otherwise add first result
-      const first = (State.inventory||[]).find(p =>
-        p.quantity > 0 && (p.name.toLowerCase().includes(val.toLowerCase()) || (p.barcode||'').includes(val))
-      );
-      if (first) {
-        Invoices.addProductById(first.id);
-      } else {
-        Notify.error('المنتج غير موجود');
-        DOM.get('inv-prod-search').select();
-      }
-    }
-  },
-
-  searchProduct(val) {
-    const dd = DOM.get('inv-prod-dropdown');
-    if (!val.trim()) { dd.style.display = 'none'; return; }
-    const q = val.trim().toLowerCase();
-    const matches = (State.inventory || []).filter(p =>
-      p.quantity > 0 && (p.name.toLowerCase().includes(q) || (p.barcode||'').includes(q))
-    ).slice(0, 8);
-    if (!matches.length) { dd.innerHTML = '<div class="inv-prod-opt" style="color:var(--g4);">لا توجد نتائج</div>'; dd.style.display = 'block'; return; }
-    dd.innerHTML = matches.map(p =>
-      `<div class="inv-prod-opt" onclick="Invoices.addProductById('${p.id}')">
-        <div><div class="inv-prod-opt-name">${escape(p.name)}</div><div class="inv-prod-opt-meta">${p.barcode||''} · ${p.quantity} ${p.unit||'قطعة'}</div></div>
-        <div style="font-weight:700;color:var(--p);">₪${p.sale_price?.toFixed(2)||0}</div>
-      </div>`
-    ).join('');
-    dd.style.display = 'block';
-  },
-
-  addProductById(id) {
+  addProductById(id, initialQty = 1) {
     const p = (State.inventory||[]).find(i => i.id === id);
     if (!p) { Notify.error('لم يتم العثور على المنتج — حاولي مرة أخرى'); return; }
     // Check if already in list
     const existing = document.querySelector(`#inv-items-list .inv-item-row[data-pid="${id}"]`);
     if (existing) {
       const qtyInp = existing.querySelector('.inv-qty-inp');
-      qtyInp.value = parseInt(qtyInp.value||1) + 1;
+      qtyInp.value = parseInt(qtyInp.value||1) + initialQty;
       Invoices.calcTotal();
     } else {
       const list = DOM.get('inv-items-list');
@@ -210,22 +187,19 @@ const Invoices = {
           <div class="inv-item-bottom">
             <div class="inv-item-ctrl">
               <button class="inv-qty-btn" onclick="Invoices.changeQty(this,-1)" type="button">−</button>
-              <input class="inv-qty-inp" type="number" value="1" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal">
+              <input class="inv-qty-inp" type="number" value="${initialQty}" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal">
               <button class="inv-qty-btn" onclick="Invoices.changeQty(this,1)" type="button">+</button>
             </div>
             <div style="font-size:12px;color:var(--g5);">
               ₪<input class="price-inp" type="number" value="${p.sale_price||0}" min="0" oninput="Invoices.calcTotal()" inputmode="decimal"
                style="width:60px;border:1px solid var(--br);border-radius:6px;padding:3px 5px;font-size:12px;font-family:Cairo,sans-serif;text-align:center;">
             </div>
-            <div class="inv-item-total">₪${((p.sale_price||0)).toFixed(2)}</div>
+            <div class="inv-item-total">₪${((p.sale_price||0) * initialQty).toFixed(2)}</div>
           </div>
         </div>`
       );
     }
-    DOM.get('inv-prod-search').value = '';
-    DOM.get('inv-prod-dropdown').style.display = 'none';
     Invoices.calcTotal();
-    setTimeout(() => DOM.get('inv-prod-search')?.focus(), 100);
   },
 
   changeQty(btn, delta) {
@@ -747,8 +721,6 @@ const Invoices = {
     DOM.setText('is-discount',     '₪0');
     DOM.setText('inv-items-count', '0 صنف');
     const disc = DOM.get('idiscount'); if (disc) disc.value = '0';
-    const srch = DOM.get('inv-prod-search'); if (srch) srch.value = '';
-    const dd   = DOM.get('inv-prod-dropdown'); if (dd) dd.style.display = 'none';
     Invoices._discType = 'fixed';
     const btn = DOM.get('inv-disc-toggle'); if (btn) btn.textContent = '₪';
   },
