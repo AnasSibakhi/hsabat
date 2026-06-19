@@ -726,6 +726,16 @@ const Invoices = {
     if (!items.length) { Notify.error('أضف منتجاً على الأقل'); return; }
     if (!subtotal && subtotal !== 0) { Notify.error('تحقق من أسعار المنتجات'); return; }
 
+    // اسم الزبون إلزامي — إما زبون محفوظ مُختار، أو اسم مكتوب للزبون الجديد
+    const custIdCheck  = DOM.val('ic');
+    const searchValCheck = DOM.val('inv-cust-search')?.trim();
+    const newNameCheck = DOM.val('inv-new-name')?.trim();
+    if (!custIdCheck && !searchValCheck && !newNameCheck) {
+      Notify.error('أدخل اسم الزبون');
+      DOM.get('inv-cust-search')?.focus();
+      return;
+    }
+
     const globalDisc  = parseFloat(DOM.val('idiscount')) || 0;
     const itemsDisc   = items.reduce((s, i) => s + (i.discount||0), 0);
     const discount    = globalDisc + itemsDisc;
@@ -782,7 +792,7 @@ const Invoices = {
       if (qs) qs.clearCart();
 
       await getInventory().loadList();
-      await Promise.all([Invoices.load(), getDashboard().load(), getCustomers().loadTable()]);
+      await Promise.all([Invoices.load(), getDashboard().load(), getCustomers().loadUnified()]);
     } catch (err) {
       console.error('[Invoices.save]', err);
       Notify.error(err.message);
