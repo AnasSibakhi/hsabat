@@ -134,10 +134,32 @@ Object.assign(window, {
   closeM:  (id)     => Modal.close(id),
 });
 
-// ── PWA Service Worker ──
+// ── PWA Service Worker — مع تحديث تلقائي فوري عند نشر نسخة جديدة ──
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      // فحص تحديثات فوري عند تحميل الصفحة
+      reg.update().catch(() => {});
+
+      // لو وجدنا Service Worker جديد قيد التثبيت — فعّله فوراً وأعد تحميل الصفحة
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+    }).catch(() => {});
+
+    // لما يتغيّر الـ controller (نسخة جديدة فعّالة) — أعد تحميل الصفحة مرة واحدة لضمان آخر نسخة
+    let _reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_reloaded) return;
+      _reloaded = true;
+      window.location.reload();
+    });
   });
 }
 
