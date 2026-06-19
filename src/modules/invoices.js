@@ -170,43 +170,32 @@ const Invoices = {
   addProductById(id, initialQty = 1) {
     const p = (State.inventory||[]).find(i => i.id === id);
     if (!p) { Notify.error('لم يتم العثور على المنتج — حاولي مرة أخرى'); return; }
-    // Check if already in list
+    // Check if already in list — لا يفترض أن يحصل أصلاً (الاستيراد من السلة فيه كل منتج مرة واحدة فقط)
     const existing = document.querySelector(`#inv-items-list .inv-item-row[data-pid="${id}"]`);
     if (existing) {
-      const qtyInp = existing.querySelector('.inv-qty-inp');
-      qtyInp.value = parseInt(qtyInp.value||1) + initialQty;
+      const qtyEl = existing.querySelector('.inv-qty-fixed');
+      const newQty = (parseInt(qtyEl?.dataset.qty || 1)) + initialQty;
+      if (qtyEl) { qtyEl.dataset.qty = newQty; qtyEl.textContent = newQty; }
       Invoices.calcTotal();
     } else {
       const list = DOM.get('inv-items-list');
+      const lineTotal = (p.sale_price||0) * initialQty;
       list.insertAdjacentHTML('beforeend', `
-        <div class="inv-item-row" data-pid="${p.id}" data-price="${p.sale_price||0}">
+        <div class="inv-item-row" data-pid="${p.id}" data-price="${p.sale_price||0}" data-qty="${initialQty}">
           <div class="inv-item-top">
             <div class="inv-item-name">${escape(p.name)}</div>
-            <button class="inv-del-row" onclick="this.closest('.inv-item-row').remove();Invoices.calcTotal()" type="button">✕</button>
           </div>
           <div class="inv-item-bottom">
             <div class="inv-item-ctrl">
-              <button class="inv-qty-btn" onclick="Invoices.changeQty(this,-1)" type="button">−</button>
-              <input class="inv-qty-inp" type="number" value="${initialQty}" min="1" max="${p.quantity}" oninput="Invoices.calcTotal()" inputmode="decimal">
-              <button class="inv-qty-btn" onclick="Invoices.changeQty(this,1)" type="button">+</button>
+              <span class="inv-qty-fixed" data-qty="${initialQty}">${initialQty}</span>
+              <span style="font-size:11px;color:var(--g5);">${escape(p.unit || 'قطعة')}</span>
             </div>
-            <div style="font-size:12px;color:var(--g5);">
-              ₪<input class="price-inp" type="number" value="${p.sale_price||0}" min="0" oninput="Invoices.calcTotal()" inputmode="decimal"
-               style="width:60px;border:1px solid var(--br);border-radius:6px;padding:3px 5px;font-size:12px;font-family:Cairo,sans-serif;text-align:center;">
-            </div>
-            <div class="inv-item-total">₪${((p.sale_price||0) * initialQty).toFixed(2)}</div>
+            <div style="font-size:12px;color:var(--g5);">₪${(p.sale_price||0).toFixed(2)}</div>
+            <div class="inv-item-total">₪${lineTotal.toFixed(2)}</div>
           </div>
         </div>`
       );
     }
-    Invoices.calcTotal();
-  },
-
-  changeQty(btn, delta) {
-    const inp = btn.closest('.inv-item-ctrl').querySelector('.inv-qty-inp');
-    const max = parseInt(inp.max) || 9999;
-    const val = Math.min(max, Math.max(1, (parseInt(inp.value)||1) + delta));
-    inp.value = val;
     Invoices.calcTotal();
   },
 
@@ -252,8 +241,8 @@ const Invoices = {
   calcTotal() {
     let subtotal = 0, totalDisc = 0, totalQty = 0, itemCount = 0;
     document.querySelectorAll('#inv-items-list .inv-item-row').forEach(row => {
-      const price = parseFloat(row.dataset.price) || parseFloat(row.querySelector('.price-inp')?.value) || 0;
-      const qty   = parseFloat(row.querySelector('.inv-qty-inp')?.value) || 0;
+      const price = parseFloat(row.dataset.price) || 0;
+      const qty   = parseFloat(row.dataset.qty) || 0;
       const rowTotal = qty * price;
       const el = row.querySelector('.inv-item-total');
       if (el) el.textContent = '₪' + rowTotal.toFixed(2);
@@ -279,8 +268,8 @@ const Invoices = {
     document.querySelectorAll('#inv-items-list .inv-item-row').forEach(row => {
       const id    = row.dataset.pid;
       const p     = (State.inventory||[]).find(i => i.id === id);
-      const qty   = parseFloat(row.querySelector('.inv-qty-inp')?.value) || 0;
-      const price = parseFloat(row.querySelector('.price-inp')?.value) || parseFloat(row.dataset.price) || 0;
+      const qty   = parseFloat(row.dataset.qty)   || 0;
+      const price = parseFloat(row.dataset.price) || 0;
       if (qty > 0 && price > 0) {
         items.push({ product_name: p?.name||'منتج', inventory_id: id||null, quantity: qty, price });
         subtotal += qty * price;
@@ -787,6 +776,11 @@ const Invoices = {
       DOM.get('new-cust-wrap')?.classList.add('hidden');
       DOM.clearInputs('inv-new-name', 'inv-new-phone', 'inotes');
       DOM.get('idiscount').value = '0';
+
+      // أفرغ سلة البيع السريع — الفاتورة كانت نسخة من نفس منتجاتها، يجب ألا يُباع نفس المنتج مرتين
+      const qs = getQuickSale();
+      if (qs) qs.clearCart();
+
       await getInventory().loadList();
       await Promise.all([Invoices.load(), getDashboard().load(), getCustomers().loadTable()]);
     } catch (err) {
