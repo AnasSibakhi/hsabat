@@ -410,7 +410,7 @@ const Invoices = {
             <div class="ir-actions">
               <button class="ir-act-btn" onclick="Invoices.openDetails('${inv.id}')" title="عرض"><i class="ti ti-eye"></i></button>
               ${!isReturned
-                ? `<button class="ir-act-btn ir-act-return" onclick="Returns.openModal('${inv.id}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})" title="إرجاع"><i class="ti ti-rotate-2"></i></button>`
+                ? `<button class="ir-act-btn ir-act-return" data-inv-id="${inv.id}" data-buyer="${escape(inv.buyer_name || inv.customer_name || '')}" data-total="${inv.total}" onclick="Returns.openModalFromBtn(this)" title="إرجاع"><i class="ti ti-rotate-2"></i></button>`
                 : '<span class="ir-act-disabled"><i class="ti ti-rotate-2"></i></span>'}
               <button class="ir-act-btn ir-act-del" onclick="Invoices.delete('${inv.id}')" title="حذف"><i class="ti ti-trash"></i></button>
             </div>
@@ -596,7 +596,7 @@ const Invoices = {
         </a>
       </div>
       ${!ret ? `
-      <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px;" onclick="Modal.close('m-inv-details');Returns.openModal('${invId}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})">
+      <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px;" data-inv-id="${invId}" data-buyer="${escape(inv.buyer_name || inv.customer_name || '')}" data-total="${inv.total}" onclick="Modal.close('m-inv-details');Returns.openModalFromBtn(this)">
         <i class="ti ti-arrow-back-up"></i> إرجاع هذه الفاتورة
       </button>` : ''}
     `);
