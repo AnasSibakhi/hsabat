@@ -58,7 +58,6 @@ const Returns = {
     if (_saving) return;
 
     DOM.get('ret-inv-id').value  = invId;
-    DOM.get('ret-buyer-name').value = custName || '';
     DOM.setText('ret-inv-info', `الزبون: ${custName || 'عادي'} — المجموع: ₪${total}`);
     DOM.get('ret-amount').value  = total;
     Modal.open('m-return');
