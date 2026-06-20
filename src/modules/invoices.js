@@ -799,15 +799,23 @@ const Invoices = {
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
-  async delete(id) {
+  delete(id) {
     const inv = (_allInvoices || []).find(i => i.id === id) || _filtered.find(i => i.id === id);
     const isDefer = inv?.payment_type === PAYMENT.DEFER || inv?.payment_type === PAYMENT.PARTIAL;
 
-    const confirmMsg = isDefer
-      ? 'حذف الفاتورة؟ سيتم إرجاع الكمية للمخزون.\nتنبيه: هذه فاتورة دين — الدين المرتبط بها لن يُحذف تلقائياً، يجب حذفه يدوياً من صفحة الزبائن والديون إن لزم.'
-      : 'حذف الفاتورة؟ سيتم إرجاع الكمية للمخزون.';
-    if (!confirm(confirmMsg)) return;
+    DOM.get('del-inv-id').value = id;
+    DOM.setText('del-inv-num', inv?.invoice_number || '');
+    const warning = DOM.get('del-debt-warning');
+    if (warning) warning.style.display = isDefer ? 'flex' : 'none';
 
+    Modal.open('m-del-invoice');
+  },
+
+  async confirmDelete() {
+    const id = DOM.val('del-inv-id');
+    if (!id) return;
+
+    Modal.close('m-del-invoice');
     State.isMutating = true;
     try {
       // جلب أصناف الفاتورة قبل حذفها — لازم نعرفهم لنرجّع الكمية صحيح
