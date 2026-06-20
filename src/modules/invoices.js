@@ -389,35 +389,46 @@ const Invoices = {
           const buyer    = escape(inv.buyer_name || inv.customer_name || 'عادي');
           const payClass = PAY_CLASS[inv.payment_type] || '';
           const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
-          const discount = inv.discount > 0 ? `<span style="color:var(--d);font-size:11px;">-₪${inv.discount.toFixed(2)}</span>` : '<span style="color:var(--g4);">—</span>';
+          const hasDiscount = inv.discount > 0;
           const isReturned = inv._returned;
-          return `<tr${isReturned ? ' style="opacity:0.7;"' : ''}>
-            <td>
-              <strong style="color:var(--p);">${escape(inv.invoice_number || '-')}</strong>
-              ${isReturned ? '<br><span class="br" style="font-size:10px;">مُرجَعة</span>' : ''}
-            </td>
-            <td>
-              <div style="font-weight:600;">${buyer}</div>
-              ${inv.buyer_phone ? `<div style="font-size:11px;color:var(--g5);">${escape(inv.buyer_phone)}</div>` : ''}
-            </td>
-            <td>
-              <div>${inv.invoice_date}</div>
-              <div style="font-size:11px;color:var(--g4);">${inv.sale_time || ''}</div>
-            </td>
-            <td><span class="inv-items-badge" id="ic-${inv.id}">—</span></td>
-            <td>${discount}</td>
-            <td><strong>₪${inv.total.toFixed(2)}</strong></td>
-            <td><span class="inv-pay-badge ${payClass}">${payLabel}</span></td>
-            <td>
-              <div class="inv-actions">
-                <button class="inv-action-btn" onclick="Invoices.openDetails('${inv.id}')"><i class="ti ti-eye"></i> عرض</button>
-                ${!isReturned ? `<button class="ibb" onclick="Returns.openModal('${inv.id}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})" style="padding:4px 7px;font-size:11px;">إرجاع</button>` : '<span style="font-size:11px;color:var(--g4);">مُرجَعة</span>'}
-                <button class="inv-del-btn" onclick="Invoices.delete('${inv.id}')"><i class="ti ti-trash"></i></button>
+          return `<div class="inv-card${isReturned ? ' inv-card-returned' : ''}">
+            <div class="inv-card-top">
+              <div class="inv-card-num">
+                <strong>${escape(inv.invoice_number || '-')}</strong>
+                ${isReturned ? '<span class="br inv-returned-tag">مُرجَعة</span>' : ''}
               </div>
-            </td>
-          </tr>`;
+              <span class="inv-pay-badge ${payClass}">${payLabel}</span>
+            </div>
+
+            <div class="inv-card-buyer">
+              <i class="ti ti-user"></i>
+              <div>
+                <div class="inv-card-buyer-name">${buyer}</div>
+                ${inv.buyer_phone ? `<div class="inv-card-buyer-phone">${escape(inv.buyer_phone)}</div>` : ''}
+              </div>
+            </div>
+
+            <div class="inv-card-meta">
+              <span><i class="ti ti-calendar"></i> ${inv.invoice_date}${inv.sale_time ? ' · ' + inv.sale_time : ''}</span>
+              <span class="inv-items-badge" id="ic-${inv.id}"><i class="ti ti-package"></i> —</span>
+            </div>
+
+            <div class="inv-card-totals">
+              <div class="inv-card-total-row">
+                <span class="inv-card-total-label">الإجمالي</span>
+                <strong class="inv-card-total-val">₪${inv.total.toFixed(2)}</strong>
+              </div>
+              ${hasDiscount ? `<div class="inv-card-disc-row"><span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span></div>` : ''}
+            </div>
+
+            <div class="inv-card-actions">
+              <button class="inv-action-btn" onclick="Invoices.openDetails('${inv.id}')"><i class="ti ti-eye"></i> عرض</button>
+              ${!isReturned ? `<button class="ibb" onclick="Returns.openModal('${inv.id}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})">إرجاع</button>` : '<span class="inv-returned-note">مُرجَعة</span>'}
+              <button class="inv-del-btn" onclick="Invoices.delete('${inv.id}')"><i class="ti ti-trash"></i></button>
+            </div>
+          </div>`;
         }).join('')
-      : '<tr class="er"><td colspan="8">لا توجد فواتير</td></tr>'
+      : '<div class="er inv-empty-state">لا توجد فواتير</div>'
     );
 
     // Pagination UI
