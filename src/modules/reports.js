@@ -2,7 +2,7 @@
  * reports.js — Reports Module (FIFO-aware)
  */
 
-import { DB, sbAdmin } from '../core/db.js';
+import { DB }           from '../core/db.js';
 import { State }       from '../core/state.js';
 import { Notify }      from '../core/notify.js';
 import * as DOM        from '../core/dom.js';
@@ -30,31 +30,10 @@ const Reports = {
     const invoiceIds  = (invRes.data || []).map(i => i.id);
     const totalSales  = Utils.sumBy(invRes.data, 'total');
 
-    // COGS من FIFO allocations (أدق من تكلفة المنتج الحالية)
+    // COGS من FIFO allocations (أدق من تكلفة المنتج الحالية) — عبر Edge Function آمنة
     let totalCOGS = 0;
     if (invoiceIds.length) {
-      const { data: allocs } = await sbAdmin
-        .from('sale_inventory_allocations')
-        .select('quantity_taken, cost_price')
-        .in('sale_invoice_id', invoiceIds)
-        .eq('store_id', State.user.id);
-
-      totalCOGS = (allocs || []).reduce(
-        (sum, a) => sum + a.quantity_taken * a.cost_price, 0
-      );
-
-      // Fallback: لو ما في FIFO allocations بعد — استخدم تكلفة المنتج
-      if (!totalCOGS && invoiceIds.length) {
-        const { data: items } = await sbAdmin
-          .from('invoice_items')
-          .select('quantity, price, inventory_id, inventory(cost_price)')
-          .in('invoice_id', invoiceIds);
-
-        totalCOGS = (items || []).reduce((sum, item) => {
-          const cost = item.inventory?.cost_price || 0;
-          return sum + cost * (item.quantity || 1);
-        }, 0);
-      }
+      totalCOGS = await FIFOService.calculateCOGS(invoiceIds);
     }
 
     const expList   = expRes.data || [];
