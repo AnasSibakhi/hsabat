@@ -55,4 +55,9 @@ export const FIFOService = {
   async removeBatchByPurchase(purchaseId, productId) {
     return callFifoFunction('removeBatchByPurchase', { purchaseId, productId });
   },
+
+  async calculateCOGS(invoiceIds) {
+    const result = await callFifoFunction('calculateCOGS', { invoiceIds });
+    return result.totalCOGS;
+  },
 };
