@@ -714,3 +714,29 @@ body.dark .ni.active{background:#1e3a5f;}
 
 /* زر "فاتورة مباشرة" — معطّل بصرياً طالما السلة فاضية */
 .pos-invoice-btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.3);}
+
+/* ── صفحة الفواتير — كاردات متجاوبة (تستبدل الجدول العريض) ── */
+.inv-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+@media (min-width:680px){.inv-grid{grid-template-columns:repeat(2,1fr);}}
+@media (min-width:1000px){.inv-grid{grid-template-columns:repeat(3,1fr);}}
+
+.inv-card{background:#fff;border:1px solid var(--br);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.inv-card-returned{opacity:.65;}
+.inv-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.inv-card-num{font-size:14px;color:var(--p);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.inv-returned-tag{font-size:10px;}
+.inv-card-buyer{display:flex;align-items:flex-start;gap:8px;color:var(--g6);}
+.inv-card-buyer i{font-size:16px;margin-top:2px;color:var(--g4);flex-shrink:0;}
+.inv-card-buyer-name{font-size:13px;font-weight:700;color:var(--g9);}
+.inv-card-buyer-phone{font-size:11px;color:var(--g5);margin-top:1px;}
+.inv-card-meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--g5);padding-top:8px;border-top:1px solid var(--g1);}
+.inv-card-meta i{font-size:12px;margin-left:3px;}
+.inv-card-totals{background:var(--g0);border-radius:10px;padding:8px 12px;}
+.inv-card-total-row{display:flex;justify-content:space-between;align-items:baseline;}
+.inv-card-total-label{font-size:11px;color:var(--g5);}
+.inv-card-total-val{font-size:17px;color:var(--p);}
+.inv-card-disc-row{display:flex;justify-content:space-between;font-size:11px;color:var(--d);margin-top:4px;}
+.inv-card-actions{display:flex;gap:6px;}
+.inv-card-actions button{flex:1;text-align:center;justify-content:center;display:flex;align-items:center;gap:4px;}
+.inv-returned-note{flex:1;text-align:center;font-size:11px;color:var(--g4);align-self:center;}
+.inv-empty-state{padding:40px 20px;text-align:center;color:var(--g5);grid-column:1/-1;}
