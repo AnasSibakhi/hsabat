@@ -277,7 +277,7 @@ const Purchases = {
 
     State.isMutating = true;
     try {
-      const { error } = await DB.purchases().insert({
+      const { data: newPurchase, error } = await DB.purchases().insert({
         store_id: State.user.id, supplier, product_name: productName,
         quantity: qty, cost, purchase_date: DOM.val('pud'),
         supplier_phone: supplierPhone || null,
@@ -285,8 +285,10 @@ const Purchases = {
         payment_status: payStatus,
         paid_amount:    paidAmount,
         remaining:      remaining,
-      });
+        sale_price:     salePrice * qty, // إجمالي سعر البيع لكل الكمية (نفس منطق p.sale_price بالمعادلات الأخرى)
+      }).select().single();
       if (error) throw error;
+      const purchaseId = newPurchase?.id || null;
 
       // ربط المخزون — ابحث عن الصنف بالاسم (مع تطبيع النص لمنع التكرار بسبب مسافات/اختلاف بسيط)
       const unit = DOM.get('pu-unit')?.value || 'قطعة (pcs)';
@@ -346,11 +348,12 @@ const Purchases = {
         try {
           await FIFOService.addBatch({
             productId,
-            quantity:         qty,
-            costPrice:        unitCost,
-            sellingPrice:     salePrice,
-            supplierId:       supplier || null,
-            purchaseDate:     DOM.val('pud'),
+            quantity:           qty,
+            costPrice:          unitCost,
+            sellingPrice:       salePrice,
+            supplierId:         supplier || null,
+            purchaseDate:       DOM.val('pud'),
+            purchaseInvoiceId:  purchaseId,
           });
         } catch (fifoErr) {
           console.warn('FIFO batch creation failed (non-critical):', fifoErr.message);
@@ -578,13 +581,20 @@ const Purchases = {
         supplier, product_name: product, quantity: qty, cost, purchase_date: date,
         supplier_phone: phone || null,
         invoice_ref:    invno || null,
-        sale_price:     salePrice,
+        sale_price:     salePrice * qty, // إجمالي سعر البيع لكل الكمية — المستخدمة تُدخل سعر الوحدة بالنموذج
       }).eq('id', id);
       if (error) throw error;
 
       // تحديث سعر البيع وسعر التكلفة في المخزون (لحساب هامش الربح بشكل صحيح)
+      // — نفس منطق التطبيع بدالة save() لمنع فشل المطابقة بصمت بسبب مسافات/اختلاف بسيط بالاسم
       const unitCost = qty > 0 ? (cost / qty) : cost;
-      const { data: inv } = await DB.inventory().select('id').eq('name', product).maybeSingle();
+      const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      const targetNorm = normalize(product);
+      if (!State.inventory?.length) {
+        const { data } = await DB.inventory().select('id,name');
+        State.inventory = data || [];
+      }
+      const inv = State.inventory.find(item => normalize(item.name) === targetNorm) || null;
       if (inv) {
         const updates = { cost_price: unitCost };
         if (salePrice) updates.sale_price = salePrice;
@@ -598,10 +608,40 @@ const Purchases = {
   },
 
   async delete(id) {
-    if (!confirm('حذف؟')) return;
-    await DB.purchases().delete().eq('id', id);
-    Notify.success('تم');
-    await Purchases.load();
+    if (!confirm('حذف هذه العملية؟ سيتم إرجاع الكمية غير المباعة للمخزون')) return;
+
+    try {
+      // جلب بيانات العملية قبل حذفها — لازم نعرف المنتج/الكمية لنرجّعهم صحيح
+      const { data: purchase } = await DB.purchases().select('*').eq('id', id).maybeSingle();
+
+      if (purchase) {
+        const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        const targetNorm = normalize(purchase.product_name);
+        if (!State.inventory?.length) {
+          const { data } = await DB.inventory().select('id,name,quantity');
+          State.inventory = data || [];
+        }
+        const product = State.inventory.find(item => normalize(item.name) === targetNorm) || null;
+
+        if (product) {
+          // حاول التراجع عبر الـ batch المرتبط (يحافظ على دقة المبيعات السابقة لو استُهلك جزء منه)
+          const result = await FIFOService.removeBatchByPurchase(id, product.id);
+
+          // لا يوجد batch مرتبط (عملية قديمة قبل الإصلاح) — احتياط: اخصم الكمية كاملة مباشرة
+          if (!result.found) {
+            const newQty = Math.max(0, product.quantity - purchase.quantity);
+            await DB.inventory().update({ quantity: newQty }).eq('id', product.id);
+          }
+        }
+      }
+
+      await DB.purchases().delete().eq('id', id);
+      Notify.success('تم الحذف وإرجاع الكمية للمخزون');
+      await Purchases.load();
+      const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
+    } catch (err) {
+      Notify.error('فشل الحذف: ' + err.message);
+    }
   },
 };
 
