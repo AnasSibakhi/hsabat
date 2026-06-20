@@ -211,4 +211,44 @@ export const FIFOService = {
 
     return { costValue, sellValue };
   },
+
+  // ── التراجع عن عملية شراء محذوفة: يرجّع للمخزون فقط الكمية غير المُباعة فعلياً ──
+  // (الكمية اللي استُهلكت بالفعل ببيع سابق لا تُمس — حذف عملية الشراء لا يبطل بيعاً تم بالفعل)
+  async removeBatchByPurchase(purchaseId, productId) {
+    const sid = storeId();
+
+    const { data: batch } = await sbAdmin
+      .from('inventory_batches')
+      .select('*')
+      .eq('store_id', sid)
+      .eq('purchase_invoice_id', purchaseId)
+      .maybeSingle();
+
+    // لا يوجد batch مرتبط (عملية شراء قديمة قبل ربط الـ batches، أو فشل إنشاء الـ batch أصلاً)
+    if (!batch) return { reverted: 0, found: false };
+
+    const unsoldQty = batch.quantity_remaining; // الكمية المتبقية غير المُباعة فعلياً من هذا الـ batch بالضبط
+
+    if (unsoldQty > 0 && productId) {
+      const { data: inv } = await sbAdmin
+        .from('inventory')
+        .select('quantity')
+        .eq('id', productId)
+        .maybeSingle();
+      if (inv) {
+        await sbAdmin
+          .from('inventory')
+          .update({ quantity: Math.max(0, inv.quantity - unsoldQty) })
+          .eq('id', productId);
+      }
+    }
+
+    // صفّر الـ batch بدل حذفه نهائياً — يحافظ على السجل التاريخي لأي مبيعات استهلكت منه بالفعل
+    await sbAdmin
+      .from('inventory_batches')
+      .update({ quantity_remaining: 0 })
+      .eq('id', batch.id);
+
+    return { reverted: unsoldQty, found: true };
+  },
 };
