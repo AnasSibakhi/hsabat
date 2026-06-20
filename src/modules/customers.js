@@ -294,12 +294,32 @@ export const Customers = {
   async save() {
     const name = DOM.val('cn');
     if (!name) { Notify.error('يرجى إدخال الاسم'); return; }
+    const phone = DOM.val('cph');
 
     await State.mutate(async () => {
+      // نفس منطق المطابقة المركزي — تمنع تكرار الزبون لو الجوال أو الاسم مطابق لزبون موجود مسبقاً
+      const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+
+      const { data: allCustomers } = await sb.from('customers').select('*').eq('store_id', State.user.id);
+      let existing = null;
+
+      if (cleanPhone) {
+        existing = (allCustomers || []).find(c => (c.phone || '').trim().replace(/[\s-]/g, '') === cleanPhone);
+      }
+      if (!existing) {
+        existing = (allCustomers || []).find(c => normalize(c.name) === normalize(name));
+      }
+
+      if (existing) {
+        Notify.error('هذا الزبون موجود مسبقاً: ' + existing.name + (existing.phone ? ' — ' + existing.phone : ''));
+        return;
+      }
+
       const { error } = await DB.customers().insert({
         store_id: State.user.id,
         name,
-        phone:   DOM.val('cph'),
+        phone,
         address: DOM.val('cad'),
         notes:   DOM.val('cno'),
       });
