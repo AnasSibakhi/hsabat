@@ -325,24 +325,43 @@ export const Customers = {
 
   /** Create a customer inline (called from Invoices/QuickSale) */
   async createInline(name, phone) {
-    // تحقق أولاً — لو الاسم موجود مسبقاً ارجعه بدون إضافة
-    const existing = (State.customers || []).find(c =>
-      c.name.trim().toLowerCase() === name.trim().toLowerCase()
-    );
-    if (existing) return existing;
+    const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const cleanName  = normalize(name);
+    const cleanPhone = (phone || '').trim().replace(/[\s-]/g, ''); // إزالة المسافات والشرطات من الجوال للمطابقة الدقيقة
 
-    // تحقق من DB كمان لو ما محمّلين
-    const { data: found } = await sb.from('customers')
-      .select('*').eq('store_id', State.user.id)
-      .ilike('name', name.trim()).maybeSingle();
-    if (found) {
-      // أضفه للـ cache
-      if (!State.customers) State.customers = [];
-      if (!State.customers.find(c => c.id === found.id)) State.customers.push(found);
-      return found;
+    // الأولوية القصوى: مطابقة بالجوال — أدق معرّف فريد فعلي للزبون (لا يتأثر باختلاف كتابة الاسم)
+    if (cleanPhone) {
+      const byPhoneCache = (State.customers || []).find(c =>
+        (c.phone || '').trim().replace(/[\s-]/g, '') === cleanPhone
+      );
+      if (byPhoneCache) return byPhoneCache;
+
+      const { data: allCustomers } = await sb.from('customers')
+        .select('*').eq('store_id', State.user.id);
+      const byPhoneDb = (allCustomers || []).find(c =>
+        (c.phone || '').trim().replace(/[\s-]/g, '') === cleanPhone
+      );
+      if (byPhoneDb) {
+        if (!State.customers) State.customers = [];
+        if (!State.customers.find(c => c.id === byPhoneDb.id)) State.customers.push(byPhoneDb);
+        return byPhoneDb;
+      }
     }
 
-    // أضف جديد
+    // احتياط: مطابقة بالاسم المُطبَّع (لو الجوال غير متوفر — مثلاً زبون كاش بدون جوال)
+    const byNameCache = (State.customers || []).find(c => normalize(c.name) === cleanName);
+    if (byNameCache) return byNameCache;
+
+    const { data: byNameDb } = await sb.from('customers')
+      .select('*').eq('store_id', State.user.id)
+      .ilike('name', name.trim()).maybeSingle();
+    if (byNameDb) {
+      if (!State.customers) State.customers = [];
+      if (!State.customers.find(c => c.id === byNameDb.id)) State.customers.push(byNameDb);
+      return byNameDb;
+    }
+
+    // لا يوجد تطابق فعلي — أنشئي زبون جديد فعلاً
     const { data, error } = await DB.customers().insert({
       store_id: State.user.id, name: name.trim(), phone: phone ?? '',
     }).select().single();
