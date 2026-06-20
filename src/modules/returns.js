@@ -47,10 +47,11 @@ const Returns = {
   // ── نسخة آمنة من openModal — تقرأ البيانات من data-* attributes بدل تضمينها بالـ onclick نصّاً ──
   // (يمنع كسر الزر بصمت لو اسم الزبون يحتوي على علامة اقتباس فردية أو رموز خاصة)
   openModalFromBtn(btn) {
-    const invId    = btn.dataset.invId;
-    const buyer    = btn.dataset.buyer;
-    const total     = parseFloat(btn.dataset.total) || 0;
-    Returns.openModal(invId, buyer, total);
+    const invId = btn.dataset.invId;
+    const buyer = btn.dataset.buyer;
+    const total = parseFloat(btn.dataset.total) || 0;
+    // تأخير بسيط جداً — يسمح برؤية تأثير اللون عند اللمس قبل أن يغطي الموديل الشاشة
+    setTimeout(() => Returns.openModal(invId, buyer, total), 150);
   },
 
   openModal(invId, custName, total) {
