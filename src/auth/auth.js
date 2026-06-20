@@ -9,9 +9,9 @@
  * 3. Logout → show login
  */
 
-import { sb, sbAdmin }  from '../core/db.js';
+import { sb }           from '../core/db.js';
 import { State }        from '../core/state.js';
-import { ROLES }        from '../config/constants.js';
+import { ROLES, CONFIG } from '../config/constants.js';
 import * as DOM         from '../core/dom.js';
 import { Notify }       from '../core/notify.js';
 
@@ -91,27 +91,17 @@ export const Auth = {
 
   async _bootFromSession(session) {
     try {
-      // Fetch account by auth_id
-      let { data: account } = await sbAdmin
-        .from('app_accounts')
-        .select('*')
-        .eq('auth_id', session.user.id)
-        .maybeSingle();
-
-      // Fallback by email
-      if (!account) {
-        const { data: byEmail } = await sbAdmin
-          .from('app_accounts')
-          .select('*')
-          .eq('username', session.user.email)
-          .maybeSingle();
-
-        if (byEmail) {
-          await sbAdmin.from('app_accounts')
-            .update({ auth_id: session.user.id })
-            .eq('id', byEmail.id);
-          account = { ...byEmail, auth_id: session.user.id };
-        }
+      // جلب حساب التطبيق عبر Edge Function آمنة — لا يصل مفتاح service_role أبداً للمتصفح
+      let account = null;
+      try {
+        const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/get-account`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        const json = await res.json();
+        if (res.ok) account = json.data;
+      } catch (fetchErr) {
+        console.error('[Auth] فشل الاتصال بخدمة الحسابات:', fetchErr.message);
       }
 
       if (!account) {
