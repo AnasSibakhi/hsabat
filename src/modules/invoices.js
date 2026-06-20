@@ -391,40 +391,28 @@ const Invoices = {
           const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
           const hasDiscount = inv.discount > 0;
           const isReturned = inv._returned;
-          return `<div class="inv-card${isReturned ? ' inv-card-returned' : ''}">
-            <div class="inv-card-top">
-              <div class="inv-card-num">
-                <strong>${escape(inv.invoice_number || '-')}</strong>
-                ${isReturned ? '<span class="br inv-returned-tag">مُرجَعة</span>' : ''}
-              </div>
+          return `<div class="inv-receipt${isReturned ? ' inv-receipt-returned' : ''}">
+            <div class="ir-top">
+              <span class="ir-num"><i class="ti ti-receipt"></i> ${escape(inv.invoice_number || '-')}</span>
               <span class="inv-pay-badge ${payClass}">${payLabel}</span>
             </div>
-
-            <div class="inv-card-buyer">
-              <i class="ti ti-user"></i>
-              <div>
-                <div class="inv-card-buyer-name">${buyer}</div>
-                ${inv.buyer_phone ? `<div class="inv-card-buyer-phone">${escape(inv.buyer_phone)}</div>` : ''}
-              </div>
+            ${isReturned ? '<div class="ir-returned-strip">مُرجَعة</div>' : ''}
+            <div class="ir-line"></div>
+            <div class="ir-row"><span>المشتري</span><b>${buyer}</b></div>
+            ${inv.buyer_phone ? `<div class="ir-row"><span>الجوال</span><b>${escape(inv.buyer_phone)}</b></div>` : ''}
+            <div class="ir-row"><span>التاريخ</span><b>${inv.invoice_date}${inv.sale_time ? ' · ' + inv.sale_time : ''}</b></div>
+            <div class="ir-row"><span>المنتجات</span><b class="inv-items-badge" id="ic-${inv.id}">—</b></div>
+            ${hasDiscount ? `<div class="ir-row"><span>الخصم</span><b class="ir-disc-val">-₪${inv.discount.toFixed(2)}</b></div>` : ''}
+            <div class="ir-total">
+              <span class="ir-total-label">الإجمالي</span>
+              <span class="ir-total-val">₪${inv.total.toFixed(2)}</span>
             </div>
-
-            <div class="inv-card-meta">
-              <span><i class="ti ti-calendar"></i> ${inv.invoice_date}${inv.sale_time ? ' · ' + inv.sale_time : ''}</span>
-              <span class="inv-items-badge" id="ic-${inv.id}"><i class="ti ti-package"></i> —</span>
-            </div>
-
-            <div class="inv-card-totals">
-              <div class="inv-card-total-row">
-                <span class="inv-card-total-label">الإجمالي</span>
-                <strong class="inv-card-total-val">₪${inv.total.toFixed(2)}</strong>
-              </div>
-              ${hasDiscount ? `<div class="inv-card-disc-row"><span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span></div>` : ''}
-            </div>
-
-            <div class="inv-card-actions">
-              <button class="inv-action-btn" onclick="Invoices.openDetails('${inv.id}')"><i class="ti ti-eye"></i> عرض</button>
-              ${!isReturned ? `<button class="ibb" onclick="Returns.openModal('${inv.id}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})">إرجاع</button>` : '<span class="inv-returned-note">مُرجَعة</span>'}
-              <button class="inv-del-btn" onclick="Invoices.delete('${inv.id}')"><i class="ti ti-trash"></i></button>
+            <div class="ir-actions">
+              <button class="ir-act-btn" onclick="Invoices.openDetails('${inv.id}')" title="عرض"><i class="ti ti-eye"></i></button>
+              ${!isReturned
+                ? `<button class="ir-act-btn ir-act-return" onclick="Returns.openModal('${inv.id}','${escape(inv.buyer_name || inv.customer_name || '')}',${inv.total})" title="إرجاع"><i class="ti ti-rotate-2"></i></button>`
+                : '<span class="ir-act-disabled"><i class="ti ti-rotate-2"></i></span>'}
+              <button class="ir-act-btn ir-act-del" onclick="Invoices.delete('${inv.id}')" title="حذف"><i class="ti ti-trash"></i></button>
             </div>
           </div>`;
         }).join('')
