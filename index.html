@@ -1198,6 +1198,22 @@
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-return')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-return', () => Returns.save(), this)">تأكيد</button></div>
 </div></div>
 
+<!-- Delete Invoice Confirmation — تصميم مخصص بدل تنبيه المتصفح العادي -->
+<div class="mo" id="m-del-invoice"><div class="modal" style="max-width:380px;text-align:center;">
+  <div class="del-icon-wrap"><i class="ti ti-trash-x"></i></div>
+  <div class="del-title">حذف الفاتورة <span id="del-inv-num" class="del-inv-num"></span>؟</div>
+  <div class="del-desc">سيتم إرجاع الكمية المباعة إلى المخزون تلقائياً. هذا الإجراء لا يمكن التراجع عنه.</div>
+  <div id="del-debt-warning" class="del-debt-warning" style="display:none;">
+    <i class="ti ti-alert-triangle"></i>
+    <span>هذه فاتورة دين — الدين المرتبط بها لن يُحذف تلقائياً، احذفيه يدوياً من صفحة الزبائن والديون إن لزم.</span>
+  </div>
+  <input type="hidden" id="del-inv-id">
+  <div class="mfoot" style="margin-top:18px;">
+    <button class="btn btn-o" style="flex:1;" onclick="Modal.close('m-del-invoice')">إلغاء</button>
+    <button class="btn" style="flex:1;background:var(--d);color:#fff;" onclick="Guard.run('delete-invoice', () => Invoices.confirmDelete(), this)">حذف نهائياً</button>
+  </div>
+</div></div>
+
 <script type="module" src="/src/ui/drawer.js"></script>
 <script type="module" src="/src/main.js"></script>
 
