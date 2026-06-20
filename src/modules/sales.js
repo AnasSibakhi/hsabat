@@ -3,7 +3,8 @@
  * Extracted from monolithic app.js into clean module
  */
 
-import { DB, sb, sbAdmin } from '../core/db.js';
+import { DB, sb }   from '../core/db.js';
+import { FIFOService } from '../services/FIFOService.js';
 import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
 import * as DOM     from '../core/dom.js';
@@ -41,30 +42,14 @@ const Sales = {
     const list       = invs || [];
     const totalSales = Utils.sumBy(list, 'total');
 
-    // صافي الربح الصحيح = المبيعات - تكلفة البضاعة المباعة فعلياً (COGS من FIFO)
+    // صافي الربح الصحيح = المبيعات - تكلفة البضاعة المباعة فعلياً (COGS من FIFO) — عبر Edge Function آمنة
     // وليس "المبيعات - مشتريات اليوم" (معادلة خاطئة لأن الشراء والبيع عمليتان منفصلتان زمنياً)
     let totalCOGS = 0;
     const invoiceIds = list.map(i => i.id);
     if (invoiceIds.length) {
       try {
-        const { data: allocs } = await sbAdmin
-          .from('sale_inventory_allocations')
-          .select('quantity_taken, cost_price')
-          .in('sale_invoice_id', invoiceIds)
-          .eq('store_id', State.user.id);
-        totalCOGS = (allocs || []).reduce((sum, a) => sum + a.quantity_taken * a.cost_price, 0);
-      } catch (e) { /* fallback أدناه */ }
-
-      // احتياط لو ما توجد سجلات FIFO — استخدم تكلفة المنتج الحالية من المخزون
-      if (!totalCOGS) {
-        try {
-          const { data: items } = await sbAdmin
-            .from('invoice_items')
-            .select('quantity, inventory_id, inventory(cost_price)')
-            .in('invoice_id', invoiceIds);
-          totalCOGS = (items || []).reduce((sum, item) => sum + (item.inventory?.cost_price || 0) * (item.quantity || 1), 0);
-        } catch (e) { /* يبقى 0 لو فشل أيضاً */ }
-      }
+        totalCOGS = await FIFOService.calculateCOGS(invoiceIds);
+      } catch (e) { /* يبقى 0 لو فشل الاتصال بالخدمة */ }
     }
 
     const profit     = totalSales - totalCOGS;
