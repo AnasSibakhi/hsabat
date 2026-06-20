@@ -11,6 +11,7 @@ import { escape, currency } from '../core/utils.js';
 import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getCustomers, getDebts, getInventory, getDashboard, getQuickSale } from '../core/registry.js';
+import { FIFOService } from '../services/FIFOService.js';
 
 // ── State ──
 let _allInvoices  = [];
@@ -799,10 +800,47 @@ const Invoices = {
   },
 
   async delete(id) {
-    if (!confirm('حذف الفاتورة؟')) return;
+    const inv = (_allInvoices || []).find(i => i.id === id) || _filtered.find(i => i.id === id);
+    const isDefer = inv?.payment_type === PAYMENT.DEFER || inv?.payment_type === PAYMENT.PARTIAL;
+
+    const confirmMsg = isDefer
+      ? 'حذف الفاتورة؟ سيتم إرجاع الكمية للمخزون.\nتنبيه: هذه فاتورة دين — الدين المرتبط بها لن يُحذف تلقائياً، يجب حذفه يدوياً من صفحة الزبائن والديون إن لزم.'
+      : 'حذف الفاتورة؟ سيتم إرجاع الكمية للمخزون.';
+    if (!confirm(confirmMsg)) return;
+
     State.isMutating = true;
-    try { await DB.invoices().delete().eq('id', id); Notify.success('تم الحذف'); Invoices.load(); }
-    finally { setTimeout(() => { State.isMutating = false; }, 500); }
+    try {
+      // جلب أصناف الفاتورة قبل حذفها — لازم نعرفهم لنرجّع الكمية صحيح
+      const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', id);
+
+      // إرجاع كل صنف للمخزون (الكمية المباشرة + التراجع عن batch الـ FIFO الأصلي)
+      if (items?.length) {
+        await Promise.all(items.map(async item => {
+          if (!item.inventory_id) return;
+          const { data: prod } = await DB.inventory().select('quantity').eq('id', item.inventory_id).maybeSingle();
+          if (prod) {
+            await DB.inventory().update({ quantity: prod.quantity + item.quantity }).eq('id', item.inventory_id);
+          }
+        }));
+      }
+
+      // التراجع عن استهلاك FIFO (يرجّع الكمية لنفس الدفعات الأصلية بدقة محاسبية)
+      try { await FIFOService.reverseFIFO(id); } catch (fifoErr) {
+        console.warn('FIFO reverse (non-critical):', fifoErr.message);
+      }
+
+      // حذف أصناف الفاتورة، ثم الفاتورة نفسها
+      await sb.from('invoice_items').delete().eq('invoice_id', id);
+      await DB.invoices().delete().eq('id', id);
+
+      Notify.success('تم الحذف وإرجاع الكمية للمخزون');
+      await Invoices.load();
+      const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
+    } catch (err) {
+      Notify.error('فشل الحذف: ' + err.message);
+    } finally {
+      setTimeout(() => { State.isMutating = false; }, 500);
+    }
   },
 };
 
