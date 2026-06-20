@@ -410,9 +410,6 @@ const Invoices = {
             </div>
             <div class="ir-actions">
               <button class="ir-act-btn" onclick="Invoices.openDetails('${inv.id}')" title="عرض"><i class="ti ti-eye"></i></button>
-              ${!isReturned
-                ? `<button class="ir-act-btn ir-act-return" data-inv-id="${inv.id}" data-buyer="${escape(inv.buyer_name || inv.customer_name || '')}" data-total="${inv.total}" onclick="Returns.openModalFromBtn(this)" title="إرجاع"><i class="ti ti-rotate-2"></i></button>`
-                : '<span class="ir-act-disabled"><i class="ti ti-rotate-2"></i></span>'}
               <button class="ir-act-btn ir-act-del" onclick="Invoices.delete('${inv.id}')" title="حذف"><i class="ti ti-trash"></i></button>
             </div>
           </div>`;
