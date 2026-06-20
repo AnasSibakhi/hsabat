@@ -756,3 +756,22 @@ body.dark .ni.active{background:#1e3a5f;}
 .ir-act-disabled{width:36px;height:36px;border-radius:50%;background:var(--g1);color:var(--g4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 
 .inv-empty-state{padding:40px 20px;text-align:center;color:var(--g5);grid-column:1/-1;}
+
+/* ── موديل تأكيد حذف الفاتورة — تصميم مخصص بدل تنبيه المتصفح ── */
+.del-icon-wrap{
+  width:64px;height:64px;border-radius:50%;background:var(--dl);color:var(--d);
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  margin:0 auto 16px;animation:del-pulse 1.8s ease-in-out infinite;
+}
+@keyframes del-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(200,30,30,.15);}
+  50%{box-shadow:0 0 0 10px rgba(200,30,30,.08);}
+}
+.del-title{font-size:16px;font-weight:800;color:var(--g9);margin-bottom:8px;}
+.del-inv-num{color:var(--p);}
+.del-desc{font-size:13px;color:var(--g5);line-height:1.6;padding:0 6px;}
+.del-debt-warning{
+  display:flex;align-items:flex-start;gap:8px;background:var(--wl);color:var(--w);
+  border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12px;text-align:right;line-height:1.5;
+}
+.del-debt-warning i{font-size:16px;flex-shrink:0;margin-top:1px;}
