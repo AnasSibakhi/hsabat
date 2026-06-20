@@ -3,7 +3,7 @@
  * Production-ready: barcode, camera scan, cart, payment
  */
 
-import { DB, sb, sbAdmin } from '../core/db.js';
+import { DB, sb }          from '../core/db.js';
 import { State }           from '../core/state.js';
 import { Notify }          from '../core/notify.js';
 import * as DOM            from '../core/dom.js';
@@ -902,9 +902,20 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Transfer Entity ──
   async loadTransferEntities() {
-    const { data } = await sbAdmin.from('transfer_entities')
-      .select('*').eq('store_id', State.user.id).eq('is_active', true).order('name');
-    _transferEntities = data || [];
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { _transferEntities = []; return; }
+
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/get-transfer-entities`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const json = await res.json();
+      _transferEntities = res.ok ? (json.data || []) : [];
+    } catch (e) {
+      console.warn('[loadTransferEntities] فشل الاتصال بالخدمة:', e.message);
+      _transferEntities = [];
+    }
   },
 
   async openTransferModal() {
