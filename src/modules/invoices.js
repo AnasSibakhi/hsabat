@@ -771,24 +771,26 @@ const Invoices = {
       }
 
       const invoiceNumber = await Invoices._generateInvoiceNumber();
-      const { data: invoice, error } = await DB.invoices().insert({
-        store_id: State.user.id, customer_id: customerId||null,
-        customer_name: customerName, customer_phone: customerPhone,
-        buyer_name: customerName, buyer_phone: customerPhone,
-        total, subtotal, discount, payment_type: paymentType,
-        partial_paid: partialPaid, invoice_date: today,
-        sale_time: timeNow, invoice_number: invoiceNumber,
-        notes: DOM.val('inotes'),
-      }).select().single();
-      if (error) throw error;
+      const debtAmount = ([PAYMENT.DEFER, PAYMENT.PARTIAL].includes(paymentType) && customerId)
+        ? (paymentType === PAYMENT.PARTIAL ? total - partialPaid : total)
+        : 0;
 
-      await sb.from('invoice_items').insert(items.map(it => ({ ...it, invoice_id: invoice.id })));
-      await getInventory().deductItems(items);
-
-      if ([PAYMENT.DEFER, PAYMENT.PARTIAL].includes(paymentType) && customerId) {
-        const debtAmount = paymentType === PAYMENT.PARTIAL ? total - partialPaid : total;
-        if (debtAmount > 0) await getDebts().addFromInvoice(customerId, debtAmount, today, invoiceNumber);
-      }
+      // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + خصم مخزون + دين) على السيرفر دفعة وحدة ──
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          items, subtotal, discount, total, paymentType, partialPaid,
+          customerId: customerId || null, customerName, customerPhone,
+          invoiceDate: today, saleTime: timeNow, invoiceNumber,
+          notes: DOM.val('inotes'),
+          debtAmount,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
+      const invoice = json.data.invoice;
 
       Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
       Modal.close('m-invoice');
