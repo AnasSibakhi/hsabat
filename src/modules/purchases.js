@@ -277,88 +277,25 @@ const Purchases = {
 
     State.isMutating = true;
     try {
-      const { data: newPurchase, error } = await DB.purchases().insert({
-        store_id: State.user.id, supplier, product_name: productName,
-        quantity: qty, cost, purchase_date: DOM.val('pud'),
-        supplier_phone: supplierPhone || null,
-        invoice_ref:    invoiceNumber || null,
-        payment_status: payStatus,
-        paid_amount:    paidAmount,
-        remaining:      remaining,
-        sale_price:     salePrice * qty, // إجمالي سعر البيع لكل الكمية (نفس منطق p.sale_price بالمعادلات الأخرى)
-      }).select().single();
-      if (error) throw error;
-      const purchaseId = newPurchase?.id || null;
+      // ── استدعاء واحد فقط ينفّذ كل العملية (شراء + ربط/تحديث مخزون + FIFO) على السيرفر دفعة وحدة ──
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          supplier, productName, quantity: qty, cost, purchaseDate: DOM.val('pud'),
+          supplierPhone: supplierPhone || null,
+          invoiceRef: invoiceNumber || null,
+          paymentStatus: payStatus, paidAmount, remaining,
+          salePrice, unit: DOM.get('pu-unit')?.value || 'قطعة (pcs)',
+          invId, lowStockDefault: CONFIG.lowStockDefault,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية الشراء');
 
-      // ربط المخزون — ابحث عن الصنف بالاسم (مع تطبيع النص لمنع التكرار بسبب مسافات/اختلاف بسيط)
-      const unit = DOM.get('pu-unit')?.value || 'قطعة (pcs)';
-      const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
-      const targetNorm = normalize(productName);
+      Notify.success(json.data.message);
 
-      let existing = null;
-      if (invId) {
-        const { data } = await DB.inventory().select('id,quantity').eq('id', invId).maybeSingle();
-        existing = data;
-      }
-      if (!existing) {
-        // تأكد إن المخزون محمّل بالكامل بالـ State قبل المقارنة
-        if (!State.inventory?.length) {
-          const { data } = await DB.inventory().select('id,name,quantity');
-          State.inventory = data || [];
-        }
-        existing = State.inventory.find(item => normalize(item.name) === targetNorm) || null;
-        // لو ما لقيناه بالكاش المحلي (احتمال قديم) — تأكيد أخير من قاعدة البيانات مباشرة
-        if (!existing) {
-          const { data: allInv } = await DB.inventory().select('id,name,quantity');
-          existing = (allInv || []).find(item => normalize(item.name) === targetNorm) || null;
-        }
-      }
-
-      let productId = null;
-      const unitCostForInv = qty > 0 ? (cost / qty) : cost; // سعر تكلفة الوحدة الواحدة — لازم يُحفظ بالمخزون لحساب هامش الربح
-
-      if (existing) {
-        productId = existing.id;
-        // صنف موجود — أضف الكمية وحدّث سعر البيع وسعر التكلفة (آخر سعر مسجّل)
-        await DB.inventory().update({
-          quantity:   existing.quantity + qty,
-          sale_price: salePrice,
-          cost_price: unitCostForInv,
-        }).eq('id', existing.id);
-        Notify.success('تم — المجموع: ' + (existing.quantity + qty) + ' — سعر البيع: ₪' + salePrice);
-      } else {
-        // صنف جديد — أنشئه في المخزون مع سعر التكلفة
-        const { data: newProd } = await DB.inventory().insert({
-          store_id:        State.user.id,
-          name:            productName,
-          category:        'عام',
-          unit:            unit,
-          quantity:        qty,
-          sale_price:      salePrice,
-          cost_price:      unitCostForInv,
-          low_stock_alert: CONFIG.lowStockDefault,
-        }).select().single();
-        productId = newProd?.id;
-        Notify.success('تم — أُضيف "' + productName + '" — سعر البيع: ₪' + salePrice);
-      }
-
-      // ── FIFO: أنشئ batch جديد لهاد الشراء ──
-      if (productId) {
-        const unitCost = qty > 0 ? cost / qty : cost;
-        try {
-          await FIFOService.addBatch({
-            productId,
-            quantity:           qty,
-            costPrice:          unitCost,
-            sellingPrice:       salePrice,
-            supplierId:         supplier || null,
-            purchaseDate:       DOM.val('pud'),
-            purchaseInvoiceId:  purchaseId,
-          });
-        } catch (fifoErr) {
-          console.warn('FIFO batch creation failed (non-critical):', fifoErr.message);
-        }
-      }
       // تحديث كاش المخزون
       await getInventory()?.loadList();
 
