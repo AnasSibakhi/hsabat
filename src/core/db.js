@@ -129,7 +129,7 @@ function secureStoreTable(table) {
   return {
     select: (columns) => {
       const filters = [];
-      let orderSpec = null, limitSpec = null, countSpec = null;
+      let orderSpec = null, limitSpec = null, offsetSpec = null;
       const b = {
         eq:  (c, v) => { filters.push({ op: 'eq',  col: c, val: v }); return b; },
         gt:  (c, v) => { filters.push({ op: 'gt',  col: c, val: v }); return b; },
@@ -137,16 +137,17 @@ function secureStoreTable(table) {
         in:  (c, v) => { filters.push({ op: 'in',  col: c, val: v }); return b; },
         order: (c, o) => { orderSpec = { col: c, ascending: o?.ascending !== false }; return b; },
         limit: (n)    => { limitSpec = n; return b; },
-        single:      () => callStoreDB(table, 'select', { columns, filters, order: orderSpec, limit: limitSpec, single: true })
+        offset: (n)   => { offsetSpec = n; return b; },
+        single:      () => callStoreDB(table, 'select', { columns, filters, order: orderSpec, limit: limitSpec, offset: offsetSpec, single: true })
           .then(data => ({ data, error: null })).catch(error => ({ data: null, error })),
-        maybeSingle: () => callStoreDB(table, 'select', { columns, filters, order: orderSpec, limit: limitSpec, maybeSingle: true })
+        maybeSingle: () => callStoreDB(table, 'select', { columns, filters, order: orderSpec, limit: limitSpec, offset: offsetSpec, maybeSingle: true })
           .then(data => ({ data, error: null })).catch(error => ({ data: null, error })),
         then: (resolve, reject) => {
           // دعم نمط count: select('*', { count: 'exact', head: true })
           const isCountQuery = typeof columns === 'object' && columns?.count === 'exact';
           const action = isCountQuery
             ? callStoreDB(table, 'select', { filters, countOnly: true })
-            : callStoreDB(table, 'select', { columns, filters, order: orderSpec, limit: limitSpec });
+            : callStoreDB(table, 'select', { columns, filters, order: orderSpec, limit: limitSpec, offset: offsetSpec });
           return action
             .then(data => resolve(isCountQuery ? { count: data.count, error: null } : { data, error: null }))
             .catch(error => (reject ? reject(error) : resolve({ data: null, error, count: null })));
