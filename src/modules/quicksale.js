@@ -860,12 +860,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const total    = _cart.reduce((s,c) => s + c.price * c.qty, 0) * (1 - _discount/100);
     const received = parseFloat(DOM.val('qs-cash-received')) || 0;
     const change   = received - total;
-    const row = DOM.get('qs-cash-change-row');
-    const val = DOM.get('qs-cash-change-val');
+    const row   = DOM.get('qs-cash-change-row');
+    const val   = DOM.get('qs-cash-change-val');
+    const label = document.querySelector('#qs-cash-change-row span:first-child');
     if (row && val) {
       row.style.display = received > 0 ? 'flex' : 'none';
       val.textContent = '₪' + Math.abs(change).toFixed(2);
       val.style.color = change >= 0 ? 'var(--s)' : 'var(--d)';
+      if (label) label.textContent = change >= 0 ? 'الباقي للزبون' : 'الباقي كدين على الزبون';
     }
   },
 
@@ -1240,7 +1242,43 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     let   custId   = null, custName = 'زبون عادي';
     let   debtSnapshot = null; // نسخة محفوظة من _deferData قبل محوها — تُستخدم لاحقاً عند إنشاء الدين
 
-    if (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL) {
+    // ── كشف تلقائي: لو دفع كاش بمبلغ أقل من الإجمالي، هذي فعلياً دفعة جزئية وليست بيع نقدي كامل ──
+    let isAutoPartialCash = false;
+    if (paymentType === PAYMENT.CASH) {
+      const received = parseFloat(DOM.val('qs-cash-received')) || 0;
+      if (received > 0 && received < total) {
+        const buyerNameForDebt = DOM.val('qs-buyer-name')?.trim();
+        if (!buyerNameForDebt) {
+          Notify.error('المبلغ المستلم أقل من الإجمالي — أدخلي اسم الزبون لتسجيل الباقي كدين عليه');
+          return;
+        }
+        paymentType = PAYMENT.PARTIAL;
+        isAutoPartialCash = true;
+        custName = buyerNameForDebt;
+        debtSnapshot = {
+          name: buyerNameForDebt,
+          phone: DOM.val('qs-buyer-phone') || '',
+          partialAmount: received,
+          note: '',
+        };
+      }
+    }
+
+    if (isAutoPartialCash) {
+      // نفس منطق ربط/إنشاء الزبون المستخدم بحالة الدين العادي، لكن للكاش الجزئي
+      const existing = (State.customers || []).find(c =>
+        c.name.toLowerCase() === custName.toLowerCase()
+      );
+      if (existing) {
+        custId = existing.id;
+      } else {
+        const { Customers } = await import('./customers.js');
+        const newC = await Customers.createInline(custName, debtSnapshot.phone || '');
+        if (newC?.id) custId = newC.id;
+      }
+    }
+
+    if (!isAutoPartialCash && (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL)) {
       const d        = QuickSale._deferData || {};
       const deferName = (d.name || '').trim();
 
