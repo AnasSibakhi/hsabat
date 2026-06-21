@@ -1086,16 +1086,43 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     if (!name) { Notify.error('أدخل اسم الزبون'); return; }
 
+    const payType = document.querySelector('input[name="qsdt"]:checked')?.value || 'full';
+    let partialAmount = 0;
+
+    if (payType === 'partial') {
+      partialAmount = parseFloat(DOM.val('qs-debt-partial-amount')) || 0;
+      const total = _cart.reduce((s, c) => s + c.qty * c.price, 0) * (1 - _discount / 100);
+      if (partialAmount <= 0) { Notify.error('أدخل المبلغ المدفوع'); return; }
+      if (partialAmount >= total) { Notify.error('المبلغ المدفوع يجب أن يكون أقل من الإجمالي — استخدمي "كاش" لو دفع كامل'); return; }
+    }
+
     // حفظ البيانات
     QuickSale._deferData = {
       name,
       custId,
       phone: DOM.val('qs-debt-new-phone'),
       note:  DOM.val('qs-debt-note'),
+      isPartial: payType === 'partial',
+      partialAmount,
     };
 
     QuickSale.closeDebtModal();
-    await QuickSale.sell('defer');
+    await QuickSale.sell(payType === 'partial' ? 'partial' : 'defer');
+  },
+
+  // ── تبديل عرض حقل الدفعة الجزئية حسب نوع الدفع المختار ──
+  toggleDebtPartial(radio) {
+    const wrap = DOM.get('qs-debt-partial-wrap');
+    if (wrap) wrap.classList.toggle('hidden', radio.value !== 'partial');
+    if (radio.value === 'partial') QuickSale.calcDebtRemaining();
+  },
+
+  // ── حساب الباقي كدين فور كتابة المبلغ المدفوع ──
+  calcDebtRemaining() {
+    const total   = _cart.reduce((s, c) => s + c.qty * c.price, 0) * (1 - _discount / 100);
+    const paid    = parseFloat(DOM.val('qs-debt-partial-amount')) || 0;
+    const el      = DOM.get('qs-debt-remaining');
+    if (el) el.textContent = '₪' + Math.max(0, total - paid).toFixed(2);
   },
 
   searchDebtCustomer(val) {
@@ -1211,13 +1238,15 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
     const total    = Math.max(0, subtotal - discount);
     let   custId   = null, custName = 'زبون عادي';
+    let   debtSnapshot = null; // نسخة محفوظة من _deferData قبل محوها — تُستخدم لاحقاً عند إنشاء الدين
 
-    if (paymentType === PAYMENT.DEFER) {
+    if (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL) {
       const d        = QuickSale._deferData || {};
       const deferName = (d.name || '').trim();
 
       if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
       custName = deferName;
+      debtSnapshot = { ...d };
 
       if (d.custId) {
         custId = d.custId;
@@ -1296,18 +1325,24 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         }
       }));
 
-      // Create debt if needed
-      if (paymentType === PAYMENT.DEFER) {
+      // Create debt if needed (دين كامل أو الباقي من دفعة جزئية)
+      if (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL) {
         const debtCustId  = custId || null;
-        const debtData    = QuickSale._deferData || {};
+        const debtData    = debtSnapshot || {};
         const remindDays  = debtData.remindDays || 0;
         const remindDate  = remindDays > 0
           ? new Date(Date.now() + remindDays * 86400000).toISOString().split('T')[0]
           : null;
+
+        // لو دفعة جزئية: الدين = الإجمالي - المدفوع الآن. لو آجل كامل: الدين = الإجمالي بالكامل
+        const isPartial   = paymentType === PAYMENT.PARTIAL;
+        const paidNow      = isPartial ? (debtData.partialAmount || 0) : 0;
+        const debtAmount   = Math.max(0, total - paidNow);
+
         await DB.debts().insert({
           store_id:    State.user.id,
           customer_id: debtCustId,
-          amount:      total,
+          amount:      debtAmount,
           paid:        0,
           debt_date:   Utils.today(),
           notes:       debtData.note || ('فاتورة ' + invNum),
