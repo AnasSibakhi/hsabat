@@ -3,14 +3,33 @@
  * Handles store management, subscriptions, users
  */
 
-import { sbAdmin, sb } from '../core/db.js';
+import { sb }           from '../core/db.js';
 import * as Utils from '../core/utils.js';
 import { State }       from '../core/state.js';
 import { Notify }      from '../core/notify.js';
 import * as DOM          from '../core/dom.js';
 import * as Modal        from '../nav/modal.js';
-import { ROLES }       from '../config/constants.js';
+import { ROLES, CONFIG } from '../config/constants.js';
 import { escape, formatDate } from '../core/utils.js';
+
+// ── استدعاء عام لأي عملية إدارية عبر Edge Function آمنة (يتحقق من صلاحية الأدمن على السيرفر) ──
+async function callAdminFunction(action, params) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error('غير مسجّل دخول');
+
+  const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/admin-service`, {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization':  `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ action, params }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'فشل الاتصال بخدمة الإدارة');
+  return json.data;
+}
 
 const AdminPanel = {
   async boot() {
@@ -93,12 +112,9 @@ const AdminPanel = {
   },
 
   async loadDashboard() {
-    const [r1, r2] = await Promise.all([
-      sbAdmin.from('stores').select('id,store_name,owner_name,is_active,subscription_end'),
-      sbAdmin.from('invoices').select('total'),
-    ]);
-    const stores      = r1.data || [];
-    const totalSales  = Utils.sumBy(r2.data, 'total');
+    const { stores: storesData, invoices: invoicesData } = await callAdminFunction('loadDashboard', {});
+    const stores      = storesData || [];
+    const totalSales  = Utils.sumBy(invoicesData, 'total');
     const active      = stores.filter(s => s.is_active !== false).length;
     const expired     = stores.filter(s => s.subscription_end && new Date(s.subscription_end) < new Date()).length;
 
@@ -114,7 +130,7 @@ const AdminPanel = {
   },
 
   async loadStores() {
-    const { data } = await sbAdmin.from('stores').select('*').order('created_at', { ascending: false });
+    const data = await callAdminFunction('loadStores', {});
     DOM.setHTML('sa-all-stores', (data || []).map(s => AdminPanel._storeRow(s, true)).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">لا توجد محلات</td></tr>');
   },
 
@@ -137,8 +153,8 @@ const AdminPanel = {
   },
 
   async loadSubscriptions() {
-    const { data } = await sbAdmin.from('app_accounts').select('*').order('created_at', { ascending: false });
-    const list     = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
+    const data = await callAdminFunction('loadSubscriptions', {});
+    const list = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
     DOM.setHTML('sa-subs-list', list.length
       ? list.map(a => {
           const isExpired = a.subscription_end && new Date(a.subscription_end) < new Date();
@@ -158,8 +174,8 @@ const AdminPanel = {
   },
 
   async loadUsers() {
-    const { data } = await sbAdmin.from('app_accounts').select('*').order('created_at', { ascending: false });
-    const list     = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
+    const data = await callAdminFunction('loadUsers', {});
+    const list = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
     DOM.setHTML('sa-users-list', list.length
       ? list.map(a => `<tr>
           <td>${Utils.escape(a.store_name)}</td>
@@ -187,37 +203,8 @@ const AdminPanel = {
     const origText = btn?.textContent;
     if (btn) { btn.disabled = true; btn.textContent = 'جاري الإنشاء...'; }
 
-    const storeId = 'store-' + Date.now().toString(36);
-    const subEnd  = new Date(); subEnd.setMonth(subEnd.getMonth() + months);
-    const subStr  = subEnd.toISOString().split('T')[0];
-
     try {
-      // 1. Auth User أولاً
-      const { data: adminData, error: adminErr } = await sbAdmin.auth.admin.createUser({
-        email, password: pass, email_confirm: true,
-        user_metadata: { store_name: store, owner_name: owner, role: ROLES.OWNER },
-      });
-      if (adminErr) throw adminErr;
-      const authUserId = adminData?.user?.id;
-      if (!authUserId) throw new Error('فشل إنشاء حساب المصادقة');
-
-      // 2 + 3 بالتوازي
-      const [r1, r2] = await Promise.all([
-        sbAdmin.from('stores').insert({
-          id: storeId, store_name: store, owner_name: owner,
-          phone, is_active: true, subscription_end: subStr, auth_id: authUserId,
-        }),
-        sbAdmin.from('app_accounts').insert({
-          id: storeId, username: email, password: 'supabase-auth',
-          store_name: store, owner_name: owner, role: ROLES.OWNER,
-          is_active: true, subscription_end: subStr, auth_id: authUserId,
-        }),
-      ]);
-      if (r1.error) throw r1.error;
-      if (r2.error) throw r2.error;
-
-      // 4. تهيئة البطاقات في الخلفية
-      db_netCards_init(storeId).catch(() => {});
+      await callAdminFunction('createStore', { store, owner, phone, email, pass, months });
 
       Notify.success('✅ تم إنشاء محل "' + store + '" — يمكن الدخول بـ: ' + email);
       document.getElementById('m-new-store-dynamic')?.remove();
@@ -231,34 +218,28 @@ const AdminPanel = {
 
 
   async toggleStore(storeId, currentActive) {
-    const newState = !currentActive;
-    await sbAdmin.from('stores').update({ is_active: newState }).eq('id', storeId);
-    await sbAdmin.from('app_accounts').update({ is_active: newState }).eq('id', storeId);
-    Notify.show(newState ? '✅ تم تفعيل المحل' : '⛔ تم إيقاف المحل');
+    await callAdminFunction('toggleStore', { storeId, currentActive });
+    Notify.show(!currentActive ? '✅ تم تفعيل المحل' : '⛔ تم إيقاف المحل');
     await AdminPanel.loadDashboard();
     await AdminPanel.loadStores();
   },
 
   async deleteStore(storeId) {
     if (!confirm('حذف هذا المحل وجميع بياناته نهائياً؟')) return;
-    await sbAdmin.from('stores').delete().eq('id', storeId);
-    await sbAdmin.from('app_accounts').delete().eq('id', storeId);
+    await callAdminFunction('deleteStore', { storeId });
     Notify.success('تم الحذف');
     await AdminPanel.loadDashboard();
     await AdminPanel.loadStores();
   },
 
   async renewSubscription(accId, days) {
-    const subEnd = new Date(); subEnd.setDate(subEnd.getDate() + days);
-    const dateStr = subEnd.toISOString().split('T')[0];
-    await sbAdmin.from('app_accounts').update({ subscription_end: dateStr, is_active: true }).eq('id', accId);
-    await sbAdmin.from('stores').update({ subscription_end: dateStr, is_active: true }).eq('id', accId);
-    Notify.success('تم التجديد حتى ' + dateStr);
+    const result = await callAdminFunction('renewSubscription', { accId, days });
+    Notify.success('تم التجديد حتى ' + result.dateStr);
     await AdminPanel.loadSubscriptions();
   },
 
   async toggleAccount(accId, currentActive) {
-    await sbAdmin.from('app_accounts').update({ is_active: !currentActive }).eq('id', accId);
+    await callAdminFunction('toggleAccount', { accId, currentActive });
     Notify.show(!currentActive ? '✅ تم التفعيل' : '⛔ تم الإيقاف');
     await AdminPanel.loadUsers();
   },
@@ -295,21 +276,12 @@ const AdminPanel = {
     const sendAll = DOM.get('notif-all')?.checked;
     if (!title || !msg) { Notify.error('أدخل العنوان والرسالة'); return; }
 
-    const typeIcon = { info:'📢', update:'🆕', feature:'✨', warning:'⚠️' }[type] || '📢';
-    const fullTitle = typeIcon + ' ' + title;
-
     if (sendAll) {
-      // أرسل لكل المحلات
-      const { data: stores } = await sbAdmin.from('app_accounts').select('id');
-      const rows = (stores || []).map(s => ({
-        from_id: State.user.id,
-        store_id: s.id,
-        title: fullTitle,
-        message: msg,
-        type,
-      }));
-      if (rows.length) await sbAdmin.from('notifications').insert(rows);
+      // أرسل لكل المحلات — عبر Edge Function آمنة (تتطلب صلاحية أدمن)
+      await callAdminFunction('sendNotification', { title, msg, type, sendAll: true });
     } else {
+      const typeIcon = { info:'📢', update:'🆕', feature:'✨', warning:'⚠️' }[type] || '📢';
+      const fullTitle = typeIcon + ' ' + title;
       await sb.from('notifications').insert({
         from_id: State.user.id,
         title: fullTitle,
@@ -322,7 +294,7 @@ const AdminPanel = {
   },
 
   async _fillStoresDropdown(selectId) {
-    const { data } = await sbAdmin.from('app_accounts').select('id, store_name').order('store_name');
+    const data = await callAdminFunction('fillStoresDropdown', {});
     const sel = DOM.get(selectId);
     if (!sel) return;
     const current = sel.value;
@@ -332,10 +304,7 @@ const AdminPanel = {
 
   // ── Transfer Entities Management ──
   async loadTransferEntities() {
-    const [{ data }, { data: stores }] = await Promise.all([
-      sbAdmin.from('transfer_entities').select('*').order('name'),
-      sbAdmin.from('app_accounts').select('id, store_name'),
-    ]);
+    const { entities: data, stores } = await callAdminFunction('loadTransferEntitiesAdmin', {});
     const storeMap = Object.fromEntries((stores || []).map(s => [s.id, s.store_name]));
     DOM.setHTML('te-list', (data || []).length
       ? data.map(e => `<tr>
@@ -365,14 +334,14 @@ const AdminPanel = {
 
     const names = raw.split('\n').map(n => n.trim()).filter(n => n);
 
+    await callAdminFunction('saveTransferEntity', { id: id || null, storeId, name, names, details: details || null });
+
     if (id) {
-      await sbAdmin.from('transfer_entities').update({ name, names, details: details || null }).eq('id', id);
       Notify.success('تم التعديل');
       DOM.get('te-edit-id').value = '';
       const title = DOM.get('te-form-title');
       if (title) title.textContent = 'إضافة جهة';
     } else {
-      await sbAdmin.from('transfer_entities').insert({ store_id: storeId, name, names, details: details || null });
       Notify.success(`تمت الإضافة — ${names.length} جهة`);
     }
     DOM.get('te-name').value    = '';
@@ -395,17 +364,10 @@ const AdminPanel = {
 
   async deleteTransferEntity(id) {
     if (!confirm('حذف جهة التحويل؟')) return;
-    await sbAdmin.from('transfer_entities').delete().eq('id', id);
+    await callAdminFunction('deleteTransferEntity', { id });
     Notify.success('تم الحذف');
     await AdminPanel.loadTransferEntities();
   },
 };
-
-// Helper for initializing net card stock for new stores
-async function db_netCards_init(storeId) {
-  await sbAdmin.from('net_cards_stock').insert(
-    ['1','2','3'].map(type => ({ store_id: storeId, card_type: type, quantity: 0 }))
-  );
-}
 
 export { AdminPanel };
