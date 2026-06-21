@@ -989,6 +989,29 @@
   </div>
  </div>
 
+ <!-- نوع الدفع: كامل آجل / دفعة جزئية الآن والباقي دين -->
+ <div class="fg">
+  <label class="lbl">نوع الدفع</label>
+  <div class="flex-gap8">
+   <label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;">
+    <input type="radio" name="qsdt" value="full" checked onchange="QuickSale.toggleDebtPartial(this)"> آجل بالكامل
+   </label>
+   <label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;">
+    <input type="radio" name="qsdt" value="partial" onchange="QuickSale.toggleDebtPartial(this)"> دفعة جزئية
+   </label>
+  </div>
+ </div>
+
+ <div id="qs-debt-partial-wrap" class="hidden">
+  <div class="fg">
+   <label class="lbl">المبلغ المدفوع الآن (₪)</label>
+   <input class="inp" type="number" id="qs-debt-partial-amount" inputmode="decimal" oninput="QuickSale.calcDebtRemaining()">
+  </div>
+  <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;display:flex;justify-content:space-between;">
+   <span>الباقي كدين:</span><strong id="qs-debt-remaining" style="color:var(--d);">-</strong>
+  </div>
+ </div>
+
  <!-- ملاحظة -->
  <div class="fg">
   <label class="lbl">ملاحظة (اختياري)</label>
