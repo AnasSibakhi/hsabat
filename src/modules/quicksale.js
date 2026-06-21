@@ -1320,75 +1320,54 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         if (saved?.id) custId = saved.id;
       }
 
-      const { data: inv, error } = await DB.invoices().insert({
-        store_id: State.user.id, customer_id: custId || null,
-        customer_name: buyerName, total, subtotal, discount,
-        payment_type: paymentType,
-        invoice_date: Utils.today(),
-        sale_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        invoice_number: invNum,
-        buyer_name:  buyerName,
-        buyer_phone: buyerPhone,
-        transfer_entity_id:   _selectedTransferEntity?.id   || null,
-        transfer_entity_name: _selectedTransferEntity?.name || null,
-      }).select().single();
-      if (error) throw error;
+      // حساب الدين (لو دفعة جزئية أو آجل كامل) — يُمرَّر جاهز للسيرفر
+      let debtAmount = 0, debtNote = null, remindDate = null;
+      if (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL) {
+        const debtData   = debtSnapshot || {};
+        const remindDays = debtData.remindDays || 0;
+        remindDate = remindDays > 0
+          ? new Date(Date.now() + remindDays * 86400000).toISOString().split('T')[0]
+          : null;
+        const isPartial = paymentType === PAYMENT.PARTIAL;
+        const paidNow    = isPartial ? (debtData.partialAmount || 0) : 0;
+        debtAmount = Math.max(0, total - paidNow);
+        debtNote   = debtData.note || null;
+      }
 
-      // Save line items
-      await sb.from('invoice_items').insert(_cart.map(c => ({
-        invoice_id: inv.id, product_name: c.name,
-        inventory_id: c.id, quantity: c.qty, price: c.price,
-      })));
+      // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + مخزون + FIFO + دين) على السيرفر دفعة وحدة ──
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          cart: _cart, subtotal, discount, total, paymentType,
+          customerId: custId, customerName: custName, buyerName, buyerPhone,
+          invoiceDate: Utils.today(),
+          saleTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          invoiceNumber: invNum,
+          transferEntityId:   _selectedTransferEntity?.id   || null,
+          transferEntityName: _selectedTransferEntity?.name || null,
+          debtAmount, debtNote, remindDate,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية البيع');
+      const inv = json.data.invoice;
 
-      // Deduct inventory + FIFO tracking — كل شي بـ Promise.all بدل loop
-      await Promise.all(_cart.map(async item => {
+      // ── تحديث الكاش المحلي للمخزون فوراً (بدون أي طلب شبكي إضافي) — يعكس الكمية الجديدة بالواجهة مباشرة ──
+      _cart.forEach(item => {
         const p = State.inventory.find(x => x.id === item.id);
         if (p) {
           const newQty = Math.max(0, p.quantity - item.qty);
-          await DB.inventory().update({ quantity: newQty }).eq('id', item.id);
           p.quantity = newQty;
           if (newQty <= p.low_stock_alert && newQty > 0)
             Notify.warn('"' + p.name + '" — المخزون منخفض: ' + newQty);
         }
-        if (item.id) {
-          try {
-            await FIFOService.consumeFIFO({
-              productId:      item.id,
-              quantityNeeded: item.qty,
-              invoiceId:      inv.id,
-            });
-          } catch (fifoErr) {
-            console.warn('FIFO consume (non-critical):', fifoErr.message);
-          }
-        }
-      }));
+      });
 
-      // Create debt if needed (دين كامل أو الباقي من دفعة جزئية)
-      if (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL) {
-        const debtCustId  = custId || null;
-        const debtData    = debtSnapshot || {};
-        const remindDays  = debtData.remindDays || 0;
-        const remindDate  = remindDays > 0
-          ? new Date(Date.now() + remindDays * 86400000).toISOString().split('T')[0]
-          : null;
-
-        // لو دفعة جزئية: الدين = الإجمالي - المدفوع الآن. لو آجل كامل: الدين = الإجمالي بالكامل
-        const isPartial   = paymentType === PAYMENT.PARTIAL;
-        const paidNow      = isPartial ? (debtData.partialAmount || 0) : 0;
-        const debtAmount   = Math.max(0, total - paidNow);
-
-        await DB.debts().insert({
-          store_id:    State.user.id,
-          customer_id: debtCustId,
-          amount:      debtAmount,
-          paid:        0,
-          debt_date:   Utils.today(),
-          notes:       debtData.note || ('فاتورة ' + invNum),
-          cust_phone:  buyerPhone || null,
-          remind_date: remindDate,
-        });
+      if (debtAmount > 0) {
         // لو ما عنده customer_id — أضفه للـ customers
-        if (!debtCustId && custName && custName !== 'زبون عادي') {
+        if (!custId && custName && custName !== 'زبون عادي') {
           const { Customers } = await import('./customers.js');
           await Customers.createInline(custName, buyerPhone);
         }
