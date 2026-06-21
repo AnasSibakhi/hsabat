@@ -4,18 +4,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { CONFIG }       from '../config/constants.js';
-import { State }        from './state.js';
 
 export const sb = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
-
-export const sbAdmin = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
-  auth: {
-    autoRefreshToken:   false,
-    persistSession:     false,
-    detectSessionInUrl: false,
-    storageKey:         'hesabat-admin-client',
-  },
-});
 
 // ── استدعاء عام لجدول inventory عبر Edge Function آمنة ──
 async function callInventoryDB(action, params) {
