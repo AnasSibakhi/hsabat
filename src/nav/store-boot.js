@@ -8,7 +8,8 @@ import { ROLES }    from '../config/constants.js';
 import * as DOM     from '../core/dom.js';
 import * as Nav     from './nav.js';
 import { Realtime } from './realtime.js';
-import { sbAdmin }  from '../core/db.js';
+import { sb }       from '../core/db.js';
+import { CONFIG }   from '../config/constants.js';
 import { Notify }   from '../core/notify.js';
 
 // Module imports
@@ -121,12 +122,17 @@ export const Settings = {
     if (!owner)     { Notify.error('اسم صاحب المحل مطلوب'); return; }
 
     try {
-      const { error } = await sbAdmin
-        .from('app_accounts')
-        .update({ store_name: storeName, owner_name: owner, phone })
-        .eq('store_id', State.user.id);
-
-      if (error) throw new Error(error.message);
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/get-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization':  `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'updateOwnSettings', params: { storeName, owner, phone } }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'فشل تحديث الإعدادات');
 
       // حدّث الـ State والـ UI
       State.user.store_name = storeName;
