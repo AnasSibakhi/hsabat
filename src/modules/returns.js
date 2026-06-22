@@ -126,12 +126,11 @@ const Returns = {
       Notify.success('تم تسجيل الإرجاع');
       Modal.close('m-return');
 
-      await Promise.all([
-        getInvoices()?.load(),
-        getInventory()?.load(),
-        getDebts()?.load(),
-        getDashboard()?.load(),
-      ]);
+      // تحديث البيانات بالخلفية — بدون تأخير ظهور رسالة النجاح للمستخدمة
+      getInvoices()?.load();
+      getInventory()?.load();
+      getDebts()?.load();
+      getDashboard()?.load();
 
     } catch (e) {
       Notify.error('فشل الإرجاع: ' + e.message);
