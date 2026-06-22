@@ -379,39 +379,86 @@ const Invoices = {
   },
 
   // ── Render table with pagination ──
+  // كارد فاتورة واحدة داخل قائمة الزبون المفتوحة
+  _renderInvoiceCard(inv) {
+    const payClass = PAY_CLASS[inv.payment_type] || '';
+    const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
+    const hasDiscount = inv.discount > 0;
+    const isReturned = inv._returned;
+    return `<div class="inv-receipt${isReturned ? ' inv-receipt-returned' : ''}">
+      <div class="ir-top">
+        <span class="ir-num"><i class="ti ti-receipt"></i> ${escape(inv.invoice_number || '-')}</span>
+        <span class="inv-pay-badge ${payClass}">${payLabel}</span>
+      </div>
+      ${isReturned ? '<div class="ir-returned-strip">مُرجَعة</div>' : ''}
+      <div class="ir-line"></div>
+      <div class="ir-row"><span>التاريخ</span><b>${inv.invoice_date}${inv.sale_time ? ' · ' + inv.sale_time : ''}</b></div>
+      <div class="ir-row"><span>المنتجات</span><b class="inv-items-badge" id="ic-${inv.id}">—</b></div>
+      ${hasDiscount ? `<div class="ir-row"><span>الخصم</span><b class="ir-disc-val">-₪${inv.discount.toFixed(2)}</b></div>` : ''}
+      <div class="ir-total">
+        <span class="ir-total-label">الإجمالي</span>
+        <span class="ir-total-val">₪${inv.total.toFixed(2)}</span>
+      </div>
+      <div class="ir-actions">
+        <button class="ir-act-btn" onclick="Invoices.openDetails('${inv.id}')" title="عرض"><i class="ti ti-eye"></i></button>
+        <button class="ir-act-btn ir-act-del" onclick="Invoices.delete('${inv.id}')" title="حذف"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  },
+
+  // ── تجميع الفواتير حسب اسم الزبون — نفس فكرة تجميع الموردين بالمشتريات ──
+  _groupByCustomer(data) {
+    const groups = {};
+    data.forEach(inv => {
+      const name = (inv.buyer_name || inv.customer_name || '').trim() || 'زبون عادي';
+      const key  = name.toLowerCase();
+      if (!groups[key]) {
+        groups[key] = { name, phone: inv.buyer_phone || '', invoices: [] };
+      }
+      groups[key].invoices.push(inv);
+      if (inv.buyer_phone) groups[key].phone = inv.buyer_phone;
+    });
+    // الأحدث أولاً (الزبون الذي له فاتورة أحدث يظهر بالأعلى)
+    return Object.values(groups).sort((a, b) =>
+      new Date(b.invoices[0]?.created_at || 0) - new Date(a.invoices[0]?.created_at || 0)
+    );
+  },
+
   _renderTable() {
     const start  = (_page - 1) * UI_SIZE;
     const page   = _filtered.slice(start, start + UI_SIZE);
     const total  = _filtered.length;
     const pages  = Math.max(1, Math.ceil(total / UI_SIZE));
 
-    DOM.setHTML('ilist', page.length
-      ? page.map(inv => {
-          const buyer    = escape(inv.buyer_name || inv.customer_name || 'عادي');
-          const payClass = PAY_CLASS[inv.payment_type] || '';
-          const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
-          const hasDiscount = inv.discount > 0;
-          const isReturned = inv._returned;
-          return `<div class="inv-receipt${isReturned ? ' inv-receipt-returned' : ''}">
-            <div class="ir-top">
-              <span class="ir-num"><i class="ti ti-receipt"></i> ${escape(inv.invoice_number || '-')}</span>
-              <span class="inv-pay-badge ${payClass}">${payLabel}</span>
+    const groups = Invoices._groupByCustomer(page);
+
+    DOM.setHTML('ilist', groups.length
+      ? groups.map((g, idx) => {
+          const totalAmount = g.invoices.reduce((s, inv) => s + inv.total, 0);
+          const hasReturned = g.invoices.some(inv => inv._returned);
+          const initials    = g.name.trim().slice(0, 2);
+          const invoicesHtml = g.invoices.map(inv => Invoices._renderInvoiceCard(inv)).join('');
+
+          return `<div class="cust-card${idx === 0 && groups.length === 1 ? ' open' : ''}" id="cust-card-${idx}">
+            <div class="cust-header" onclick="document.getElementById('cust-card-${idx}').classList.toggle('open')">
+              <div class="cust-info">
+                <div class="pur-avatar">${escape(initials)}</div>
+                <div style="min-width:0;">
+                  <div class="cust-name">${escape(g.name)}</div>
+                  ${g.phone ? '<a href="tel:' + g.phone + '" class="pur-sphone" onclick="event.stopPropagation()">' + escape(g.phone) + '</a>' : ''}
+                </div>
+              </div>
+              <div class="cust-summary">
+                <span class="cust-count">${g.invoices.length} ${g.invoices.length === 1 ? 'فاتورة' : 'فواتير'}</span>
+                <div class="pur-stat" style="background:none;padding:0;">
+                  <div class="pur-stat-label">إجمالي مشترياته</div>
+                  <div class="pur-stat-val" style="color:var(--p);">₪${totalAmount.toFixed(2)}</div>
+                </div>
+                ${hasReturned ? '<span class="sup-debt-dot" title="يوجد فاتورة مُرجَعة لهذا الزبون"></span>' : ''}
+                <span class="sup-chevron">‹</span>
+              </div>
             </div>
-            ${isReturned ? '<div class="ir-returned-strip">مُرجَعة</div>' : ''}
-            <div class="ir-line"></div>
-            <div class="ir-row"><span>المشتري</span><b>${buyer}</b></div>
-            ${inv.buyer_phone ? `<div class="ir-row"><span>الجوال</span><b>${escape(inv.buyer_phone)}</b></div>` : ''}
-            <div class="ir-row"><span>التاريخ</span><b>${inv.invoice_date}${inv.sale_time ? ' · ' + inv.sale_time : ''}</b></div>
-            <div class="ir-row"><span>المنتجات</span><b class="inv-items-badge" id="ic-${inv.id}">—</b></div>
-            ${hasDiscount ? `<div class="ir-row"><span>الخصم</span><b class="ir-disc-val">-₪${inv.discount.toFixed(2)}</b></div>` : ''}
-            <div class="ir-total">
-              <span class="ir-total-label">الإجمالي</span>
-              <span class="ir-total-val">₪${inv.total.toFixed(2)}</span>
-            </div>
-            <div class="ir-actions">
-              <button class="ir-act-btn" onclick="Invoices.openDetails('${inv.id}')" title="عرض"><i class="ti ti-eye"></i></button>
-              <button class="ir-act-btn ir-act-del" onclick="Invoices.delete('${inv.id}')" title="حذف"><i class="ti ti-trash"></i></button>
-            </div>
+            <div class="cust-invoices">${invoicesHtml}</div>
           </div>`;
         }).join('')
       : '<div class="er inv-empty-state">لا توجد فواتير</div>'
