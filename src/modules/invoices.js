@@ -818,8 +818,11 @@ const Invoices = {
       const qs = getQuickSale();
       if (qs) qs.clearCart();
 
-      await getInventory().loadList();
-      await Promise.all([Invoices.load(), getDashboard().load(), getCustomers().loadUnified()]);
+      // تحديث البيانات الثانوية بالخلفية — بدون تأخير إغلاق الموديل أو ظهور رسالة النجاح
+      getInventory().loadList();
+      Invoices.load();
+      getDashboard().load();
+      getCustomers().loadUnified();
     } catch (err) {
       console.error('[Invoices.save]', err);
       Notify.error(err.message);
