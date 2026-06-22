@@ -238,52 +238,66 @@ const Inventory = {
   },
 
   _renderList(list) {
-    const getStatusBadge = (i) => {
-      if (i.quantity <= 0)                        return { cls: 'b-out', label: 'نفد' };
-      if (i.quantity <= (i.low_stock_alert || 5))  return { cls: 'b-low', label: 'منخفض' };
-      return { cls: 'b-ok', label: 'متوفر' };
-    };
-    const CAT_COLOR = {
-      'مواد غذائية': '#0e9f6e', 'مشروبات': '#c27803', 'حلويات': '#c81e1e',
-      'منظفات': '#1a56db', 'مستلزمات شخصية': '#7c3aed', 'خضار وفواكه': '#0e9f6e',
-      'ألبان': '#1a56db', 'لحوم': '#c81e1e', 'مخبوزات': '#c27803',
+    const getStatus = (i) => {
+      if (i.quantity <= 0)                        return { cls: 'out', label: 'نفد' };
+      if (i.quantity <= (i.low_stock_alert || 5))  return { cls: 'low', label: 'منخفض' };
+      return { cls: 'ok', label: 'متوفر' };
     };
 
     DOM.setHTML('invlist', list.length
       ? list.map(i => {
-          const status = getStatusBadge(i);
-          const color  = CAT_COLOR[i.category] || 'var(--p)';
-          const hasMargin = i.sale_price && i.cost_price && i.cost_price > 0;
-          let marginHtml = '<span class="prod-margin placeholder">-</span>';
+          const status = getStatus(i);
+          const hasPrice  = i.sale_price > 0;
+          const hasCost   = i.cost_price > 0;
+          const hasMargin = hasPrice && hasCost;
+
+          let marginCellHtml = '<span class="lbl">الربح</span><span class="v" style="color:var(--g4);">—</span>';
           if (hasMargin) {
             const marginPct = ((i.sale_price - i.cost_price) / i.cost_price) * 100;
             const isLoss = marginPct < 0;
-            marginHtml = '<span class="prod-margin' + (isLoss ? ' loss' : '') + '">' + (isLoss ? '⚠ خسارة ' : 'هامش الربح ') + Math.abs(marginPct).toFixed(0) + '%</span>';
+            const diff = Math.abs(i.sale_price - i.cost_price);
+            marginCellHtml = `<span class="lbl">الربح</span>
+              <span class="v ${isLoss ? 'loss' : 'profit'}">${isLoss ? '-' : ''}${Math.abs(marginPct).toFixed(0)}%</span>
+              <span class="micro ${isLoss ? 'down' : 'up'}">${isLoss ? '▼' : '▲'} ₪${diff.toFixed(2)}</span>`;
           }
-          return `<div class="prod-card" onclick="Inventory.openProduct('${i.id}')" style="--cat-color:${color};">
-            <div class="prod-card-top">
-              <span class="prod-cat-label" style="color:${color};">${Utils.escape(i.category || 'عام')}</span>
-              <span class="prod-badge ${status.cls}">${status.label}</span>
-            </div>
-            <div class="prod-name">${Utils.escape(i.name)}</div>
-            <div class="prod-meta">${Utils.escape(i.unit || '-')} · <span style="font-family:monospace;">${i.barcode || '—'}</span></div>
-            <div class="prod-price-row">
-              <div>
-                <span class="prod-price-label">سعر البيع (للوحدة)</span>
-                <span class="prod-price">${i.sale_price ? '₪' + i.sale_price.toFixed(2) : '-'}</span>
-                <span class="prod-cost">${i.cost_price ? 'تكلفة الشراء ₪' + i.cost_price.toFixed(2) : 'تكلفة الشراء -'}</span>
-                ${marginHtml}
+
+          const stockPct = Math.max(2, Math.min(100, (i.quantity / ((i.low_stock_alert || 5) * 4)) * 100));
+          const stockColor = status.cls === 'out' ? 'var(--d)' : status.cls === 'low' ? 'var(--w)' : 'var(--s)';
+
+          const canPrint = !!i.barcode;
+
+          return `<div class="prod-card-v2 ${status.cls}" onclick="Inventory.openProduct('${i.id}')">
+            <div class="pcv2-top">
+              <div class="pcv2-name-area">
+                <span class="pcv2-name">${Utils.escape(i.name)}</span>
+                <span class="pcv2-cat-tag">${Utils.escape(i.category || 'عام')}</span>
               </div>
-              <div style="text-align:left;min-width:70px;">
-                <span class="prod-price-label">الكمية المتوفرة</span>
-                <span class="prod-qty">${i.quantity} ${Utils.escape(i.unit || '')}</span>
+              <span class="pcv2-status ${status.cls}">● ${status.label}</span>
+            </div>
+            <div class="pcv2-metrics">
+              <div class="pcv2-cell">
+                <span class="lbl">السعر</span>
+                <span class="v price">${hasPrice ? '₪' + i.sale_price.toFixed(2) : '—'}</span>
+              </div>
+              <div class="pcv2-cell">
+                <span class="lbl">التكلفة</span>
+                <span class="v">${hasCost ? '₪' + i.cost_price.toFixed(2) : '—'}</span>
+              </div>
+              <div class="pcv2-cell">${marginCellHtml}</div>
+              <div class="pcv2-cell">
+                <span class="lbl">الكمية</span>
+                <span class="v" style="${status.cls !== 'ok' ? 'color:var(--' + (status.cls === 'out' ? 'd' : 'w') + ');' : ''}">${i.quantity} <span class="pcv2-unit">${Utils.escape(i.unit || '')}</span></span>
+                <div class="pcv2-stockbar"><div class="pcv2-stockfill" style="width:${stockPct}%;background:${stockColor};"></div></div>
               </div>
             </div>
-            <div class="prod-actions">
-              <button class="ibb" onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')">تعديل</button>
-              <button class="ibb" onclick="event.stopPropagation();Inventory.openProduct('${i.id}')">تفاصيل</button>
-              <button class="ibb print-btn${i.barcode ? '' : ' disabled'}" style="background:var(--pl);color:var(--p);border-color:var(--p);" onclick="event.stopPropagation();${i.barcode ? `Inventory.printBarcode('${i.id}')` : ''}">🖨️</button>
-              <button class="ibr" onclick="event.stopPropagation();Inventory.delete('${i.id}')">حذف</button>
+            <div class="pcv2-bottom">
+              <span class="pcv2-barcode">${i.barcode ? Utils.escape(i.barcode) : 'بدون باركود'}</span>
+              <div class="pcv2-actions">
+                <button onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')" title="تعديل">✎</button>
+                <button onclick="event.stopPropagation();Inventory.openProduct('${i.id}')" title="تفاصيل">ℹ</button>
+                <button ${canPrint ? `onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')"` : 'disabled'} title="طباعة باركود">🖨</button>
+                <button class="danger" onclick="event.stopPropagation();Inventory.delete('${i.id}')" title="حذف">🗑</button>
+              </div>
             </div>
           </div>`;
         }).join('')
