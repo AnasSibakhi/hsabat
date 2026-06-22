@@ -296,9 +296,6 @@ const Purchases = {
 
       Notify.success(json.data.message);
 
-      // تحديث كاش المخزون
-      await getInventory()?.loadList();
-
       Modal.close('m-pur');
       DOM.clearInputs('pus', 'pup', 'puc');
       DOM.get('pur-inv-sel').value = '';
@@ -308,6 +305,9 @@ const Purchases = {
       const hidden   = DOM.get('pur-inv-sel'); if (hidden) hidden.value = '';
       const badge    = document.getElementById('pur-match-badge'); if (badge) badge.style.display = 'none';
       const sugg     = document.getElementById('pur-suggestions'); if (sugg) sugg.style.display = 'none';
+
+      // تحديث كاش المخزون بالخلفية — بدون تأخير إغلاق الموديل أو التنظيف البصري
+      getInventory()?.loadList();
       const phone = DOM.get('pus-phone'); if (phone) phone.value = '';
       const invno = DOM.get('pus-invoice');if (invno) invno.value = '';
       const pud = DOM.get('pud'); if (pud) pud.value = new Date().toISOString().split('T')[0];
@@ -316,8 +316,8 @@ const Purchases = {
       Purchases.setPayStatus('cash');
       const paidEl = DOM.get('pur-paid-amount'); if (paidEl) paidEl.value = '';
       const remEl  = DOM.get('pur-remaining');   if (remEl)  remEl.value  = '';
-      await getInventory().load();
-      await Purchases.load();
+      getInventory()?.load();
+      Purchases.load();
       await getDashboard().load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
