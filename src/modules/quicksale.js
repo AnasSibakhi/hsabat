@@ -1265,17 +1265,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
 
     if (isAutoPartialCash) {
-      // نفس منطق ربط/إنشاء الزبون المستخدم بحالة الدين العادي، لكن للكاش الجزئي
+      // فحص سريع بالكاش المحلي فقط (بدون طلب شبكي) — لو غير موجود، الـ Edge Function تتولى البحث/الإنشاء بنفس طلب البيع
       const existing = (State.customers || []).find(c =>
         c.name.toLowerCase() === custName.toLowerCase()
       );
-      if (existing) {
-        custId = existing.id;
-      } else {
-        const { Customers } = await import('./customers.js');
-        const newC = await Customers.createInline(custName, debtSnapshot.phone || '');
-        if (newC?.id) custId = newC.id;
-      }
+      if (existing) custId = existing.id;
     }
 
     if (!isAutoPartialCash && (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL)) {
@@ -1289,16 +1283,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (d.custId) {
         custId = d.custId;
       } else {
+        // فحص سريع بالكاش المحلي فقط (بدون طلب شبكي) — الـ Edge Function تتولى الباقي
         const existing = (State.customers || []).find(c =>
           c.name.toLowerCase() === deferName.toLowerCase()
         );
-        if (existing) {
-          custId = existing.id;
-        } else {
-          const { Customers } = await import('./customers.js');
-          const newC = await Customers.createInline(deferName, d.phone || '');
-          if (newC?.id) custId = newC.id;
-        }
+        if (existing) custId = existing.id;
       }
       QuickSale._deferData   = null;
       QuickSale._debtNewCust = null;
@@ -1313,12 +1302,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const custRecord = custId ? State.customers.find(x => x.id === custId) : null;
       const buyerPhone = DOM.val('qs-buyer-phone') || custRecord?.phone || '';
 
-      // لو في اسم مشتري وما في customer_id — أضفه أو اربطه
-      if (buyerName && buyerName !== 'زبون عادي' && !custId) {
-        const { Customers } = await import('./customers.js');
-        const saved = await Customers.createInline(buyerName, buyerPhone);
-        if (saved?.id) custId = saved.id;
-      }
+      // ربط/إنشاء الزبون يحصل الآن داخل complete-sale نفسها — لا حاجة لطلب شبكي منفصل هنا
 
       // حساب الدين (لو دفعة جزئية أو آجل كامل) — يُمرَّر جاهز للسيرفر
       let debtAmount = 0, debtNote = null, remindDate = null;
@@ -1366,11 +1350,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       });
 
       if (debtAmount > 0) {
-        // لو ما عنده customer_id — أضفه للـ customers
-        if (!custId && custName && custName !== 'زبون عادي') {
-          const { Customers } = await import('./customers.js');
-          await Customers.createInline(custName, buyerPhone);
-        }
         await getDebts()?.loadBadge();
       }
 
