@@ -24,22 +24,48 @@ const Returns = {
         .select('*')
         .order('created_at', { ascending: false });
 
-      DOM.setHTML('ret-list', (data || []).length
-        ? data.map(r => `<tr>
-            <td>${r.return_date}</td>
-            <td>${r.invoice_id?.slice(-8) || '-'}</td>
-            <td>${escape(r.buyer_name || '-')}</td>
-            <td>₪${r.amount.toFixed(2)}</td>
-            <td>${{
-              cash:     '<span class="bg">نقدي</span>',
-              debt:     '<span class="ba">شطب دين</span>',
-              transfer: '<span class="bb">تحويل</span>'
-            }[r.return_type] || r.return_type}</td>
-            <td>${escape(r.notes || '-')}</td>
-          </tr>`).join('')
-        : '<tr class="er"><td colspan="6">لا توجد إرجاعات</td></tr>'
+      const returnsList = data || [];
+
+      // جلب أرقام الفواتير الحقيقية المرتبطة (بدل عرض UUID خام)
+      const invIds = [...new Set(returnsList.map(r => r.invoice_id).filter(Boolean))];
+      let invoiceNumMap = {};
+      if (invIds.length) {
+        const { data: invs } = await sb.from('invoices').select('id,invoice_number').in('id', invIds);
+        invoiceNumMap = Object.fromEntries((invs || []).map(i => [i.id, i.invoice_number]));
+      }
+
+      const typeLabel = {
+        cash:     { text: 'نقدي',     cls: 'ret-badge-cash' },
+        debt:     { text: 'شطب دين',  cls: 'ret-badge-debt' },
+        transfer: { text: 'تحويل',    cls: 'ret-badge-transfer' },
+      };
+
+      DOM.setHTML('ret-list', returnsList.length
+        ? returnsList.map(r => {
+            const t = typeLabel[r.return_type] || { text: r.return_type, cls: '' };
+            const invNum = invoiceNumMap[r.invoice_id] || ('#' + (r.invoice_id?.slice(-6) || '-'));
+            // اسم الزبون يُستخرج من بداية notes (نُخزّنه بصيغة "الزبون: الاسم — ملاحظات")
+            const buyerMatch = (r.notes || '').match(/^الزبون:\s*([^—]+?)(?:\s*—\s*(.*))?$/);
+            const buyerName  = buyerMatch ? buyerMatch[1].trim() : null;
+            const extraNotes = buyerMatch ? (buyerMatch[2] || '').trim() : (r.notes || '');
+
+            return `<div class="ret-card">
+              <div class="ret-card-top">
+                <span class="ret-card-inv"><i class="ti ti-receipt"></i> ${escape(invNum)}</span>
+                <span class="ret-badge ${t.cls}">${t.text}</span>
+              </div>
+              ${buyerName ? `<div class="ret-card-buyer"><i class="ti ti-user"></i> ${escape(buyerName)}</div>` : ''}
+              <div class="ret-card-bottom">
+                <span class="ret-card-date">${r.return_date}</span>
+                <strong class="ret-card-amount">₪${r.amount.toFixed(2)}</strong>
+              </div>
+              ${extraNotes ? `<div class="ret-card-notes">${escape(extraNotes)}</div>` : ''}
+            </div>`;
+          }).join('')
+        : '<div class="er ret-empty-state">لا توجد إرجاعات</div>'
       );
-    } catch {
+    } catch (e) {
+      console.error('[Returns.load]', e);
       DOM.showEmpty?.('ret-list', 6, 'جدول الإرجاعات غير موجود');
     }
   },
