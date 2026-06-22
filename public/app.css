@@ -806,3 +806,8 @@ body.dark .ni.active{background:#1e3a5f;}
 .cust-card.open .cust-invoices{display:flex;}
 @media (min-width:680px){.cust-card.open .cust-invoices{display:grid;grid-template-columns:repeat(2,1fr);}}
 @media (min-width:1000px){.cust-card.open .cust-invoices{display:grid;grid-template-columns:repeat(3,1fr);}}
+
+/* حالة التأخر بكارد الدين الفردي */
+.pur-status.bg-d{background:var(--dl);color:var(--d);}
+.pur-status.bg-w{background:var(--wl);color:var(--w);}
+.debt-empty-state{padding:40px 20px;text-align:center;color:var(--g5);}
