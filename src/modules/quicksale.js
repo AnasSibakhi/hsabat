@@ -1210,21 +1210,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Checkout ──
-  // ── توليد رقم فاتورة فريد بشكل مضمون — يتحقق من عدم وجود تكرار فعلياً قبل الإرجاع ──
-  // (السبب الجذري لتكرار أرقام الفواتير: العدّ فقط غير آمن لو حُفظت فاتورتان بنفس اللحظة تقريباً)
-  async _generateUniqueInvoiceNumber() {
-    const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
-    let nextNum = (count || 0) + 1;
-
-    for (let attempt = 0; attempt < 20; attempt++) {
-      const candidate = 'INV-' + String(nextNum).padStart(4, '0');
-      const { data: existing } = await DB.invoices().select('id').eq('invoice_number', candidate).maybeSingle();
-      if (!existing) return candidate;
-      nextNum++;
-    }
-    return 'INV-' + Date.now().toString().slice(-6);
-  },
-
   async sell(paymentType) {
     // Rate limiting — منع 3 مبيعات في ثانية واحدة
     try {
@@ -1295,7 +1280,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     State.isMutating = true;
     try {
-      const invNum = await QuickSale._generateUniqueInvoiceNumber();
+      // رقم الفاتورة يُولَّد الآن داخل complete-sale نفسها — لا حاجة لطلب شبكي منفصل هنا
 
       // Buyer info
       const buyerName  = DOM.val('qs-buyer-name') || custName || '';
@@ -1328,7 +1313,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           customerId: custId, customerName: custName, buyerName, buyerPhone,
           invoiceDate: Utils.today(),
           saleTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-          invoiceNumber: invNum,
           transferEntityId:   _selectedTransferEntity?.id   || null,
           transferEntityName: _selectedTransferEntity?.name || null,
           debtAmount, debtNote, remindDate,
