@@ -793,3 +793,16 @@ body.dark .ni.active{background:#1e3a5f;}
 .ret-card-amount{font-size:16px;color:var(--p);}
 .ret-card-notes{font-size:11px;color:var(--g5);background:var(--g0);border-radius:8px;padding:6px 10px;}
 .ret-empty-state{padding:40px 20px;text-align:center;color:var(--g5);grid-column:1/-1;}
+
+/* ── صفحة الفواتير — مُجمّعة حسب الزبون (Accordion، نفس فكرة الموردين) ── */
+.cust-card{background:#fff;border:1px solid var(--br);border-radius:14px;overflow:hidden;}
+.cust-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;}
+.cust-header:hover{background:var(--g0);}
+.cust-info{display:flex;align-items:center;gap:10px;min-width:0;}
+.cust-name{font-size:13px;font-weight:800;color:var(--g9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cust-summary{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.cust-count{background:var(--pl);color:var(--p);font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.cust-invoices{display:none;border-top:1px solid var(--g1);padding:10px;flex-direction:column;gap:10px;}
+.cust-card.open .cust-invoices{display:flex;}
+@media (min-width:680px){.cust-card.open .cust-invoices{display:grid;grid-template-columns:repeat(2,1fr);}}
+@media (min-width:1000px){.cust-card.open .cust-invoices{display:grid;grid-template-columns:repeat(3,1fr);}}
