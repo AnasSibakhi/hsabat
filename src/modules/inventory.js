@@ -411,7 +411,8 @@ const Inventory = {
       Notify.success('تم إضافة الصنف');
       Modal.close('m-inv');
       DOM.clearInputs('inn', 'insp', 'incp');
-      await Promise.all([Inventory.loadList(), Inventory.load()]);
+      Inventory.loadList();
+      Inventory.load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
