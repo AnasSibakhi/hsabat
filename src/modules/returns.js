@@ -84,67 +84,18 @@ const Returns = {
       if (!retAmount) { Notify.error('أدخل المبلغ'); return; }
       if (!retType)   { Notify.error('اختر نوع الإرجاع'); return; }
 
-      // تحقق إن الفاتورة ما رُجعت قبل
-      const { data: existing } = await DB.returns()
-        .select('id')
-        .eq('invoice_id', invId);
-
-      if (existing?.length) {
-        Notify.error('هذه الفاتورة رُجعت مسبقاً');
-        return;
-      }
-
-      const { data: invoice } = await DB.invoices()
-        .select('*,invoice_items(*)')
-        .eq('id', invId)
-        .single();
-
-      if (!invoice) { Notify.error('الفاتورة غير موجودة'); return; }
-
-      // إرجاع المخزون
-      for (const item of invoice.invoice_items || []) {
-        if (!item.inventory_id) continue;
-        const retQty = (retAmount / invoice.total) * item.quantity;
-        const { data: inv } = await DB.inventory()
-          .select('quantity')
-          .eq('id', item.inventory_id)
-          .single();
-        if (inv) await DB.inventory()
-          .update({ quantity: inv.quantity + retQty })
-          .eq('id', item.inventory_id);
-      }
-
-      // FIFO reverse
-      try {
-        await FIFOService.reverseFIFO(invId);
-      } catch (e) {
-        console.warn('FIFO reverse:', e.message);
-      }
-
-      // شطب الدين لو نوع الإرجاع دين
-      if (retType === RETURN_TYPE.DEBT && invoice.customer_id) {
-        const { data: debts } = await DB.debts()
-          .select('*')
-          .eq('customer_id', invoice.customer_id);
-        let remaining = retAmount;
-        for (const d of debts || []) {
-          if (remaining <= 0) break;
-          const reduce = Math.min(remaining, d.amount - d.paid);
-          await DB.debts().update({ paid: d.paid + reduce }).eq('id', d.id);
-          remaining -= reduce;
-        }
-      }
-
-      // حفظ الإرجاع مع اسم الزبون ✅
-      await DB.returns().insert({
-        store_id:    State.user.id,
-        invoice_id:  invId,
-        buyer_name:  buyerName,
-        amount:      retAmount,
-        return_type: retType,
-        notes:       DOM.val('ret-notes') || '',
-        return_date: Utils.today(),
+      // ── استدعاء واحد فقط ينفّذ كل العملية (تحقق + إرجاع مخزون + FIFO + شطب دين + تسجيل) على السيرفر دفعة وحدة ──
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          invId, buyerName, retType, retAmount,
+          notes: DOM.val('ret-notes') || '',
+        }),
       });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'فشل تسجيل الإرجاع');
 
       Notify.success('تم تسجيل الإرجاع');
       Modal.close('m-return');
