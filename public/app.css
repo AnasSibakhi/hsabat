@@ -749,7 +749,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .ir-act-btn:active{transform:translateY(0) scale(.92);}
 .ir-act-btn:first-child{color:var(--p);border-color:var(--pl);background:var(--pl);}
 .ir-act-btn:first-child:hover,.ir-act-btn:first-child:active{background:var(--p);color:#fff;}
-.ir-act-del{color:var(--d);border-color:var(--dl);background:var(--dl);margin-right:auto;}
+.ir-act-del{color:var(--d);border-color:var(--dl);background:var(--dl);}
 .ir-act-del:hover,.ir-act-del:active{background:var(--d);color:#fff;}
 
 .inv-empty-state{padding:40px 20px;text-align:center;color:var(--g5);grid-column:1/-1;}
