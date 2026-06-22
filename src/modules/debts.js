@@ -479,6 +479,13 @@ const Debts = {
       const { data: debt } = await DB.debts().select('amount').eq('id', id).single();
       await DB.debts().update({ paid: debt.amount }).eq('id', id);
       Notify.success('✅ تم التسديد');
+
+      // تحديث فوري للواجهة — بدون انتظار إعادة تحميل كامل من السيرفر
+      const local = _allDebts.find(d => d.id === id);
+      if (local) local.paid = debt.amount;
+      Debts._renderList();
+      Debts._renderStats();
+
       await Promise.all([Customers.loadUnified(), Debts.loadBadge()]);
     } catch { Notify.error('فشل التسديد'); }
   },
