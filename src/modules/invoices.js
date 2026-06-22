@@ -504,6 +504,9 @@ const Invoices = {
       `\nالمنتجات:\n` +
       (items||[]).map(it => `• ${it.product_name} × ${it.quantity} = ₪${(it.quantity*it.price).toFixed(2)}`).join('\n') +
       `\n\nالإجمالي: ₪${inv.total.toFixed(2)}\n` +
+      (inv.payment_type === 'partial'
+        ? `المدفوع: ₪${(inv.partial_paid || 0).toFixed(2)}\nالمتبقي كدين: ₪${(inv.total - (inv.partial_paid || 0)).toFixed(2)}\n`
+        : '') +
       `طريقة الدفع: ${payLabel}`
     );
     const waUrl = phone ? `https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
@@ -519,8 +522,13 @@ const Invoices = {
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;">
           <span>مبلغ الإرجاع</span><strong>₪${ret.amount?.toFixed(2)}</strong>
         </div>
-        ${ret.buyer_name ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;"><span>الزبون</span><strong>${escape(ret.buyer_name)}</strong></div>` : ''}
-        ${ret.notes ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);"><span>ملاحظات</span><strong>${escape(ret.notes)}</strong></div>` : ''}
+        ${(() => {
+          const m = (ret.notes || '').match(/^الزبون:\s*([^—]+?)(?:\s*—\s*(.*))?$/);
+          const buyer = m ? m[1].trim() : null;
+          const extra = m ? (m[2] || '').trim() : (ret.notes || '');
+          return (buyer ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;"><span>الزبون</span><strong>${escape(buyer)}</strong></div>` : '')
+               + (extra ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);"><span>ملاحظات</span><strong>${escape(extra)}</strong></div>` : '');
+        })()}
       </div>` : ''}
 
       <!-- معلومات الفاتورة -->
@@ -577,6 +585,13 @@ const Invoices = {
         ${inv.discount > 0 ? `
         <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--d);margin-bottom:4px;">
           <span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span>
+        </div>` : ''}
+        ${inv.payment_type === 'partial' ? `
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#166534;margin-bottom:4px;">
+          <span>المدفوع</span><span>₪${(inv.partial_paid || 0).toFixed(2)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--d);margin-bottom:4px;">
+          <span>المتبقي كدين</span><span>₪${(inv.total - (inv.partial_paid || 0)).toFixed(2)}</span>
         </div>` : ''}
         <div style="display:flex;justify-content:space-between;font-weight:900;font-size:17px;margin-top:8px;padding-top:8px;border-top:1.5px solid var(--br);">
           <span>الإجمالي النهائي</span>
