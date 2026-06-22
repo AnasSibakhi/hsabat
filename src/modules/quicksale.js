@@ -1386,12 +1386,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const cartSnapshot = _cart.map(c => ({ ...c }));
 
       QuickSale.clearCart();
-      await getDashboard()?.load();
-      const invSvc = getInventory(); if (invSvc) await invSvc.loadList();
       DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
-      // عرض الفاتورة بعد البيع
+      // عرض الفاتورة فوراً — بدون انتظار أي طلب شبكي إضافي (المخزون محدّث محلياً أعلى، يكفي للعرض الفوري)
       QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone, debtAmount);
+
+      // تحديث لوحة التحكم والمخزون بالخلفية (بدون انتظار، لا يؤخر ظهور الفاتورة للمستخدمة)
+      getDashboard()?.load();
+      getInventory()?.loadList();
     } catch (err) {
       Notify.error(err.message);
     } finally {
