@@ -1210,6 +1210,21 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Checkout ──
+  // ── توليد رقم فاتورة فريد بشكل مضمون — يتحقق من عدم وجود تكرار فعلياً قبل الإرجاع ──
+  // (السبب الجذري لتكرار أرقام الفواتير: العدّ فقط غير آمن لو حُفظت فاتورتان بنفس اللحظة تقريباً)
+  async _generateUniqueInvoiceNumber() {
+    const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
+    let nextNum = (count || 0) + 1;
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const candidate = 'INV-' + String(nextNum).padStart(4, '0');
+      const { data: existing } = await DB.invoices().select('id').eq('invoice_number', candidate).maybeSingle();
+      if (!existing) return candidate;
+      nextNum++;
+    }
+    return 'INV-' + Date.now().toString().slice(-6);
+  },
+
   async sell(paymentType) {
     // Rate limiting — منع 3 مبيعات في ثانية واحدة
     try {
@@ -1250,11 +1265,17 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
 
     if (isAutoPartialCash) {
-      // فحص سريع بالكاش المحلي فقط (بدون طلب شبكي) — لو غير موجود، الـ Edge Function تتولى البحث/الإنشاء بنفس طلب البيع
+      // نفس منطق ربط/إنشاء الزبون المستخدم بحالة الدين العادي، لكن للكاش الجزئي
       const existing = (State.customers || []).find(c =>
         c.name.toLowerCase() === custName.toLowerCase()
       );
-      if (existing) custId = existing.id;
+      if (existing) {
+        custId = existing.id;
+      } else {
+        const { Customers } = await import('./customers.js');
+        const newC = await Customers.createInline(custName, debtSnapshot.phone || '');
+        if (newC?.id) custId = newC.id;
+      }
     }
 
     if (!isAutoPartialCash && (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL)) {
@@ -1268,11 +1289,16 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (d.custId) {
         custId = d.custId;
       } else {
-        // فحص سريع بالكاش المحلي فقط (بدون طلب شبكي) — الـ Edge Function تتولى الباقي
         const existing = (State.customers || []).find(c =>
           c.name.toLowerCase() === deferName.toLowerCase()
         );
-        if (existing) custId = existing.id;
+        if (existing) {
+          custId = existing.id;
+        } else {
+          const { Customers } = await import('./customers.js');
+          const newC = await Customers.createInline(deferName, d.phone || '');
+          if (newC?.id) custId = newC.id;
+        }
       }
       QuickSale._deferData   = null;
       QuickSale._debtNewCust = null;
@@ -1280,14 +1306,19 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     State.isMutating = true;
     try {
-      // رقم الفاتورة يُولَّد الآن داخل complete-sale نفسها — لا حاجة لطلب شبكي منفصل هنا
+      const invNum = await QuickSale._generateUniqueInvoiceNumber();
 
       // Buyer info
       const buyerName  = DOM.val('qs-buyer-name') || custName || '';
       const custRecord = custId ? State.customers.find(x => x.id === custId) : null;
       const buyerPhone = DOM.val('qs-buyer-phone') || custRecord?.phone || '';
 
-      // ربط/إنشاء الزبون يحصل الآن داخل complete-sale نفسها — لا حاجة لطلب شبكي منفصل هنا
+      // لو في اسم مشتري وما في customer_id — أضفه أو اربطه
+      if (buyerName && buyerName !== 'زبون عادي' && !custId) {
+        const { Customers } = await import('./customers.js');
+        const saved = await Customers.createInline(buyerName, buyerPhone);
+        if (saved?.id) custId = saved.id;
+      }
 
       // حساب الدين (لو دفعة جزئية أو آجل كامل) — يُمرَّر جاهز للسيرفر
       let debtAmount = 0, debtNote = null, remindDate = null;
@@ -1305,7 +1336,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + مخزون + FIFO + دين) على السيرفر دفعة وحدة ──
       const { data: { session } } = await sb.auth.getSession();
-      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale`, {
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({
@@ -1313,6 +1344,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           customerId: custId, customerName: custName, buyerName, buyerPhone,
           invoiceDate: Utils.today(),
           saleTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          invoiceNumber: invNum,
           transferEntityId:   _selectedTransferEntity?.id   || null,
           transferEntityName: _selectedTransferEntity?.name || null,
           debtAmount, debtNote, remindDate,
@@ -1334,6 +1366,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       });
 
       if (debtAmount > 0) {
+        // لو ما عنده customer_id — أضفه للـ customers
+        if (!custId && custName && custName !== 'زبون عادي') {
+          const { Customers } = await import('./customers.js');
+          await Customers.createInline(custName, buyerPhone);
+        }
         await getDebts()?.loadBadge();
       }
 
