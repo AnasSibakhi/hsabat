@@ -385,7 +385,8 @@ const Invoices = {
     const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
     const hasDiscount = inv.discount > 0;
     const isReturned = inv._returned;
-    return `<div class="inv-receipt${isReturned ? ' inv-receipt-returned' : ''}">
+    return `<div class="inv-receipt page-invoice${isReturned ? ' inv-receipt-returned' : ''}">
+      <div class="page-accent-stripe invoice"></div>
       <div class="ir-top">
         <span class="ir-num"><i class="ti ti-receipt"></i> ${escape(inv.invoice_number || '-')}</span>
         <span class="inv-pay-badge ${payClass}">${payLabel}</span>
