@@ -1391,7 +1391,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
       // عرض الفاتورة بعد البيع
-      QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone);
+      QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone, debtAmount);
     } catch (err) {
       Notify.error(err.message);
     } finally {
@@ -1400,7 +1400,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Daily Stats ──
-  _showReceipt(inv, cart, total, paymentType, custName, phone) {
+  _showReceipt(inv, cart, total, paymentType, custName, phone, debtAmount = 0) {
     if (!inv) return;
     const PAY = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
     const store = State.user?.store_name || 'حسابات';
@@ -1421,6 +1421,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       `\nالمنتجات:\n` +
       cart.map(c => `• ${c.name} × ${c.qty} = ₪${(c.qty*c.price).toFixed(2)}`).join('\n') +
       `\n\nالإجمالي: ₪${total.toFixed(2)}\n` +
+      (paymentType === 'partial'
+        ? `المدفوع الآن: ₪${(total - debtAmount).toFixed(2)}\nالمتبقي كدين: ₪${debtAmount.toFixed(2)}\n`
+        : '') +
       `طريقة الدفع: ${PAY[paymentType]||paymentType}`
     );
     const waUrl = phone
@@ -1439,11 +1442,23 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     };
     const msg = msgConfig[paymentType] || msgConfig.cash;
 
+    const paidNow = paymentType === 'partial' ? (total - debtAmount) : 0;
+
     const extraInfo = paymentType === 'defer'
       ? `<div style="margin-top:6px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:8px;padding:8px 12px;">
           👤 ${escape(custName || '-')}
           ${deferDate ? ' · 📅 السداد: ' + deferDate : ''}
           ${deferAcct ? ' · ' + deferAcct : ''}
+        </div>`
+      : paymentType === 'partial'
+      ? `<div style="margin-top:6px;background:#fef3c7;border-radius:8px;padding:8px 12px;">
+          <div style="font-size:12px;color:#92400e;margin-bottom:4px;">👤 ${escape(custName || '-')}</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#166534;">
+            <span>المدفوع الآن</span><strong>₪${paidNow.toFixed(2)}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#92400e;margin-top:2px;">
+            <span>المتبقي كدين</span><strong>₪${debtAmount.toFixed(2)}</strong>
+          </div>
         </div>`
       : '';
     if (el) {
