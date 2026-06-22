@@ -657,30 +657,57 @@ body.dark .ni.active{background:#1e3a5f;}
 .dr-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;}
 .dr-arrow{font-size:14px;color:#cbd5e1;}
 
-/* ── PRODUCT CARDS — صفحة المخزون ── */
-.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-@media (min-width:700px){.prod-grid{grid-template-columns:repeat(3,1fr);}}
-@media (min-width:1000px){.prod-grid{grid-template-columns:repeat(4,1fr);}}
-.prod-card{background:#fff;border:1px solid var(--br);border-radius:14px;padding:12px;position:relative;overflow:hidden;cursor:pointer;transition:.15s;display:flex;flex-direction:column;height:100%;}
-.prod-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px);}
-.prod-card::before{content:'';position:absolute;top:0;right:0;width:4px;height:100%;background:var(--cat-color,var(--p));}
-.prod-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;min-height:20px;}
-.prod-cat-label{font-size:11px;font-weight:800;}
-.prod-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;white-space:nowrap;}
-.prod-name{font-size:14px;font-weight:800;color:var(--g9);margin:6px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:18px;}
-.prod-meta{font-size:11px;color:var(--g5);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:14px;}
-.prod-price-row{display:flex;justify-content:space-between;align-items:flex-start;padding-top:8px;border-top:1px solid var(--g1);margin-bottom:8px;flex:1;min-height:78px;}
-.prod-price{font-size:15px;font-weight:900;color:var(--p);display:block;}
-.prod-cost{font-size:10px;color:var(--g5);display:block;margin-top:3px;min-height:13px;}
-.prod-margin{font-size:10px;color:var(--s);font-weight:700;display:block;margin-top:2px;min-height:13px;}
-.prod-margin.loss{color:var(--d);}
-.prod-margin.placeholder{color:var(--g4);font-weight:400;}
-.prod-price-label{font-size:9px;color:var(--g4);display:block;}
-.prod-qty{font-size:13px;color:var(--g6);font-weight:800;white-space:nowrap;}
-.prod-actions{display:flex;gap:5px;margin-top:auto;}
-.prod-actions button{flex:1;padding:6px 4px;border-radius:8px;font-size:10px;}
-.prod-actions button.print-btn{flex:0 0 32px;padding:6px 0;}
-.prod-actions button.print-btn.disabled{opacity:.35;cursor:not-allowed;background:var(--g1)!important;color:var(--g4)!important;border-color:var(--g2)!important;}
+/* ── PRODUCT CARDS — صفحة المخزون (تصميم جديد: شريط حالة جانبي متدرّج + شبكة مقاييس) ── */
+.prod-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+@media (min-width:680px){.prod-grid{grid-template-columns:repeat(2,1fr);}}
+@media (min-width:1100px){.prod-grid{grid-template-columns:repeat(3,1fr);}}
+
+.prod-card-v2{
+  background:#fff;border-radius:16px;overflow:hidden;position:relative;cursor:pointer;
+  box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 12px rgba(15,23,42,.05);
+  transition:.15s;
+}
+.prod-card-v2:hover{box-shadow:0 2px 4px rgba(15,23,42,.06),0 6px 16px rgba(15,23,42,.08);transform:translateY(-1px);}
+.prod-card-v2::before{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;}
+.prod-card-v2.ok::before{background:linear-gradient(180deg,var(--s),#34d399);}
+.prod-card-v2.low::before{background:linear-gradient(180deg,var(--w),#fbbf24);}
+.prod-card-v2.out::before{background:linear-gradient(180deg,var(--d),#f87171);}
+
+.pcv2-top{display:flex;justify-content:space-between;align-items:center;padding:13px 16px 10px 14px;gap:8px;}
+.pcv2-name-area{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.pcv2-name{font-size:13.5px;font-weight:800;color:var(--g9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pcv2-cat-tag{font-size:10px;font-weight:700;color:var(--g5);background:var(--g0);padding:2px 8px;border-radius:6px;display:inline-block;width:fit-content;}
+
+.pcv2-status{font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap;flex-shrink:0;}
+.pcv2-status.ok{background:var(--sl);color:var(--s);}
+.pcv2-status.low{background:var(--wl);color:var(--w);}
+.pcv2-status.out{background:var(--dl);color:var(--d);}
+
+.pcv2-metrics{display:grid;grid-template-columns:repeat(4,1fr);margin:0 12px 11px;border-radius:12px;overflow:hidden;background:var(--g0);}
+.pcv2-cell{padding:9px 5px;text-align:center;position:relative;min-height:48px;}
+.pcv2-cell:not(:last-child)::after{content:'';position:absolute;left:0;top:18%;bottom:18%;width:1px;background:var(--g1);}
+.pcv2-cell .lbl{font-size:9px;color:var(--g4);font-weight:700;display:block;margin-bottom:3px;}
+.pcv2-cell .v{font-size:13.5px;font-weight:900;color:var(--g9);letter-spacing:-.2px;}
+.pcv2-cell .v.price{color:var(--p);}
+.pcv2-cell .v.profit{color:var(--s);}
+.pcv2-cell .v.loss{color:var(--d);}
+.pcv2-cell .micro{font-size:8.5px;font-weight:700;margin-top:2px;display:block;}
+.pcv2-cell .micro.up{color:var(--s);}
+.pcv2-cell .micro.down{color:var(--d);}
+.pcv2-unit{font-size:10px;font-weight:700;color:var(--g4);}
+.pcv2-stockbar{height:3px;background:var(--g1);border-radius:2px;margin-top:5px;overflow:hidden;}
+.pcv2-stockfill{height:100%;border-radius:2px;}
+
+.pcv2-bottom{display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px 14px;gap:8px;}
+.pcv2-barcode{font-size:10px;color:var(--g4);font-family:monospace;direction:ltr;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.pcv2-actions{display:flex;gap:5px;flex-shrink:0;}
+.pcv2-actions button{
+  width:28px;height:28px;border-radius:8px;border:none;background:var(--g0);font-size:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:var(--g6);transition:transform .1s;
+}
+.pcv2-actions button:active{transform:scale(.92);}
+.pcv2-actions button.danger{background:var(--dl);color:var(--d);}
+.pcv2-actions button:disabled{opacity:.35;cursor:not-allowed;}
 
 /* ── PURCHASES — مُجمّعة حسب المورد (Accordion) ── */
 .pur-grid{display:flex;flex-direction:column;gap:10px;}
