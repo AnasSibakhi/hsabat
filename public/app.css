@@ -728,7 +728,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .pur-sphone{font-size:11px;color:var(--p);}
 .pur-status{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 
-.pur-item{background:var(--g0);border-radius:10px;padding:10px 12px;}
+.pur-item{background:var(--g0);border-radius:10px;padding:13px 12px 10px;position:relative;overflow:hidden;}
 .pur-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;}
 .pur-product-name{font-size:12px;color:var(--g7);font-weight:700;}
 .pur-item-meta{font-size:10px;color:var(--g5);margin-bottom:8px;}
@@ -838,3 +838,14 @@ body.dark .ni.active{background:#1e3a5f;}
 .pur-status.bg-d{background:var(--dl);color:var(--d);}
 .pur-status.bg-w{background:var(--wl);color:var(--w);}
 .debt-empty-state{padding:40px 20px;text-align:center;color:var(--g5);}
+
+/* ── تمييز بصري بين كاردات الفواتير (أزرق) والمشتريات (كهرماني) — خط علوي مميّز لكل صفحة ── */
+.page-accent-stripe{position:absolute;top:0;right:0;left:0;height:3px;}
+.page-accent-stripe.invoice{background:linear-gradient(90deg,var(--p),#6699ff);}
+.page-accent-stripe.purchase{background:linear-gradient(90deg,var(--w),#fbbf24);}
+
+/* رقم الفاتورة بلون أزرق هوية واضح (الإيصالات) */
+.page-invoice .ir-num{color:var(--p);}
+
+/* اسم المنتج بالمشتريات يحصل على لون كهرماني خفيف للتمييز عن الفواتير */
+.page-purchase .pur-product-name{color:var(--g9);}
