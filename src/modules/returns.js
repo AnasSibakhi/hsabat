@@ -86,7 +86,7 @@ const Returns = {
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (تحقق + إرجاع مخزون + FIFO + شطب دين + تسجيل) على السيرفر دفعة وحدة ──
       const { data: { session } } = await sb.auth.getSession();
-      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-return`, {
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/process-return`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({
