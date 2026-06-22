@@ -119,9 +119,10 @@ const Purchases = {
     const effectiveSale = p.sale_price || (matched?.sale_price ? matched.sale_price * p.quantity : null);
     const unitSaleVal    = (showUnit && effectiveSale) ? (effectiveSale / p.quantity) : 0;
 
-    return `<div class="pur-item">
+    return `<div class="pur-item page-purchase">
+      <div class="page-accent-stripe purchase"></div>
       <div class="pur-item-top">
-        <span class="pur-product-name">${Utils.escape(p.product_name)}</span>
+        <span class="pur-product-name"><i class="ti ti-shopping-cart" style="color:var(--w);font-size:13px;margin-left:3px;"></i>${Utils.escape(p.product_name)}</span>
         <span class="pur-status" style="background:var(--${st.c});color:var(--${st.t});">${st.l}</span>
       </div>
       <div class="pur-item-meta">${p.purchase_date}${p.invoice_ref ? ' · فاتورة #' + Utils.escape(p.invoice_ref) : ''} · الكمية المشتراة ${p.quantity} ${Utils.escape(unitLabel)}</div>
