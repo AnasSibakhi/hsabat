@@ -772,3 +772,24 @@ body.dark .ni.active{background:#1e3a5f;}
   border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12px;text-align:right;line-height:1.5;
 }
 .del-debt-warning i{font-size:16px;flex-shrink:0;margin-top:1px;}
+
+/* ── صفحة الإرجاعات — كاردات متجاوبة (تستبدل الجدول المكسور) ── */
+.ret-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+@media (min-width:680px){.ret-grid{grid-template-columns:repeat(2,1fr);}}
+@media (min-width:1000px){.ret-grid{grid-template-columns:repeat(3,1fr);}}
+
+.ret-card{background:#fff;border:1px solid var(--br);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;}
+.ret-card-top{display:flex;justify-content:space-between;align-items:center;}
+.ret-card-inv{font-size:13px;font-weight:800;color:var(--g9);display:flex;align-items:center;gap:5px;}
+.ret-card-inv i{color:var(--p);font-size:14px;}
+.ret-badge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;}
+.ret-badge-cash{background:var(--sl);color:var(--s);}
+.ret-badge-debt{background:var(--wl);color:var(--w);}
+.ret-badge-transfer{background:var(--pl);color:var(--p);}
+.ret-card-buyer{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g6);}
+.ret-card-buyer i{color:var(--g4);font-size:13px;}
+.ret-card-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid var(--g1);}
+.ret-card-date{font-size:11px;color:var(--g5);}
+.ret-card-amount{font-size:16px;color:var(--p);}
+.ret-card-notes{font-size:11px;color:var(--g5);background:var(--g0);border-radius:8px;padding:6px 10px;}
+.ret-empty-state{padding:40px 20px;text-align:center;color:var(--g5);grid-column:1/-1;}
