@@ -451,15 +451,8 @@
       <button id="dsort-overdue" class="d-sort-btn"        onclick="Debts.setSort('overdue')">الأقدم</button>
     </div>
 
-    <!-- Debts Table -->
-    <div class="card">
-      <div class="tw">
-        <table class="dt">
-          <thead><tr><th>الزبون</th><th>الدين</th><th>الباقي</th><th>التاريخ</th><th>تأخر</th><th></th><th></th></tr></thead>
-          <tbody id="dlist"><tr class="er"><td colspan="7"><span class="spin">↻</span></td></tr></tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Debts List — مُجمّعة حسب الزبون -->
+    <div id="dlist" class="pur-grid"><div class="er debt-empty-state"><span class="spin">↻</span></div></div>
 
     <!-- Aging Report -->
     <div class="sec-title" style="margin-bottom:.5rem;margin-top:.5rem;">📊 تقرير التأخر</div>
