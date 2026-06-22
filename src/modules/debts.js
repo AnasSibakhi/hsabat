@@ -452,7 +452,11 @@ const Debts = {
       DOM.get('dc-new-wrap').style.display = 'none';
       _newCustName = null; _remindDays = 0;
       document.querySelectorAll('.debt-remind-btn').forEach((b,i) => b.classList.toggle('active', i===0));
-      await Promise.all([Debts.load(), Debts.loadBadge(), getDashboard().load()]);
+
+      // تحديث البيانات بالخلفية — لا تؤخر إغلاق الموديل
+      Debts.load();
+      Debts.loadBadge();
+      getDashboard().load();
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
