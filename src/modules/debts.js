@@ -54,6 +54,53 @@ const Debts = {
     );
   },
 
+  // ── تجميع الديون حسب اسم الزبون — نفس فكرة تجميع الموردين/الزبائن بالمشتريات والفواتير ──
+  _groupByDebtCustomer(list) {
+    const groups = {};
+    list.forEach(d => {
+      const name = (d.customers?.name || '').trim() || 'زبون عادي';
+      const key  = name.toLowerCase();
+      if (!groups[key]) {
+        groups[key] = { name, phone: d.cust_phone || d.customers?.phone || '', debts: [] };
+      }
+      groups[key].debts.push(d);
+      if (d.cust_phone || d.customers?.phone) groups[key].phone = d.cust_phone || d.customers?.phone;
+    });
+    return Object.values(groups).sort((a, b) =>
+      new Date(b.debts[0]?.debt_date || 0) - new Date(a.debts[0]?.debt_date || 0)
+    );
+  },
+
+  // كارد دين واحد داخل قائمة الزبون المفتوحة
+  _renderDebtItem(d) {
+    const remaining   = d.amount - d.paid;
+    const invNum      = (d.notes || '').match(/INV-\d+/)?.[0] || (d.invoice_id || '');
+    const days        = Utils.daysSince(d.debt_date);
+    const isLate      = days >= CONFIG.debtLateDays;
+    const id          = d.id;
+    const name        = Utils.escape(d.customers?.name || '-');
+    const remindReady = d.remind_date && (d.cust_phone || d.customers?.phone) && d.remind_date <= new Date().toISOString().split('T')[0];
+    const desc = d.notes && !d.notes.startsWith('فاتورة') ? `<div class="pur-item-meta">${escape(d.notes)}</div>` : '';
+
+    return `<div class="pur-item">
+      <div class="pur-item-top">
+        <span class="pur-product-name">₪${remaining.toFixed(2)} <span style="color:var(--g5);font-weight:400;">متبقٍ من ₪${d.amount.toFixed(2)}</span></span>
+        <span class="pur-status ${isLate ? 'bg-d' : 'bg-w'}">${days} يوم</span>
+      </div>
+      ${desc}
+      <div class="pur-item-meta">${d.debt_date}</div>
+      <div class="pur-item-actions">
+        ${!d.archived
+          ? `<button class="ibg" onclick="Debts.openPayModal('${id}','${name}',${remaining})">تسديد</button>
+             <button class="iba" style="background:var(--wl);color:var(--w);border:none;border-radius:6px;padding:5px;font-size:10px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:600;" onclick="Debts.archive('${id}')">أرشفة</button>
+             ${remindReady ? `<button class="ibw" onclick="Debts.sendWhatsapp('${id}')">📲</button>` : ''}`
+          : `<button class="ibb" onclick="Debts.unarchive('${id}')">إلغاء أرشفة</button>`}
+        <button class="ibb" onclick="Debts.openInvoiceDetails('${invNum || ''}','${id}')">📋</button>
+        <button class="ibr" onclick="Debts.delete('${id}')">حذف</button>
+      </div>
+    </div>`;
+  },
+
   _renderList() {
     let list = _showArchive
       ? _allDebts.filter(d => d.archived)
@@ -69,40 +116,40 @@ const Debts = {
     }
 
     if (!list.length) {
-      DOM.setHTML('dlist', '<tr class="er"><td colspan="7">'
-        + (_showArchive ? 'لا توجد ديون مؤرشفة' : 'لا توجد ديون نشطة') + '</td></tr>');
+      DOM.setHTML('dlist', '<div class="er debt-empty-state">'
+        + (_showArchive ? 'لا توجد ديون مؤرشفة' : 'لا توجد ديون نشطة') + '</div>');
       return;
     }
 
-    DOM.setHTML('dlist', list.map(d => {
-      const remaining   = d.amount - d.paid;
-      const invNum      = (d.notes || '').match(/INV-\d+/)?.[0] || (d.invoice_id || '');
-      const days        = Utils.daysSince(d.debt_date);
-      const isLate      = days >= CONFIG.debtLateDays;
-      const id          = d.id;
-      const name        = Utils.escape(d.customers?.name || '-');
-      const remindReady = d.remind_date && (d.cust_phone || d.customers?.phone) && d.remind_date <= new Date().toISOString().split('T')[0];
+    const groups = Debts._groupByDebtCustomer(list);
 
-      const desc = d.notes && !d.notes.startsWith('فاتورة') ? `<div style="font-size:11px;color:var(--g5);margin-top:2px;">${escape(d.notes)}</div>` : '';
+    DOM.setHTML('dlist', groups.map((g, idx) => {
+      const totalRemaining = g.debts.reduce((s, d) => s + (d.amount - d.paid), 0);
+      const hasLate = g.debts.some(d => Utils.daysSince(d.debt_date) >= CONFIG.debtLateDays);
+      const initials = g.name.trim().slice(0, 2);
+      const debtsHtml = g.debts.map(d => Debts._renderDebtItem(d)).join('');
 
-      return '<tr>'
-        + '<td>' + name + desc + '</td>'
-        + '<td>₪' + d.amount.toFixed(2) + '</td>'
-        + '<td><strong>₪' + remaining.toFixed(2) + '</strong></td>'
-        + '<td>' + d.debt_date + '</td>'
-        + '<td><span class="' + (isLate ? 'br' : 'bb') + '">' + days + ' يوم</span></td>'
-        + '<td>'
-        + (!d.archived
-          ? '<button class="ibg" onclick="Debts.openPayModal(\'' + id + '\',\'' + name + '\',' + remaining + ')">تسديد</button> '
-            + '<button class="iba" onclick="Debts.archive(\'' + id + '\')" style="background:var(--wl);color:var(--w);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:600;">أرشفة</button>'
-            + (remindReady ? ' <button class="ibw" onclick="Debts.sendWhatsapp(\'' + id + '\')">📲 واتساب</button>' : '')
-          : '<button class="ibb" onclick="Debts.unarchive(\'' + id + '\')">إلغاء أرشفة</button>')
-        + '</td>'
-        + '<td>'
-        + '<button class="ibb" onclick="Debts.openInvoiceDetails(\'' + (invNum || '') + '\',\'' + id + '\')" style="margin-left:4px;">📋 تفاصيل</button>'
-        + ' <button class="ibr" onclick="Debts.delete(\'' + id + '\')">حذف</button>'
-        + '</td>'
-        + '</tr>';
+      return `<div class="sup-card${groups.length === 1 ? ' open' : ''}" id="debt-card-${idx}">
+        <div class="sup-header" onclick="document.getElementById('debt-card-${idx}').classList.toggle('open')">
+          <div class="sup-info">
+            <div class="pur-avatar">${escape(initials)}</div>
+            <div style="min-width:0;">
+              <div class="sup-name">${escape(g.name)}</div>
+              ${g.phone ? '<a href="tel:' + g.phone + '" class="pur-sphone" onclick="event.stopPropagation()">' + escape(g.phone) + '</a>' : ''}
+            </div>
+          </div>
+          <div class="sup-summary">
+            <span class="sup-count">${g.debts.length} ${g.debts.length === 1 ? 'دين' : 'ديون'}</span>
+            <div class="pur-stat" style="background:none;padding:0;">
+              <div class="pur-stat-label">إجمالي المتبقي</div>
+              <div class="pur-stat-val" style="color:var(--d);">₪${totalRemaining.toFixed(2)}</div>
+            </div>
+            ${hasLate ? '<span class="sup-debt-dot" title="يوجد دين متأخر لهذا الزبون"></span>' : ''}
+            <span class="sup-chevron">‹</span>
+          </div>
+        </div>
+        <div class="sup-items">${debtsHtml}</div>
+      </div>`;
     }).join(''));
   },
 
