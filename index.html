@@ -725,8 +725,12 @@
    <!-- EXPENSES -->
    <div class="page" id="page-expenses">
     <div class="ph"><span class="pt">المصاريف التشغيلية</span><button class="btn btn-s" onclick="Modal.open('m-expense')"><i class="ti ti-plus"></i> إضافة مصروف</button></div>
-    <div class="sg c3"><div class="sc red"><div class="sc-l">مصاريف اليوم</div><div class="sc-v" id="exp-day">-</div></div><div class="sc amber"><div class="sc-l">مصاريف الأسبوع</div><div class="sc-v" id="exp-week">-</div></div><div class="sc red"><div class="sc-l">مصاريف الشهر</div><div class="sc-v" id="exp-month">-</div></div></div>
-    <div class="card"><div class="tw"><table class="dt"><thead><tr><th>النوع</th><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th><th></th></tr></thead><tbody id="exp-list"><tr class="er"><td colspan="5"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <div class="stats-grid-v2 stats-3 mb-14">
+     <div class="stat-card-v2 red"><div class="stat-icon-v2 red">📅</div><div class="stat-label-v2">مصاريف اليوم</div><div class="stat-value-v2" id="exp-day">-</div></div>
+     <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber">📊</div><div class="stat-label-v2">مصاريف الأسبوع</div><div class="stat-value-v2" id="exp-week">-</div></div>
+     <div class="stat-card-v2 red"><div class="stat-icon-v2 red">🗓️</div><div class="stat-label-v2">مصاريف الشهر</div><div class="stat-value-v2" id="exp-month">-</div></div>
+    </div>
+    <div id="exp-list" class="exp-grid"><div class="er" style="padding:30px;text-align:center;"><span class="spin">↻</span></div></div>
    </div>
 
    <!-- REPORTS -->
