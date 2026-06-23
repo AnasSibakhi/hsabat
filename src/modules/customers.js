@@ -97,12 +97,12 @@ export const Customers = {
     });
     const agingEl = DOM.get('cu-aging');
     if (agingEl) agingEl.innerHTML = `
-      <div class="sg c2">
-        <div><div class="text-sm c-muted">أقل من يومين</div><div class="fw-700 c-success">₪${aging.current.toFixed(2)}</div></div>
-        <div><div class="text-sm c-muted">2-7 أيام</div><div class="fw-700 c-primary">₪${aging.d2.toFixed(2)}</div></div>
-        <div><div class="text-sm c-muted">7-30 يوم</div><div class="fw-700" style="color:var(--w);">₪${aging.d7.toFixed(2)}</div></div>
-        <div><div class="text-sm c-muted">30-90 يوم</div><div class="fw-700 c-danger">₪${aging.d30.toFixed(2)}</div></div>
-        <div><div class="text-sm c-muted">أكثر من 90 يوم</div><div class="fw-700" style="color:#7c3aed;">₪${aging.old.toFixed(2)}</div></div>
+      <div class="aging-grid-v2">
+        <div class="aging-cell" style="background:var(--sl);"><div class="aging-label" style="color:var(--s);">أقل من يومين</div><div class="aging-val" style="color:var(--s);">₪${aging.current.toFixed(2)}</div></div>
+        <div class="aging-cell" style="background:var(--pl);"><div class="aging-label" style="color:var(--p);">2-7 أيام</div><div class="aging-val" style="color:var(--p);">₪${aging.d2.toFixed(2)}</div></div>
+        <div class="aging-cell" style="background:var(--wl);"><div class="aging-label" style="color:var(--w);">7-30 يوم</div><div class="aging-val" style="color:var(--w);">₪${aging.d7.toFixed(2)}</div></div>
+        <div class="aging-cell" style="background:var(--dl);"><div class="aging-label" style="color:var(--d);">30-90 يوم</div><div class="aging-val" style="color:var(--d);">₪${aging.d30.toFixed(2)}</div></div>
+        <div class="aging-cell" style="background:#f3e8ff;"><div class="aging-label" style="color:#7c3aed;">أكثر من 90 يوم</div><div class="aging-val" style="color:#7c3aed;">₪${aging.old.toFixed(2)}</div></div>
       </div>`;
 
     Customers._allData = { customers: State.customers, debts };
