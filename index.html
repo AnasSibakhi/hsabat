@@ -394,10 +394,10 @@
     </div>
 
     <!-- Stats -->
-    <div class="sg c3">
-      <div class="sc red"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="cu-total">-</div></div>
-      <div class="sc amber"><div class="sc-l">متأخرون +يومين</div><div class="sc-v" id="cu-late">-</div></div>
-      <div class="sc green"><div class="sc-l">مسدَّد الشهر</div><div class="sc-v" id="cu-paid">-</div></div>
+    <div class="stats-grid-v2 stats-3 mb-14">
+      <div class="stat-card-v2 red"><div class="stat-icon-v2 red">⏳</div><div class="stat-label-v2">إجمالي الديون</div><div class="stat-value-v2" id="cu-total">-</div></div>
+      <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber">⚠️</div><div class="stat-label-v2">متأخرون +يومين</div><div class="stat-value-v2" id="cu-late">-</div></div>
+      <div class="stat-card-v2 green"><div class="stat-icon-v2 green">✅</div><div class="stat-label-v2">مسدَّد الشهر</div><div class="stat-value-v2" id="cu-paid">-</div></div>
     </div>
 
     <!-- Alerts -->
@@ -857,6 +857,31 @@
 </div></div>
 
 <!-- Pay -->
+<!-- Customer Detail Modal -->
+<div class="mo" id="m-cust-detail"><div class="modal" style="max-width:480px;">
+ <div class="mhdr">
+   <div>
+     <span class="mtitle" id="cd-name">-</span>
+     <div id="cd-phone" style="font-size:11px;color:var(--g5);margin-top:2px;"></div>
+   </div>
+   <button class="mclose" onclick="Modal.close('m-cust-detail')">✕</button>
+ </div>
+
+ <div class="cd-tabs">
+   <button class="cd-tab active" id="cd-tab-debts" onclick="Customers.switchDetailTab('debts')">الديون</button>
+   <button class="cd-tab" id="cd-tab-invoices" onclick="Customers.switchDetailTab('invoices')">سجل المشتريات</button>
+ </div>
+
+ <div id="cd-debts-panel" class="cd-panel"></div>
+ <div id="cd-invoices-panel" class="cd-panel" style="display:none;"></div>
+
+ <div class="mfoot">
+   <button class="ibr" id="cd-delete-btn" onclick="Customers.deleteFromDetail()">حذف</button>
+   <button class="btn btn-o" id="cd-call-btn" onclick="">📞 اتصال</button>
+   <button class="btn btn-s" style="flex:1;" onclick="Customers.openNewDebtFromDetail()">+ دين جديد</button>
+ </div>
+</div></div>
+
 <div class="mo" id="m-pay"><div class="modal">
  <div class="mhdr"><span class="mtitle">تسديد دين</span><button class="mclose" onclick="Modal.close('m-pay')">✕</button></div>
  <input type="hidden" id="pid">
