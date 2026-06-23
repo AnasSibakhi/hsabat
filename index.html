@@ -125,14 +125,14 @@
      <div><div class="sa-title">لوحة التحكم 📊</div><div class="sa-title-sub">نظرة عامة على النظام</div></div>
     </div>
     <div class="sa-stats-grid">
-     <div class="sa-stat" style="--sa-accent:#6366f1;"><div class="sa-stat-label">إجمالي المحلات</div><div class="sa-stat-value" id="sa-stat-stores">-</div><i class="ti ti-building-store sa-stat-icon"></i></div>
-     <div class="sa-stat" style="--sa-accent:#10b981;"><div class="sa-stat-label">إجمالي المبيعات</div><div class="sa-stat-value" id="sa-stat-sales" style="color:#10b981;">-</div><i class="ti ti-cash sa-stat-icon"></i></div>
-     <div class="sa-stat" style="--sa-accent:#10b981;"><div class="sa-stat-label">محلات نشطة</div><div class="sa-stat-value" id="sa-stat-active" style="color:#10b981;">-</div><i class="ti ti-check sa-stat-icon"></i></div>
-     <div class="sa-stat" style="--sa-accent:#ef4444;"><div class="sa-stat-label">اشتراكات منتهية</div><div class="sa-stat-value" id="sa-stat-expired" style="color:#ef4444;">-</div><i class="ti ti-alert-circle sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:var(--p);"><div class="sa-stat-label">إجمالي المحلات</div><div class="sa-stat-value" id="sa-stat-stores">-</div><i class="ti ti-building-store sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:var(--s);"><div class="sa-stat-label">إجمالي المبيعات</div><div class="sa-stat-value" id="sa-stat-sales" style="color:var(--s);">-</div><i class="ti ti-cash sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:var(--s);"><div class="sa-stat-label">محلات نشطة</div><div class="sa-stat-value" id="sa-stat-active" style="color:var(--s);">-</div><i class="ti ti-check sa-stat-icon"></i></div>
+     <div class="sa-stat" style="--sa-accent:var(--d);"><div class="sa-stat-label">اشتراكات منتهية</div><div class="sa-stat-value" id="sa-stat-expired" style="color:var(--d);">-</div><i class="ti ti-alert-circle sa-stat-icon"></i></div>
     </div>
     <div class="sa-card">
      <div class="sa-card-header"><span>آخر المحلات</span><button class="sa-btn sa-btn-p" onclick="AdminPanel.openNewStore()"><i class="ti ti-plus"></i> محل جديد</button></div>
-     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-stores-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div id="sa-stores-list" class="exp-grid"><div class="er" style="padding:20px;text-align:center;"><span class="spin">↻</span></div></div>
     </div>
    </div>
 
@@ -143,7 +143,7 @@
      <button class="sa-btn sa-btn-p" onclick="AdminPanel.openNewStore()"><i class="ti ti-plus"></i> محل جديد</button>
     </div>
     <div class="sa-card">
-     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الصاحب</th><th>الجوال</th><th>الحالة</th><th>الاشتراك</th><th>إجراءات</th></tr></thead><tbody id="sa-all-stores"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div id="sa-all-stores" class="exp-grid"><div class="er" style="padding:20px;text-align:center;"><span class="spin">↻</span></div></div>
     </div>
    </div>
 
@@ -151,7 +151,7 @@
    <div class="sa-page" id="sa-subscriptions">
     <div class="sa-page-header"><div><div class="sa-title">الاشتراكات 💳</div><div class="sa-title-sub">إدارة اشتراكات المحلات</div></div></div>
     <div class="sa-card">
-     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الحالة</th><th>ينتهي</th><th>تجديد</th></tr></thead><tbody id="sa-subs-list"><tr><td colspan="5" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div id="sa-subs-list" class="exp-grid"><div class="er" style="padding:20px;text-align:center;"><span class="spin">↻</span></div></div>
     </div>
    </div>
 
@@ -159,7 +159,7 @@
    <div class="sa-page" id="sa-users">
     <div class="sa-page-header"><div><div class="sa-title">المستخدمين 👥</div><div class="sa-title-sub">كل مستخدمي النظام</div></div></div>
     <div class="sa-card">
-     <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="sa-users-list"><tr><td colspan="6" class="empty-state"><span class="spin">↻</span></td></tr></tbody></table></div>
+     <div id="sa-users-list" class="exp-grid"><div class="er" style="padding:20px;text-align:center;"><span class="spin">↻</span></div></div>
     </div>
    </div>
 
@@ -171,7 +171,7 @@
       <div class="sa-form-group"><label class="sa-label">نوع الإشعار</label><select class="sa-select" id="notif-type"><option value="info">📢 إعلان عام</option><option value="update">🆕 تحديث جديد</option><option value="feature">✨ ميزة جديدة</option><option value="warning">⚠️ تنبيه</option></select></div>
       <div class="sa-form-group"><label class="sa-label">العنوان</label><input class="sa-input" id="notif-title" placeholder="عنوان الإشعار"></div>
       <div class="sa-form-group"><label class="sa-label">الرسالة</label><textarea class="sa-input" id="notif-msg" rows="4" placeholder="نص الإشعار..." style="resize:none;"></textarea></div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;margin-bottom:1.25rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--g4);margin-bottom:1.25rem;cursor:pointer;"><input type="checkbox" id="notif-all" checked> إرسال لجميع المحلات</label>
       <button class="sa-btn sa-btn-p" onclick="AdminPanel.sendNotification()"><i class="ti ti-send"></i> إرسال الإشعار</button>
      </div>
     </div>
@@ -187,7 +187,7 @@
        <input type="hidden" id="te-edit-id">
        <div class="sa-form-group"><label class="sa-label">المحل *</label><select class="sa-select" id="te-store-id"><option value="">-- اختر المحل --</option></select></div>
        <div class="sa-form-group"><label class="sa-label">اسم المجموعة *</label><input class="sa-input" id="te-name" placeholder="مثال: طرق الدفع"></div>
-       <div class="sa-form-group"><label class="sa-label">الجهات * <span style="font-size:11px;color:#94a3b8;">(كل جهة في سطر)</span></label><textarea class="sa-input" id="te-names" rows="4" placeholder="بنك فلسطين" style="resize:none;"></textarea></div>
+       <div class="sa-form-group"><label class="sa-label">الجهات * <span style="font-size:11px;color:var(--g4);">(كل جهة في سطر)</span></label><textarea class="sa-input" id="te-names" rows="4" placeholder="بنك فلسطين" style="resize:none;"></textarea></div>
        <div class="sa-form-group"><label class="sa-label">تفاصيل (اختياري)</label><input class="sa-input" id="te-details" placeholder="ملاحظات..."></div>
        <div style="display:flex;gap:8px;">
         <button class="sa-btn sa-btn-p" onclick="AdminPanel.saveTransferEntity()"><i class="ti ti-device-floppy"></i> حفظ</button>
@@ -197,7 +197,7 @@
      </div>
      <div class="sa-card">
       <div class="sa-card-header"><span>قائمة جهات التحويل</span><button class="sa-btn sa-btn-o" style="padding:5px 10px;font-size:12px;" onclick="AdminPanel.loadTransferEntities()"><i class="ti ti-refresh"></i></button></div>
-      <div class="tw"><table class="sa-dt"><thead><tr><th>المحل</th><th>الاسم</th><th>الجهات</th><th>تفاصيل</th><th>الحالة</th><th></th></tr></thead><tbody id="te-list"><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#94a3b8;">اضغط تحديث للتحميل</td></tr></tbody></table></div>
+      <div id="te-list" class="exp-grid"><div class="er" style="padding:20px;text-align:center;color:var(--g4);">اضغط تحديث للتحميل</div></div>
      </div>
     </div>
    </div>
@@ -218,7 +218,7 @@
    <div class="pos-rel">
     <button class="btn btn-o" onclick="Notifications.toggle()" style="padding:6px 8px;font-size:16px;position:relative;">
      <i class="ti ti-bell" id="notif-bell-icon"></i>
-     <span id="notif-badge" style="display:none;position:absolute;top:0px;right:0px;width:10px;height:10px;background:#dc2626;border-radius:50%;border:2px solid #fff;animation:badge-pulse 1.2s ease-in-out infinite;"></span>
+     <span id="notif-badge" style="display:none;position:absolute;top:0px;right:0px;width:10px;height:10px;background:var(--d);border-radius:50%;border:2px solid #fff;animation:badge-pulse 1.2s ease-in-out infinite;"></span>
     </button>
     <!-- Dropdown -->
     <div id="notif-dropdown" style="display:none;position:fixed;top:calc(60px + env(safe-area-inset-top, 0px));right:8px;left:8px;background:#fff;border:1px solid var(--br);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:600;overflow:hidden;max-height:70vh;overflow-y:auto;">
@@ -1384,12 +1384,12 @@
       <!-- Scan box border -->
       <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
         <!-- Corner marks -->
-        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:3px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 3px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 3px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 3px 0;"></div>
+        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-left:4px solid var(--p);border-radius:3px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 3px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-left:4px solid var(--p);border-radius:0 0 0 3px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 0 3px 0;"></div>
         <!-- Scan line -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),#a5b4fc,var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
       </div>
     </div>
 
@@ -1424,12 +1424,12 @@
       <!-- Scan box border -->
       <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
         <!-- Corner marks -->
-        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:3px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 3px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-left:4px solid #6366f1;border-radius:0 0 0 3px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #6366f1;border-right:4px solid #6366f1;border-radius:0 0 3px 0;"></div>
+        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-left:4px solid var(--p);border-radius:3px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 3px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-left:4px solid var(--p);border-radius:0 0 0 3px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 0 3px 0;"></div>
         <!-- Scan line -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a5b4fc,#6366f1,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),#a5b4fc,var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
       </div>
     </div>
 
@@ -1456,11 +1456,11 @@
       <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
       <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
       <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
-        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid #10b981;border-left:4px solid #10b981;border-radius:3px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid #10b981;border-right:4px solid #10b981;border-radius:0 3px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid #10b981;border-left:4px solid #10b981;border-radius:0 0 0 3px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid #10b981;border-right:4px solid #10b981;border-radius:0 0 3px 0;"></div>
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#10b981,#6ee7b7,#10b981,transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid var(--s);border-left:4px solid var(--s);border-radius:3px 0 0 0;"></div>
+        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--s);border-right:4px solid var(--s);border-radius:0 3px 0 0;"></div>
+        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--s);border-left:4px solid var(--s);border-radius:0 0 0 3px;"></div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--s);border-right:4px solid var(--s);border-radius:0 0 3px 0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--s),#6ee7b7,var(--s),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
       </div>
     </div>
 
@@ -1531,7 +1531,7 @@
     <div><div class="qs-pay-opt-title">تطبيق لاحق</div><div class="qs-pay-opt-sub">يُضاف على حساب الزبون</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('defer')">
-    <div class="qs-pay-opt-icon" style="background:#fee2e2;"><i class="ti ti-users" style="color:#dc2626;"></i></div>
+    <div class="qs-pay-opt-icon" style="background:#fee2e2;"><i class="ti ti-users" style="color:var(--d);"></i></div>
     <div><div class="qs-pay-opt-title">دين</div><div class="qs-pay-opt-sub">حفظ على حساب زبون</div></div>
    </button>
   </div>
