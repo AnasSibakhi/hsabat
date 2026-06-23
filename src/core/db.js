@@ -204,6 +204,7 @@ export const DB = {
   purchases:        () => secureStoreTable('purchases'),
   netCardStock:     () => secureStoreTable('net_cards_stock'),
   netCardSales:     () => secureStoreTable('net_card_sales'),
+  netCardPurchases: () => secureStoreTable('net_card_purchases'),
   expenses:         () => secureStoreTable('expenses'),
   returns:          () => secureStoreTable('returns'),
 };
