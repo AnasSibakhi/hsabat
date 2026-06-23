@@ -77,30 +77,26 @@ const Dashboard = {
     if (!el) return;
 
     if (!outOfStock.length && !lowStock.length) {
-      el.innerHTML = '<div class="card" style="padding:12px 14px;color:var(--s);font-size:13px;font-weight:700;">✅ المخزون في حالة جيدة</div>';
+      el.innerHTML = '<div class="all-good-v2">✅ المخزون في حالة جيدة</div>';
       return;
     }
 
     let html = '';
 
     if (outOfStock.length) {
-      html += `<div class="card" style="margin-bottom:8px;border-right:4px solid var(--r);">
-        <div style="padding:10px 14px;">
-          <div style="font-size:13px;font-weight:800;color:var(--r);margin-bottom:8px;">🔴 منتهية المخزون (${outOfStock.length})</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            ${outOfStock.map(i => `<span style="background:var(--rl);color:var(--r);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;">${Utils.escape(i.name)}</span>`).join('')}
-          </div>
+      html += `<div class="alert-card-v2 out">
+        <div class="alert-head-v2 out">🔴 منتهية المخزون (${outOfStock.length})</div>
+        <div class="alert-chips-v2">
+          ${outOfStock.map(i => `<span class="chip-v2 out">${Utils.escape(i.name)}</span>`).join('')}
         </div>
       </div>`;
     }
 
     if (lowStock.length) {
-      html += `<div class="card" style="border-right:4px solid var(--amber,#f59e0b);">
-        <div style="padding:10px 14px;">
-          <div style="font-size:13px;font-weight:800;color:#d97706;margin-bottom:8px;">🟡 قاربت النفاد (${lowStock.length})</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            ${lowStock.map(i => `<span style="background:#fef3c7;color:#d97706;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;">${Utils.escape(i.name)} (${i.quantity})</span>`).join('')}
-          </div>
+      html += `<div class="alert-card-v2 low">
+        <div class="alert-head-v2 low">🟡 قاربت النفاد (${lowStock.length})</div>
+        <div class="alert-chips-v2">
+          ${lowStock.map(i => `<span class="chip-v2 low">${Utils.escape(i.name)} (${i.quantity})</span>`).join('')}
         </div>
       </div>`;
     }
@@ -119,17 +115,21 @@ const Dashboard = {
 
     DOM.setHTML('hoverdue', overdue.length
       ? overdue.map(d => Dashboard._overdueRow(d)).join('')
-      : '<tr class="er"><td colspan="4">✅ لا يوجد متأخرون</td></tr>'
+      : '<div style="padding:1rem;text-align:center;color:var(--s);font-size:13px;font-weight:700;">✅ لا يوجد متأخرون</div>'
     );
   },
 
   _overdueRow: (d) => `
-    <tr>
-      <td>${Utils.escape(d.customers?.name || '-')}</td>
-      <td>₪${(d.amount - d.paid).toFixed(2)}</td>
-      <td><span class="br">${Utils.daysSince(d.debt_date)} يوم</span></td>
-      <td><button class="ibg" onclick="Debts.openPayModal('${d.id}','${Utils.escape(d.customers?.name)}',${d.amount - d.paid})">تسديد</button></td>
-    </tr>`,
+    <div class="debt-row-v2">
+      <div>
+        <div class="debt-row-v2-name">${Utils.escape(d.customers?.name || '-')}</div>
+        <span class="debt-row-v2-days">${Utils.daysSince(d.debt_date)} يوم متأخر</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="debt-row-v2-amount">₪${(d.amount - d.paid).toFixed(2)}</span>
+        <button class="debt-row-v2-btn" onclick="Debts.openPayModal('${d.id}','${Utils.escape(d.customers?.name)}',${d.amount - d.paid})">تسديد</button>
+      </div>
+    </div>`,
 };
 
 export { Dashboard };
