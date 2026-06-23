@@ -968,3 +968,13 @@ body.dark .ni.active{background:#1e3a5f;}
 .aging-bucket-v2.red .aging-bucket-v2-pill{color:var(--d);}
 .aging-bucket-v2-meta{font-size:11px;color:var(--g6);}
 .aging-bucket-v2-names{font-size:11.5px;color:var(--g7);line-height:1.5;}
+
+/* ── كاردات بطاقات الإنترنت — صيغة مربعة متساوية ── */
+.nc-square-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.nc-square{
+  aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:10px;
+}
+.nc-square .stat-icon-v2{margin-bottom:8px;}
+.nc-square .stat-label-v2{font-size:11px;margin-bottom:4px;}
+.nc-square .stat-value-v2{font-size:15px;}
