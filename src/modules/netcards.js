@@ -23,16 +23,18 @@ const NetCards = {
     CONFIG.netCardTypes.forEach(type => {
       const item = (data || []).find(d => d.card_type === type);
       const qty  = item?.quantity || 0;
-      const card = DOM.get('ncs' + type);
-      if (!card) return;
-      const valEl = card.querySelector('.stat-value-v2');
-      if (valEl) valEl.textContent = qty + ' بطاقة';
+      const valEl = DOM.get('ncs' + type);
+      if (!valEl) return;
+      valEl.textContent = qty + ' بطاقة';
 
+      const card = valEl.closest('.stat-card-v2');
       const isLow = qty <= CONFIG.lowStockThreshold;
-      card.classList.remove('blue', 'amber', 'green', 'red');
-      card.classList.add(isLow ? 'red' : 'green');
-      const iconEl = card.querySelector('.stat-icon-v2');
-      if (iconEl) { iconEl.classList.remove('blue', 'amber', 'green', 'red'); iconEl.classList.add(isLow ? 'red' : 'green'); }
+      if (card) {
+        card.classList.remove('blue', 'amber', 'green', 'red');
+        card.classList.add(isLow ? 'red' : 'green');
+        const iconEl = card.querySelector('.stat-icon-v2');
+        if (iconEl) { iconEl.classList.remove('blue', 'amber', 'green', 'red'); iconEl.classList.add(isLow ? 'red' : 'green'); }
+      }
 
       if (isLow) {
         alerts.push(`<div class="alert aw"><i class="ti ti-wifi-off"></i><span><strong>تنبيه:</strong> بطاقة ${type} شيكل — المتبقي ${qty} فقط</span></div>`);
