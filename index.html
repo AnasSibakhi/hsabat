@@ -397,7 +397,7 @@
       <span class="pt">الزبائن والديون</span>
       <div class="flex-gap6">
         <button class="btn btn-o" id="cu-archive-btn" onclick="Customers.toggleArchive()" style="font-size:12px;padding:7px 10px;">🗄 الأرشيف</button>
-        <button class="btn btn-o" onclick="Customers.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i></button>
+        <button class="btn btn-o" onclick="Debts.printDebts()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-printer"></i></button>
         
       </div>
     </div>
@@ -463,7 +463,7 @@
 
     <!-- Aging Report -->
     <div class="sec-title" style="margin-bottom:.5rem;margin-top:.5rem;">📊 تقرير التأخر</div>
-    <div class="card" class="p-16" id="d-aging">
+    <div class="card p-16" id="d-aging">
       <span class="spin">↻</span>
     </div>
    </div>
@@ -561,7 +561,7 @@
      <div class="sc red"><div class="sc-l">دين/آجل</div><div class="sc-v" id="sv6">-</div></div>
     </div>
     <div class="sec-title-lg">تقرير نهاية اليوم</div>
-    <div class="card" id="daily-report" class="p-16"></div>
+    <div class="card p-16" id="daily-report"></div>
    </div>
 
    <!-- INVENTORY -->
@@ -712,7 +712,7 @@
    <div class="page" id="page-netcards">
     <div class="ph"><span class="pt">بطاقات الإنترنت</span><div class="flex-gap6"><button class="btn btn-o" onclick="Modal.open('m-addstock')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="Modal.open('m-netsale')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
     <div id="ncalerts"></div>
-    <div class="sg c3" class="mb-12">
+    <div class="sg c3 mb-12">
      <div class="sc" id="ncs1"><div class="sc-l">1 شيكل</div><div class="sc-v">-</div></div>
      <div class="sc" id="ncs2"><div class="sc-l">2 شيكل</div><div class="sc-v">-</div></div>
      <div class="sc" id="ncs3"><div class="sc-l">3 شيكل</div><div class="sc-v">-</div></div>
@@ -741,7 +741,7 @@
      <div class="profit-main" id="profit-main">-</div>
      <div class="profit-margin" id="profit-margin-label">هامش الربح: -</div>
     </div>
-    <div class="sg c3" class="mb-12">
+    <div class="sg c3 mb-12">
      <div class="sc blue"><div class="sc-l">إجمالي المبيعات</div><div class="sc-v" id="r-sales">-</div></div>
      <div class="sc red"><div class="sc-l">تكلفة البضاعة (COGS)</div><div class="sc-v" id="r-cogs">-</div></div>
      <div class="sc amber"><div class="sc-l">المصاريف التشغيلية</div><div class="sc-v" id="r-opex">-</div></div>
@@ -1106,7 +1106,7 @@
  <div class="mhdr"><span class="mtitle">تسجيل مشتريات</span><button class="mclose" onclick="Modal.close('m-pur')">✕</button></div>
 
  <!-- 1. الصنف مع بحث -->
- <div class="fg" class="pos-rel">
+ <div class="fg pos-rel">
    <label class="lbl">اسم الصنف * <span id="pur-match-badge" style="display:none;background:var(--sl);color:var(--s);font-size:11px;padding:2px 8px;border-radius:6px;margin-right:6px;">موجود في المخزون ✓</span></label>
    <input class="inp" id="pup" placeholder="ابحث أو أدخل اسم جديد..." oninput="Purchases.searchInventory(this.value)" onfocus="Purchases.searchInventory(this.value)" autocomplete="off">
    <div id="pur-suggestions" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1.5px solid var(--p);border-radius:10px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
@@ -1481,29 +1481,6 @@
   </div>
 </div></div>
 
-<!-- New Product Modal -->
-<div class="mo" id="m-new-product"><div class="modal">
-  <div class="mhdr"><span class="mtitle">🆕 منتج جديد</span><button class="mclose" onclick="Modal.close('m-new-product')">✕</button></div>
-  <div class="fg"><label class="lbl">الباركود</label><input class="inp" id="qs-new-barcode" readonly style="background:var(--g1);direction:ltr;font-family:monospace;letter-spacing:2px;"></div>
-  <div class="fg"><label class="lbl">اسم المنتج *</label><input class="inp" id="qs-new-name" placeholder="مثال: سكر 1kg"></div>
-  <div class="fr">
-    <div class="fg"><label class="lbl">سعر البيع (₪) *</label><input class="inp" type="number" id="qs-new-sell" inputmode="decimal"></div>
-    <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="qs-new-qty" value="1" inputmode="decimal"></div>
-  </div>
-  <div class="fr">
-    <div class="fg"><label class="lbl">الفئة</label>
-      <select class="inp" id="qs-new-cat"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>مشروبات</option><option>عام</option></select>
-    </div>
-    <div class="fg"><label class="lbl">الوحدة</label>
-      <select class="inp" id="qs-new-unit"><option>قطعة (pcs)</option><option>كيلو (kg)</option><option>غرام (g)</option><option>لتر (L)</option><option>علبة (box)</option><option>كرتون (ctn)</option></select>
-    </div>
-  </div>
-  <div class="mfoot">
-    <button class="btn btn-o" onclick="Modal.close('m-new-product')">إلغاء</button>
-    <button class="btn btn-s" onclick="QuickSale.saveNewProduct()">✅ حفظ وإضافة للسلة</button>
-  </div>
-</div></div>
-
 
 
 <!-- QS Receipt Modal -->
@@ -1521,7 +1498,7 @@
    <span style="font-size:13px;color:var(--p);font-weight:700;">الإجمالي</span>
    <span id="qs-checkout-total" style="font-size:22px;font-weight:900;color:var(--p);">₪0</span>
   </div>
-  <div class="lbl" class="mb-8">اختر طريقة إتمام البيع</div>
+  <div class="lbl mb-8">اختر طريقة إتمام البيع</div>
   <div class="qs-pay-opts">
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('cash')">
     <div class="qs-pay-opt-icon" style="background:#dcfce7;"><i class="ti ti-cash" style="color:#16a34a;"></i></div>
