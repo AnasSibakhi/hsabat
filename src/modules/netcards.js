@@ -91,14 +91,19 @@ const NetCards = {
   },
 
   async sell() {
-    const buyer = DOM.val('nsb');
-    const type  = DOM.val('nst');
-    const qty   = parseInt(DOM.val('nsq')) || 0;
+    const buyer     = DOM.val('nsb');
+    const type      = DOM.val('nst');
+    const qty       = parseInt(DOM.val('nsq')) || 0;
+    const batchId   = DOM.val('ns-supplier');
     if (!buyer)   { Notify.error('أدخل اسم المشتري'); return; }
     if (qty < 1)  { Notify.error('أدخل العدد'); return; }
+    if (!batchId) { Notify.error('اختاري المورد اللي بدك تبيعي من مخزونه'); return; }
 
-    const { data: stock } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).single();
-    if (!stock || stock.quantity < qty) { Notify.error('المخزون غير كافٍ — المتبقي: ' + (stock?.quantity || 0)); return; }
+    const { data: batch } = await DB.netCardPurchases().select('id,remaining_qty,final_cost,supplier_name').eq('id', batchId).maybeSingle();
+    if (!batch || batch.remaining_qty < qty) { Notify.error('مخزون هذا المورد غير كافٍ — المتبقي: ' + (batch?.remaining_qty || 0)); return; }
+
+    const { data: stock } = await DB.netCardStock().select('id,quantity').eq('card_type', type).maybeSingle();
+    if (!stock || stock.quantity < qty) { Notify.error('المخزون الإجمالي غير كافٍ — المتبقي: ' + (stock?.quantity || 0)); return; }
 
     const total = parseInt(type) * qty;
     const paymentType = document.querySelector('input[name="nsp"]:checked').value;
@@ -109,9 +114,12 @@ const NetCards = {
         store_id: State.user.id, buyer_name: buyer, card_type: type,
         quantity: qty, total_price: total, paid: paymentType === 'full' ? total : 0,
         payment_type: paymentType, sale_date: Utils.today(),
-        cost_at_sale: stock.cost_price || 0,
+        cost_at_sale: batch.final_cost || 0,
+        supplier_name: batch.supplier_name || null,
       });
       if (error) throw error;
+      // خصم من الدفعة المحدَّدة بالاسم + من الإجمالي المُجمَّع
+      await DB.netCardPurchases().update({ remaining_qty: batch.remaining_qty - qty }).eq('id', batch.id);
       await DB.netCardStock().update({ quantity: stock.quantity - qty, updated_at: new Date().toISOString() }).eq('id', stock.id);
       Notify.success('تم تسجيل البيع');
       Modal.close('m-netsale');
@@ -121,6 +129,29 @@ const NetCards = {
       await Promise.all([NetCards.loadStock(), NetCards.loadSales('day')]);
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
+  },
+
+  async loadSupplierBatches() {
+    const type = DOM.val('nst');
+    const sel  = DOM.get('ns-supplier');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">جاري التحميل...</option>';
+
+    const { data } = await DB.netCardPurchases()
+      .select('id,supplier_name,remaining_qty,purchase_date')
+      .eq('card_type', type)
+      .gt('remaining_qty', 0)
+      .order('purchase_date', { ascending: true });
+
+    const batches = data || [];
+    if (!batches.length) {
+      sel.innerHTML = '<option value="">⚠️ لا يوجد مخزون من أي مورد لهذا النوع</option>';
+      return;
+    }
+
+    sel.innerHTML = batches.map(b =>
+      `<option value="${b.id}">${Utils.escape(b.supplier_name || 'مورد غير محدد')} — متبقي ${b.remaining_qty} (${b.purchase_date})</option>`
+    ).join('');
   },
 
   async loadSupplierSuggestions() {
@@ -161,7 +192,7 @@ const NetCards = {
     // سجل كامل لهذي دفعة الشراء بالذات، مع اسم المورد الخاص بها
     await DB.netCardPurchases().insert({
       store_id: State.user.id, card_type: type, supplier_name: supplier || null,
-      quantity: qty, unit_price: price, discount_pct: discount, final_cost: finalCost,
+      quantity: qty, remaining_qty: qty, unit_price: price, discount_pct: discount, final_cost: finalCost,
       purchase_date: Utils.today(),
     });
 
