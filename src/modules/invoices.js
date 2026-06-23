@@ -114,9 +114,7 @@ const Invoices = {
       return;
     }
     dd.innerHTML = matches.map(c =>
-      `<div class="dc-opt" data-id="${c.id}" onclick="Invoices.selectCustomerById(this.dataset.id)">
-        ${escape(c.name)}${c.phone ? ' — '+c.phone : ''}
-      </div>`
+      Utils.customerSuggestRow(c, `onclick="Invoices.selectCustomerById(this.dataset.id)"`)
     ).join('');
     // fixed position
     const inp = document.getElementById('inv-cust-search');
@@ -148,9 +146,7 @@ const Invoices = {
     dd.style.width    = r.width + 'px';
     dd.style.maxWidth = '340px';
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
-      `<div class="dc-opt" data-id="${c.id}" onclick="Invoices.selectCustomerById(this.dataset.id)">
-        <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
-      </div>`
+      Utils.customerSuggestRow(c, `onclick="Invoices.selectCustomerById(this.dataset.id)"`)
     ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن</div>`;
     dd.style.display = 'block';
   },
