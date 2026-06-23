@@ -84,7 +84,7 @@ export const BarcodeScanner = {
     // مؤشر تحميل واضح بدل الشاشة السودا أثناء انتظار صلاحية الكاميرا
     el.innerHTML = `
       <div id="bc-loading-${containerId}" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:14px;z-index:1;">
-        <div style="width:42px;height:42px;border:3px solid rgba(255,255,255,0.2);border-top-color:#6366f1;border-radius:50%;animation:bc-spin 0.8s linear infinite;"></div>
+        <div style="width:42px;height:42px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--p);border-radius:50%;animation:bc-spin 0.8s linear infinite;"></div>
         <span style="color:#fff;font-size:14px;font-family:Cairo,sans-serif;opacity:0.85;">جاري فتح الكاميرا...</span>
       </div>
       <style>@keyframes bc-spin{to{transform:rotate(360deg)}}</style>
@@ -276,7 +276,7 @@ export const BarcodeScanner = {
       // يبحث عن أي زر فلاش ظاهر حالياً (qs أو inv أو invc) بدون الاعتماد على صفحة معينة
       const btn = document.getElementById('qs-flash-btn') || document.getElementById('inv-flash-btn') || document.getElementById('invc-flash-btn');
       if (btn) {
-        btn.style.background = _flashOn ? '#fbbf24' : 'rgba(0,0,0,0.5)';
+        btn.style.background = _flashOn ? 'var(--w)' : 'rgba(0,0,0,0.5)';
         btn.style.color = _flashOn ? '#000' : '#fff';
       }
     } catch { window.Notify?.error?.('الفلاش غير مدعوم'); }
