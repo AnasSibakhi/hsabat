@@ -112,7 +112,6 @@ export const Customers = {
   _renderUnified(customers, debts) {
     const list = DOM.get('cu-list');
     if (!list) return;
-    const today = new Date().toISOString().split('T')[0];
 
     // بناء map الديون لكل زبون
     const debtMap = {};
@@ -150,54 +149,111 @@ export const Customers = {
       return;
     }
 
-    list.innerHTML = sorted.map(c => {
+    list.innerHTML = `<div class="cu-list-card">` + sorted.map(c => {
       const custDebts = debtMap[c.id] || [];
       const totalRem  = custDebts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
       const hasDebt   = totalRem > 0;
+      const oldestDebt = custDebts.filter(d => d.amount - (d.paid||0) > 0)
+        .sort((a,b) => new Date(a.debt_date) - new Date(b.debt_date))[0];
+      const days = oldestDebt ? Math.floor((new Date().setHours(0,0,0,0) - new Date(oldestDebt.debt_date)) / 86400000) : 0;
 
-      return `
-      <div class="card" data-customer-id="${c.id}" style="margin-bottom:.6rem;">
-        <div style="padding:12px 14px;">
-          <!-- اسم + جوال + إجمالي -->
-          <div class="flex-between" style="margin-bottom:${hasDebt ? '10px' : '0'};">
-            <div>
-              <div style="font-size:15px;font-weight:800;color:#1e293b;">${escape(c.name)}</div>
-              ${c.phone ? `<div style="font-size:12px;color:var(--g5);margin-top:2px;">📞 ${c.phone}</div>` : ''}
-            </div>
-            <div style="text-align:left;" data-cust-total>
-              ${hasDebt
-                ? `<div style="font-size:16px;font-weight:900;color:var(--r);">₪${totalRem.toFixed(2)}</div><div style="font-size:10px;color:var(--g4);">إجمالي الديون</div>`
-                : `<span style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">✅ صافي</span>`
-              }
-            </div>
-          </div>
-
-          <!-- قائمة الديون -->
-          ${custDebts.filter(d => d.amount - (d.paid||0) > 0).map(d => {
-            const rem  = d.amount - (d.paid||0);
-            const days = Math.floor((new Date().setHours(0,0,0,0) - new Date(d.debt_date)) / 86400000);
-            return `
-            <div data-debt-id="${d.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:${days>=2?'#fff5f5':'#f8fafc'};border-radius:8px;margin-bottom:4px;">
-              <div>
-                <div data-rem style="font-size:12px;font-weight:700;color:#1e293b;">₪${rem.toFixed(2)}</div>
-                <div style="font-size:10px;color:var(--g4);">${d.debt_date} ${days>0?'· متأخر '+days+' يوم':''}</div>
-              </div>
-              <div class="flex-gap6">
-                ${d.notes ? `<span style="font-size:10px;color:var(--g5);">${escape(d.notes)}</span>` : ''}
-                <button class="ibg" onclick="Debts.openPayModal('${d.id}','${escape(c.name)}',${rem})" style="font-size:11px;padding:5px 10px;">تسديد</button>
-              </div>
-            </div>`;
-          }).join('')}
-
-          <!-- أزرار الزبون -->
-          <div class="flex-gap6" style="margin-top:${hasDebt?'8px':'0'};">
-            <button class="ibb" onclick="Customers.openNewDebt('${c.id}','${escape(c.name)}')" style="font-size:11px;">+ دين جديد</button>
-            ${c.phone ? `<button class="ibb" onclick="window.open('tel:${c.phone}')" style="font-size:11px;">📞 اتصال</button>` : ''}
-            <button class="ibr" onclick="Customers.delete('${c.id}')" style="font-size:11px;">حذف</button>
-          </div>
+      return `<div class="cu-row" data-customer-id="${c.id}" onclick="Customers.openDetail('${c.id}')">
+        <div class="cu-row-info">
+          <div class="cu-row-name">${escape(c.name)}</div>
+          ${hasDebt
+            ? `<div class="cu-row-debt-line">₪${totalRem.toFixed(2)} متبقٍ ${days >= 2 ? `· متأخر ${days} يوم` : ''}</div>`
+            : (c.phone ? `<div class="cu-row-phone">📞 ${escape(c.phone)}</div>` : '')}
         </div>
+        <div class="cu-row-status">
+          ${hasDebt
+            ? `<span class="cu-status-pill ${days >= 2 ? 'late' : 'recent'}">${days >= 2 ? 'متأخر' : 'حديث'}</span>`
+            : `<span class="cu-status-pill ok">✅ صافي</span>`}
+        </div>
+        <span class="cu-row-chev">‹</span>
       </div>`;
-    }).join('');
+    }).join('') + `</div>`;
+  },
+
+  // ── فتح موديل تفاصيل الزبون الكامل (ديون + سجل مشتريات) ──
+  async openDetail(customerId) {
+    const c = State.customers.find(x => x.id === customerId);
+    if (!c) return;
+    Customers._detailCustomerId = customerId;
+
+    DOM.setText('cd-name', c.name);
+    const phoneEl = DOM.get('cd-phone');
+    if (phoneEl) phoneEl.textContent = c.phone ? '📞 ' + c.phone : '';
+    const callBtn = DOM.get('cd-call-btn');
+    if (callBtn) callBtn.onclick = () => c.phone && window.open('tel:' + c.phone);
+
+    Modal.open('m-cust-detail');
+    Customers.switchDetailTab('debts');
+
+    // الديون (من الكاش المحلي، فوري بدون طلب شبكي)
+    const { debts } = Customers._allData || { debts: [] };
+    const custDebts = debts.filter(d => d.customer_id === customerId);
+    Customers._renderDetailDebts(custDebts);
+
+    // سجل المشتريات (فواتيره) — يُطلب فقط عند الحاجة
+    const { data: invoices } = await sb.from('invoices').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+    Customers._renderDetailInvoices(invoices || []);
+  },
+
+  switchDetailTab(tab) {
+    DOM.get('cd-tab-debts')?.classList.toggle('active', tab === 'debts');
+    DOM.get('cd-tab-invoices')?.classList.toggle('active', tab === 'invoices');
+    DOM.get('cd-debts-panel').style.display    = tab === 'debts' ? 'block' : 'none';
+    DOM.get('cd-invoices-panel').style.display = tab === 'invoices' ? 'block' : 'none';
+  },
+
+  _renderDetailDebts(custDebts) {
+    const panel = DOM.get('cd-debts-panel');
+    if (!panel) return;
+    const active = custDebts.filter(d => d.amount - (d.paid||0) > 0);
+
+    panel.innerHTML = active.length
+      ? active.map(d => {
+          const rem  = d.amount - (d.paid||0);
+          const days = Math.floor((new Date().setHours(0,0,0,0) - new Date(d.debt_date)) / 86400000);
+          return `<div class="cd-debt-item" data-debt-id="${d.id}">
+            <div>
+              <div class="cd-debt-amount">₪${rem.toFixed(2)}</div>
+              <div class="cd-debt-date">${d.debt_date} ${days > 0 ? '· متأخر ' + days + ' يوم' : ''}</div>
+              ${d.notes ? `<div class="cd-debt-notes">${escape(d.notes)}</div>` : ''}
+            </div>
+            <button class="ibg" onclick="Debts.openPayModal('${d.id}','${escape(State.customers.find(c=>c.id===Customers._detailCustomerId)?.name||'')}',${rem})">تسديد</button>
+          </div>`;
+        }).join('')
+      : '<div class="cd-empty">✅ لا توجد ديون نشطة</div>';
+  },
+
+  _renderDetailInvoices(invoices) {
+    const panel = DOM.get('cd-invoices-panel');
+    if (!panel) return;
+
+    panel.innerHTML = invoices.length
+      ? invoices.map(inv => `<div class="cd-inv-item">
+          <div>
+            <div class="cd-inv-num">${escape(inv.invoice_number || '-')}</div>
+            <div class="cd-inv-date">${inv.invoice_date}${inv.sale_time ? ' · ' + inv.sale_time : ''}</div>
+          </div>
+          <div class="cd-inv-amount">₪${inv.total.toFixed(2)}</div>
+        </div>`).join('')
+      : '<div class="cd-empty">لا توجد فواتير سابقة</div>';
+  },
+
+  deleteFromDetail() {
+    const id = Customers._detailCustomerId;
+    if (!id) return;
+    Modal.close('m-cust-detail');
+    Customers.delete(id);
+  },
+
+  openNewDebtFromDetail() {
+    const c = State.customers.find(x => x.id === Customers._detailCustomerId);
+    if (!c) return;
+    Modal.close('m-cust-detail');
+    Customers.openNewDebt(c.id, c.name);
   },
 
   // تحديث الإجماليات بدون إعادة تحميل
@@ -217,15 +273,8 @@ export const Customers = {
   // تحديث بطاقة زبون معين
   _updateCustomerCard(customerId) {
     if (!Customers._allData) return;
-    const { debts } = Customers._allData;
-    const custDebts = debts.filter(d => d.customer_id === customerId && d.amount - (d.paid||0) > 0);
-    const card = document.querySelector(`[data-customer-id="${customerId}"]`);
-    if (!card) return;
-    if (custDebts.length === 0) {
-      // لا ديون — غيّر الإجمالي لـ "✅ صافي"
-      const totalEl = card.querySelector('[data-cust-total]');
-      if (totalEl) totalEl.innerHTML = '<span style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">✅ صافي</span>';
-    }
+    // إعادة عرض القائمة كاملة — التصميم الجديد خفيف وسريع بما يكفي لإعادة البناء بدون تأثير ملموس
+    Customers._renderUnified(Customers._allData.customers, Customers._allData.debts);
   },
 
   openNewDebt(customerId, customerName) {
