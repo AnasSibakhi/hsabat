@@ -50,6 +50,11 @@ const NetCards = {
     DOM.setText('ns2', list.reduce((s, r) => s + r.quantity, 0));
     DOM.setText('ns3', list.filter(r => r.total_price - r.paid > 0 && Utils.daysSince(r.sale_date) >= CONFIG.debtLateDays).length);
 
+    // ربح البطاقات — منفصل تماماً عن التقارير المالية العامة
+    const profit = list.reduce((s, r) => s + (r.total_price - (r.cost_at_sale || 0) * r.quantity), 0);
+    const profitEl = DOM.get('nc-profit');
+    if (profitEl) { profitEl.textContent = Utils.currency(profit); profitEl.style.color = profit >= 0 ? 'var(--s)' : 'var(--d)'; }
+
     DOM.setHTML('nslist', list.length
       ? list.map(s => {
           const remaining = s.total_price - s.paid;
@@ -90,7 +95,7 @@ const NetCards = {
     if (!buyer)   { Notify.error('أدخل اسم المشتري'); return; }
     if (qty < 1)  { Notify.error('أدخل العدد'); return; }
 
-    const { data: stock } = await DB.netCardStock().select('id,quantity').eq('card_type', type).single();
+    const { data: stock } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).single();
     if (!stock || stock.quantity < qty) { Notify.error('المخزون غير كافٍ — المتبقي: ' + (stock?.quantity || 0)); return; }
 
     const total = parseInt(type) * qty;
@@ -102,6 +107,7 @@ const NetCards = {
         store_id: State.user.id, buyer_name: buyer, card_type: type,
         quantity: qty, total_price: total, paid: paymentType === 'full' ? total : 0,
         payment_type: paymentType, sale_date: Utils.today(),
+        cost_at_sale: stock.cost_price || 0,
       });
       if (error) throw error;
       await DB.netCardStock().update({ quantity: stock.quantity - qty, updated_at: new Date().toISOString() }).eq('id', stock.id);
@@ -115,16 +121,37 @@ const NetCards = {
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
+  calcStockCost() {
+    const price    = parseFloat(DOM.val('asp')) || 0;
+    const discount = parseFloat(DOM.val('asd')) || 0;
+    const finalCost = price * (1 - discount / 100);
+    const el = DOM.get('ast-final-cost');
+    if (el) el.textContent = '₪' + finalCost.toFixed(3);
+  },
+
   async addStock() {
-    const type = DOM.val('ast');
-    const qty  = parseInt(DOM.val('asq')) || 0;
+    const type     = DOM.val('ast');
+    const qty      = parseInt(DOM.val('asq')) || 0;
+    const price    = parseFloat(DOM.val('asp')) || 0;
+    const discount = parseFloat(DOM.val('asd')) || 0;
     if (qty < 1) { Notify.error('أدخل الكمية'); return; }
-    const { data: s } = await DB.netCardStock().select('id,quantity').eq('card_type', type).single();
-    if (s) await DB.netCardStock().update({ quantity: s.quantity + qty, updated_at: new Date().toISOString() }).eq('id', s.id);
-    else   await DB.netCardStock().insert({ store_id: State.user.id, card_type: type, quantity: qty });
-    Notify.success('تم إضافة المخزون');
+    const finalCost = price * (1 - discount / 100);
+
+    const { data: s } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).single();
+    if (s) {
+      // متوسط مرجّح للتكلفة لو كان فيه مخزون قديم بتكلفة مختلفة (دقة أعلى لحساب الربح)
+      const oldQty  = s.quantity || 0;
+      const oldCost = s.cost_price || 0;
+      const newAvgCost = (oldQty + qty) > 0 ? ((oldQty * oldCost) + (qty * finalCost)) / (oldQty + qty) : finalCost;
+      await DB.netCardStock().update({ quantity: oldQty + qty, cost_price: newAvgCost, updated_at: new Date().toISOString() }).eq('id', s.id);
+    } else {
+      await DB.netCardStock().insert({ store_id: State.user.id, card_type: type, quantity: qty, cost_price: finalCost });
+    }
+    Notify.success('تم إضافة المخزون' + (finalCost > 0 ? ' — التكلفة: ₪' + finalCost.toFixed(3) + '/وحدة' : ''));
     Modal.close('m-addstock');
-    DOM.get('asq').value = 50;
+    DOM.get('asq').value = 100;
+    DOM.clearInputs('asp', 'asd');
+    DOM.get('ast-final-cost').textContent = '₪0.00';
     await NetCards.loadStock();
   },
 
