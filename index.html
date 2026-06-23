@@ -23,9 +23,9 @@
 <!-- Mobile Drawer -->
 <div id="mobile-drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;"></div>
 <div id="mobile-drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(260px,100vw);background:#fff;z-index:301;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,0.15);padding:.6rem;transform:translateX(100%);transition:transform .25s ease;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:.5rem;border-bottom:1px solid #e5e7eb;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:.5rem;border-bottom:1px solid var(--g2);">
     <span style="font-weight:800;font-size:16px;">القائمة</span>
-    <button onclick="closeDrawer()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">✕</button>
+    <button onclick="closeDrawer()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--g5);">✕</button>
   </div>
 
   <div class="nl">المبيعات</div>
@@ -48,7 +48,7 @@
 
 
 <!-- LOADING SCREEN — shown while checking session -->
-<div id="loading-wrap" style="position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
+<div id="loading-wrap" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--p) 0%,var(--pd) 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
   <div style="width:64px;height:64px;background:rgba(255,255,255,0.15);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;">
     <i class="ti ti-calculator" style="color:#fff;font-size:32px;"></i>
   </div>
@@ -803,7 +803,7 @@
 <div id="add-menu-overlay" onclick="closeAddMenu()" style="display:none;position:fixed;inset:0;z-index:299;"></div>
 <div id="add-menu" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;min-width:220px;border:1px solid var(--br);">
   <button onclick="closeAddMenu();Modal.open('m-inv')" class="add-menu-item"><i class="ti ti-box" style="color:var(--w);"></i> صنف جديد</button>
-  <button onclick="closeAddMenu();Modal.open('m-expense')" class="add-menu-item"><i class="ti ti-cash" style="color:#0e9f6e;"></i> مصروف جديد</button>
+  <button onclick="closeAddMenu();Modal.open('m-expense')" class="add-menu-item"><i class="ti ti-cash" style="color:var(--s);"></i> مصروف جديد</button>
 </div>
 
 <!-- MODALS -->
@@ -1337,7 +1337,7 @@
   <input type="hidden" id="sup-pay-id">
   <div style="background:var(--g0);border-radius:12px;padding:14px;margin-bottom:14px;">
     <div style="font-size:13px;color:var(--g5);margin-bottom:4px;">المورد</div>
-    <div id="sup-pay-name" style="font-size:16px;font-weight:800;color:#1e293b;"></div>
+    <div id="sup-pay-name" style="font-size:16px;font-weight:800;color:var(--g9);"></div>
     <div style="display:flex;gap:16px;margin-top:10px;">
       <div>
         <div style="font-size:11px;color:var(--g5);">إجمالي الفاتورة</div>
@@ -1389,7 +1389,7 @@
         <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-left:4px solid var(--p);border-radius:0 0 0 3px;"></div>
         <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 0 3px 0;"></div>
         <!-- Scan line -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),#a5b4fc,var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),var(--pl),var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
       </div>
     </div>
 
@@ -1429,7 +1429,7 @@
         <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-left:4px solid var(--p);border-radius:0 0 0 3px;"></div>
         <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 0 3px 0;"></div>
         <!-- Scan line -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),#a5b4fc,var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),var(--pl),var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
       </div>
     </div>
 
@@ -1460,7 +1460,7 @@
         <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--s);border-right:4px solid var(--s);border-radius:0 3px 0 0;"></div>
         <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--s);border-left:4px solid var(--s);border-radius:0 0 0 3px;"></div>
         <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--s);border-right:4px solid var(--s);border-radius:0 0 3px 0;"></div>
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--s),#6ee7b7,var(--s),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
+        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--s),var(--sl),var(--s),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
       </div>
     </div>
 
@@ -1519,19 +1519,19 @@
   <div class="lbl mb-8">اختر طريقة إتمام البيع</div>
   <div class="qs-pay-opts">
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('cash')">
-    <div class="qs-pay-opt-icon" style="background:#dcfce7;"><i class="ti ti-cash" style="color:#16a34a;"></i></div>
+    <div class="qs-pay-opt-icon" style="background:var(--sl);"><i class="ti ti-cash" style="color:var(--s);"></i></div>
     <div><div class="qs-pay-opt-title">كاش</div><div class="qs-pay-opt-sub">بيع مباشر مكتمل</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('transfer')">
-    <div class="qs-pay-opt-icon" style="background:#dbeafe;"><i class="ti ti-building-bank" style="color:#2563eb;"></i></div>
+    <div class="qs-pay-opt-icon" style="background:var(--pl);"><i class="ti ti-building-bank" style="color:var(--p);"></i></div>
     <div><div class="qs-pay-opt-title">تحويل فوري</div><div class="qs-pay-opt-sub">تحويل تم استلامه</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('transfer2defer')">
-    <div class="qs-pay-opt-icon" style="background:#fef9c3;"><i class="ti ti-clock" style="color:#ca8a04;"></i></div>
+    <div class="qs-pay-opt-icon" style="background:var(--wl);"><i class="ti ti-clock" style="color:var(--w);"></i></div>
     <div><div class="qs-pay-opt-title">تطبيق لاحق</div><div class="qs-pay-opt-sub">يُضاف على حساب الزبون</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('defer')">
-    <div class="qs-pay-opt-icon" style="background:#fee2e2;"><i class="ti ti-users" style="color:var(--d);"></i></div>
+    <div class="qs-pay-opt-icon" style="background:var(--dl);"><i class="ti ti-users" style="color:var(--d);"></i></div>
     <div><div class="qs-pay-opt-title">دين</div><div class="qs-pay-opt-sub">حفظ على حساب زبون</div></div>
    </button>
   </div>
