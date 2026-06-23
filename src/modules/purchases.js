@@ -454,7 +454,7 @@ const Purchases = {
     document.getElementById('ret-pur-id').value = id;
     const unitCost = p.quantity > 0 ? (p.cost / p.quantity) : 0;
     document.getElementById('ret-pur-info').innerHTML =
-      '<b style="color:#1e293b;">' + Utils.escape(p.supplier) + '</b> — ' + Utils.escape(p.product_name) +
+      '<b style="color:var(--g9);">' + Utils.escape(p.supplier) + '</b> — ' + Utils.escape(p.product_name) +
       '<br>الكمية المتوفرة: <b>' + p.quantity + '</b> — تكلفة الوحدة: <b>₪' + unitCost.toFixed(2) + '</b>';
     document.getElementById('ret-pur-qty').value    = '';
     document.getElementById('ret-pur-amount').value = '';
