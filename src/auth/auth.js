@@ -174,7 +174,7 @@ export const Auth = {
       ">
         <!-- Header بلون الموقع -->
         <div style="
-          background:linear-gradient(135deg,#1a56db,#1241a8);
+          background:linear-gradient(135deg,var(--p),var(--pd));
           padding:28px 24px 20px;text-align:center;
         ">
           <div style="
@@ -196,10 +196,10 @@ export const Auth = {
         <!-- Body -->
         <div style="padding:20px;">
           <div style="text-align:center;margin-bottom:20px;">
-            <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:6px;">
+            <div style="font-size:15px;font-weight:700;color:var(--g9);margin-bottom:6px;">
               هل تريد تسجيل الخروج؟
             </div>
-            <div style="font-size:13px;color:#94a3b8;">
+            <div style="font-size:13px;color:var(--g4);">
               سيتم إنهاء جلستك الحالية
             </div>
           </div>
@@ -207,7 +207,7 @@ export const Auth = {
           <button onclick="document.getElementById('logout-overlay').remove();Auth.logout()"
             style="
               width:100%;padding:13px;border-radius:12px;border:none;
-              background:#c81e1e;color:#fff;
+              background:var(--d);color:#fff;
               font-family:Cairo,sans-serif;font-weight:800;font-size:14px;
               cursor:pointer;margin-bottom:8px;
               display:flex;align-items:center;justify-content:center;gap:6px;
@@ -219,8 +219,8 @@ export const Auth = {
           <button onclick="document.getElementById('logout-overlay').remove()"
             style="
               width:100%;padding:12px;border-radius:12px;
-              border:1.5px solid #e2e8f0;background:#fff;
-              color:#64748b;font-family:Cairo,sans-serif;
+              border:1.5px solid var(--g2);background:#fff;
+              color:var(--g5);font-family:Cairo,sans-serif;
               font-weight:700;font-size:14px;cursor:pointer;
             ">
             إلغاء
