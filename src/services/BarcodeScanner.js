@@ -57,21 +57,6 @@ export const BarcodeScanner = {
   isActive: () => _active,
   get _flashOn() { return _flashOn; },
 
-  // ── Pause/Resume — للمسح المتتالي (Bulk Scan) ──
-  // الكاميرا تبقى شغالة، فقط معالجة القراءات تتوقف مؤقتاً
-  pause() {
-    _paused = true;
-    _last = null;
-    _pendingCode  = null;
-    _pendingCount = 0;
-  },
-  resume() {
-    _paused = false;
-    _last = null;
-    _pendingCode  = null;
-    _pendingCount = 0;
-  },
-
   async start(containerId, onSuccess, onError) {
     if (_starting) return; // فتح سابق لسا قيد الانتظار — تجاهل الضغط المزدوج
     if (_active) await BarcodeScanner.stop();
