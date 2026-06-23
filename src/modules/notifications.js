@@ -123,7 +123,7 @@ export const Notifications = {
 
     if (badge) {
       badge.style.display    = unread > 0 ? 'block' : 'none';
-      badge.style.background = auto.some(n => n._type === 'out') ? '#dc2626' : '#f59e0b';
+      badge.style.background = auto.some(n => n._type === 'out') ? 'var(--d)' : 'var(--w)';
     }
 
     // هز الجرس لو في تنبيهات جديدة
