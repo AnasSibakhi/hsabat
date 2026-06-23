@@ -27,15 +27,22 @@ const Expenses = {
     DOM.setText('exp-week',  Utils.currency(list.filter(e => e.exp_date >= weekAgo).reduce((s, e) => s + e.amount, 0)));
     DOM.setText('exp-month', Utils.currency(list.filter(e => e.exp_date >= monthStart).reduce((s, e) => s + e.amount, 0)));
 
+    const TYPE_ICON = { 'إيجار':'🏠', 'كهرباء':'⚡', 'ماء':'💧', 'رواتب':'👥', 'صيانة':'🔧', 'نقل':'🚚', 'تسويق':'📢' };
+
     DOM.setHTML('exp-list', list.length
-      ? list.map(e => `<tr>
-          <td><span class="bb">${Utils.escape(e.exp_type)}</span></td>
-          <td>₪${e.amount.toFixed(2)}</td>
-          <td>${e.exp_date}</td>
-          <td>${Utils.escape(e.notes || '-')}</td>
-          <td><button class="ibr" onclick="Expenses.delete('${e.id}')">حذف</button></td>
-        </tr>`).join('')
-      : '<tr class="er"><td colspan="5">لا توجد مصاريف</td></tr>'
+      ? list.map(e => `<div class="exp-card">
+          <div class="exp-card-icon">${TYPE_ICON[e.exp_type] || '💸'}</div>
+          <div class="exp-card-body">
+            <div class="exp-card-type">${Utils.escape(e.exp_type)}</div>
+            <div class="exp-card-date">${e.exp_date}</div>
+            ${e.notes ? `<div class="exp-card-notes">${Utils.escape(e.notes)}</div>` : ''}
+          </div>
+          <div class="exp-card-right">
+            <div class="exp-card-amount">₪${e.amount.toFixed(2)}</div>
+            <button class="exp-card-del" onclick="Expenses.delete('${e.id}')"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>`).join('')
+      : '<div class="er" style="padding:30px;text-align:center;color:var(--g5);">لا توجد مصاريف</div>'
     );
   },
 
