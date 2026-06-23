@@ -480,7 +480,7 @@ export const Customers = {
     const w = window.open('', '_blank');
     w.document.write(`<html dir="rtl"><head><title>${title}</title>
       <style>body{font-family:Arial;padding:20px;direction:rtl;}table{width:100%;border-collapse:collapse;}
-      th,td{border:1px solid #ddd;padding:8px;text-align:right;}th{background:#f5f5f5;}</style></head>
+      th,td{border:1px solid var(--g3);padding:8px;text-align:right;}th{background:var(--g0);}</style></head>
       <body><h2>${title}</h2>${content}</body></html>`);
     w.document.close();
     w.print();
