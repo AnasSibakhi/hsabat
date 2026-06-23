@@ -697,10 +697,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!dd) return;
     QuickSale._positionDropdown(dd, nameId);
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
-      `<div class="dc-opt" data-cid="${c.id}"
-        onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)">
-        <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
-      </div>`
+      Utils.customerSuggestRow(c, `onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)"`)
     ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن مسجّلين</div>`;
     dd.style.display = 'block';
   },
@@ -739,12 +736,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale._positionDropdown(dd, nameId);
     dd.innerHTML = [
       ...matches.map(c =>
-        `<div class="dc-opt" data-cid="${c.id}"
-          onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)">
-          <b>${escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
-        </div>`
+        Utils.customerSuggestRow(c, `onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)"`)
       ),
-      `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);padding-top:8px;"
+      `<div class="dc-opt new"
         onclick="document.getElementById('${ddId}').style.display='none'">
         ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
       </div>`
