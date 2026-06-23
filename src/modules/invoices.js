@@ -558,7 +558,7 @@ const Invoices = {
     DOM.setHTML('inv-details-body', `
       <!-- معلومات الإرجاع لو موجودة -->
       ${ret ? `
-      <div style="background:var(--dl);border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid #fecaca;">
+      <div style="background:var(--dl);border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid var(--dl);">
         <div style="font-size:13px;font-weight:800;color:var(--d);margin-bottom:8px;">⚠️ هذه الفاتورة مُرجَعة</div>
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--d);margin-bottom:4px;">
           <span>تاريخ الإرجاع</span><strong>${ret.return_date}</strong>
@@ -631,7 +631,7 @@ const Invoices = {
           <span>خصم</span><span>-₪${inv.discount.toFixed(2)}</span>
         </div>` : ''}
         ${inv.payment_type === 'partial' ? `
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#166534;margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--s);margin-bottom:4px;">
           <span>المدفوع</span><span>₪${(inv.partial_paid || 0).toFixed(2)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--d);margin-bottom:4px;">
@@ -677,15 +677,15 @@ const Invoices = {
         const html = `<!DOCTYPE html><html dir="rtl" lang="ar">
 <head><meta charset="UTF-8"><title>فاتورة ${inv.invoice_number}</title>
 <style>
-  body{font-family:'Cairo',Arial,sans-serif;margin:0;padding:16px;font-size:13px;color:#111;max-width:320px;margin:auto;}
+  body{font-family:'Cairo',Arial,sans-serif;margin:0;padding:16px;font-size:13px;color:var(--g9);max-width:320px;margin:auto;}
   .store-name{font-size:18px;font-weight:900;text-align:center;margin-bottom:4px;}
-  .inv-num{text-align:center;color:#666;font-size:12px;margin-bottom:12px;border-bottom:1px dashed #ccc;padding-bottom:8px;}
+  .inv-num{text-align:center;color:var(--g5);font-size:12px;margin-bottom:12px;border-bottom:1px dashed var(--g3);padding-bottom:8px;}
   .info-row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;}
   table{width:100%;border-collapse:collapse;margin:10px 0;}
-  th{background:#f5f5f5;padding:6px 8px;font-size:11px;text-align:right;border-bottom:1px solid #ddd;}
-  td{padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:12px;}
-  .total-row{font-size:15px;font-weight:900;display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid #111;margin-top:8px;}
-  .footer{text-align:center;font-size:11px;color:#999;margin-top:12px;border-top:1px dashed #ccc;padding-top:8px;}
+  th{background:var(--g0);padding:6px 8px;font-size:11px;text-align:right;border-bottom:1px solid var(--g3);}
+  td{padding:6px 8px;border-bottom:1px solid var(--g1);font-size:12px;}
+  .total-row{font-size:15px;font-weight:900;display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--g9);margin-top:8px;}
+  .footer{text-align:center;font-size:11px;color:var(--g4);margin-top:12px;border-top:1px dashed var(--g3);padding-top:8px;}
   @media print{body{padding:0;}}
 </style></head>
 <body>
