@@ -20,12 +20,18 @@ const Dashboard = {
     try {
       const todayStr = Utils.today();
 
-      // جلب فواتير اليوم + عناصرها + المخزون + الديون
-      const [todayInv, debts, inventory, purchasesRes] = await Promise.all([
-        DB.invoices().select('id,total').eq('invoice_date', todayStr),
-        DB.debts().select('amount,paid').limit(500),
+      // جلب فواتير اليوم + الديون (بكل تفاصيلها مرة واحدة) + المخزون + المشتريات + ربح اليوم — كل شي بالتوازي بطلب واحد
+      const todayInvForIds = await DB.invoices().select('id,total').eq('invoice_date', todayStr);
+      const todayInvIds = (todayInvForIds.data || []).map(i => i.id);
+
+      const [todayInv, debtsFull, inventory, purchasesRes, soldItemsRes] = await Promise.all([
+        Promise.resolve(todayInvForIds),
+        DB.debts().select('*,customers(name)').limit(500),
         DB.inventory().select('id,name,quantity,low_stock_alert,cost_price').limit(1000),
         DB.purchases().select('*').eq('payment_status','defer').gt('remaining',0).limit(100),
+        todayInvIds.length > 0
+          ? sb.from('invoice_items').select('quantity, price, inventory_id, inventory(cost_price)').in('invoice_id', todayInvIds)
+          : Promise.resolve({ data: [] }),
       ]);
 
       // ١. مبيعات اليوم
@@ -33,38 +39,33 @@ const Dashboard = {
       DOM.setText('hs1', Utils.currency(todaySales));
 
       // ٢. ربح اليوم الحقيقي من invoice_items
-      const todayInvIds = (todayInv.data || []).map(i => i.id);
-      let todayProfit = 0;
-
-      if (todayInvIds.length > 0) {
-        const { data: soldItems } = await sb.from('invoice_items')
-          .select('quantity, price, inventory_id, inventory(cost_price)')
-          .in('invoice_id', todayInvIds);
-
-        todayProfit = (soldItems || []).reduce((sum, it) => {
-          const cost  = it.inventory?.cost_price || 0;
-          const qty   = it.quantity || 1;
-          const price = it.price   || 0;
-          return sum + (price - cost) * qty;
-        }, 0);
-      }
+      const soldItems = soldItemsRes.data || [];
+      const todayProfit = soldItems.reduce((sum, it) => {
+        const cost  = it.inventory?.cost_price || 0;
+        const qty   = it.quantity || 1;
+        const price = it.price   || 0;
+        return sum + (price - cost) * qty;
+      }, 0);
 
       const profitEl = DOM.get('hs-profit');
       if (profitEl) {
         profitEl.textContent = Utils.currency(todayProfit);
-        profitEl.style.color = todayProfit >= 0 ? 'var(--s)' : 'var(--r)';
+        profitEl.style.color = todayProfit >= 0 ? 'var(--s)' : 'var(--d)';
       }
 
       // ٣. عدد الفواتير اليوم
       DOM.setText('hs-invoices', (todayInv.data || []).length + ' فاتورة');
 
+      const debts = debtsFull.data || [];
+
       // ٤. إجمالي الديون
-      DOM.setText('hs2', Utils.currency((debts.data || []).reduce((s, d) => s + (d.amount - d.paid), 0)));
+      DOM.setText('hs2', Utils.currency(debts.reduce((s, d) => s + (d.amount - d.paid), 0)));
 
       // ٥. تنبيهات المخزون
       Dashboard._loadInventoryAlerts(inventory.data || []);
 
-      await Dashboard._loadOverdueDebts();
+      // ٦. الديون المتأخرة — من نفس البيانات المجلوبة أعلاه، بدون طلب شبكي إضافي
+      Dashboard._renderOverdueDebts(debts);
     } catch(err) {
       console.error('[Dashboard.load] ERROR:', err);
     }
@@ -104,9 +105,8 @@ const Dashboard = {
     el.innerHTML = html;
   },
 
-  async _loadOverdueDebts() {
-    const { data } = await DB.debts().select('*,customers(name)');
-    const overdue = (data || []).filter(d => d.amount - d.paid > 0 && Utils.daysSince(d.debt_date) >= CONFIG.debtLateDays);
+  _renderOverdueDebts(debts) {
+    const overdue = (debts || []).filter(d => d.amount - d.paid > 0 && Utils.daysSince(d.debt_date) >= CONFIG.debtLateDays);
 
     DOM.setHTML('halerts', overdue.length
       ? `<div class="alert ad"><i class="ti ti-alert-triangle"></i><span><strong>تنبيه:</strong> ${overdue.length} زبون متأخر — ${overdue.map(d => Utils.escape(d.customers?.name)).join('، ')}</span></div>`
