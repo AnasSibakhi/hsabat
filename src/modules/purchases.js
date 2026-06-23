@@ -254,6 +254,17 @@ const Purchases = {
 
 
 
+  // ── تهيئة موديل الشراء وقت الفتح — تعبئة التاريخ بتاريخ اليوم وتنظيف الحقول من فاتورة سابقة ──
+  initModal() {
+    const dateEl = DOM.get('pud');
+    if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+
+    const searchEl = DOM.get('pup');
+    if (searchEl) searchEl.value = '';
+    DOM.get('pur-inv-sel') && (DOM.get('pur-inv-sel').value = '');
+    DOM.get('pur-match-badge') && (DOM.get('pur-match-badge').style.display = 'none');
+  },
+
   async save() {
     const supplier = DOM.val('pus');
     const manual   = DOM.val('pup');
