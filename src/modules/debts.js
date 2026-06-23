@@ -427,14 +427,14 @@ const Debts = {
       <meta charset="UTF-8">
       <title>كشف الديون — ${storeName}</title>
       <style>
-        body{font-family:Arial,sans-serif;padding:20px;direction:rtl;color:#111;}
+        body{font-family:Arial,sans-serif;padding:20px;direction:rtl;color:var(--g9);}
         h2{font-size:20px;margin-bottom:4px;}
-        p{font-size:13px;color:#666;margin-bottom:16px;}
+        p{font-size:13px;color:var(--g5);margin-bottom:16px;}
         table{width:100%;border-collapse:collapse;font-size:13px;}
-        th{background:#f3f4f6;padding:10px 12px;font-weight:700;border-bottom:2px solid #e5e7eb;text-align:right;}
-        td{padding:10px 12px;border-bottom:1px solid #f3f4f6;}
+        th{background:var(--g1);padding:10px 12px;font-weight:700;border-bottom:2px solid var(--g2);text-align:right;}
+        td{padding:10px 12px;border-bottom:1px solid var(--g1);}
         tr:last-child td{border-bottom:none;}
-        .total{font-weight:700;font-size:15px;text-align:left;margin-top:12px;color:#1a56db;}
+        .total{font-weight:700;font-size:15px;text-align:left;margin-top:12px;color:var(--p);}
         @media print{button{display:none;}}
       </style></head><body>
       <h2>كشف الديون — ${Utils.escape(storeName)}</h2>
