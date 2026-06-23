@@ -50,24 +50,24 @@ const AdminPanel = {
     modal.id = 'm-new-store-dynamic';
     modal.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.55);';
     modal.innerHTML = `
-      <div style="background:#1e293b;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+      <div style="background:var(--g9);border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-sizing:border-box;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-          <span style="font-size:16px;font-weight:800;color:#f1f5f9;">إنشاء محل جديد</span>
-          <button onclick="document.getElementById('m-new-store-dynamic').remove()" style="background:#334155;border:none;color:#94a3b8;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;">✕</button>
+          <span style="font-size:16px;font-weight:800;color:var(--g1);">إنشاء محل جديد</span>
+          <button onclick="document.getElementById('m-new-store-dynamic').remove()" style="background:var(--g7);border:none;color:var(--g4);border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;">✕</button>
         </div>
-        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">اسم المحل *</label><input id="sa-new-store" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;" placeholder="بقالة أبو أحمد"></div>
-        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">اسم صاحب المحل *</label><input id="sa-new-owner" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;"></div>
-        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">رقم الجوال</label><input id="sa-new-phone" inputmode="tel" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;"></div>
-        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">البريد الإلكتروني *</label><input id="sa-new-user" type="email" inputmode="email" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:ltr;box-sizing:border-box;" placeholder="store@mail.com"></div>
-        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">كلمة المرور *</label><input id="sa-new-pass" type="password" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:ltr;box-sizing:border-box;"></div>
-        <div style="margin-bottom:1rem;"><label style="font-size:13px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px;">مدة الاشتراك</label>
-          <select id="sa-new-months" style="width:100%;padding:12px 14px;border:1.5px solid #334155;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:#f1f5f9;background:#334155;direction:rtl;box-sizing:border-box;">
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:var(--g4);display:block;margin-bottom:5px;">اسم المحل *</label><input id="sa-new-store" style="width:100%;padding:12px 14px;border:1.5px solid var(--g7);border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:var(--g1);background:var(--g7);direction:rtl;box-sizing:border-box;" placeholder="بقالة أبو أحمد"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:var(--g4);display:block;margin-bottom:5px;">اسم صاحب المحل *</label><input id="sa-new-owner" style="width:100%;padding:12px 14px;border:1.5px solid var(--g7);border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:var(--g1);background:var(--g7);direction:rtl;box-sizing:border-box;"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:var(--g4);display:block;margin-bottom:5px;">رقم الجوال</label><input id="sa-new-phone" inputmode="tel" style="width:100%;padding:12px 14px;border:1.5px solid var(--g7);border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:var(--g1);background:var(--g7);direction:rtl;box-sizing:border-box;"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:var(--g4);display:block;margin-bottom:5px;">البريد الإلكتروني *</label><input id="sa-new-user" type="email" inputmode="email" style="width:100%;padding:12px 14px;border:1.5px solid var(--g7);border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:var(--g1);background:var(--g7);direction:ltr;box-sizing:border-box;" placeholder="store@mail.com"></div>
+        <div style="margin-bottom:.9rem;"><label style="font-size:13px;font-weight:600;color:var(--g4);display:block;margin-bottom:5px;">كلمة المرور *</label><input id="sa-new-pass" type="password" style="width:100%;padding:12px 14px;border:1.5px solid var(--g7);border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:var(--g1);background:var(--g7);direction:ltr;box-sizing:border-box;"></div>
+        <div style="margin-bottom:1rem;"><label style="font-size:13px;font-weight:600;color:var(--g4);display:block;margin-bottom:5px;">مدة الاشتراك</label>
+          <select id="sa-new-months" style="width:100%;padding:12px 14px;border:1.5px solid var(--g7);border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;color:var(--g1);background:var(--g7);direction:rtl;box-sizing:border-box;">
             <option value="1">شهر</option><option value="3">3 أشهر</option><option value="6">6 أشهر</option><option value="12" selected>سنة كاملة</option><option value="24">سنتين</option>
           </select>
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end;">
-          <button onclick="document.getElementById('m-new-store-dynamic').remove()" style="padding:8px 14px;border-radius:9px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer;">إلغاء</button>
-          <button onclick="AdminPanel.createStore()" style="padding:8px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="ti ti-plus"></i> إنشاء المحل</button>
+          <button onclick="document.getElementById('m-new-store-dynamic').remove()" style="padding:8px 14px;border-radius:9px;border:1px solid var(--g7);background:var(--g9);color:var(--g4);font-family:Cairo,sans-serif;font-size:13px;font-weight:600;cursor:pointer;">إلغاء</button>
+          <button onclick="AdminPanel.createStore()" style="padding:8px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="ti ti-plus"></i> إنشاء المحل</button>
         </div>
       </div>
     `;
@@ -125,31 +125,34 @@ const AdminPanel = {
 
     DOM.setHTML('sa-stores-list', stores.length
       ? stores.map(s => AdminPanel._storeRow(s)).join('')
-      : '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748b;">لا توجد محلات</td></tr>'
+      : '<div style="text-align:center;padding:2rem;color:var(--g5);">لا توجد محلات</div>'
     );
   },
 
   async loadStores() {
     const data = await callAdminFunction('loadStores', {});
-    DOM.setHTML('sa-all-stores', (data || []).map(s => AdminPanel._storeRow(s, true)).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">لا توجد محلات</td></tr>');
+    DOM.setHTML('sa-all-stores', (data || []).map(s => AdminPanel._storeRow(s, true)).join('') || '<div style="text-align:center;padding:2rem;color:var(--g5);">لا توجد محلات</div>');
   },
 
   _storeRow(s, extended = false) {
     const isExpired = s.subscription_end && new Date(s.subscription_end) < new Date();
     const status    = isExpired ? '<span class="sa-badge-expired">منتهي</span>' : s.is_active === false ? '<span class="sa-badge-pending">موقوف</span>' : '<span class="sa-badge-active">نشط</span>';
     const subDate   = s.subscription_end ? new Date(s.subscription_end).toLocaleDateString('en-US') : '-';
-    return `<tr>
-      <td><strong>${Utils.escape(s.store_name)}</strong></td>
-      <td>${Utils.escape(s.owner_name || '-')}</td>
-      ${extended ? `<td>${Utils.escape(s.phone || '-')}</td>` : ''}
-      <td>${status}</td>
-      <td>${subDate}</td>
-      <td>
+    return `<div class="sa-row-card">
+      <div class="sa-row-info">
+        <div class="sa-row-name">${Utils.escape(s.store_name)}</div>
+        <div class="sa-row-sub">${Utils.escape(s.owner_name || '-')}${extended && s.phone ? ' · ' + Utils.escape(s.phone) : ''}</div>
+      </div>
+      <div class="sa-row-mid">
+        ${status}
+        <div class="sa-row-date">${subDate}</div>
+      </div>
+      <div class="sa-row-actions">
         <button class="ibb" onclick="AdminPanel.editStore('${s.id}')">تعديل</button>
-        <button class="${s.is_active === false ? 'ibg' : 'ibr'}" onclick="AdminPanel.toggleStore('${s.id}',${s.is_active !== false})" style="margin-right:4px;">${s.is_active === false ? 'تفعيل' : 'إيقاف'}</button>
-        ${extended ? `<button class="ibr" onclick="AdminPanel.deleteStore('${s.id}')" style="margin-right:4px;">حذف</button>` : ''}
-      </td>
-    </tr>`;
+        <button class="${s.is_active === false ? 'ibg' : 'ibr'}" onclick="AdminPanel.toggleStore('${s.id}',${s.is_active !== false})">${s.is_active === false ? 'تفعيل' : 'إيقاف'}</button>
+        ${extended ? `<button class="ibr" onclick="AdminPanel.deleteStore('${s.id}')">حذف</button>` : ''}
+      </div>
+    </div>`;
   },
 
   async loadSubscriptions() {
@@ -158,18 +161,22 @@ const AdminPanel = {
     DOM.setHTML('sa-subs-list', list.length
       ? list.map(a => {
           const isExpired = a.subscription_end && new Date(a.subscription_end) < new Date();
-          return `<tr>
-            <td>${Utils.escape(a.store_name)}</td>
-            <td>${Utils.escape(a.username)}</td>
-            <td>${isExpired ? '<span class="br">منتهي</span>' : '<span class="bg">نشط</span>'}</td>
-            <td>${a.subscription_end ? new Date(a.subscription_end).toLocaleDateString('en-US') : '-'}</td>
-            <td>
-              <button class="ibb" onclick="AdminPanel.renewSubscription('${a.id}',365)">تجديد سنة</button>
-              <button class="ibg" onclick="AdminPanel.renewSubscription('${a.id}',30)" style="margin-right:4px;">شهر</button>
-            </td>
-          </tr>`;
+          return `<div class="sa-row-card">
+            <div class="sa-row-info">
+              <div class="sa-row-name">${Utils.escape(a.store_name)}</div>
+              <div class="sa-row-sub">${Utils.escape(a.username)}</div>
+            </div>
+            <div class="sa-row-mid">
+              ${isExpired ? '<span class="sa-badge-expired">منتهي</span>' : '<span class="sa-badge-active">نشط</span>'}
+              <div class="sa-row-date">${a.subscription_end ? new Date(a.subscription_end).toLocaleDateString('en-US') : '-'}</div>
+            </div>
+            <div class="sa-row-actions">
+              <button class="ibb" onclick="AdminPanel.renewSubscription('${a.id}',365)">سنة</button>
+              <button class="ibg" onclick="AdminPanel.renewSubscription('${a.id}',30)">شهر</button>
+            </div>
+          </div>`;
         }).join('')
-      : '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748b;">لا يوجد اشتراكات</td></tr>'
+      : '<div style="text-align:center;padding:2rem;color:var(--g5);">لا يوجد اشتراكات</div>'
     );
   },
 
@@ -177,15 +184,20 @@ const AdminPanel = {
     const data = await callAdminFunction('loadUsers', {});
     const list = (data || []).filter(a => a.role !== ROLES.SUPERADMIN);
     DOM.setHTML('sa-users-list', list.length
-      ? list.map(a => `<tr>
-          <td>${Utils.escape(a.store_name)}</td>
-          <td>${Utils.escape(a.username)}</td>
-          <td>${Utils.escape(a.owner_name)}</td>
-          <td><span class="${a.role === ROLES.OWNER ? 'bb' : 'ba'}">${a.role === ROLES.OWNER ? 'صاحب محل' : 'موظف'}</span></td>
-          <td><span class="${a.is_active ? 'bg' : 'br'}">${a.is_active ? 'نشط' : 'موقوف'}</span></td>
-          <td><button class="${a.is_active ? 'ibr' : 'ibg'}" onclick="AdminPanel.toggleAccount('${a.id}',${a.is_active})">${a.is_active ? 'إيقاف' : 'تفعيل'}</button></td>
-        </tr>`).join('')
-      : '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">لا يوجد مستخدمين</td></tr>'
+      ? list.map(a => `<div class="sa-row-card">
+          <div class="sa-row-info">
+            <div class="sa-row-name">${Utils.escape(a.store_name)}</div>
+            <div class="sa-row-sub">${Utils.escape(a.username)} · ${Utils.escape(a.owner_name)}</div>
+          </div>
+          <div class="sa-row-mid">
+            <span class="${a.role === ROLES.OWNER ? 'sa-badge-active' : 'sa-badge-pending'}">${a.role === ROLES.OWNER ? 'صاحب محل' : 'موظف'}</span>
+            <span class="${a.is_active ? 'sa-badge-active' : 'sa-badge-expired'}">${a.is_active ? 'نشط' : 'موقوف'}</span>
+          </div>
+          <div class="sa-row-actions">
+            <button class="${a.is_active ? 'ibr' : 'ibg'}" onclick="AdminPanel.toggleAccount('${a.id}',${a.is_active})">${a.is_active ? 'إيقاف' : 'تفعيل'}</button>
+          </div>
+        </div>`).join('')
+      : '<div style="text-align:center;padding:2rem;color:var(--g5);">لا يوجد مستخدمين</div>'
     );
   },
 
@@ -307,18 +319,22 @@ const AdminPanel = {
     const { entities: data, stores } = await callAdminFunction('loadTransferEntitiesAdmin', {});
     const storeMap = Object.fromEntries((stores || []).map(s => [s.id, s.store_name]));
     DOM.setHTML('te-list', (data || []).length
-      ? data.map(e => `<tr>
-          <td>${Utils.escape(storeMap[e.store_id] || e.store_id)}</td>
-          <td><strong>${Utils.escape(e.name)}</strong></td>
-          <td>${(e.names || []).map(n => `<span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${Utils.escape(n)}</span>`).join('')}</td>
-          <td>${Utils.escape(e.details || '-')}</td>
-          <td><span class="${e.is_active ? 'sa-badge-active' : 'sa-badge-expired'}">${e.is_active ? 'فعّال' : 'معطّل'}</span></td>
-          <td>
+      ? data.map(e => `<div class="sa-row-card" style="align-items:flex-start;">
+          <div class="sa-row-info">
+            <div class="sa-row-name">${Utils.escape(e.name)}</div>
+            <div class="sa-row-sub">${Utils.escape(storeMap[e.store_id] || e.store_id)}</div>
+            <div style="margin-top:6px;">${(e.names || []).map(n => `<span style="background:var(--pl);color:var(--pd);padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${Utils.escape(n)}</span>`).join('')}</div>
+            ${e.details ? `<div class="sa-row-sub" style="margin-top:4px;">${Utils.escape(e.details)}</div>` : ''}
+          </div>
+          <div class="sa-row-mid">
+            <span class="${e.is_active ? 'sa-badge-active' : 'sa-badge-expired'}">${e.is_active ? 'فعّال' : 'معطّل'}</span>
+          </div>
+          <div class="sa-row-actions">
             <button class="ibb" onclick="AdminPanel.editTransferEntity('${e.id}','${Utils.escape(e.name)}','${Utils.escape((e.names||[]).join('\n'))}','${Utils.escape(e.details||'')}','${e.store_id}')">تعديل</button>
             <button class="ibr" onclick="AdminPanel.deleteTransferEntity('${e.id}')">حذف</button>
-          </td>
-        </tr>`).join('')
-      : '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#94a3b8;">لا توجد جهات تحويل</td></tr>'
+          </div>
+        </div>`).join('')
+      : '<div style="text-align:center;padding:1.5rem;color:var(--g4);">لا توجد جهات تحويل</div>'
     );
   },
 
