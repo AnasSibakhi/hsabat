@@ -142,14 +142,14 @@ export const QuickSale = {
       grid.style.display = 'block';
       grid.innerHTML = `
         <div style="padding:16px;text-align:center;">
-          <div style="font-size:13px;color:#94a3b8;margin-bottom:10px;">المنتج غير موجود في المخزون</div>
+          <div style="font-size:13px;color:var(--g4);margin-bottom:10px;">المنتج غير موجود في المخزون</div>
           <button onclick="
             const bc=document.getElementById('qs-barcode-input').value.trim();
             document.getElementById('qs-product-grid').style.display='none';
             document.getElementById('qs-barcode-input').value='';
             Nav.goTo('inventory');
             setTimeout(()=>{Modal.open('m-inv');const el=document.getElementById('inb');if(el){el.value=bc;Inventory.onBarcodeInput(bc);}},300);
-          " style="background:#6366f1;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;width:100%;">
+          " style="background:var(--p);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;width:100%;">
             ➕ إضافة للمخزون
           </button>
         </div>`;
@@ -160,12 +160,12 @@ export const QuickSale = {
       const zero = p.quantity <= 0;
       const dot  = zero ? '🔴' : p.quantity <= (p.low_stock_alert || 5) ? '🟡' : '🟢';
       return `
-        <div data-id="${p.id}" class="qs-search-row" style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;${zero ? 'opacity:0.45;' : ''}">
+        <div data-id="${p.id}" class="qs-search-row" style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--g1);cursor:pointer;${zero ? 'opacity:0.45;' : ''}">
           <div style="flex:1;">
-            <div style="font-weight:700;color:#1e293b;font-size:14px;">${p.name}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${dot} ${p.quantity} ${p.unit || ''}${p.barcode ? ' · ' + p.barcode : ''}</div>
+            <div style="font-weight:700;color:var(--g9);font-size:14px;">${p.name}</div>
+            <div style="font-size:11px;color:var(--g4);margin-top:2px;">${dot} ${p.quantity} ${p.unit || ''}${p.barcode ? ' · ' + p.barcode : ''}</div>
           </div>
-          <div style="font-size:15px;font-weight:900;color:#6366f1;">₪${(p.sale_price || 0).toFixed(2)}</div>
+          <div style="font-size:15px;font-weight:900;color:var(--p);">₪${(p.sale_price || 0).toFixed(2)}</div>
         </div>`;
     }).join('');
 
@@ -175,7 +175,7 @@ export const QuickSale = {
     // event delegation — أفضل من onclick inline
     grid.querySelectorAll('.qs-search-row:not([style*="opacity:0.4"])').forEach(el => {
       el.addEventListener('click', () => QuickSale.selectFromSearch(el.dataset.id));
-      el.addEventListener('mouseover', () => el.style.background = '#f8fafc');
+      el.addEventListener('mouseover', () => el.style.background = 'var(--g0)');
       el.addEventListener('mouseout',  () => el.style.background = '');
     });
   },
@@ -231,14 +231,14 @@ export const QuickSale = {
   _productRow(p, extra = '') {
     const zero = p.quantity <= 0;
     const dot  = zero ? '🔴' : p.quantity <= (p.low_stock_alert || 5) ? '🟡' : '🟢';
-    return `<div data-id="${p.id}" class="qs-smart-row" style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;${zero ? 'opacity:0.45;pointer-events:none;' : ''}">
+    return `<div data-id="${p.id}" class="qs-smart-row" style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--g1);cursor:pointer;${zero ? 'opacity:0.45;pointer-events:none;' : ''}">
       <div style="flex:1;">
-        <div style="font-weight:700;color:#1e293b;font-size:14px;">${p.name}</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${dot} ${p.quantity} ${p.unit || ''}${extra}</div>
+        <div style="font-weight:700;color:var(--g9);font-size:14px;">${p.name}</div>
+        <div style="font-size:11px;color:var(--g4);margin-top:2px;">${dot} ${p.quantity} ${p.unit || ''}${extra}</div>
       </div>
       <div style="text-align:left;">
-        <div style="font-size:16px;font-weight:900;color:#6366f1;">₪${(p.sale_price || 0).toFixed(2)}</div>
-        ${extra ? '<div style="font-size:10px;color:#94a3b8;">' + extra + '</div>' : ''}
+        <div style="font-size:16px;font-weight:900;color:var(--p);">₪${(p.sale_price || 0).toFixed(2)}</div>
+        ${extra ? '<div style="font-size:10px;color:var(--g4);">' + extra + '</div>' : ''}
       </div>
     </div>`;
   },
@@ -251,7 +251,7 @@ export const QuickSale = {
         Modal.close(modalId);
         setTimeout(() => QuickSale.addToCart(el.dataset.id), 100);
       });
-      el.addEventListener('mouseover', () => el.style.background = '#f8fafc');
+      el.addEventListener('mouseover', () => el.style.background = 'var(--g0)');
       el.addEventListener('mouseout',  () => el.style.background = '');
     });
   },
@@ -264,7 +264,7 @@ export const QuickSale = {
     const inp = DOM.get('qs-bestsell-search'); if (inp) inp.value = '';
     el.innerHTML = list.length
       ? list.map(p => QuickSale._productRow(p, '· مبيع ' + p.sold + ' مرة')).join('')
-      : '<div style="padding:20px;text-align:center;color:#94a3b8;">لا توجد بيانات مبيعات بعد</div>';
+      : '<div style="padding:20px;text-align:center;color:var(--g4);">لا توجد بيانات مبيعات بعد</div>';
     Modal.open('m-qs-bestsell');
     QuickSale._bindSmartRows('qs-bestsell-list', 'm-qs-bestsell');
   },
@@ -290,7 +290,7 @@ export const QuickSale = {
     if (!el) return;
     el.innerHTML = list.length
       ? list.map(p => QuickSale._productRow(p)).join('')
-      : '<div style="padding:20px;text-align:center;color:#94a3b8;">لا توجد منتجات بدون باركود</div>';
+      : '<div style="padding:20px;text-align:center;color:var(--g4);">لا توجد منتجات بدون باركود</div>';
     Modal.open('m-qs-nobc');
     QuickSale._bindSmartRows('qs-nobc-list', 'm-qs-nobc');
   },
@@ -553,7 +553,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     toast.id = 'qs-not-found-toast';
     toast.style.cssText = `
       position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-      background:#1e293b;color:#fff;border-radius:14px;padding:14px 18px;
+      background:var(--g9);color:#fff;border-radius:14px;padding:14px 18px;
       z-index:999;min-width:280px;max-width:340px;text-align:center;
       box-shadow:0 8px 24px rgba(0,0,0,0.3);
       animation:fadeInUp .2s ease;
@@ -561,7 +561,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     toast.innerHTML = `
       <div style="font-size:22px;margin-bottom:6px;">❌</div>
       <div style="font-weight:800;font-size:15px;margin-bottom:4px;">المنتج غير موجود</div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;font-family:monospace;">${barcode || ''}</div>
+      <div style="font-size:12px;color:var(--g4);margin-bottom:12px;font-family:monospace;">${barcode || ''}</div>
       <button onclick="
         document.getElementById('qs-not-found-toast').remove();
         Nav.goTo('inventory');
@@ -570,11 +570,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           const el = document.getElementById('inb');
           if(el){ el.value='${barcode || ''}'; Inventory.onBarcodeInput('${barcode || ''}'); }
         }, 300);
-      " style="background:#6366f1;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
+      " style="background:var(--p);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
         ➕ إضافة للمخزون
       </button>
       <button onclick="document.getElementById('qs-not-found-toast').remove();"
-        style="background:transparent;color:#94a3b8;border:none;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;margin-top:8px;width:100%;">
+        style="background:transparent;color:var(--g4);border:none;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;margin-top:8px;width:100%;">
         إغلاق
       </button>
     `;
@@ -1166,7 +1166,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       ...matches.slice(0,8).map(c =>
         `<div class="dc-opt" data-cid="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}"
           onclick="QuickSale.selectDebtCustomerById(this.dataset.cid, this.dataset.name)">
-          <b>${escape(c.name)}</b>${c.phone ? ' — <span style=color:#94a3b8>' + c.phone + '</span>' : ''}
+          <b>${escape(c.name)}</b>${c.phone ? ' — <span style=color:var(--g4)>' + c.phone + '</span>' : ''}
         </div>`
       ),
       val.trim() ? `<div class="dc-opt" style="color:var(--p);border-top:1px solid var(--br);margin-top:4px;"
@@ -1432,8 +1432,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     const msgConfig = {
       cash:     { icon: '✅', color: 'var(--s)',  text: 'تم البيع بنجاح' },
-      transfer: { icon: '🏦', color: '#0ea5e9',  text: 'تم التحويل بنجاح' },
-      defer:    { icon: '🕐', color: '#f59e0b',  text: 'تم تسجيل الدين بنجاح' },
+      transfer: { icon: '🏦', color: 'var(--p)',  text: 'تم التحويل بنجاح' },
+      defer:    { icon: '🕐', color: 'var(--w)',  text: 'تم تسجيل الدين بنجاح' },
       partial:  { icon: '💰', color: 'var(--s)', text: 'تم البيع (دفع جزئي)' },
     };
     const msg = msgConfig[paymentType] || msgConfig.cash;
@@ -1441,18 +1441,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     const paidNow = paymentType === 'partial' ? (total - debtAmount) : 0;
 
     const extraInfo = paymentType === 'defer'
-      ? `<div style="margin-top:6px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:8px;padding:8px 12px;">
+      ? `<div style="margin-top:6px;font-size:12px;color:var(--w);background:var(--wl);border-radius:8px;padding:8px 12px;">
           👤 ${escape(custName || '-')}
           ${deferDate ? ' · 📅 السداد: ' + deferDate : ''}
           ${deferAcct ? ' · ' + deferAcct : ''}
         </div>`
       : paymentType === 'partial'
-      ? `<div style="margin-top:6px;background:#fef3c7;border-radius:8px;padding:8px 12px;">
-          <div style="font-size:12px;color:#92400e;margin-bottom:4px;">👤 ${escape(custName || '-')}</div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#166534;">
+      ? `<div style="margin-top:6px;background:var(--wl);border-radius:8px;padding:8px 12px;">
+          <div style="font-size:12px;color:var(--w);margin-bottom:4px;">👤 ${escape(custName || '-')}</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--s);">
             <span>المدفوع الآن</span><strong>₪${paidNow.toFixed(2)}</strong>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#92400e;margin-top:2px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--w);margin-top:2px;">
             <span>المتبقي كدين</span><strong>₪${debtAmount.toFixed(2)}</strong>
           </div>
         </div>`
@@ -1495,13 +1495,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 <head><meta charset="UTF-8"><title>فاتورة ${r.inv.invoice_number}</title>
 <style>body{font-family:'Cairo',Arial,sans-serif;margin:0;padding:16px;max-width:320px;margin:auto;font-size:13px;}
 .store{font-size:18px;font-weight:900;text-align:center;margin-bottom:4px;}
-.meta{text-align:center;color:#666;font-size:11px;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:10px;}
+.meta{text-align:center;color:var(--g5);font-size:11px;border-bottom:1px dashed var(--g3);padding-bottom:8px;margin-bottom:10px;}
 .row{display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;}
 table{width:100%;border-collapse:collapse;margin:10px 0;}
-th{background:#f5f5f5;padding:5px 6px;font-size:11px;text-align:right;}
-td{padding:5px 6px;border-bottom:1px solid #f0f0f0;font-size:12px;}
-.total{display:flex;justify-content:space-between;font-size:15px;font-weight:900;border-top:2px solid #111;padding-top:8px;margin-top:6px;}
-.footer{text-align:center;font-size:11px;color:#999;margin-top:10px;}
+th{background:var(--g0);padding:5px 6px;font-size:11px;text-align:right;}
+td{padding:5px 6px;border-bottom:1px solid var(--g1);font-size:12px;}
+.total{display:flex;justify-content:space-between;font-size:15px;font-weight:900;border-top:2px solid var(--g9);padding-top:8px;margin-top:6px;}
+.footer{text-align:center;font-size:11px;color:var(--g4);margin-top:10px;}
 @media print{body{padding:0;}}</style></head>
 <body>
 <div class="store">${r.store}</div>
