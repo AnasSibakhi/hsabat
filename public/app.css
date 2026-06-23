@@ -219,10 +219,17 @@ table.dt tr:hover td{background:var(--g0);}
 .qab span{font-size:11px;color:var(--g7);font-weight:600;text-align:center;line-height:1.3;}
 
 /* ── DROPDOWN OPTIONS ── */
-.dc-opt{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--g1);}
+.dc-opt{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--g1);}
 .dc-opt:last-child{border-bottom:none;}
-.dc-opt:hover{background:var(--g0);}
-.dc-opt.new{color:var(--p);font-weight:700;}
+.dc-opt:hover, .dc-opt:active{background:var(--g0);}
+.dc-opt.new{color:var(--p);font-weight:700;border-top:1px solid var(--g1);}
+.dc-opt-avatar{width:30px;height:30px;border-radius:50%;background:var(--pl);color:var(--p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.dc-opt-body{flex:1;min-width:0;}
+.dc-opt-name{font-weight:800;color:var(--g9);font-size:12.5px;}
+.dc-opt-phone{font-size:10.5px;color:var(--g5);margin-top:1px;}
+
+/* ── توحيد كل حاويات قوائم اقتراحات الأسماء بالموقع (دين، فاتورة، بيع سريع) ── */
+.cust-suggest-dropdown{display:none;position:fixed;background:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.12);z-index:99999;max-height:240px;overflow-y:auto;min-width:240px;}
 
 /* ── INV DET ROW ── */
 .inv-det-row{background:var(--g0);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;}
