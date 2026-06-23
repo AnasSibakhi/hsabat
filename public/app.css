@@ -711,7 +711,7 @@ body.dark .ni.active{background:#1e3a5f;}
 
 /* ── PURCHASES — مُجمّعة حسب المورد (Accordion) ── */
 .pur-grid{display:flex;flex-direction:column;gap:10px;}
-.sup-card{background:#fff;border:1px solid var(--br);border-radius:14px;overflow:hidden;}
+.sup-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);}
 .sup-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;}
 .sup-header:hover{background:var(--g0);}
 .sup-info{display:flex;align-items:center;gap:10px;min-width:0;}
@@ -728,7 +728,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .pur-sphone{font-size:11px;color:var(--p);}
 .pur-status{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 
-.pur-item{background:var(--g0);border-radius:10px;padding:13px 12px 10px;position:relative;overflow:hidden;}
+.pur-item{background:var(--g0);border-radius:14px;padding:13px 12px 10px;position:relative;overflow:hidden;}
 .pur-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;}
 .pur-product-name{font-size:12px;color:var(--g7);font-weight:700;}
 .pur-item-meta{font-size:10px;color:var(--g5);margin-bottom:8px;}
@@ -747,7 +747,7 @@ body.dark .ni.active{background:#1e3a5f;}
 @media (min-width:680px){.inv-grid{grid-template-columns:repeat(2,1fr);}}
 @media (min-width:1000px){.inv-grid{grid-template-columns:repeat(3,1fr);}}
 
-.inv-receipt{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);position:relative;overflow:hidden;display:flex;flex-direction:column;height:100%;}
+.inv-receipt{background:#fff;border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);position:relative;overflow:hidden;display:flex;flex-direction:column;height:100%;}
 .inv-receipt-returned{opacity:.6;}
 
 .ir-top{display:flex;justify-content:space-between;align-items:center;padding:13px 15px 0;}
@@ -805,7 +805,7 @@ body.dark .ni.active{background:#1e3a5f;}
 @media (min-width:680px){.ret-grid{grid-template-columns:repeat(2,1fr);}}
 @media (min-width:1000px){.ret-grid{grid-template-columns:repeat(3,1fr);}}
 
-.ret-card{background:#fff;border:1px solid var(--br);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;}
+.ret-card{background:#fff;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);}
 .ret-card-top{display:flex;justify-content:space-between;align-items:center;}
 .ret-card-inv{font-size:13px;font-weight:800;color:var(--g9);display:flex;align-items:center;gap:5px;}
 .ret-card-inv i{color:var(--p);font-size:14px;}
@@ -822,7 +822,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .ret-empty-state{padding:40px 20px;text-align:center;color:var(--g5);grid-column:1/-1;}
 
 /* ── صفحة الفواتير — مُجمّعة حسب الزبون (Accordion، نفس فكرة الموردين) ── */
-.cust-card{background:#fff;border:1px solid var(--br);border-radius:14px;overflow:hidden;}
+.cust-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);}
 .cust-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;}
 .cust-header:hover{background:var(--g0);}
 .cust-info{display:flex;align-items:center;gap:10px;min-width:0;}
@@ -867,7 +867,7 @@ body.dark .ni.active{background:#1e3a5f;}
 .stat-value-v2{font-size:19px;font-weight:900;letter-spacing:-.3px;color:var(--g9);}
 
 /* ── تنبيهات المخزون — كاردات جديدة ── */
-.alert-card-v2{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;border-right:3px solid;}
+.alert-card-v2{background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:8px;border-right:3px solid;}
 .alert-card-v2.out{border-color:var(--d);}
 .alert-card-v2.low{border-color:var(--w);}
 .alert-head-v2{font-size:12.5px;font-weight:800;margin-bottom:8px;}
@@ -880,8 +880,27 @@ body.dark .ni.active{background:#1e3a5f;}
 .all-good-v2{background:#fff;border-radius:14px;padding:14px;text-align:center;color:var(--s);font-weight:700;font-size:13px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
 
 /* ── ديون متأخرة بلوحة التحكم — كاردات بدل جدول ── */
-.debt-row-v2{background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.debt-row-v2{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
 .debt-row-v2-name{font-size:12.5px;font-weight:700;color:var(--g9);}
 .debt-row-v2-days{font-size:10px;color:var(--d);background:var(--dl);padding:2px 7px;border-radius:6px;margin-top:3px;display:inline-block;}
 .debt-row-v2-amount{font-size:14px;font-weight:800;color:var(--d);}
 .debt-row-v2-btn{background:var(--sl);color:var(--s);border:none;padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;}
+
+/* ── صفحة المصاريف — تصميم جديد بكاردات موحَّدة مع باقي الموقع ── */
+.stats-grid-v2.stats-3{grid-template-columns:repeat(3,1fr);}
+@media (max-width:480px){.stats-grid-v2.stats-3{grid-template-columns:1fr;}}
+
+.exp-grid{display:flex;flex-direction:column;gap:9px;}
+.exp-card{
+  background:#fff;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);
+}
+.exp-card-icon{width:38px;height:38px;border-radius:11px;background:var(--dl);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.exp-card-body{flex:1;min-width:0;}
+.exp-card-type{font-size:13px;font-weight:800;color:var(--g9);}
+.exp-card-date{font-size:11px;color:var(--g5);margin-top:1px;}
+.exp-card-notes{font-size:11px;color:var(--g5);background:var(--g0);border-radius:7px;padding:4px 9px;margin-top:5px;display:inline-block;}
+.exp-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.exp-card-amount{font-size:15px;font-weight:900;color:var(--d);}
+.exp-card-del{width:26px;height:26px;border-radius:8px;border:none;background:var(--g0);color:var(--g5);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.exp-card-del:active{transform:scale(.9);}
