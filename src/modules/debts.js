@@ -198,9 +198,7 @@ const Debts = {
     dd.style.width    = r.width + 'px';
     dd.style.maxWidth = '340px';
     dd.innerHTML = (State.customers || []).slice(0, 8).map(c =>
-      `<div class="dc-opt" data-id="${c.id}" onclick="Debts.selectCustomerById(this.dataset.id)">
-        <b>${Utils.escape(c.name)}</b>${c.phone ? ' — ' + c.phone : ''}
-      </div>`
+      Utils.customerSuggestRow(c, `onclick="Debts.selectCustomerById(this.dataset.id)"`)
     ).join('') || `<div class="dc-opt" style="color:var(--g4);">لا يوجد زبائن</div>`;
     dd.style.display = 'block';
   },
@@ -248,9 +246,7 @@ const Debts = {
 
     dd.innerHTML = [
       ...matches.map(c =>
-        `<div class="dc-opt" data-id="${c.id}" onclick="Debts.selectCustomerById(this.dataset.id)">
-          ${Utils.escape(c.name)}${c.phone ? ' — ' + c.phone : ''}
-        </div>`
+        Utils.customerSuggestRow(c, `onclick="Debts.selectCustomerById(this.dataset.id)"`)
       ),
       `<div class="dc-opt new" onclick="Debts.selectNew('${Utils.escape(val.trim())}')">+ إضافة "${Utils.escape(val.trim())}" كزبون جديد</div>`
     ].join('');
