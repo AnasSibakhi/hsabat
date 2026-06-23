@@ -701,8 +701,9 @@
      <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📶</div><div class="stat-label-v2">3 شيكل</div><div class="stat-value-v2" id="ncs3">-</div></div>
     </div>
     <div class="ph" style="margin-bottom:.5rem;"><span style="font-size:14px;font-weight:800;">سجل المبيعات</span><div class="ptabs"><button class="ptab active" onclick="NetCards.loadSales('day',this)">اليوم</button><button class="ptab" onclick="NetCards.loadSales('week',this)">الأسبوع</button><button class="ptab" onclick="NetCards.loadSales('month',this)">الشهر</button></div></div>
-    <div class="stats-grid-v2 stats-3 mb-14">
+    <div class="stats-grid-v2 mb-14" style="grid-template-columns:repeat(2,1fr);">
      <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">💰</div><div class="stat-label-v2">المبيعات</div><div class="stat-value-v2" id="ns1">-</div></div>
+     <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📈</div><div class="stat-label-v2">ربح البطاقات</div><div class="stat-value-v2" id="nc-profit">-</div></div>
      <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📶</div><div class="stat-label-v2">بطاقات مباعة</div><div class="stat-value-v2" id="ns2">-</div></div>
      <div class="stat-card-v2 red"><div class="stat-icon-v2 red">⏳</div><div class="stat-label-v2">متأخرون</div><div class="stat-value-v2" id="ns3">-</div></div>
     </div>
@@ -1198,7 +1199,15 @@
 <div class="mo" id="m-addstock"><div class="modal">
  <div class="mhdr"><span class="mtitle">إضافة مخزون بطاقات</span><button class="mclose" onclick="Modal.close('m-addstock')">✕</button></div>
  <div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="ast"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div>
- <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="asq" value="50" inputmode="numeric"></div>
+ <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="asq" value="100" inputmode="numeric" oninput="NetCards.calcStockCost()"></div>
+ <div class="fr">
+  <div class="fg"><label class="lbl">سعر الشراء (₪ للوحدة)</label><input class="inp" type="number" id="asp" inputmode="decimal" placeholder="مثال: 1" oninput="NetCards.calcStockCost()"></div>
+  <div class="fg"><label class="lbl">نسبة الخصم من المورد (%)</label><input class="inp" type="number" id="asd" inputmode="decimal" placeholder="مثال: 10" oninput="NetCards.calcStockCost()"></div>
+ </div>
+ <div style="background:var(--sl);border-radius:10px;padding:10px 14px;margin-bottom:.75rem;display:flex;justify-content:space-between;font-size:13px;">
+  <span style="color:var(--s);font-weight:700;">التكلفة الفعلية للوحدة بعد الخصم</span>
+  <strong id="ast-final-cost" style="color:var(--s);">₪0.00</strong>
+ </div>
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-addstock')">إلغاء</button><button class="btn btn-s" onclick="NetCards.addStock()">إضافة</button></div>
 </div></div>
 
