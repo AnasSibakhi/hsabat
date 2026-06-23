@@ -25,12 +25,17 @@ const NetCards = {
       const qty  = item?.quantity || 0;
       const card = DOM.get('ncs' + type);
       if (!card) return;
-      card.querySelector('.sc-v').textContent = qty + ' بطاقة';
-      if (qty <= CONFIG.lowStockThreshold) {
-        card.className = 'sc red';
+      const valEl = card.querySelector('.stat-value-v2');
+      if (valEl) valEl.textContent = qty + ' بطاقة';
+
+      const isLow = qty <= CONFIG.lowStockThreshold;
+      card.classList.remove('blue', 'amber', 'green', 'red');
+      card.classList.add(isLow ? 'red' : 'green');
+      const iconEl = card.querySelector('.stat-icon-v2');
+      if (iconEl) { iconEl.classList.remove('blue', 'amber', 'green', 'red'); iconEl.classList.add(isLow ? 'red' : 'green'); }
+
+      if (isLow) {
         alerts.push(`<div class="alert aw"><i class="ti ti-wifi-off"></i><span><strong>تنبيه:</strong> بطاقة ${type} شيكل — المتبقي ${qty} فقط</span></div>`);
-      } else {
-        card.className = 'sc green';
       }
     });
     DOM.setHTML('ncalerts', alerts.join(''));
@@ -49,15 +54,26 @@ const NetCards = {
       ? list.map(s => {
           const remaining = s.total_price - s.paid;
           const isLate    = remaining > 0 && Utils.daysSince(s.sale_date) >= CONFIG.debtLateDays;
-          return `<tr>
-            <td>${Utils.escape(s.buyer_name)}</td><td>${s.card_type}₪</td><td>${s.quantity}</td><td>₪${s.total_price.toFixed(2)}</td>
-            <td>${s.payment_type === 'full' ? '<span class="bg">كلي</span>' : '<span class="ba">جزئي</span>'}</td>
-            <td>${s.sale_date}</td>
-            <td>${isLate ? `<span class="br">متأخر ${Utils.daysSince(s.sale_date)} يوم</span>` : remaining > 0 ? `<span class="ba">باقي ₪${remaining.toFixed(2)}</span>` : '<span class="bg">مسدَّد</span>'}</td>
-            <td><button class="ibr" onclick="NetCards.deleteSale('${s.id}')">حذف</button></td>
-          </tr>`;
+          const statusHtml = isLate
+            ? `<span class="cu-status-pill late">متأخر ${Utils.daysSince(s.sale_date)} يوم</span>`
+            : remaining > 0
+            ? `<span class="cu-status-pill recent">باقي ₪${remaining.toFixed(2)}</span>`
+            : `<span class="cu-status-pill ok">✅ مسدَّد</span>`;
+
+          return `<div class="exp-card">
+            <div class="exp-card-icon" style="background:var(--pl);">📶</div>
+            <div class="exp-card-body">
+              <div class="exp-card-type">${Utils.escape(s.buyer_name)} — ${s.card_type}₪ × ${s.quantity}</div>
+              <div class="exp-card-date">${s.sale_date} · ${s.payment_type === 'full' ? 'دفع كلي' : 'دفع جزئي'}</div>
+              <div style="margin-top:5px;">${statusHtml}</div>
+            </div>
+            <div class="exp-card-right">
+              <div class="exp-card-amount" style="color:var(--p);">₪${s.total_price.toFixed(2)}</div>
+              <button class="exp-card-del" onclick="NetCards.deleteSale('${s.id}')"><i class="ti ti-trash"></i></button>
+            </div>
+          </div>`;
         }).join('')
-      : '<tr class="er"><td colspan="8">لا توجد مبيعات</td></tr>'
+      : '<div class="er" style="padding:30px;text-align:center;color:var(--g5);">لا توجد مبيعات</div>'
     );
   },
 
