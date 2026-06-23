@@ -1366,115 +1366,75 @@
   </div>
 </div></div>
 <!-- Scanner Overlay -->
-<div id="qs-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;">
-  <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
-    <div id="qs-scanner-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
-
-    <!-- Dark overlays around scan box -->
-    <div style="position:absolute;inset:0;pointer-events:none;">
-      <!-- Top -->
-      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Bottom -->
-      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Left -->
-      <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Right -->
-      <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
-
-      <!-- Scan box border -->
-      <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
-        <!-- Corner marks -->
-        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-left:4px solid var(--p);border-radius:3px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 3px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-left:4px solid var(--p);border-radius:0 0 0 3px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 0 3px 0;"></div>
-        <!-- Scan line -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),var(--pl),var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
-      </div>
+<div id="qs-scanner-overlay" class="scn-overlay">
+  <div class="scn-stage">
+    <div id="qs-scanner-container" class="scn-container"></div>
+    <div class="scn-top-bar">
+      <button class="scn-icon-btn" onclick="QuickSale.stopScanner()"><i class="ti ti-x"></i></button>
+      <button id="qs-flash-btn" class="scn-icon-btn" onclick="QuickSale.toggleFlash()"><i class="ti ti-bolt"></i></button>
     </div>
-
-    <button id="qs-flash-btn" onclick="QuickSale.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-      <i class="ti ti-bolt"></i>
-    </button>
-    <button onclick="QuickSale.stopScanner()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-      <i class="ti ti-x"></i>
-    </button>
-  </div>
-  <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
-    <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">ضع الباركود داخل المربع</p>
+    <div class="scn-box">
+      <div class="scn-glow-ring"></div>
+      <div class="scn-dot tl"></div>
+      <div class="scn-dot tr"></div>
+      <div class="scn-dot bl"></div>
+      <div class="scn-dot br"></div>
+      <div class="scn-shimmer"></div>
+    </div>
+    <div class="scn-float-card">
+      <div class="ico"><i class="ti ti-viewfinder"></i></div>
+      <span>ضع الباركود داخل المربع</span>
+    </div>
   </div>
 </div>
 
 <!-- Inventory Barcode Scanner Overlay — نفس تصميم البيع السريع -->
-<div id="inv-scanner-overlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;">
-  <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
-    <div id="inv-scanner-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
-
-    <!-- Dark overlays around scan box -->
-    <div style="position:absolute;inset:0;pointer-events:none;">
-      <!-- Top -->
-      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Bottom -->
-      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Left -->
-      <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
-      <!-- Right -->
-      <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
-
-      <!-- Scan box border -->
-      <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
-        <!-- Corner marks -->
-        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-left:4px solid var(--p);border-radius:3px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 3px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-left:4px solid var(--p);border-radius:0 0 0 3px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--p);border-right:4px solid var(--p);border-radius:0 0 3px 0;"></div>
-        <!-- Scan line -->
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p),var(--pl),var(--p),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
-      </div>
+<div id="inv-scanner-overlay" class="scn-overlay">
+  <div class="scn-stage">
+    <div id="inv-scanner-container" class="scn-container"></div>
+    <div class="scn-top-bar">
+      <button class="scn-icon-btn" onclick="Inventory.stopScanner()"><i class="ti ti-x"></i></button>
+      <button id="inv-flash-btn" class="scn-icon-btn" onclick="Inventory.toggleFlash()"><i class="ti ti-bolt"></i></button>
     </div>
-
-    <button id="inv-flash-btn" onclick="Inventory.toggleFlash()" style="position:absolute;top:14px;right:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-      <i class="ti ti-bolt"></i>
-    </button>
-    <button onclick="Inventory.stopScanner()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-      <i class="ti ti-x"></i>
-    </button>
-  </div>
-  <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
-    <p style="color:#fff;font-size:13px;margin:0;opacity:0.8;">ضع الباركود داخل المربع</p>
+    <div class="scn-box">
+      <div class="scn-glow-ring"></div>
+      <div class="scn-dot tl"></div>
+      <div class="scn-dot tr"></div>
+      <div class="scn-dot bl"></div>
+      <div class="scn-dot br"></div>
+      <div class="scn-shimmer"></div>
+    </div>
+    <div class="scn-float-card">
+      <div class="ico"><i class="ti ti-viewfinder"></i></div>
+      <span>ضع الباركود داخل المربع</span>
+    </div>
   </div>
 </div>
 
 <!-- Bulk Scan Overlay — وضع المسح المتتالي -->
-<div id="inv-bulk-overlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;">
-  <div style="position:relative;flex:1;width:100%;overflow:hidden;background:#000;">
-    <div id="inv-bulk-container" style="width:100%;height:100%;min-height:calc(100vh - 50px);"></div>
-
-    <div style="position:absolute;inset:0;pointer-events:none;">
-      <div style="position:absolute;top:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:25%;background:rgba(0,0,0,0.55);"></div>
-      <div style="position:absolute;top:25%;bottom:25%;left:0;width:3%;background:rgba(0,0,0,0.55);"></div>
-      <div style="position:absolute;top:25%;bottom:25%;right:0;width:3%;background:rgba(0,0,0,0.55);"></div>
-      <div style="position:absolute;top:25%;left:3%;right:3%;bottom:25%;border:2px solid rgba(255,255,255,0.9);border-radius:4px;">
-        <div style="position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-top:4px solid var(--s);border-left:4px solid var(--s);border-radius:3px 0 0 0;"></div>
-        <div style="position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-top:4px solid var(--s);border-right:4px solid var(--s);border-radius:0 3px 0 0;"></div>
-        <div style="position:absolute;bottom:-3px;left:-3px;width:22px;height:22px;border-bottom:4px solid var(--s);border-left:4px solid var(--s);border-radius:0 0 0 3px;"></div>
-        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-bottom:4px solid var(--s);border-right:4px solid var(--s);border-radius:0 0 3px 0;"></div>
-        <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--s),var(--sl),var(--s),transparent);animation:scan-line 1.6s ease-in-out infinite;top:0;"></div>
-      </div>
+<div id="inv-bulk-overlay" class="scn-overlay">
+  <div class="scn-stage">
+    <div id="inv-bulk-container" class="scn-container"></div>
+    <div class="scn-top-bar">
+      <button class="scn-icon-btn" onclick="Inventory.stopBulkScan()"><i class="ti ti-x"></i></button>
+      <div></div>
     </div>
-
-    <div style="position:absolute;top:14px;right:50%;transform:translateX(50%);background:rgba(16,185,129,0.9);border-radius:99px;padding:8px 18px;display:flex;align-items:center;gap:8px;">
+    <div class="scn-counter-badge">
       <i class="ti ti-check" style="color:#fff;font-size:16px;"></i>
       <span style="color:#fff;font-weight:800;font-size:14px;">تمت إضافة <span id="inv-bulk-counter">0</span></span>
     </div>
-
-    <button onclick="Inventory.stopBulkScan()" style="position:absolute;top:14px;left:14px;width:46px;height:46px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.5);border-radius:12px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-      <i class="ti ti-x"></i>
-    </button>
-  </div>
-  <div style="background:rgba(0,0,0,0.9);padding:10px;text-align:center;">
-    <p id="inv-bulk-hint" style="color:#fff;font-size:13px;margin:0;opacity:0.8;">ضع الباركود داخل المربع</p>
+    <div class="scn-box green">
+      <div class="scn-glow-ring"></div>
+      <div class="scn-dot tl"></div>
+      <div class="scn-dot tr"></div>
+      <div class="scn-dot bl"></div>
+      <div class="scn-dot br"></div>
+      <div class="scn-shimmer"></div>
+    </div>
+    <div class="scn-float-card green">
+      <div class="ico"><i class="ti ti-viewfinder"></i></div>
+      <span id="inv-bulk-hint">ضع الباركود داخل المربع</span>
+    </div>
   </div>
 </div>
 
