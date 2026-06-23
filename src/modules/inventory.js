@@ -134,14 +134,18 @@ const Inventory = {
       .limit(10);
 
     document.getElementById('prod-purchases-list').innerHTML = (purchases || []).length
-      ? purchases.map(p => `<tr>
-          <td style="color:#1e293b;font-weight:600;">${Utils.escape(p.supplier)}</td>
-          <td>${p.quantity}</td>
-          <td>₪${p.cost.toFixed(2)}</td>
-          <td style="color:var(--p);font-weight:700;">${p.sale_price ? '₪'+p.sale_price.toFixed(2) : '-'}</td>
-          <td style="color:#64748b;">${p.purchase_date}</td>
-        </tr>`).join('')
-      : '<tr class="er"><td colspan="5">لا يوجد سجل مشتريات</td></tr>';
+      ? purchases.map(p => `<div class="exp-card">
+          <div class="exp-card-icon" style="background:var(--pl);">🛒</div>
+          <div class="exp-card-body">
+            <div class="exp-card-type">${Utils.escape(p.supplier)}</div>
+            <div class="exp-card-date">${p.purchase_date} · الكمية: ${p.quantity}</div>
+          </div>
+          <div class="exp-card-right">
+            <div class="exp-card-amount" style="color:var(--g9);font-size:13px;">تكلفة ₪${p.cost.toFixed(2)}</div>
+            ${p.sale_price ? `<div style="font-size:12px;font-weight:800;color:var(--p);">بيع ₪${p.sale_price.toFixed(2)}</div>` : ''}
+          </div>
+        </div>`).join('')
+      : '<div class="er" style="padding:20px;text-align:center;color:var(--g5);">لا يوجد سجل مشتريات</div>';
 
     // سجل المبيعات
     const { data: soldItems } = await sb.from('invoice_items')
