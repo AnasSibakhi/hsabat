@@ -377,17 +377,20 @@ const Purchases = {
       const paid = p.paid_amount || 0;
       const phone = p.supplier_phone
         ? '<a href="tel:' + p.supplier_phone + '" style="color:var(--p);">' + Utils.escape(p.supplier_phone) + '</a>'
-        : '-';
-      return '<tr>'
-        + '<td style="font-weight:800;color:#1e293b;">' + Utils.escape(p.supplier) + '</td>'
-        + '<td style="color:#475569;">' + phone + '</td>'
-        + '<td style="color:#475569;">' + Utils.escape(p.product_name) + '</td>'
-        + '<td style="font-weight:600;color:#1e293b;">₪' + p.cost.toFixed(2) + '</td>'
-        + '<td style="color:var(--s);font-weight:700;">₪' + paid.toFixed(2) + '</td>'
-        + '<td style="color:var(--r);font-weight:800;">₪' + rem.toFixed(2) + '</td>'
-        + '<td style="color:#64748b;">' + p.purchase_date + '</td>'
-        + '<td><button class="ibb" onclick="Purchases.openPayModal(\'' + p.id + '\')" >تسديد</button></td>'
-        + '</tr>';
+        : '';
+      return `<div class="exp-card">
+        <div class="exp-card-icon" style="background:var(--dl);">🏭</div>
+        <div class="exp-card-body">
+          <div class="exp-card-type">${Utils.escape(p.supplier)}</div>
+          <div class="exp-card-date">${Utils.escape(p.product_name)} · ${p.purchase_date}</div>
+          ${phone ? `<div class="exp-card-notes">${phone}</div>` : ''}
+        </div>
+        <div class="exp-card-right">
+          <div class="exp-card-amount" style="color:var(--d);">₪${rem.toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--g5);">من ₪${p.cost.toFixed(2)} (مدفوع ₪${paid.toFixed(2)})</div>
+          <button class="exp-card-del" style="background:var(--sl);color:var(--s);width:auto;padding:0 10px;height:24px;font-size:10px;font-weight:700;" onclick="Purchases.openPayModal('${p.id}')">تسديد</button>
+        </div>
+      </div>`;
     }).join('');
   },
 
