@@ -58,13 +58,13 @@ const Sales = {
     const defer      = list.filter(r => [PAYMENT.DEFER, PAYMENT.PARTIAL].includes(r.payment_type)).reduce((s, r) => s + r.total, 0);
 
     DOM.setHTML('daily-report', `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div style="background:var(--sl);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--s);">إجمالي المبيعات</div><div style="font-size:18px;font-weight:800;color:var(--s);">${Utils.currency(totalSales)}</div></div>
-        <div style="background:${profit >= 0 ? 'var(--sl)' : 'var(--dl)'};border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:${profit >= 0 ? 'var(--s)' : 'var(--d)'};">صافي الربح</div><div style="font-size:18px;font-weight:800;color:${profit >= 0 ? 'var(--s)' : 'var(--d)'};">${Utils.currency(profit)}</div></div>
-        <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">نقدي</div><div style="font-size:16px;font-weight:700;">${Utils.currency(cash)}</div></div>
-        <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">تحويل</div><div style="font-size:16px;font-weight:700;">${Utils.currency(transfer)}</div></div>
-        <div style="background:var(--dl);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--d);">دين اليوم</div><div style="font-size:16px;font-weight:700;color:var(--d);">${Utils.currency(defer)}</div></div>
-        <div style="background:var(--g0);border-radius:8px;padding:10px 14px;"><div style="font-size:11px;color:var(--g5);">تكلفة البضاعة المباعة</div><div style="font-size:16px;font-weight:700;">${Utils.currency(totalCOGS)}</div></div>
+      <div class="dr-grid">
+        <div class="dr-cell" style="background:var(--sl);"><div class="dr-label" style="color:var(--s);">إجمالي المبيعات</div><div class="dr-val" style="color:var(--s);">${Utils.currency(totalSales)}</div></div>
+        <div class="dr-cell" style="background:${profit >= 0 ? 'var(--sl)' : 'var(--dl)'};"><div class="dr-label" style="color:${profit >= 0 ? 'var(--s)' : 'var(--d)'};">صافي الربح</div><div class="dr-val" style="color:${profit >= 0 ? 'var(--s)' : 'var(--d)'};">${Utils.currency(profit)}</div></div>
+        <div class="dr-cell"><div class="dr-label">نقدي</div><div class="dr-val plain">${Utils.currency(cash)}</div></div>
+        <div class="dr-cell"><div class="dr-label">تحويل</div><div class="dr-val plain">${Utils.currency(transfer)}</div></div>
+        <div class="dr-cell" style="background:var(--dl);"><div class="dr-label" style="color:var(--d);">دين اليوم</div><div class="dr-val" style="color:var(--d);">${Utils.currency(defer)}</div></div>
+        <div class="dr-cell"><div class="dr-label">تكلفة البضاعة المباعة</div><div class="dr-val plain">${Utils.currency(totalCOGS)}</div></div>
       </div>`
     );
   },
