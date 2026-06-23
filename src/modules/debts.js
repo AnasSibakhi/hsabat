@@ -164,21 +164,23 @@ const Debts = {
     };
 
     const labels = { week1: 'أسبوع', week2: 'أسبوعان', month1: 'شهر', more: '+شهرين' };
-    const colors = { week1: 'ba', week2: 'br', month1: 'br', more: 'br' };
 
     let html = '';
     Object.entries(buckets).forEach(([key, list]) => {
       if (!list.length) return;
       const totalAmt = list.reduce((s, d) => s + (d.amount - d.paid), 0);
-      html += '<div class="aging-bucket">'
-        + '<div class="aging-label"><span class="' + colors[key] + '">' + labels[key] + '</span>'
-        + '<span style="font-size:12px;color:var(--g5);margin-right:6px;">' + list.length + ' زبون — ₪' + totalAmt.toFixed(2) + '</span></div>'
-        + '<div class="aging-names">' + list.map(d => Utils.escape(d.customers?.name || '-')).join('، ') + '</div>'
-        + '</div>';
+      const colorMap = { week1: 'amber', week2: 'red', month1: 'red', more: 'red' };
+      html += `<div class="aging-bucket-v2 ${colorMap[key]}">
+        <div class="aging-bucket-v2-head">
+          <span class="aging-bucket-v2-pill">${labels[key]}</span>
+          <span class="aging-bucket-v2-meta">${list.length} زبون — ₪${totalAmt.toFixed(2)}</span>
+        </div>
+        <div class="aging-bucket-v2-names">${list.map(d => Utils.escape(d.customers?.name || '-')).join('، ')}</div>
+      </div>`;
     });
 
     const agingEl = DOM.get('d-aging');
-    if (agingEl) agingEl.innerHTML = html || '<p style="color:var(--g4);font-size:13px;">لا يوجد متأخرون</p>';
+    if (agingEl) agingEl.innerHTML = html || '<div style="padding:20px;text-align:center;color:var(--g5);font-size:13px;">✅ لا يوجد متأخرون</div>';
   },
 
   // ── Customer Search ──
