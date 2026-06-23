@@ -849,3 +849,39 @@ body.dark .ni.active{background:#1e3a5f;}
 
 /* اسم المنتج بالمشتريات يحصل على لون كهرماني خفيف للتمييز عن الفواتير */
 .page-purchase .pur-product-name{color:var(--g9);}
+
+/* ── لوحة التحكم — تصميم جديد لكاردات الإحصائيات ── */
+.stats-grid-v2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.stat-card-v2{background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);position:relative;overflow:hidden;}
+.stat-card-v2::before{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;}
+.stat-card-v2.blue::before{background:var(--p);}
+.stat-card-v2.green::before{background:var(--s);}
+.stat-card-v2.amber::before{background:var(--w);}
+.stat-card-v2.red::before{background:var(--d);}
+.stat-icon-v2{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:10px;}
+.stat-icon-v2.blue{background:var(--pl);}
+.stat-icon-v2.green{background:var(--sl);}
+.stat-icon-v2.amber{background:var(--wl);}
+.stat-icon-v2.red{background:var(--dl);}
+.stat-label-v2{font-size:11px;color:var(--g5);font-weight:700;margin-bottom:4px;}
+.stat-value-v2{font-size:19px;font-weight:900;letter-spacing:-.3px;color:var(--g9);}
+
+/* ── تنبيهات المخزون — كاردات جديدة ── */
+.alert-card-v2{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;border-right:3px solid;}
+.alert-card-v2.out{border-color:var(--d);}
+.alert-card-v2.low{border-color:var(--w);}
+.alert-head-v2{font-size:12.5px;font-weight:800;margin-bottom:8px;}
+.alert-head-v2.out{color:var(--d);}
+.alert-head-v2.low{color:var(--w);}
+.alert-chips-v2{display:flex;flex-wrap:wrap;gap:6px;}
+.chip-v2{font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;}
+.chip-v2.out{background:var(--dl);color:var(--d);}
+.chip-v2.low{background:var(--wl);color:var(--w);}
+.all-good-v2{background:#fff;border-radius:14px;padding:14px;text-align:center;color:var(--s);font-weight:700;font-size:13px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+
+/* ── ديون متأخرة بلوحة التحكم — كاردات بدل جدول ── */
+.debt-row-v2{background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.debt-row-v2-name{font-size:12.5px;font-weight:700;color:var(--g9);}
+.debt-row-v2-days{font-size:10px;color:var(--d);background:var(--dl);padding:2px 7px;border-radius:6px;margin-top:3px;display:inline-block;}
+.debt-row-v2-amount{font-size:14px;font-weight:800;color:var(--d);}
+.debt-row-v2-btn{background:var(--sl);color:var(--s);border:none;padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;}
