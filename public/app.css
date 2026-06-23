@@ -951,3 +951,20 @@ body.dark .ni.active{background:#1e3a5f;}
 .dr-label{font-size:11px;color:var(--g5);font-weight:700;}
 .dr-val{font-size:17px;font-weight:900;margin-top:3px;}
 .dr-val.plain{color:var(--g9);font-size:15px;}
+
+/* ── تقرير aging الموحَّد (صفحة الزبائن + صفحة الديون) ── */
+.card-v2{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);}
+.aging-grid-v2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.aging-cell{border-radius:14px;padding:11px 14px;}
+.aging-label{font-size:11px;font-weight:700;}
+.aging-val{font-size:16px;font-weight:900;margin-top:3px;}
+
+.aging-bucket-v2{border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+.aging-bucket-v2.amber{background:var(--wl);}
+.aging-bucket-v2.red{background:var(--dl);}
+.aging-bucket-v2-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.aging-bucket-v2-pill{font-size:11px;font-weight:800;}
+.aging-bucket-v2.amber .aging-bucket-v2-pill{color:var(--w);}
+.aging-bucket-v2.red .aging-bucket-v2-pill{color:var(--d);}
+.aging-bucket-v2-meta{font-size:11px;color:var(--g6);}
+.aging-bucket-v2-names{font-size:11.5px;color:var(--g7);line-height:1.5;}
