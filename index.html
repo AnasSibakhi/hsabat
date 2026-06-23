@@ -543,13 +543,13 @@
    <!-- SALES -->
    <div class="page" id="page-sales">
     <div class="ph"><span class="pt">المبيعات</span><div class="ptabs"><button class="ptab active" onclick="Sales.load('day',this)">اليوم</button><button class="ptab" onclick="Sales.load('week',this)">الأسبوع</button><button class="ptab" onclick="Sales.load('month',this)">الشهر</button></div></div>
-    <div class="sg c4">
-     <div class="sc blue"><div class="sc-l">إجمالي</div><div class="sc-v" id="sv1">-</div></div>
-     <div class="sc green"><div class="sc-l">عدد الفواتير</div><div class="sc-v" id="sv2">-</div></div>
-     <div class="sc amber"><div class="sc-l">متوسط الفاتورة</div><div class="sc-v" id="sv3">-</div></div>
-     <div class="sc"><div class="sc-l">نقدي</div><div class="sc-v" id="sv4">-</div></div>
-     <div class="sc blue"><div class="sc-l">تحويل</div><div class="sc-v" id="sv5">-</div></div>
-     <div class="sc red"><div class="sc-l">دين/آجل</div><div class="sc-v" id="sv6">-</div></div>
+    <div class="stats-grid-v2 mb-14" style="grid-template-columns:repeat(2,1fr);">
+     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">💰</div><div class="stat-label-v2">إجمالي</div><div class="stat-value-v2" id="sv1">-</div></div>
+     <div class="stat-card-v2 green"><div class="stat-icon-v2 green">🧾</div><div class="stat-label-v2">عدد الفواتير</div><div class="stat-value-v2" id="sv2">-</div></div>
+     <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber">📊</div><div class="stat-label-v2">متوسط الفاتورة</div><div class="stat-value-v2" id="sv3">-</div></div>
+     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">💵</div><div class="stat-label-v2">نقدي</div><div class="stat-value-v2" id="sv4">-</div></div>
+     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">🔄</div><div class="stat-label-v2">تحويل</div><div class="stat-value-v2" id="sv5">-</div></div>
+     <div class="stat-card-v2 red"><div class="stat-icon-v2 red">⏳</div><div class="stat-label-v2">دين/آجل</div><div class="stat-value-v2" id="sv6">-</div></div>
     </div>
     <div class="sec-title-lg">تقرير نهاية اليوم</div>
     <div class="card p-16" id="daily-report"></div>
@@ -703,14 +703,18 @@
    <div class="page" id="page-netcards">
     <div class="ph"><span class="pt">بطاقات الإنترنت</span><div class="flex-gap6"><button class="btn btn-o" onclick="Modal.open('m-addstock')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="Modal.open('m-netsale')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
     <div id="ncalerts"></div>
-    <div class="sg c3 mb-12">
-     <div class="sc" id="ncs1"><div class="sc-l">1 شيكل</div><div class="sc-v">-</div></div>
-     <div class="sc" id="ncs2"><div class="sc-l">2 شيكل</div><div class="sc-v">-</div></div>
-     <div class="sc" id="ncs3"><div class="sc-l">3 شيكل</div><div class="sc-v">-</div></div>
+    <div class="stats-grid-v2 stats-3 mb-14">
+     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">📶</div><div class="stat-label-v2">1 شيكل</div><div class="stat-value-v2" id="ncs1">-</div></div>
+     <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber">📶</div><div class="stat-label-v2">2 شيكل</div><div class="stat-value-v2" id="ncs2">-</div></div>
+     <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📶</div><div class="stat-label-v2">3 شيكل</div><div class="stat-value-v2" id="ncs3">-</div></div>
     </div>
     <div class="ph" style="margin-bottom:.5rem;"><span style="font-size:14px;font-weight:800;">سجل المبيعات</span><div class="ptabs"><button class="ptab active" onclick="NetCards.loadSales('day',this)">اليوم</button><button class="ptab" onclick="NetCards.loadSales('week',this)">الأسبوع</button><button class="ptab" onclick="NetCards.loadSales('month',this)">الشهر</button></div></div>
-    <div class="sg c3"><div class="sc blue"><div class="sc-l">المبيعات</div><div class="sc-v" id="ns1">-</div></div><div class="sc green"><div class="sc-l">بطاقات مباعة</div><div class="sc-v" id="ns2">-</div></div><div class="sc red"><div class="sc-l">متأخرون</div><div class="sc-v" id="ns3">-</div></div></div>
-    <div class="card mt-8"><div class="tw"><table class="dt"><thead><tr><th>المشتري</th><th>النوع</th><th>العدد</th><th>السعر</th><th>الدفع</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead><tbody id="nslist"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody></table></div></div>
+    <div class="stats-grid-v2 stats-3 mb-14">
+     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">💰</div><div class="stat-label-v2">المبيعات</div><div class="stat-value-v2" id="ns1">-</div></div>
+     <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📶</div><div class="stat-label-v2">بطاقات مباعة</div><div class="stat-value-v2" id="ns2">-</div></div>
+     <div class="stat-card-v2 red"><div class="stat-icon-v2 red">⏳</div><div class="stat-label-v2">متأخرون</div><div class="stat-value-v2" id="ns3">-</div></div>
+    </div>
+    <div id="nslist" class="exp-grid"><div class="er" style="padding:30px;text-align:center;"><span class="spin">↻</span></div></div>
    </div>
 
    <!-- EXPENSES -->
