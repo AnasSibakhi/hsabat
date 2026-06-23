@@ -123,6 +123,13 @@ const NetCards = {
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
+  async loadSupplierSuggestions() {
+    const { data } = await DB.netCardPurchases().select('supplier_name').order('created_at', { ascending: false }).limit(50);
+    const names = [...new Set((data || []).map(r => r.supplier_name).filter(Boolean))];
+    const list = DOM.get('ast-supplier-list');
+    if (list) list.innerHTML = names.map(n => `<option value="${Utils.escape(n)}"></option>`).join('');
+  },
+
   calcStockCost() {
     const price    = parseFloat(DOM.val('asp')) || 0;
     const discount = parseFloat(DOM.val('asd')) || 0;
@@ -133,13 +140,14 @@ const NetCards = {
 
   async addStock() {
     const type     = DOM.val('ast');
+    const supplier = DOM.val('ast-supplier').trim();
     const qty      = parseInt(DOM.val('asq')) || 0;
     const price    = parseFloat(DOM.val('asp')) || 0;
     const discount = parseFloat(DOM.val('asd')) || 0;
     if (qty < 1) { Notify.error('أدخل الكمية'); return; }
     const finalCost = price * (1 - discount / 100);
 
-    const { data: s } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).single();
+    const { data: s } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).maybeSingle();
     if (s) {
       // متوسط مرجّح للتكلفة لو كان فيه مخزون قديم بتكلفة مختلفة (دقة أعلى لحساب الربح)
       const oldQty  = s.quantity || 0;
@@ -149,10 +157,18 @@ const NetCards = {
     } else {
       await DB.netCardStock().insert({ store_id: State.user.id, card_type: type, quantity: qty, cost_price: finalCost });
     }
+
+    // سجل كامل لهذي دفعة الشراء بالذات، مع اسم المورد الخاص بها
+    await DB.netCardPurchases().insert({
+      store_id: State.user.id, card_type: type, supplier_name: supplier || null,
+      quantity: qty, unit_price: price, discount_pct: discount, final_cost: finalCost,
+      purchase_date: Utils.today(),
+    });
+
     Notify.success('تم إضافة المخزون' + (finalCost > 0 ? ' — التكلفة: ₪' + finalCost.toFixed(3) + '/وحدة' : ''));
     Modal.close('m-addstock');
     DOM.get('asq').value = 100;
-    DOM.clearInputs('asp', 'asd');
+    DOM.clearInputs('asp', 'asd', 'ast-supplier');
     DOM.get('ast-final-cost').textContent = '₪0.00';
     await NetCards.loadStock();
   },
