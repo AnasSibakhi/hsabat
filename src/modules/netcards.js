@@ -155,28 +155,51 @@ const NetCards = {
   },
 
   async loadSupplierSuggestions() {
-    const { data } = await DB.netCardPurchases().select('supplier_name').order('created_at', { ascending: false }).limit(50);
-    const names = [...new Set((data || []).map(r => r.supplier_name).filter(Boolean))];
+    const { data } = await DB.netCardPurchases().select('supplier_name').order('created_at', { ascending: false }).limit(100);
+    const seen = new Map();
+    (data || []).forEach(r => {
+      const raw = (r.supplier_name || '').trim();
+      if (!raw) return;
+      const normalized = raw.replace(/\s+/g, ' ').toLowerCase();
+      if (!seen.has(normalized)) seen.set(normalized, raw); // أول ظهور (الأحدث، بسبب الترتيب) يحدد الشكل المعروض
+    });
+    const names = [...seen.values()];
     const list = DOM.get('ast-supplier-list');
     if (list) list.innerHTML = names.map(n => `<option value="${Utils.escape(n)}"></option>`).join('');
   },
 
+  autofillPrice() {
+    const type = DOM.val('ast');
+    DOM.get('asp').value = type;
+    NetCards.calcStockCost();
+  },
+
   calcStockCost() {
+    const type     = DOM.val('ast');
     const price    = parseFloat(DOM.val('asp')) || 0;
     const discount = parseFloat(DOM.val('asd')) || 0;
-    const finalCost = price * (1 - discount / 100);
+    const multiplier = parseInt(type) || 1;
+    const costPerCard = price * (1 - discount / 100);
+    const costPerUnit = costPerCard / multiplier;
     const el = DOM.get('ast-final-cost');
-    if (el) el.textContent = '₪' + finalCost.toFixed(3);
+    if (el) el.textContent = '₪' + costPerCard.toFixed(3) + ' للبطاقة (₪' + costPerUnit.toFixed(3) + ' للوحدة بالمخزون)';
   },
 
   async addStock() {
-    const type     = DOM.val('ast');
-    const supplier = DOM.val('ast-supplier').trim();
-    const qty      = parseInt(DOM.val('asq')) || 0;
-    const price    = parseFloat(DOM.val('asp')) || 0;
-    const discount = parseFloat(DOM.val('asd')) || 0;
-    if (qty < 1) { Notify.error('أدخل الكمية'); return; }
-    const finalCost = price * (1 - discount / 100);
+    const type       = DOM.val('ast');
+    const supplier   = DOM.val('ast-supplier').trim();
+    const enteredQty = parseInt(DOM.val('asq')) || 0;
+    const price      = parseFloat(DOM.val('asp')) || 0;
+    const discount   = parseFloat(DOM.val('asd')) || 0;
+    if (enteredQty < 1) { Notify.error('أدخل الكمية'); return; }
+
+    // كل بطاقة من نوع "2 شيكل" أو "3 شيكل" تساوي فعلياً 2 أو 3 وحدات بالمخزون — تُضرَب تلقائياً عند الشراء
+    const multiplier = parseInt(type) || 1;
+    const qty = enteredQty * multiplier;
+
+    // تكلفة البطاقة الواحدة (بعد الخصم)، مقسومة على عدد الوحدات بداخلها = تكلفة الوحدة الواحدة الحقيقية بالمخزون
+    const costPerCard = price * (1 - discount / 100);
+    const finalCost    = costPerCard / multiplier;
 
     const { data: s } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).maybeSingle();
     if (s) {
@@ -189,7 +212,7 @@ const NetCards = {
       await DB.netCardStock().insert({ store_id: State.user.id, card_type: type, quantity: qty, cost_price: finalCost });
     }
 
-    // سجل كامل لهذي دفعة الشراء بالذات، مع اسم المورد الخاص بها
+    // سجل كامل لهذي دفعة الشراء بالذات، مع اسم المورد الخاص بها (الكمية المسجَّلة هي الفعلية بعد الضرب)
     await DB.netCardPurchases().insert({
       store_id: State.user.id, card_type: type, supplier_name: supplier || null,
       quantity: qty, remaining_qty: qty, unit_price: price, discount_pct: discount, final_cost: finalCost,
@@ -199,7 +222,8 @@ const NetCards = {
     Notify.success('تم إضافة المخزون' + (finalCost > 0 ? ' — التكلفة: ₪' + finalCost.toFixed(3) + '/وحدة' : ''));
     Modal.close('m-addstock');
     DOM.get('asq').value = 100;
-    DOM.clearInputs('asp', 'asd', 'ast-supplier');
+    DOM.clearInputs('asd', 'ast-supplier');
+    NetCards.autofillPrice();
     DOM.get('ast-final-cost').textContent = '₪0.00';
     await NetCards.loadStock();
   },
