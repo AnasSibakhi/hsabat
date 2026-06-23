@@ -271,20 +271,11 @@
 
     <!-- إحصائيات اليوم -->
     <div class="sec-title">📊 إحصائيات اليوم</div>
-    <div class="sg c4" class="mb-14">
+    <div class="sg c4 mb-14">
      <div class="sc blue"  onclick="Nav.goTo('invoices')"  style="cursor:pointer;"><div class="sc-l">مبيعات اليوم</div><div class="sc-v" id="hs1">-</div></div>
      <div class="sc green" style="cursor:default;">        <div class="sc-l">ربح اليوم</div>    <div class="sc-v" id="hs-profit">-</div></div>
      <div class="sc amber" onclick="Nav.goTo('invoices')"  style="cursor:pointer;"><div class="sc-l">عدد الفواتير</div><div class="sc-v" id="hs-invoices">-</div></div>
      <div class="sc red"   onclick="Nav.goTo('inventory')" style="cursor:pointer;"><div class="sc-l">إجمالي الديون</div><div class="sc-v" id="hs2">-</div></div>
-    </div>
-
-    <!-- إجراءات سريعة -->
-    <div class="sec-title-lg">إجراءات سريعة</div>
-    <div class="qa">
-     <div class="qab" onclick="Nav.goTo('quicksale')"><i class="ti ti-bolt"></i><span>بيع سريع</span></div>
-     <div class="qab" onclick="Modal.open('m-invoice');Invoices.initModal()"><i class="ti ti-receipt"></i><span>فاتورة</span></div>
-     <div class="qab" onclick="Debts.openModal()"><i class="ti ti-plus"></i><span>دين جديد</span></div>
-     
     </div>
 
     <!-- المنتجات الناقصة والمنتهية -->
@@ -808,8 +799,6 @@
 <!-- Add Menu -->
 <div id="add-menu-overlay" onclick="closeAddMenu()" style="display:none;position:fixed;inset:0;z-index:299;"></div>
 <div id="add-menu" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;min-width:220px;border:1px solid var(--br);">
-  <button onclick="closeAddMenu();Modal.open('m-invoice');Invoices.initModal()" class="add-menu-item"><i class="ti ti-receipt" style="color:var(--p);"></i> فاتورة جديدة</button>
-  
   <button onclick="closeAddMenu();Modal.open('m-inv')" class="add-menu-item"><i class="ti ti-box" style="color:var(--w);"></i> صنف جديد</button>
   <button onclick="closeAddMenu();Modal.open('m-expense')" class="add-menu-item"><i class="ti ti-cash" style="color:#0e9f6e;"></i> مصروف جديد</button>
 </div>
