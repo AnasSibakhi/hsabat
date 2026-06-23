@@ -373,7 +373,7 @@ const Inventory = {
   _openScanner(targetId, returnModal) {
     const overlay   = document.getElementById('inv-scanner-overlay');
     const container = document.getElementById('inv-scanner-container');
-    const hintEl    = document.querySelector('#inv-scanner-overlay p');
+    const hintEl    = document.querySelector('#inv-scanner-overlay .scn-float-card span');
 
     if (hintEl)    hintEl.textContent = 'ضع الباركود داخل المربع';
     if (overlay)   overlay.style.display = 'flex';
