@@ -114,11 +114,11 @@ const Inventory = {
     // حالة المخزون
     const statusEl = document.getElementById('prod-status-badge');
     if (item.quantity <= 0)
-      statusEl.innerHTML = '<span style="background:#fee2e2;color:#dc2626;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🔴 نفد</span>';
+      statusEl.innerHTML = '<span style="background:var(--dl);color:var(--d);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🔴 نفد</span>';
     else if (item.quantity <= (item.low_stock_alert || 5))
-      statusEl.innerHTML = '<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟡 منخفض</span>';
+      statusEl.innerHTML = '<span style="background:var(--wl);color:var(--w);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟡 منخفض</span>';
     else
-      statusEl.innerHTML = '<span style="background:#dcfce7;color:#16a34a;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟢 متوفر</span>';
+      statusEl.innerHTML = '<span style="background:var(--sl);color:var(--s);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;">🟢 متوفر</span>';
 
     // زر الطباعة
     const printBtn = document.getElementById('prod-print-btn');
@@ -165,12 +165,16 @@ const Inventory = {
       totalRevenue += price * qty;
       totalProfit  += profit;
       const inv    = it.invoices;
-      salesRows.push(`<tr>
-        <td style="color:var(--p);font-weight:700;">${inv?.invoice_number || '#' + (inv?.id?.slice(-4) || '-')}</td>
-        <td>${qty}</td>
-        <td style="color:var(--s);font-weight:700;">₪${price.toFixed(2)}</td>
-        <td style="color:#64748b;">${inv?.invoice_date || '-'}</td>
-      </tr>`);
+      salesRows.push(`<div class="exp-card">
+        <div class="exp-card-icon" style="background:var(--pl);">🧾</div>
+        <div class="exp-card-body">
+          <div class="exp-card-type" style="color:var(--p);">${inv?.invoice_number || '#' + (inv?.id?.slice(-4) || '-')}</div>
+          <div class="exp-card-date">${inv?.invoice_date || '-'} · الكمية: ${qty}</div>
+        </div>
+        <div class="exp-card-right">
+          <div class="exp-card-amount" style="color:var(--s);">₪${price.toFixed(2)}</div>
+        </div>
+      </div>`);
     });
 
     document.getElementById('prod-total-sold').textContent    = totalSold + ' وحدة';
@@ -178,7 +182,7 @@ const Inventory = {
     document.getElementById('prod-total-profit').textContent  = '₪' + totalProfit.toFixed(2);
     document.getElementById('prod-sales-list').innerHTML      = salesRows.length
       ? salesRows.join('')
-      : '<tr class="er"><td colspan="4">لا يوجد مبيعات</td></tr>';
+      : '<div class="er" style="padding:20px;text-align:center;color:var(--g5);">لا يوجد مبيعات</div>';
 
     // ── FIFO: طبقات المخزون ──
     const batchesSection = document.getElementById('prod-fifo-section');
@@ -192,7 +196,7 @@ const Inventory = {
             totalVal += val;
             return `<tr>
               <td style="font-weight:700;color:var(--p);">طبقة ${i + 1}</td>
-              <td style="color:#64748b;">${b.purchase_date}</td>
+              <td style="color:var(--g5);">${b.purchase_date}</td>
               <td style="font-weight:700;">${b.quantity_remaining}</td>
               <td style="color:var(--d);font-weight:700;">₪${b.cost_price.toFixed(2)}</td>
               <td style="color:var(--s);font-weight:700;">₪${val.toFixed(2)}</td>
@@ -318,9 +322,9 @@ const Inventory = {
       <meta charset="UTF-8">
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
       <style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Cairo,sans-serif;}
-      .label{text-align:center;padding:16px;border:1px dashed #ccc;border-radius:8px;}
-      .name{font-size:13px;font-weight:700;margin-bottom:6px;color:#1e293b;}
-      .price{font-size:15px;font-weight:900;color:#6366f1;margin-top:6px;}
+      .label{text-align:center;padding:16px;border:1px dashed var(--g3);border-radius:8px;}
+      .name{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--g9);}
+      .price{font-size:15px;font-weight:900;color:var(--p);margin-top:6px;}
       </style></head><body>
       <div class="label">
         <div class="name">${Utils.escape(item.name)}</div>
