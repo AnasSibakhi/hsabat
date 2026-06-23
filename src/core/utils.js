@@ -60,3 +60,15 @@ export const formatDate = (dateStr) =>
 /** Current time as HH:MM AM/PM */
 export const currentTime = () =>
   new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+/** صف موحَّد لقوائم اقتراحات الزبائن (دين، فاتورة، بيع سريع) — صورة رمزية + اسم + جوال */
+export const customerSuggestRow = (c, onclickAttr) => {
+  const initials = (c.name || '').trim().slice(0, 2);
+  return `<div class="dc-opt" data-id="${c.id}" data-cid="${c.id}" ${onclickAttr}>
+    <div class="dc-opt-avatar">${escape(initials)}</div>
+    <div class="dc-opt-body">
+      <div class="dc-opt-name">${escape(c.name)}</div>
+      ${c.phone ? `<div class="dc-opt-phone">${escape(c.phone)}</div>` : ''}
+    </div>
+  </div>`;
+};
