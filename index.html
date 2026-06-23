@@ -693,12 +693,12 @@
 
    <!-- NET CARDS -->
    <div class="page" id="page-netcards">
-    <div class="ph"><span class="pt">بطاقات الإنترنت</span><div class="flex-gap6"><button class="btn btn-o" onclick="Modal.open('m-addstock')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="Modal.open('m-netsale')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
+    <div class="ph"><span class="pt">بطاقات الإنترنت</span><div class="flex-gap6"><button class="btn btn-o" onclick="Modal.open('m-addstock');NetCards.loadSupplierSuggestions()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="Modal.open('m-netsale')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
     <div id="ncalerts"></div>
-    <div class="stats-grid-v2 stats-3 mb-14">
-     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">📶</div><div class="stat-label-v2">1 شيكل</div><div class="stat-value-v2" id="ncs1">-</div></div>
-     <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber">📶</div><div class="stat-label-v2">2 شيكل</div><div class="stat-value-v2" id="ncs2">-</div></div>
-     <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📶</div><div class="stat-label-v2">3 شيكل</div><div class="stat-value-v2" id="ncs3">-</div></div>
+    <div class="nc-square-grid mb-14">
+     <div class="stat-card-v2 nc-square blue"><div class="stat-icon-v2 blue">📶</div><div class="stat-label-v2">1 شيكل</div><div class="stat-value-v2" id="ncs1">-</div></div>
+     <div class="stat-card-v2 nc-square amber"><div class="stat-icon-v2 amber">📶</div><div class="stat-label-v2">2 شيكل</div><div class="stat-value-v2" id="ncs2">-</div></div>
+     <div class="stat-card-v2 nc-square green"><div class="stat-icon-v2 green">📶</div><div class="stat-label-v2">3 شيكل</div><div class="stat-value-v2" id="ncs3">-</div></div>
     </div>
     <div class="ph" style="margin-bottom:.5rem;"><span style="font-size:14px;font-weight:800;">سجل المبيعات</span><div class="ptabs"><button class="ptab active" onclick="NetCards.loadSales('day',this)">اليوم</button><button class="ptab" onclick="NetCards.loadSales('week',this)">الأسبوع</button><button class="ptab" onclick="NetCards.loadSales('month',this)">الشهر</button></div></div>
     <div class="stats-grid-v2 mb-14" style="grid-template-columns:repeat(2,1fr);">
@@ -1199,6 +1199,7 @@
 <div class="mo" id="m-addstock"><div class="modal">
  <div class="mhdr"><span class="mtitle">إضافة مخزون بطاقات</span><button class="mclose" onclick="Modal.close('m-addstock')">✕</button></div>
  <div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="ast"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div>
+ <div class="fg"><label class="lbl">اسم صاحب الشبكة</label><input class="inp" id="ast-supplier" placeholder="اسم المورد..." list="ast-supplier-list"><datalist id="ast-supplier-list"></datalist></div>
  <div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="asq" value="100" inputmode="numeric" oninput="NetCards.calcStockCost()"></div>
  <div class="fr">
   <div class="fg"><label class="lbl">سعر الشراء (₪ للوحدة)</label><input class="inp" type="number" id="asp" inputmode="decimal" placeholder="مثال: 1" oninput="NetCards.calcStockCost()"></div>
