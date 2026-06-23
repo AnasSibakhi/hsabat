@@ -417,7 +417,7 @@
 
     <!-- Aging Report -->
     <div class="sec-title mb-8" style="margin-top:.5rem;">📊 تقرير التأخر</div>
-    <div class="card p-16" id="cu-aging"><span class="spin">↻</span></div>
+    <div class="card-v2 p-16" id="cu-aging"><span class="spin">↻</span></div>
    </div>
    <!-- DEBTS -->
    <div class="page" id="page-debts">
@@ -454,7 +454,7 @@
 
     <!-- Aging Report -->
     <div class="sec-title" style="margin-bottom:.5rem;margin-top:.5rem;">📊 تقرير التأخر</div>
-    <div class="card p-16" id="d-aging">
+    <div class="card-v2 p-16" id="d-aging">
       <span class="spin">↻</span>
     </div>
    </div>
@@ -611,43 +611,38 @@
       </div>
 
       <!-- الأسعار والكمية -->
-      <div class="sg c2" style="margin-bottom:10px;">
-        <div class="mini-stat" style="border:2px solid var(--pl);">
-          <div class="mini-stat-label">سعر البيع الحالي</div>
-          <div id="prod-sale-price" class="mini-stat-val" style="color:var(--p);font-size:22px;"></div>
+      <div class="stats-grid-v2 mb-10" style="grid-template-columns:1fr 1fr;">
+        <div class="stat-card-v2 blue">
+          <div class="stat-label-v2">سعر البيع الحالي</div>
+          <div id="prod-sale-price" class="stat-value-v2" style="color:var(--p);font-size:22px;"></div>
         </div>
-        <div class="mini-stat">
-          <div class="mini-stat-label">سعر التكلفة</div>
-          <div id="prod-cost-price" class="mini-stat-val c-text"></div>
+        <div class="stat-card-v2">
+          <div class="stat-label-v2">سعر التكلفة</div>
+          <div id="prod-cost-price" class="stat-value-v2"></div>
         </div>
       </div>
-      <div class="sg c2">
-        <div class="mini-stat">
-          <div class="mini-stat-label">الكمية المتوفرة</div>
-          <div id="prod-qty" class="mini-stat-val c-dark"></div>
+      <div class="stats-grid-v2" style="grid-template-columns:1fr 1fr;">
+        <div class="stat-card-v2">
+          <div class="stat-label-v2">الكمية المتوفرة</div>
+          <div id="prod-qty" class="stat-value-v2"></div>
         </div>
-        <div class="mini-stat">
-          <div class="mini-stat-label">هامش الربح</div>
-          <div id="prod-margin" class="mini-stat-val c-success"></div>
+        <div class="stat-card-v2 green">
+          <div class="stat-label-v2">هامش الربح</div>
+          <div id="prod-margin" class="stat-value-v2" style="color:var(--s);"></div>
         </div>
       </div>
     </div>
 
     <!-- إحصائيات سريعة -->
-    <div class="sg c3 mb-12">
-      <div class="card prod-kpi text-center p-12"><div class="info-label">إجمالي المبيع</div><div id="prod-total-sold" class="info-value c-primary">-</div></div>
-      <div class="card prod-kpi text-center p-12"><div class="info-label">إجمالي الإيراد</div><div id="prod-total-revenue" class="info-value c-success">-</div></div>
-      <div class="card prod-kpi text-center p-12"><div class="info-label">إجمالي الربح</div><div id="prod-total-profit" class="info-value" style="color:#059669;">-</div></div>
+    <div class="stats-grid-v2 stats-3 mb-14">
+      <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">📦</div><div class="stat-label-v2">إجمالي المبيع</div><div id="prod-total-sold" class="stat-value-v2" style="color:var(--p);">-</div></div>
+      <div class="stat-card-v2 green"><div class="stat-icon-v2 green">💰</div><div class="stat-label-v2">إجمالي الإيراد</div><div id="prod-total-revenue" class="stat-value-v2" style="color:var(--s);">-</div></div>
+      <div class="stat-card-v2 green"><div class="stat-icon-v2 green">📈</div><div class="stat-label-v2">إجمالي الربح</div><div id="prod-total-profit" class="stat-value-v2" style="color:var(--s);">-</div></div>
     </div>
 
     <!-- سجل المشتريات -->
     <div class="sec-title mb-8">📦 سجل المشتريات</div>
-    <div class="card mb-12">
-      <div class="tw"><table class="dt">
-        <thead><tr><th>المورد</th><th>الكمية</th><th>التكلفة</th><th>سعر البيع</th><th>التاريخ</th></tr></thead>
-        <tbody id="prod-purchases-list"><tr class="er"><td colspan="5">لا يوجد</td></tr></tbody>
-      </table></div>
-    </div>
+    <div id="prod-purchases-list" class="exp-grid"><div class="er" style="padding:20px;text-align:center;color:var(--g5);">لا يوجد</div></div>
 
     <!-- سجل المبيعات -->
     <div class="sec-title mb-8">🧾 آخر المبيعات</div>
@@ -687,14 +682,11 @@
 
     <!-- ديون الموردين -->
     <div id="pur-section-debts" style="display:none;">
-     <div class="sg c2 mb-14">
-      <div class="sc red"><div class="sc-l">إجمالي ديون الموردين</div><div class="sc-v" id="sup-debt-total">-</div></div>
-      <div class="sc green"><div class="sc-l">إجمالي المدفوع</div><div class="sc-v" id="sup-debt-paid">-</div></div>
+     <div class="stats-grid-v2 mb-14" style="grid-template-columns:1fr 1fr;">
+      <div class="stat-card-v2 red"><div class="stat-icon-v2 red">⏳</div><div class="stat-label-v2">إجمالي ديون الموردين</div><div class="stat-value-v2" id="sup-debt-total">-</div></div>
+      <div class="stat-card-v2 green"><div class="stat-icon-v2 green">✅</div><div class="stat-label-v2">إجمالي المدفوع</div><div class="stat-value-v2" id="sup-debt-paid">-</div></div>
      </div>
-     <div class="card"><div class="tw"><table class="dt">
-      <thead><tr><th>المورد</th><th>الجوال</th><th>البضاعة</th><th>الكلي</th><th>المدفوع</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
-      <tbody id="sup-debt-list"><tr class="er"><td colspan="8"><span class="spin">↻</span></td></tr></tbody>
-     </table></div></div>
+     <div id="sup-debt-list" class="exp-grid"><div class="er" style="padding:30px;text-align:center;"><span class="spin">↻</span></div></div>
     </div>
 
    </div>
@@ -736,10 +728,10 @@
      <div class="profit-main" id="profit-main">-</div>
      <div class="profit-margin" id="profit-margin-label">هامش الربح: -</div>
     </div>
-    <div class="sg c3 mb-12">
-     <div class="sc blue"><div class="sc-l">إجمالي المبيعات</div><div class="sc-v" id="r-sales">-</div></div>
-     <div class="sc red"><div class="sc-l">تكلفة البضاعة (COGS)</div><div class="sc-v" id="r-cogs">-</div></div>
-     <div class="sc amber"><div class="sc-l">المصاريف التشغيلية</div><div class="sc-v" id="r-opex">-</div></div>
+    <div class="stats-grid-v2 stats-3 mb-14">
+     <div class="stat-card-v2 blue"><div class="stat-icon-v2 blue">💰</div><div class="stat-label-v2">إجمالي المبيعات</div><div class="stat-value-v2" id="r-sales">-</div></div>
+     <div class="stat-card-v2 red"><div class="stat-icon-v2 red">📦</div><div class="stat-label-v2">تكلفة البضاعة (COGS)</div><div class="stat-value-v2" id="r-cogs">-</div></div>
+     <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber">🧾</div><div class="stat-label-v2">المصاريف التشغيلية</div><div class="stat-value-v2" id="r-opex">-</div></div>
     </div>
     <div class="card mb-12"><div class="p-16">
      <div class="sec-title-sm mb-8">📐 المعادلة</div>
