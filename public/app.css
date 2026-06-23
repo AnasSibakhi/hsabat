@@ -944,3 +944,10 @@ body.dark .ni.active{background:#1e3a5f;}
 .cd-inv-num{font-size:12.5px;font-weight:800;color:var(--g9);}
 .cd-inv-date{font-size:10.5px;color:var(--g5);margin-top:2px;}
 .cd-inv-amount{font-size:14px;font-weight:900;color:var(--p);}
+
+/* ── تقرير نهاية اليوم — صفحة المبيعات ── */
+.dr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dr-cell{background:var(--g0);border-radius:14px;padding:11px 14px;}
+.dr-label{font-size:11px;color:var(--g5);font-weight:700;}
+.dr-val{font-size:17px;font-weight:900;margin-top:3px;}
+.dr-val.plain{color:var(--g9);font-size:15px;}
