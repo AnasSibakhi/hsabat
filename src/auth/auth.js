@@ -18,11 +18,16 @@ import { Notify }       from '../core/notify.js';
 const Loading = {
   show() {
     const el = document.getElementById('loading-wrap');
-    if (el) { el.style.display = 'flex'; }
+    if (!el) return;
+    el.style.display = 'flex';
+    el.classList.add('fade-out');           // يبدأ شفافاً
+    requestAnimationFrame(() => el.classList.remove('fade-out')); // ثم يتلاشى للظهور الكامل
   },
   hide() {
     const el = document.getElementById('loading-wrap');
-    if (el) el.style.display = 'none';
+    if (!el) return;
+    el.classList.add('fade-out');            // يتلاشى للاختفاء أولاً
+    setTimeout(() => { el.style.display = 'none'; }, 350); // ثم يُخفى فعلياً بعد اكتمال التلاشي
   },
 };
 
@@ -67,14 +72,18 @@ export const Auth = {
       if (error) throw error;
       if (!data?.session) throw new Error('No session returned');
 
-      // Show loading screen before booting
+      // Show loading screen before booting — بانتقال ناعم بدل القطع الفوري
+      const authEl = DOM.get('auth-wrap');
+      if (authEl) authEl.classList.add('fade-out');
+      await new Promise(resolve => setTimeout(resolve, 280));
+      authEl?.classList.add('hidden');
       Loading.show();
-      DOM.get('auth-wrap')?.classList.add('hidden');
 
       await Auth._bootFromSession(data.session);
     } catch (err) {
       Loading.hide();
-      DOM.get('auth-wrap')?.classList.remove('hidden');
+      const authEl2 = DOM.get('auth-wrap');
+      if (authEl2) { authEl2.classList.remove('hidden'); authEl2.classList.remove('fade-out'); }
       const msg = err.message?.includes('Invalid login credentials')
         ? 'البريد أو كلمة المرور غير صحيحة'
         : err.message?.includes('Email not confirmed')
