@@ -904,3 +904,36 @@ body.dark .ni.active{background:#1e3a5f;}
 .exp-card-amount{font-size:15px;font-weight:900;color:var(--d);}
 .exp-card-del{width:26px;height:26px;border-radius:8px;border:none;background:var(--g0);color:var(--g5);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .exp-card-del:active{transform:scale(.9);}
+
+/* ── صفحة الزبائن — قائمة عمودية احترافية جديدة ── */
+.cu-list-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04),0 3px 10px rgba(15,23,42,.05);}
+.cu-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--g1);cursor:pointer;transition:.1s;}
+.cu-row:first-child{border-top:none;}
+.cu-row:active{background:var(--g0);}
+.cu-row-info{flex:1;min-width:0;}
+.cu-row-name{font-size:13.5px;font-weight:800;color:var(--g9);}
+.cu-row-debt-line{font-size:11px;color:var(--d);font-weight:700;margin-top:2px;}
+.cu-row-phone{font-size:11px;color:var(--g5);margin-top:2px;}
+.cu-row-status{flex-shrink:0;}
+.cu-status-pill{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.cu-status-pill.late{background:var(--dl);color:var(--d);}
+.cu-status-pill.recent{background:var(--wl);color:var(--w);}
+.cu-status-pill.ok{background:var(--sl);color:var(--s);}
+.cu-row-chev{color:var(--g4);font-size:14px;flex-shrink:0;}
+
+/* ── موديل تفاصيل الزبون ── */
+.cd-tabs{display:flex;gap:6px;margin:12px 0;background:var(--g0);border-radius:10px;padding:4px;}
+.cd-tab{flex:1;padding:8px;border:none;background:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12.5px;font-weight:700;color:var(--g5);cursor:pointer;}
+.cd-tab.active{background:#fff;color:var(--p);box-shadow:0 1px 3px rgba(15,23,42,.08);}
+.cd-panel{max-height:320px;overflow-y:auto;}
+.cd-empty{padding:30px;text-align:center;color:var(--g5);font-size:13px;}
+
+.cd-debt-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--g0);border-radius:10px;margin-bottom:7px;}
+.cd-debt-amount{font-size:14px;font-weight:900;color:var(--d);}
+.cd-debt-date{font-size:10.5px;color:var(--g5);margin-top:2px;}
+.cd-debt-notes{font-size:10.5px;color:var(--g5);margin-top:3px;}
+
+.cd-inv-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--g0);border-radius:10px;margin-bottom:7px;}
+.cd-inv-num{font-size:12.5px;font-weight:800;color:var(--g9);}
+.cd-inv-date{font-size:10.5px;color:var(--g5);margin-top:2px;}
+.cd-inv-amount{font-size:14px;font-weight:900;color:var(--p);}
