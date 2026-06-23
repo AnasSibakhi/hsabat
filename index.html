@@ -693,7 +693,7 @@
 
    <!-- NET CARDS -->
    <div class="page" id="page-netcards">
-    <div class="ph"><span class="pt">بطاقات الإنترنت</span><div class="flex-gap6"><button class="btn btn-o" onclick="Modal.open('m-addstock');NetCards.loadSupplierSuggestions()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="Modal.open('m-netsale')" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
+    <div class="ph"><span class="pt">بطاقات الإنترنت</span><div class="flex-gap6"><button class="btn btn-o" onclick="Modal.open('m-addstock');NetCards.loadSupplierSuggestions()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-package"></i> مخزون</button><button class="btn btn-s" onclick="Modal.open('m-netsale');NetCards.loadSupplierBatches()" style="font-size:12px;padding:7px 10px;"><i class="ti ti-plus"></i> بيع</button></div></div>
     <div id="ncalerts"></div>
     <div class="nc-square-grid mb-14">
      <div class="stat-card-v2 nc-square blue"><div class="stat-icon-v2 blue">📶</div><div class="stat-label-v2">1 شيكل</div><div class="stat-value-v2" id="ncs1">-</div></div>
@@ -1189,7 +1189,8 @@
 <div class="mo" id="m-netsale"><div class="modal">
  <div class="mhdr"><span class="mtitle">بيع بطاقة</span><button class="mclose" onclick="Modal.close('m-netsale')">✕</button></div>
  <div class="fg"><label class="lbl">اسم المشتري *</label><input class="inp" id="nsb"></div>
- <div class="fr"><div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="nst" onchange="NetCards.calcTotal()"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div><div class="fg"><label class="lbl">العدد</label><input class="inp" type="number" id="nsq" value="1" oninput="NetCards.calcTotal()" inputmode="numeric"></div></div>
+ <div class="fr"><div class="fg"><label class="lbl">نوع البطاقة</label><select class="inp" id="nst" onchange="NetCards.calcTotal();NetCards.loadSupplierBatches()"><option value="1">1 شيكل</option><option value="2">2 شيكل</option><option value="3">3 شيكل</option></select></div><div class="fg"><label class="lbl">العدد</label><input class="inp" type="number" id="nsq" value="1" oninput="NetCards.calcTotal()" inputmode="numeric"></div></div>
+ <div class="fg"><label class="lbl">اشترِ من مخزون مورد *</label><select class="inp" id="ns-supplier"><option value="">جاري التحميل...</option></select></div>
  <div style="display:flex;justify-content:space-between;background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:14px;"><span>المجموع:</span><strong id="nstotal">₪ 1</strong></div>
  <div class="fg"><label class="lbl">الدفع</label><div class="flex-gap8"><label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="nsp" value="full" checked> كلي</label><label style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--br);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;"><input type="radio" name="nsp" value="partial"> جزئي</label></div></div>
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-netsale')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('sell-netcard', () => NetCards.sell(), this)">تأكيد</button></div>
