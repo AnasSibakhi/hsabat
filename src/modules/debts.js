@@ -572,7 +572,7 @@ const Debts = {
       // تحديث لايف — بدون إعادة تحميل كاملة
       const newRem = debt.amount - newPaid;
 
-      if (window.State?.currentPage === 'customers') {
+      if (State.currentPage === 'customers') {
         // حدّث بطاقة الزبون مباشرة
         const debtRow = document.querySelector(`[data-debt-id="${id}"]`);
         if (debtRow) {
