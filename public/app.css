@@ -886,24 +886,51 @@ body.dark .ni.active{background:#1e3a5f;}
 .stat-value-v2{font-size:19px;font-weight:900;letter-spacing:-.3px;color:var(--g9);}
 
 /* ── تنبيهات المخزون — كاردات جديدة ── */
-.alert-card-v2{background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:8px;border-right:3px solid;}
-.alert-card-v2.out{border-color:var(--d);}
-.alert-card-v2.low{border-color:var(--w);}
-.alert-head-v2{font-size:12.5px;font-weight:800;margin-bottom:8px;}
+.alert-card-v2{background:#fff;border:1px solid var(--g2);border-radius:14px;padding:13px 15px;margin-bottom:8px;}
+.alert-head-v2{font-size:12.5px;font-weight:800;margin-bottom:9px;display:flex;align-items:center;gap:6px;}
 .alert-head-v2.out{color:var(--d);}
 .alert-head-v2.low{color:var(--w);}
 .alert-chips-v2{display:flex;flex-wrap:wrap;gap:6px;}
-.chip-v2{font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;}
-.chip-v2.out{background:var(--dl);color:var(--d);}
-.chip-v2.low{background:var(--wl);color:var(--w);}
-.all-good-v2{background:#fff;border-radius:14px;padding:14px;text-align:center;color:var(--s);font-weight:700;font-size:13px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.chip-v2{font-size:11px;font-weight:700;padding:4px 10px;border-radius:5px;}
+.chip-v2.out{background:#fef2f2;color:var(--d);}
+.chip-v2.low{background:#fef9ec;color:var(--w);}
+.all-good-v2{background:#fff;border:1px solid var(--g2);border-radius:14px;padding:14px;text-align:center;color:var(--s);font-weight:700;font-size:13px;}
 
 /* ── ديون متأخرة بلوحة التحكم — كاردات بدل جدول ── */
-.debt-row-v2{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-.debt-row-v2-name{font-size:12.5px;font-weight:700;color:var(--g9);}
-.debt-row-v2-days{font-size:10px;color:var(--d);background:var(--dl);padding:2px 7px;border-radius:6px;margin-top:3px;display:inline-block;}
-.debt-row-v2-amount{font-size:14px;font-weight:800;color:var(--d);}
-.debt-row-v2-btn{background:var(--sl);color:var(--s);border:none;padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;}
+.debt-row-v2{background:#fff;border:1px solid var(--g2);border-radius:14px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.debt-row-v2-name{font-size:13px;font-weight:800;color:var(--g9);}
+.debt-row-v2-days{font-size:10.5px;color:var(--d);margin-top:3px;display:inline-block;font-weight:700;}
+.debt-row-v2-amount{font-size:15px;font-weight:900;color:var(--g9);}
+.debt-row-v2-btn{background:var(--s);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;}
+
+/* ── لوحة التحكم — تدفق اليوم المالي + مقارنة + بانر الديون ── */
+.flow-card{background:#fff;border:1px solid var(--g2);border-radius:14px;padding:20px 18px;}
+.flow-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;}
+.flow-label{font-size:12px;font-weight:700;color:var(--g9);}
+.flow-total{font-size:26px;font-weight:900;color:var(--g9);letter-spacing:-.4px;}
+.flow-bar{height:10px;background:var(--g2);border-radius:99px;overflow:hidden;display:flex;margin-bottom:12px;}
+.flow-bar .seg-profit{background:var(--p);height:100%;transition:width .4s ease;}
+.flow-bar .seg-cost{background:var(--g2);height:100%;transition:width .4s ease;}
+.flow-legend{display:flex;justify-content:space-between;font-size:12px;}
+.flow-legend .item{display:flex;align-items:center;gap:6px;}
+.flow-legend .dot{width:8px;height:8px;border-radius:50%;background:var(--p);flex-shrink:0;}
+.flow-legend .dot.cost{background:var(--g2);border:1px solid #b8bcc4;}
+.flow-legend b{color:var(--g9);font-weight:800;}
+.flow-legend span.lbl-txt{color:var(--g9);font-weight:600;}
+
+.compare-row{display:flex;border:1px solid var(--g2);border-radius:14px;overflow:hidden;background:#fff;}
+.compare-col{flex:1;padding:16px 14px;text-align:center;position:relative;}
+.compare-col:not(:last-child)::after{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:var(--g2);}
+.compare-tag{font-size:11px;font-weight:700;color:var(--g9);margin-bottom:7px;opacity:.6;}
+.compare-val{font-size:20px;font-weight:900;color:var(--g9);}
+.compare-val.accent{color:var(--p);}
+
+.debt-banner{border:1.5px solid var(--d);background:#fff;border-radius:14px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;}
+.debt-banner-left{display:flex;align-items:center;gap:12px;}
+.debt-banner-icon{width:36px;height:36px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--d);}
+.debt-banner-text b{display:block;font-size:14px;font-weight:800;color:var(--g9);}
+.debt-banner-text span{font-size:11px;color:var(--g9);opacity:.55;font-weight:600;}
+.debt-banner-val{font-size:19px;font-weight:900;color:var(--d);}
 
 /* ── صفحة المصاريف — تصميم جديد بكاردات موحَّدة مع باقي الموقع ── */
 .stats-grid-v2.stats-3{grid-template-columns:repeat(3,1fr);}
