@@ -271,3 +271,5 @@ export const Auth = {
     el.style.display = 'block';
   },
 };
+
+window.Auth = Auth; // إتاحته لـ onclick بـ HTML (زر الدخول، تسجيل الخروج)
