@@ -70,12 +70,12 @@ export const Customers = {
     const alerts = DOM.get('cu-alerts');
     if (alerts) {
       alerts.innerHTML = lateDebts.length
-        ? `<div class="card mb-8" style="border-right:4px solid var(--r);padding:10px 14px;">
-            <div style="font-size:13px;font-weight:800;color:var(--r);margin-bottom:6px;">⚠️ متأخرون عن السداد (${lateDebts.length})</div>
+        ? `<div class="mb-8" style="background:#fff;border:1px solid var(--g2);border-radius:10px;padding:12px 14px;">
+            <div style="font-size:12.5px;font-weight:800;color:var(--d);margin-bottom:8px;">⚠️ متأخرون عن السداد (${lateDebts.length})</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;">
               ${lateDebts.slice(0,5).map(d => {
                 const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
-                return `<span style="background:var(--rl);color:var(--r);padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700;">
+                return `<span style="border:1px solid var(--d);color:var(--d);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">
                   ${escape(d.customers?.name||'-')} (${days} يوم)
                 </span>`;
               }).join('')}
@@ -98,11 +98,11 @@ export const Customers = {
     const agingEl = DOM.get('cu-aging');
     if (agingEl) agingEl.innerHTML = `
       <div class="aging-grid-v2">
-        <div class="aging-cell" style="background:var(--sl);"><div class="aging-label" style="color:var(--s);">أقل من يومين</div><div class="aging-val" style="color:var(--s);">₪${aging.current.toFixed(2)}</div></div>
-        <div class="aging-cell" style="background:var(--pl);"><div class="aging-label" style="color:var(--p);">2-7 أيام</div><div class="aging-val" style="color:var(--p);">₪${aging.d2.toFixed(2)}</div></div>
-        <div class="aging-cell" style="background:var(--wl);"><div class="aging-label" style="color:var(--w);">7-30 يوم</div><div class="aging-val" style="color:var(--w);">₪${aging.d7.toFixed(2)}</div></div>
-        <div class="aging-cell" style="background:var(--dl);"><div class="aging-label" style="color:var(--d);">30-90 يوم</div><div class="aging-val" style="color:var(--d);">₪${aging.d30.toFixed(2)}</div></div>
-        <div class="aging-cell" style="background:#f3e8ff;"><div class="aging-label" style="color:#7c3aed;">أكثر من 90 يوم</div><div class="aging-val" style="color:#7c3aed;">₪${aging.old.toFixed(2)}</div></div>
+        <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--s);">أقل من يومين</div><div class="aging-val" style="color:var(--g9);">₪${aging.current.toFixed(2)}</div></div>
+        <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--p);">2-7 أيام</div><div class="aging-val" style="color:var(--g9);">₪${aging.d2.toFixed(2)}</div></div>
+        <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--w);">7-30 يوم</div><div class="aging-val" style="color:var(--g9);">₪${aging.d7.toFixed(2)}</div></div>
+        <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--d);">30-90 يوم</div><div class="aging-val" style="color:var(--g9);">₪${aging.d30.toFixed(2)}</div></div>
+        <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:#7c3aed;">أكثر من 90 يوم</div><div class="aging-val" style="color:var(--g9);">₪${aging.old.toFixed(2)}</div></div>
       </div>`;
 
     Customers._allData = { customers: State.customers, debts };
