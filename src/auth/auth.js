@@ -254,13 +254,15 @@ export const Auth = {
     DOM.show('app-wrap', false);
     DOM.show('superadmin-wrap', false);
     Loading.hide();
+    await new Promise(resolve => setTimeout(resolve, 350));
     Auth._showLogin();
   },
 
   _showLogin() {
     DOM.show('app-wrap', false);
     DOM.show('superadmin-wrap', false);
-    DOM.get('auth-wrap')?.classList.remove('hidden');
+    const authEl = DOM.get('auth-wrap');
+    if (authEl) { authEl.classList.remove('hidden'); authEl.classList.remove('fade-out'); }
   },
 
   _showError(msg) {
