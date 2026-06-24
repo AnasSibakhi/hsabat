@@ -322,11 +322,10 @@
         <div class="pos-search-bar" id="qs-search-wrap">
           <i class="ti ti-barcode"></i>
           <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" oninput="QuickSale.onBarcodeInput(this.value)" onkeydown="QuickSale.onBarcodeKey(event)">
-          <button class="pos-cam-btn" onclick="QuickSale.startScanner()"><i class="ti ti-camera"></i></button>
         </div>
 
-        <!-- كاميرا مدمجة بداخل الصفحة — بدل شاشة كاملة منفصلة -->
-        <div id="qs-inline-scanner" class="scn-inline" style="display:none;">
+        <!-- كاميرا دائمة — مفتوحة تلقائياً، تستبدل مكان الكاردات الذكية القديمة -->
+        <div id="qs-inline-scanner" class="scn-inline">
           <div class="scn-inline-stage">
             <div id="qs-scanner-container" class="scn-inline-container"></div>
             <div class="scn-box">
@@ -338,7 +337,6 @@
               <div class="scn-shimmer"></div>
             </div>
             <button id="qs-flash-btn" class="scn-inline-flash" onclick="QuickSale.toggleFlash()"><i class="ti ti-bolt"></i></button>
-            <button class="scn-inline-close" onclick="QuickSale.stopScanner()"><i class="ti ti-x"></i></button>
           </div>
           <div class="scn-inline-hint"><i class="ti ti-viewfinder"></i> ضع الباركود داخل المربع</div>
         </div>
@@ -346,19 +344,11 @@
         <!-- نتائج البحث - fixed فوق كل شي -->
         <div id="qs-product-grid" style="display:none;position:fixed;left:0;right:0;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:2px solid var(--p);z-index:400;box-shadow:0 4px 20px rgba(0,0,0,0.12);max-height:50vh;overflow-y:auto;"></div>
 
-        <!-- Smart Cards -->
-        <div class="qs-smart-cards">
-          <div class="qs-smart-card blue" onclick="QuickSale.openBestSelling()">
-            <div class="qs-smart-icon">🏆</div>
-            <div class="qs-smart-title">الأكثر مبيعاً</div>
-            <div class="qs-smart-sub" id="qs-bestsell-count">جاري التحميل...</div>
-          </div>
-          <div class="qs-smart-card amber" onclick="QuickSale.openNoBarcode()">
-            <div class="qs-smart-icon">📦</div>
-            <div class="qs-smart-title">بدون باركود</div>
-            <div class="qs-smart-sub" id="qs-nobc-count">جاري التحميل...</div>
-          </div>
-        </div>
+        <!-- بدون باركود — صار رابطاً نصياً مدمجاً بدل كارد كامل -->
+        <button class="qs-nobc-link" onclick="QuickSale.openNoBarcode()">
+          <i class="ti ti-package"></i> منتجات بدون باركود
+          <span id="qs-nobc-count">جاري التحميل...</span>
+        </button>
       </div>
 
       <!-- LEFT: Cart + Summary + Pay -->
@@ -1284,12 +1274,6 @@
 <script type="module" src="/src/main.js"></script>
 
 <!-- Best Selling Modal -->
-<div class="mo" id="m-qs-bestsell"><div class="modal" style="max-width:480px;">
-  <div class="mhdr"><span class="mtitle">🏆 الأكثر مبيعاً</span><button class="mclose" onclick="Modal.close('m-qs-bestsell')">✕</button></div>
-  <input class="inp" id="qs-bestsell-search" placeholder="🔍 ابحث..." oninput="QuickSale.filterBestSelling(this.value)" style="margin-bottom:10px;">
-  <div id="qs-bestsell-list" style="max-height:55vh;overflow-y:auto;border-radius:12px;border:1px solid var(--br);"></div>
-</div></div>
-
 <!-- No Barcode Modal -->
 <div class="mo" id="m-qs-nobc"><div class="modal" style="max-width:480px;">
   <div class="mhdr"><span class="mtitle">📦 بدون باركود</span><button class="mclose" onclick="Modal.close('m-qs-nobc')">✕</button></div>
