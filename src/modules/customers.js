@@ -149,27 +149,26 @@ export const Customers = {
       return;
     }
 
-    list.innerHTML = `<div class="cu-list-card">` + sorted.map(c => {
+    list.innerHTML = `<div class="cu-grid">` + sorted.map(c => {
       const custDebts = debtMap[c.id] || [];
       const totalRem  = custDebts.reduce((s,d) => s + Math.max(0, d.amount - (d.paid||0)), 0);
       const hasDebt   = totalRem > 0;
       const oldestDebt = custDebts.filter(d => d.amount - (d.paid||0) > 0)
         .sort((a,b) => new Date(a.debt_date) - new Date(b.debt_date))[0];
       const days = oldestDebt ? Math.floor((new Date().setHours(0,0,0,0) - new Date(oldestDebt.debt_date)) / 86400000) : 0;
+      const initials = c.name.trim().slice(0, 2);
 
-      return `<div class="cu-row" data-customer-id="${c.id}" onclick="Customers.openDetail('${c.id}')">
-        <div class="cu-row-info">
-          <div class="cu-row-name">${escape(c.name)}</div>
-          ${hasDebt
-            ? `<div class="cu-row-debt-line">₪${totalRem.toFixed(2)} متبقٍ ${days >= 2 ? `· متأخر ${days} يوم` : ''}</div>`
-            : (c.phone ? `<div class="cu-row-phone">📞 ${escape(c.phone)}</div>` : '')}
-        </div>
-        <div class="cu-row-status">
+      return `<div class="cu-tile" data-customer-id="${c.id}" onclick="Customers.openDetail('${c.id}')">
+        <div class="cu-tile-top">
+          <div class="cu-tile-avatar">${escape(initials)}</div>
           ${hasDebt
             ? `<span class="cu-status-pill ${days >= 2 ? 'late' : 'recent'}">${days >= 2 ? 'متأخر' : 'حديث'}</span>`
-            : `<span class="cu-status-pill ok">✅ صافي</span>`}
+            : `<span class="cu-status-pill ok">صافي</span>`}
         </div>
-        <span class="cu-row-chev">‹</span>
+        <div class="cu-tile-name">${escape(c.name)}</div>
+        ${hasDebt
+          ? `<div class="cu-tile-debt-line">₪${totalRem.toFixed(2)} متبقٍ${days >= 2 ? ` · ${days} يوم` : ''}</div>`
+          : (c.phone ? `<div class="cu-tile-phone">📞 ${escape(c.phone)}</div>` : '<div class="cu-tile-phone">&nbsp;</div>')}
       </div>`;
     }).join('') + `</div>`;
   },
