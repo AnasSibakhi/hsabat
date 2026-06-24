@@ -19,12 +19,76 @@ let _handler = null;
 
 const DEBOUNCE = 1200;
 
+// ── الطبقة 1: تحقق checksum رياضي حقيقي — EAN-8, EAN-13, UPC-A, UPC-E ──
 const eanOk = (code) => {
-  if (!/^\d{8}$|^\d{13}$/.test(code)) return true;
-  const d = code.split('').map(Number);
-  const c = d.pop();
-  const s = d.reverse().reduce((a,n,i) => a + (i%2===0 ? n*3 : n), 0);
-  return (10 - s%10) %10 === c;
+  if (/^\d{8}$|^\d{13}$/.test(code)) {
+    // EAN-8 / EAN-13
+    const d = code.split('').map(Number);
+    const c = d.pop();
+    const s = d.reverse().reduce((a,n,i) => a + (i%2===0 ? n*3 : n), 0);
+    return (10 - s%10) %10 === c;
+  }
+  if (/^\d{12}$/.test(code)) {
+    // UPC-A — كان مفقوداً تماماً، نفس خوارزمية EAN-13 لكن بأوزان معكوسة
+    const d = code.split('').map(Number);
+    const c = d.pop();
+    const s = d.reverse().reduce((a,n,i) => a + (i%2===0 ? n*3 : n), 0);
+    return (10 - s%10) %10 === c;
+  }
+  if (/^\d{6,8}$/.test(code)) return true; // UPC-E مضغوط — لا checksum مباشر موثوق بدون فك التشفير الكامل، يُترك للطبقة 2
+  return true; // صيغ أخرى (code_128, qr_code...) لا تحتوي checksum رياضي قابل للتحقق هنا — تعتمد على الطبقة 2
+};
+
+// ── الطبقة 2: تأكيد بالتكرار — صيغ بلا checksum رياضي تحتاج قراءتين متطابقتين بفارق زمني قصير ──
+const NO_CHECKSUM_FORMATS = ['code_128', 'code_39', 'qr_code', 'data_matrix', 'itf', 'upc_e'];
+const CONFIRM_WINDOW = 350; // ms — فارق زمني قصير كافٍ لإطارين متتاليين من نفس القراءة الحقيقية
+let _pendingCode = null;
+let _pendingTime = 0;
+
+const needsConfirmation = (fmt) => NO_CHECKSUM_FORMATS.includes(fmt);
+
+// ── الطبقة 3: فحص شكلي حسب الصيغة — طول وتنسيق متوقع لكل نوع ──
+const formatSanityOk = (code, fmt) => {
+  if (!code) return false;
+  switch (fmt) {
+    case 'ean_13':       return /^\d{13}$/.test(code);
+    case 'ean_8':        return /^\d{8}$/.test(code);
+    case 'upc_a':        return /^\d{12}$/.test(code);
+    case 'upc_e':        return /^\d{6,8}$/.test(code);
+    case 'code_128':     return code.length >= 4 && code.length <= 48;
+    case 'code_39':      return /^[0-9A-Z\-. $/+%]{1,43}$/.test(code);
+    case 'itf':          return /^\d{6,14}$/.test(code) && code.length % 2 === 0;
+    case 'qr_code':
+    case 'data_matrix':  return code.length >= 1;
+    default:             return code.length >= 3;
+  }
+};
+
+// ── نقطة الدخول الموحَّدة لكل قراءة — من أي مسار (Android أو iOS) ──
+// تُطبَّق نفس قواعد الدقة الثلاث بدقة متطابقة على المسارين، بلا أي ثغرة فروق بينهما
+const validateAndFire = (code, fmt) => {
+  if (!code) return;
+  if (!formatSanityOk(code, fmt)) return; // فشل الفحص الشكلي — رفض فوري
+
+  const isEAN = ['ean_13', 'ean_8', 'upc_a'].includes(fmt);
+  if (isEAN && !eanOk(code)) return; // فشل checksum رياضي — رفض فوري وقاطع
+
+  if (needsConfirmation(fmt)) {
+    const now = Date.now();
+    if (_pendingCode === code && (now - _pendingTime) < CONFIRM_WINDOW) {
+      // قراءتان متطابقتان بفارق زمني قصير — تأكيد حقيقي، نقبل
+      _pendingCode = null;
+      fire(code);
+    } else {
+      // أول قراءة لهذا الكود — نخزّنها وننتظر التأكيد، لا نقبلها بعد
+      _pendingCode = code;
+      _pendingTime = now;
+    }
+    return;
+  }
+
+  // EAN/UPC-A: الـ checksum الرياضي وحده كافٍ ودقيق، لا حاجة لانتظار تكرار
+  fire(code);
 };
 
 const fire = (code) => {
@@ -113,16 +177,7 @@ export const BarcodeScanner = {
       if (_video?.readyState >= 2) {
         try {
           const r = await det.detect(_video);
-          if (r.length) {
-            const code = r[0].rawValue;
-            const fmt  = r[0].format;
-            const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-            if (isEAN && !eanOk(code)) {
-              // قراءة فشل تحقق checksum — تجاهلها، لا تُمرَّر كنتيجة صحيحة
-            } else {
-              fire(code);
-            }
-          }
+          if (r.length) validateAndFire(r[0].rawValue, r[0].format);
         } catch {}
       }
       if (_active) _raf = requestAnimationFrame(loop);
@@ -208,13 +263,7 @@ export const BarcodeScanner = {
         _handler = (res) => {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
-          if (!code || code.length < 8) return;
-          if (fmt === 'ean_13' && code.length !== 13) return;
-          if (fmt === 'ean_8'  && code.length !== 8)  return;
-          const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
-          if (isEAN && !eanOk(code)) return;
-          if (fmt === 'code_128' && code.length < 4) return;
-          fire(code);
+          validateAndFire(code, fmt);
         };
         Quagga.onDetected(_handler);
       });
@@ -276,6 +325,7 @@ export const BarcodeScanner = {
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
     _stream = null; _video = null; _handler = null;
     _cb = null; _last = null;
+    _pendingCode = null; _pendingTime = 0;
     clearTimeout(_timer);
   },
 };
