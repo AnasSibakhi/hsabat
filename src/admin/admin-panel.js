@@ -282,16 +282,22 @@ const AdminPanel = {
   editStore() { Notify.show('ميزة التعديل قريباً'); },
 
   async sendNotification() {
-    alert('بدأت الدالة فعلياً'); // تشخيص مؤقت
     const title   = DOM.val('notif-title');
     const msg     = DOM.val('notif-msg');
     const type    = DOM.val('notif-type') || 'info';
     const sendAll = DOM.get('notif-all')?.checked;
+    alert('القيم: عنوان=' + title + ' | رسالة=' + msg + ' | إرسال للكل=' + sendAll);
     if (!title || !msg) { Notify.error('أدخل العنوان والرسالة'); return; }
 
     if (sendAll) {
-      // أرسل لكل المحلات — عبر Edge Function آمنة (تتطلب صلاحية أدمن)
-      await callAdminFunction('sendNotification', { title, msg, type, sendAll: true });
+      alert('قبل استدعاء callAdminFunction');
+      try {
+        await callAdminFunction('sendNotification', { title, msg, type, sendAll: true });
+        alert('بعد نجاح callAdminFunction');
+      } catch (err) {
+        alert('فشل callAdminFunction: ' + err.message);
+        return;
+      }
     } else {
       const typeIcon = { info:'📢', update:'🆕', feature:'✨', warning:'⚠️' }[type] || '📢';
       const fullTitle = typeIcon + ' ' + title;
