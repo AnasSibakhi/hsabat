@@ -17,11 +17,6 @@ let _raf     = null;
 let _flashOn = false;
 let _handler = null;
 
-// نظام التأكيد المزدوج — يمنع القراءات الخاطئة
-let _pendingCode  = null;
-let _pendingCount = 0;
-const CONFIRM_NEEDED = 1; // قراءة واحدة تكفي — الـ checksum يتحقق
-
 const DEBOUNCE = 1200;
 
 const eanOk = (code) => {
@@ -35,18 +30,6 @@ const eanOk = (code) => {
 const fire = (code) => {
   if (_paused) return; // متوقف مؤقتاً — تجاهل كل القراءات
   if (!code || code === _last) return;
-  // التأكيد المزدوج
-  if (code === _pendingCode) {
-    _pendingCount++;
-    if (_pendingCount < CONFIRM_NEEDED) return;
-  } else {
-    _pendingCode  = code;
-    _pendingCount = 1;
-    return;
-  }
-  // قُبلت القراءة
-  _pendingCode  = null;
-  _pendingCount = 0;
   _last = code;
   clearTimeout(_timer);
   _timer = setTimeout(() => { _last = null; }, DEBOUNCE);
@@ -130,7 +113,16 @@ export const BarcodeScanner = {
       if (_video?.readyState >= 2) {
         try {
           const r = await det.detect(_video);
-          if (r.length) fire(r[0].rawValue);
+          if (r.length) {
+            const code = r[0].rawValue;
+            const fmt  = r[0].format;
+            const isEAN = ['ean_13','ean_8','upc_a','upc_e'].includes(fmt);
+            if (isEAN && !eanOk(code)) {
+              // قراءة فشل تحقق checksum — تجاهلها، لا تُمرَّر كنتيجة صحيحة
+            } else {
+              fire(code);
+            }
+          }
         } catch {}
       }
       if (_active) _raf = requestAnimationFrame(loop);
@@ -283,7 +275,6 @@ export const BarcodeScanner = {
     try { if (_handler && window.Quagga) { Quagga.offDetected(_handler); Quagga.stop(); } } catch {}
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
     _stream = null; _video = null; _handler = null;
-    _pendingCode = null; _pendingCount = 0;
     _cb = null; _last = null;
     clearTimeout(_timer);
   },
