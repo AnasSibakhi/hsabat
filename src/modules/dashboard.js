@@ -47,14 +47,24 @@ const Dashboard = {
         return sum + (price - cost) * qty;
       }, 0);
 
-      const profitEl = DOM.get('hs-profit');
-      if (profitEl) {
-        profitEl.textContent = Utils.currency(todayProfit);
-        profitEl.style.color = todayProfit >= 0 ? 'var(--s)' : 'var(--d)';
-      }
+      DOM.setText('hs-profit', Utils.currency(todayProfit));
 
       // ٣. عدد الفواتير اليوم
-      DOM.setText('hs-invoices', (todayInv.data || []).length + ' فاتورة');
+      const invCount = (todayInv.data || []).length;
+      DOM.setText('hs-invoices', invCount);
+
+      // ٣ب. متوسط الفاتورة — إجمالي المبيعات ÷ عدد الفواتير
+      const avgInvoice = invCount > 0 ? todaySales / invCount : 0;
+      DOM.setText('hs-avg', Utils.currency(avgInvoice));
+
+      // ٣ج. شريط النسبة المالي — نسبة الربح من إجمالي المبيعات
+      const costOfGoods = todaySales - todayProfit;
+      const profitPct = todaySales > 0 ? Math.max(0, Math.min(100, (todayProfit / todaySales) * 100)) : 0;
+      const segProfitEl = DOM.get('flow-seg-profit');
+      const segCostEl   = DOM.get('flow-seg-cost');
+      if (segProfitEl) segProfitEl.style.width = profitPct + '%';
+      if (segCostEl)   segCostEl.style.width   = (100 - profitPct) + '%';
+      DOM.setText('flow-cost-val', Utils.currency(costOfGoods));
 
       const debts = debtsFull.data || [];
 
@@ -86,7 +96,7 @@ const Dashboard = {
 
     if (outOfStock.length) {
       html += `<div class="alert-card-v2 out">
-        <div class="alert-head-v2 out">🔴 منتهية المخزون (${outOfStock.length})</div>
+        <div class="alert-head-v2 out"><i class="ti ti-alert-triangle"></i> منتهية المخزون (${outOfStock.length})</div>
         <div class="alert-chips-v2">
           ${outOfStock.map(i => `<span class="chip-v2 out">${Utils.escape(i.name)}</span>`).join('')}
         </div>
@@ -95,7 +105,7 @@ const Dashboard = {
 
     if (lowStock.length) {
       html += `<div class="alert-card-v2 low">
-        <div class="alert-head-v2 low">🟡 قاربت النفاد (${lowStock.length})</div>
+        <div class="alert-head-v2 low"><i class="ti ti-alert-circle"></i> قاربت النفاد (${lowStock.length})</div>
         <div class="alert-chips-v2">
           ${lowStock.map(i => `<span class="chip-v2 low">${Utils.escape(i.name)} (${i.quantity})</span>`).join('')}
         </div>
