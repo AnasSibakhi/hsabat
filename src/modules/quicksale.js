@@ -22,7 +22,7 @@ let _cart     = [];   // [{id, name, barcode, unit, price, cost, qty, maxQty}]
 let _discount = 0;
 let _scanner  = null;
 let _lastScan = null;
-let _scanTimer = null;
+let _scanTimer = null; // مؤقّت الإيقاف الذكي للكاميرا (دقيقة بدون نشاط)
 let _active   = false;
 let _transferEntities = [];
 let _selectedTransferEntity = null;
@@ -455,6 +455,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (product) {
       QuickSale.addToCart(product.id);
       QuickSale._beep('success');
+      QuickSale._resetIdleTimer();
       const c = DOM.get('qs-scanner-container');
       if (c) { c.style.transition='transform .15s'; c.style.transform='scale(1.15)'; setTimeout(()=>c.style.transform='scale(1)',200); }
     } else {
@@ -477,10 +478,16 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   async startScanner() {
-    if (BarcodeScanner.isActive()) return;
+    const stage  = DOM.get('qs-scanner-stage');
+    const paused = DOM.get('qs-scanner-paused');
+    const hint   = DOM.get('qs-scanner-hint');
+    if (stage)  stage.style.display  = '';
+    if (paused) paused.style.display = 'none';
+    if (hint)   hint.style.display   = '';
 
-    const wrap = DOM.get('qs-inline-scanner');
-    if (wrap) wrap.style.display = 'block';
+    QuickSale._resetIdleTimer();
+
+    if (BarcodeScanner.isActive()) return;
 
     const container = DOM.get('qs-scanner-container');
     if (!container) return;
@@ -493,7 +500,29 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     );
   },
 
+  // ── إيقاف ذكي لتوفير البطارية — يحدث بعد دقيقة من عدم النشاط، يبقي القابلية لإعادة التشغيل بضغطة واحدة ──
+  _resetIdleTimer() {
+    clearTimeout(_scanTimer);
+    _scanTimer = setTimeout(() => QuickSale._pauseForIdle(), 60000);
+  },
+
+  _pauseForIdle() {
+    if (!BarcodeScanner.isActive()) return; // الصفحة مغادَرة أصلاً أو الكاميرا متوقفة فعلاً
+    BarcodeScanner.stop();
+    const container = DOM.get('qs-scanner-container');
+    if (container) container.innerHTML = '';
+
+    const stage  = DOM.get('qs-scanner-stage');
+    const paused = DOM.get('qs-scanner-paused');
+    const hint   = DOM.get('qs-scanner-hint');
+    if (stage)  stage.style.display  = 'none';
+    if (paused) paused.style.display = 'flex';
+    if (hint)   hint.style.display   = 'none';
+  },
+
+  // ── إغلاق كامل — فقط عند مغادرة الصفحة بالكامل ──
   stopScanner() {
+    clearTimeout(_scanTimer);
     BarcodeScanner.stop();
     const wrap = DOM.get('qs-inline-scanner');
     if (wrap) wrap.style.display = 'none';
