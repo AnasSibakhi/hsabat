@@ -48,9 +48,9 @@
 
 
 <!-- LOADING SCREEN — shown while checking session -->
-<div id="loading-wrap" style="position:fixed;inset:0;background:#f4f5f7;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
-  <div style="width:46px;height:46px;background:var(--g9);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.2rem;">
-    <i class="ti ti-calculator" style="color:#fff;font-size:20px;"></i>
+<div id="loading-wrap" style="position:fixed;inset:0;background:#fcfcfb;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
+  <div style="width:48px;height:48px;border:1.5px solid var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;">
+    <i class="ti ti-calculator" style="color:var(--p);font-size:20px;"></i>
   </div>
   <div style="color:var(--g9);font-size:18px;font-weight:800;margin-bottom:.6rem;letter-spacing:.2px;">حسابات</div>
   <div style="width:36px;height:3px;background:var(--g2);border-radius:99px;overflow:hidden;margin-top:.4rem;">
@@ -62,14 +62,19 @@
 <!-- AUTH -->
 <div id="auth-wrap" class="hidden">
  <div class="auth-card">
-  <div class="auth-logo">
-   <div class="auth-icon"><i class="ti ti-calculator"></i></div>
-   <h1>حسابات</h1><p>نظام إدارة المحل</p>
+  <div class="auth-card-head">
+   <div class="auth-logo">
+    <div class="auth-icon"><i class="ti ti-calculator"></i></div>
+    <h1>حسابات</h1><p>نظام إدارة المحل</p>
+   </div>
   </div>
-  <div class="fg"><label class="lbl">اسم المستخدم</label><input class="inp" id="le" type="email" placeholder="example@mail.com" inputmode="email" autocomplete="username"></div>
-  <div class="fg"><label class="lbl">كلمة المرور</label><input class="inp" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
-  <button class="btn-p" id="btn-li" onclick="Auth.login()"><i class="ti ti-login" style="vertical-align:-2px;margin-left:5px;"></i> دخول</button>
-  <div class="amsg" id="lmsg"></div>
+  <div class="auth-card-body">
+   <div class="fg"><label class="lbl">اسم المستخدم</label><input class="inp" id="le" type="email" placeholder="example@mail.com" inputmode="email" autocomplete="username"></div>
+   <div class="fg"><label class="lbl">كلمة المرور</label><input class="inp" id="lp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+   <button class="btn-p" id="btn-li" onclick="Auth.login()"><i class="ti ti-login" style="vertical-align:-2px;margin-left:5px;"></i> دخول</button>
+   <div class="amsg" id="lmsg"></div>
+   <div class="auth-divider"><div class="ln"></div><span>نظام موثوق لإدارة الأعمال</span><div class="ln"></div></div>
+  </div>
  </div>
 </div>
 
