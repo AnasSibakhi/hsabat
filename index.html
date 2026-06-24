@@ -326,19 +326,27 @@
 
         <!-- كاميرا دائمة — مفتوحة تلقائياً، تستبدل مكان الكاردات الذكية القديمة -->
         <div id="qs-inline-scanner" class="scn-inline">
-          <div class="scn-inline-stage">
-            <div id="qs-scanner-container" class="scn-inline-container"></div>
-            <div class="scn-box">
-              <div class="scn-glow-ring"></div>
-              <div class="scn-dot tl"></div>
-              <div class="scn-dot tr"></div>
-              <div class="scn-dot bl"></div>
-              <div class="scn-dot br"></div>
-              <div class="scn-shimmer"></div>
+          <div class="scn-inline-title"><i class="ti ti-viewfinder"></i> المسح بالكاميرا</div>
+          <div class="scn-inline-card">
+            <div class="scn-inline-stage" id="qs-scanner-stage">
+              <div id="qs-scanner-container" class="scn-inline-container"></div>
+              <div class="scn-box">
+                <div class="scn-glow-ring"></div>
+                <div class="scn-dot tl"></div>
+                <div class="scn-dot tr"></div>
+                <div class="scn-dot bl"></div>
+                <div class="scn-dot br"></div>
+                <div class="scn-shimmer"></div>
+              </div>
+              <button id="qs-flash-btn" class="scn-inline-flash" onclick="QuickSale.toggleFlash()"><i class="ti ti-bolt"></i></button>
             </div>
-            <button id="qs-flash-btn" class="scn-inline-flash" onclick="QuickSale.toggleFlash()"><i class="ti ti-bolt"></i></button>
+            <div class="scn-inline-paused" id="qs-scanner-paused" style="display:none;" onclick="QuickSale.startScanner()">
+              <i class="ti ti-camera-off"></i>
+              <span>الكاميرا متوقفة لتوفير البطارية</span>
+              <small>اضغطي هنا لإعادة التشغيل</small>
+            </div>
+            <div class="scn-inline-hint" id="qs-scanner-hint"><i class="ti ti-viewfinder"></i> ضع الباركود داخل المربع</div>
           </div>
-          <div class="scn-inline-hint"><i class="ti ti-viewfinder"></i> ضع الباركود داخل المربع</div>
         </div>
 
         <!-- نتائج البحث - fixed فوق كل شي -->
