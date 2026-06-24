@@ -519,13 +519,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   async startScanner() {
     if (BarcodeScanner.isActive()) return;
 
-    const overlay = DOM.get('qs-scanner-overlay');
-    if (overlay) overlay.style.display = 'flex';
+    const wrap = DOM.get('qs-inline-scanner');
+    if (wrap) wrap.style.display = 'block';
 
     const container = DOM.get('qs-scanner-container');
     if (!container) return;
     container.innerHTML = '';
-    container.style.height = (window.innerHeight - 50) + 'px';
 
     await BarcodeScanner.start(
       'qs-scanner-container',
@@ -536,10 +535,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   stopScanner() {
     BarcodeScanner.stop();
-    const overlay = DOM.get('qs-scanner-overlay');
-    if (overlay) overlay.style.display = 'none';
+    const wrap = DOM.get('qs-inline-scanner');
+    if (wrap) wrap.style.display = 'none';
     const container = DOM.get('qs-scanner-container');
-    if (container) { container.innerHTML = ''; container.style.height = ''; }
+    if (container) container.innerHTML = '';
     DOM.get('qs-barcode-input')?.focus();
   },
 
