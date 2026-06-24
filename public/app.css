@@ -1035,13 +1035,28 @@ table.sa-dt tr:hover td{background:var(--g0);}
 .scn-counter-badge{position:absolute;top:16px;right:50%;transform:translateX(50%);background:rgba(14,159,110,.92);backdrop-filter:blur(10px);border-radius:99px;padding:9px 20px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 
 /* ── الكاميرا المدمجة بصفحة البيع السريع — مساحة متوسطة بدل ملء الشاشة ── */
-.scn-inline{margin:10px 0;border-radius:16px;overflow:hidden;animation:scn-inline-in .25s ease;}
+.scn-inline{margin:12px 0;animation:scn-inline-in .25s ease;}
 @keyframes scn-inline-in{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
-.scn-inline-stage{position:relative;width:100%;height:280px;background:#000;border-radius:16px;overflow:hidden;}
+
+.scn-inline-title{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--g9);margin-bottom:8px;}
+.scn-inline-title i{color:var(--p);font-size:14px;}
+
+.scn-inline-card{border:1px solid var(--g2);border-radius:14px;overflow:hidden;background:#fff;}
+.scn-inline-stage{position:relative;width:100%;height:240px;background:#000;}
 .scn-inline-container{width:100%;height:100%;}
-.scn-inline-flash{position:absolute;top:12px;left:12px;z-index:5;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;cursor:pointer;}
-.scn-inline-flash:active,.scn-inline-close:active{transform:scale(.92);}
-.scn-inline-hint{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;background:var(--g0);border-radius:0 0 16px 16px;font-size:12.5px;font-weight:700;color:var(--g9);margin-top:-1px;}
+.scn-inline-flash{position:absolute;top:10px;left:10px;z-index:5;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;cursor:pointer;}
+.scn-inline-flash:active{transform:scale(.92);}
+
+.scn-inline-hint{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;background:var(--g0);border-top:1px solid var(--g2);font-size:12px;font-weight:700;color:var(--g9);}
+
+/* ── حالة الإيقاف الذكي — تظهر بدل الكاميرا بعد دقيقة من عدم النشاط ── */
+.scn-inline-paused{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  height:160px;background:var(--g0);cursor:pointer;
+}
+.scn-inline-paused i{font-size:26px;color:var(--g4);}
+.scn-inline-paused span{font-size:12.5px;font-weight:700;color:var(--g6);}
+.scn-inline-paused small{font-size:10.5px;color:var(--g4);font-weight:600;}
 
 /* ── رابط "بدون باركود" المدمج — يستبدل الكارد الكامل القديم ── */
 .qs-nobc-link{
