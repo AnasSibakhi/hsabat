@@ -147,14 +147,18 @@ export const Auth = {
         window.AdminPanel = AdminPanel; // إتاحته لكل onclick بـ HTML بعد التحميل المؤجل
         await AdminPanel.boot();
       } else {
+        alert('قبل فحص انتهاء الاشتراك');
         const expiry = account.subscription_end;
         if (expiry && new Date(expiry) < new Date()) {
           Loading.hide();
           document.getElementById('exp-wrap').style.display = 'flex';
           return;
         }
+        alert('قبل استيراد Store.boot');
         const { Store } = await import('../nav/store-boot.js');
+        alert('بعد الاستيراد، قبل استدعاء boot');
         await Store.boot(State.user);
+        alert('بعد نجاح Store.boot بالكامل');
       }
 
       // Done — hide loading
