@@ -282,6 +282,7 @@ const AdminPanel = {
   editStore() { Notify.show('ميزة التعديل قريباً'); },
 
   async sendNotification() {
+    alert('بدأت الدالة فعلياً'); // تشخيص مؤقت
     const title   = DOM.val('notif-title');
     const msg     = DOM.val('notif-msg');
     const type    = DOM.val('notif-type') || 'info';
