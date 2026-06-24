@@ -47,6 +47,29 @@ Registry.register('Reports',    Reports);
 Registry.register('QuickSale',  QuickSale);
 Registry.register('Sales',      Sales);
 
+// ── Expose all modules to window — required for onclick="X.method()" attributes in HTML to work ──
+window.Nav              = Nav;
+window.Modal             = Modal;
+window.Notify            = Notify;
+window.DOM               = DOM;
+window.Dashboard         = Dashboard;
+window.Customers         = Customers;
+window.Debts             = Debts;
+window.Invoices          = Invoices;
+window.Sales             = Sales;
+window.Inventory         = Inventory;
+window.Purchases         = Purchases;
+window.NetCards          = NetCards;
+window.Returns           = Returns;
+window.Expenses          = Expenses;
+window.Reports           = Reports;
+window.QuickSale         = QuickSale;
+window.Notifications     = Notifications;
+window.Registry          = Registry;
+window.BarcodeScanner    = BarcodeScanner;
+window.InventoryService  = InventoryService;
+window.POSService        = POSService;
+
 // ── Initialize ──
 window.addEventListener('DOMContentLoaded', () => {
   // Date inputs
