@@ -45,9 +45,8 @@ input[type="number"].zero-val{color:var(--g3)!important;}
 #toast.show{opacity:1;}
 
 /* ── APP SHELL ── */
-#app-wrap{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;visibility:hidden;}
-#app-wrap.hidden{display:none;}
-#app-wrap.ready{visibility:visible;}
+#app-wrap{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+#app-wrap.ready{display:flex;}
 
 /* ── TOPBAR ── */
 .topbar{background:#fff;border-bottom:1px solid var(--br);padding:0 1rem;padding-top:env(safe-area-inset-top,0px);height:calc(52px + env(safe-area-inset-top,0px));min-height:calc(52px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50;}
