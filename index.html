@@ -1176,7 +1176,7 @@
      <div class="fg">
        <label class="lbl">المتبقي للتاجر (₪)</label>
        <input class="inp" type="number" id="pur-remaining" inputmode="decimal" readonly
-         style="background:var(--rl);color:var(--r);font-weight:700;">
+         style="background:var(--dl);color:var(--d);font-weight:700;">
      </div>
    </div>
  </div>
@@ -1333,7 +1333,7 @@
   </div>
   <div class="mfoot">
     <button class="btn btn-o" onclick="Modal.close('m-pur-return')">إلغاء</button>
-    <button class="btn btn-s" style="background:var(--r);border-color:var(--r);" onclick="Purchases.saveReturn()">تأكيد الإرجاع</button>
+    <button class="btn btn-s" style="background:var(--d);border-color:var(--d);" onclick="Purchases.saveReturn()">تأكيد الإرجاع</button>
   </div>
 </div></div>
 <div class="mo" id="m-sup-pay"><div class="modal">
@@ -1433,19 +1433,19 @@
   <div class="lbl mb-8">اختر طريقة إتمام البيع</div>
   <div class="qs-pay-opts">
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('cash')">
-    <div class="qs-pay-opt-icon" style="background:var(--sl);"><i class="ti ti-cash" style="color:var(--s);"></i></div>
+    <div class="qs-pay-opt-icon" style="border-color:var(--s);"><i class="ti ti-cash" style="color:var(--s);"></i></div>
     <div><div class="qs-pay-opt-title">كاش</div><div class="qs-pay-opt-sub">بيع مباشر مكتمل</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('transfer')">
-    <div class="qs-pay-opt-icon" style="background:var(--pl);"><i class="ti ti-building-bank" style="color:var(--p);"></i></div>
+    <div class="qs-pay-opt-icon" style="border-color:var(--p);"><i class="ti ti-building-bank" style="color:var(--p);"></i></div>
     <div><div class="qs-pay-opt-title">تحويل فوري</div><div class="qs-pay-opt-sub">تحويل تم استلامه</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('transfer2defer')">
-    <div class="qs-pay-opt-icon" style="background:var(--wl);"><i class="ti ti-clock" style="color:var(--w);"></i></div>
+    <div class="qs-pay-opt-icon" style="border-color:var(--w);"><i class="ti ti-clock" style="color:var(--w);"></i></div>
     <div><div class="qs-pay-opt-title">تطبيق لاحق</div><div class="qs-pay-opt-sub">يُضاف على حساب الزبون</div></div>
    </button>
    <button class="qs-pay-opt" onclick="QuickSale.openPayModal('defer')">
-    <div class="qs-pay-opt-icon" style="background:var(--dl);"><i class="ti ti-users" style="color:var(--d);"></i></div>
+    <div class="qs-pay-opt-icon" style="border-color:var(--d);"><i class="ti ti-users" style="color:var(--d);"></i></div>
     <div><div class="qs-pay-opt-title">دين</div><div class="qs-pay-opt-sub">حفظ على حساب زبون</div></div>
    </button>
   </div>
