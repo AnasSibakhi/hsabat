@@ -43,6 +43,8 @@ export const QuickSale = {
     QuickSale._loadSmartCards();
     // load stats and best selling
     QuickSale._loadStats();
+    // ── الكاميرا دائمة الفتح — لا تحتاج ضغطة زر ──
+    QuickSale.startScanner();
   },
 
   // ── Physical Scanner ──
@@ -204,28 +206,6 @@ export const QuickSale = {
     QuickSale._noBarcodeData = nobc;
     const nbEl = DOM.get('qs-nobc-count');
     if (nbEl) nbEl.textContent = nobc.length + ' منتج';
-
-    // الأكثر مبيعاً — من الفواتير
-    const { data: invData } = await DB.invoices()
-      .select('items')
-      .gte('invoice_date', new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]);
-
-    const counts = {};
-    (invData || []).forEach(inv => {
-      (Array.isArray(inv.items) ? inv.items : []).forEach(it => {
-        if (it.product_id) counts[it.product_id] = (counts[it.product_id] || 0) + (it.qty || 1);
-      });
-    });
-
-    const best = State.inventory
-      .filter(p => counts[p.id])
-      .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0))
-      .slice(0, 20)
-      .map(p => ({ ...p, sold: counts[p.id] || 0 }));
-
-    QuickSale._bestSellingData = best;
-    const bsEl = DOM.get('qs-bestsell-count');
-    if (bsEl) bsEl.textContent = best.length + ' منتج · آخر 30 يوم';
   },
 
   _productRow(p, extra = '') {
@@ -254,29 +234,6 @@ export const QuickSale = {
       el.addEventListener('mouseover', () => el.style.background = 'var(--g0)');
       el.addEventListener('mouseout',  () => el.style.background = '');
     });
-  },
-
-  async openBestSelling() {
-    await QuickSale._loadSmartCards();
-    const list = QuickSale._bestSellingData;
-    const el   = DOM.get('qs-bestsell-list');
-    if (!el) return;
-    const inp = DOM.get('qs-bestsell-search'); if (inp) inp.value = '';
-    el.innerHTML = list.length
-      ? list.map(p => QuickSale._productRow(p, '· مبيع ' + p.sold + ' مرة')).join('')
-      : '<div style="padding:20px;text-align:center;color:var(--g4);">لا توجد بيانات مبيعات بعد</div>';
-    Modal.open('m-qs-bestsell');
-    QuickSale._bindSmartRows('qs-bestsell-list', 'm-qs-bestsell');
-  },
-
-  filterBestSelling(q) {
-    const list = QuickSale._bestSellingData.filter(p =>
-      p.name.toLowerCase().includes(q.toLowerCase())
-    );
-    const el = DOM.get('qs-bestsell-list');
-    if (!el) return;
-    el.innerHTML = list.map(p => QuickSale._productRow(p, '· مبيع ' + p.sold + ' مرة')).join('');
-    QuickSale._bindSmartRows('qs-bestsell-list', 'm-qs-bestsell');
   },
 
   async openNoBarcode() {
@@ -502,9 +459,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (c) { c.style.transition='transform .15s'; c.style.transform='scale(1.15)'; setTimeout(()=>c.style.transform='scale(1)',200); }
     } else {
       QuickSale._beep('error');
-      QuickSale.stopScanner();
-      // رسالة + زر إضافة في المخزون
+      // الكاميرا دائمة — لا نوقفها نهائياً، فقط نوقفها لحظياً لمنع تكرار قراءة نفس الكود الخاطئ، ثم تعمل تلقائياً
+      BarcodeScanner.stop();
+      const c = DOM.get('qs-scanner-container');
+      if (c) c.innerHTML = '';
       QuickSale._showNotFound(code);
+      setTimeout(() => QuickSale.startScanner(), 1800);
     }
 
     // Re-focus للصنف التالي
