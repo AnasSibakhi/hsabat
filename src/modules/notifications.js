@@ -34,7 +34,7 @@ export const Notifications = {
 
     const [notifsRes, debtsRes, inventoryRes, purchasesRes] = await Promise.all([
       sb.from('notifications').select('*')
-        .or(`store_id.eq.${State.user.id},store_id.is.null`)
+        .or(`to_store_id.eq.${State.user.id},to_store_id.is.null`)
         .order('created_at', { ascending: false }).limit(20),
       sb.from('debts').select('*, customers(name)')
         .eq('store_id', State.user.id).eq('archived', false).gt('amount', 0).limit(50),
