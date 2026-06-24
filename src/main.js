@@ -49,15 +49,6 @@ Registry.register('Sales',      Sales);
 
 // ── Initialize ──
 window.addEventListener('DOMContentLoaded', () => {
-  // Dark mode
-  if (localStorage.getItem('dark') === 'true') {
-    document.body.classList.add('dark');
-    setTimeout(() => {
-      const icon = DOM.get('dark-icon');
-      if (icon) icon.className = 'ti ti-sun';
-    }, 50);
-  }
-
   // Date inputs
   const today = new Date().toISOString().split('T')[0];
   document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
@@ -79,14 +70,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // Boot auth
   Auth.init();
 });
-
-// ── Dark mode toggle ──
-function toggleDark() {
-  document.body.classList.toggle('dark');
-  localStorage.setItem('dark', document.body.classList.contains('dark'));
-  const icon = DOM.get('dark-icon');
-  if (icon) icon.className = document.body.classList.contains('dark') ? 'ti ti-sun' : 'ti ti-moon';
-}
 
 // ─────────────────────────────────────────
 // Global bindings — required for onclick handlers in HTML
