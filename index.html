@@ -274,29 +274,31 @@
    <div class="page active" id="page-home">
     <div class="ph"><div><div class="pt" id="hgreet">مرحباً</div><div style="font-size:12px;color:var(--g5);margin-top:2px;" id="hdate"></div></div></div>
 
-    <!-- إحصائيات اليوم -->
-    <div class="sec-title">📊 إحصائيات اليوم</div>
-    <div class="stats-grid-v2 mb-14">
-     <div class="stat-card-v2 blue" onclick="Nav.goTo('invoices')">
-       <div class="stat-icon-v2 blue">💰</div>
-       <div class="stat-label-v2">مبيعات اليوم</div>
-       <div class="stat-value-v2" id="hs1">-</div>
-     </div>
-     <div class="stat-card-v2 green" style="cursor:default;">
-       <div class="stat-icon-v2 green">📈</div>
-       <div class="stat-label-v2">ربح اليوم</div>
-       <div class="stat-value-v2" id="hs-profit">-</div>
-     </div>
-     <div class="stat-card-v2 amber" onclick="Nav.goTo('invoices')">
-       <div class="stat-icon-v2 amber">🧾</div>
-       <div class="stat-label-v2">عدد الفواتير</div>
-       <div class="stat-value-v2" id="hs-invoices">-</div>
-     </div>
-     <div class="stat-card-v2 red" onclick="Nav.goTo('inventory')">
-       <div class="stat-icon-v2 red">⏳</div>
-       <div class="stat-label-v2">إجمالي الديون</div>
-       <div class="stat-value-v2" id="hs2">-</div>
-     </div>
+    <!-- تدفق اليوم المالي -->
+    <div class="sec-title">تدفق اليوم المالي</div>
+    <div class="flow-card mb-14">
+      <div class="flow-head">
+        <span class="flow-label">إجمالي المبيعات</span>
+        <span class="flow-total" id="hs1">₪0</span>
+      </div>
+      <div class="flow-bar"><div class="seg-profit" id="flow-seg-profit" style="width:0%;"></div><div class="seg-cost" id="flow-seg-cost" style="width:100%;"></div></div>
+      <div class="flow-legend">
+        <div class="item"><span class="dot"></span><span class="lbl-txt">صافي الربح</span> <b id="hs-profit">₪0</b></div>
+        <div class="item"><span class="dot cost"></span><span class="lbl-txt">تكلفة البضاعة</span> <b id="flow-cost-val">₪0</b></div>
+      </div>
+    </div>
+
+    <div class="compare-row mb-14">
+      <div class="compare-col"><div class="compare-tag">عدد الفواتير</div><div class="compare-val" id="hs-invoices">0</div></div>
+      <div class="compare-col"><div class="compare-tag">متوسط الفاتورة</div><div class="compare-val accent" id="hs-avg">₪0</div></div>
+    </div>
+
+    <div class="debt-banner mb-14" onclick="Nav.goTo('inventory')" style="cursor:pointer;">
+      <div class="debt-banner-left">
+        <div class="debt-banner-icon"><i class="ti ti-hourglass"></i></div>
+        <div class="debt-banner-text"><b>إجمالي الديون المستحقة</b><span>على جميع الزبائن</span></div>
+      </div>
+      <span class="debt-banner-val" id="hs2">₪0</span>
     </div>
 
     <!-- المنتجات الناقصة والمنتهية -->
