@@ -286,26 +286,19 @@ const AdminPanel = {
     const msg     = DOM.val('notif-msg');
     const type    = DOM.val('notif-type') || 'info';
     const sendAll = DOM.get('notif-all')?.checked;
-    alert('القيم: عنوان=' + title + ' | رسالة=' + msg + ' | إرسال للكل=' + sendAll);
     if (!title || !msg) { Notify.error('أدخل العنوان والرسالة'); return; }
 
     if (sendAll) {
-      alert('قبل استدعاء callAdminFunction');
-      try {
-        await callAdminFunction('sendNotification', { title, msg, type, sendAll: true });
-        alert('بعد نجاح callAdminFunction');
-      } catch (err) {
-        alert('فشل callAdminFunction: ' + err.message);
-        return;
-      }
+      // أرسل لكل المحلات — عبر Edge Function آمنة (تتطلب صلاحية أدمن)
+      await callAdminFunction('sendNotification', { title, msg, type, sendAll: true });
     } else {
       const typeIcon = { info:'📢', update:'🆕', feature:'✨', warning:'⚠️' }[type] || '📢';
       const fullTitle = typeIcon + ' ' + title;
       await sb.from('notifications').insert({
         from_id: State.user.id,
+        to_store_id: State.user.id,
         title: fullTitle,
         message: msg,
-        type,
       });
     }
     Notify.success('تم إرسال الإشعار لـ ' + (sendAll ? 'جميع المحلات' : 'المحل الحالي'));
