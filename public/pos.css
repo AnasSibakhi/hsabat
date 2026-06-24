@@ -315,10 +315,10 @@
   font-family: 'Cairo', sans-serif; text-align: right;
   transition: .15s; width: 100%;
 }
-.qs-pay-opt:hover { border-color: var(--p); background: var(--g0); box-shadow: 0 2px 12px rgba(99,102,241,.1); }
+.qs-pay-opt:hover { border-color: var(--p); background: var(--g0); }
 .qs-pay-opt:focus { outline: none; border-color: var(--g2); }
 .qs-pay-opt:active { transform: scale(.98); }
-.qs-pay-opt-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.qs-pay-opt-icon { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: none !important; }
 .qs-pay-opt-icon i { font-size: 22px; }
 .qs-pay-opt-title { font-size: 14px; font-weight: 800; color: var(--g9); }
 .qs-pay-opt-sub { font-size: 11px; color: var(--g4); margin-top: 2px; }
