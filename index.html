@@ -324,6 +324,25 @@
           <input id="qs-barcode-input" class="pos-search-inp" placeholder="باركود أو اسم المنتج..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" oninput="QuickSale.onBarcodeInput(this.value)" onkeydown="QuickSale.onBarcodeKey(event)">
           <button class="pos-cam-btn" onclick="QuickSale.startScanner()"><i class="ti ti-camera"></i></button>
         </div>
+
+        <!-- كاميرا مدمجة بداخل الصفحة — بدل شاشة كاملة منفصلة -->
+        <div id="qs-inline-scanner" class="scn-inline" style="display:none;">
+          <div class="scn-inline-stage">
+            <div id="qs-scanner-container" class="scn-inline-container"></div>
+            <div class="scn-box">
+              <div class="scn-glow-ring"></div>
+              <div class="scn-dot tl"></div>
+              <div class="scn-dot tr"></div>
+              <div class="scn-dot bl"></div>
+              <div class="scn-dot br"></div>
+              <div class="scn-shimmer"></div>
+            </div>
+            <button id="qs-flash-btn" class="scn-inline-flash" onclick="QuickSale.toggleFlash()"><i class="ti ti-bolt"></i></button>
+            <button class="scn-inline-close" onclick="QuickSale.stopScanner()"><i class="ti ti-x"></i></button>
+          </div>
+          <div class="scn-inline-hint"><i class="ti ti-viewfinder"></i> ضع الباركود داخل المربع</div>
+        </div>
+
         <!-- نتائج البحث - fixed فوق كل شي -->
         <div id="qs-product-grid" style="display:none;position:fixed;left:0;right:0;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:2px solid var(--p);z-index:400;box-shadow:0 4px 20px rgba(0,0,0,0.12);max-height:50vh;overflow-y:auto;"></div>
 
@@ -1370,28 +1389,6 @@
   </div>
 </div></div>
 <!-- Scanner Overlay -->
-<div id="qs-scanner-overlay" class="scn-overlay">
-  <div class="scn-stage">
-    <div id="qs-scanner-container" class="scn-container"></div>
-    <div class="scn-top-bar">
-      <button class="scn-icon-btn" onclick="QuickSale.stopScanner()"><i class="ti ti-x"></i></button>
-      <button id="qs-flash-btn" class="scn-icon-btn" onclick="QuickSale.toggleFlash()"><i class="ti ti-bolt"></i></button>
-    </div>
-    <div class="scn-box">
-      <div class="scn-glow-ring"></div>
-      <div class="scn-dot tl"></div>
-      <div class="scn-dot tr"></div>
-      <div class="scn-dot bl"></div>
-      <div class="scn-dot br"></div>
-      <div class="scn-shimmer"></div>
-    </div>
-    <div class="scn-float-card">
-      <div class="ico"><i class="ti ti-viewfinder"></i></div>
-      <span>ضع الباركود داخل المربع</span>
-    </div>
-  </div>
-</div>
-
 <!-- Inventory Barcode Scanner Overlay — نفس تصميم البيع السريع -->
 <div id="inv-scanner-overlay" class="scn-overlay">
   <div class="scn-stage">
