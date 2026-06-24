@@ -401,10 +401,10 @@
     </div>
 
     <!-- Stats -->
-    <div class="stats-grid-v2 stats-3 mb-14">
-      <div class="stat-card-v2 red"><div class="stat-icon-v2 red"><i class="ti ti-hourglass"></i></div><div class="stat-label-v2">إجمالي الديون</div><div class="stat-value-v2" id="cu-total">-</div></div>
-      <div class="stat-card-v2 amber"><div class="stat-icon-v2 amber"><i class="ti ti-alert-triangle"></i></div><div class="stat-label-v2">متأخرون +يومين</div><div class="stat-value-v2" id="cu-late">-</div></div>
-      <div class="stat-card-v2 green"><div class="stat-icon-v2 green"><i class="ti ti-circle-check"></i></div><div class="stat-label-v2">مسدَّد الشهر</div><div class="stat-value-v2" id="cu-paid">-</div></div>
+    <div class="aging-grid-v2 mb-14" style="grid-template-columns:repeat(3,1fr);">
+      <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--d);">إجمالي الديون</div><div class="aging-val" style="color:var(--g9);" id="cu-total">-</div></div>
+      <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--w);">متأخرون +يومين</div><div class="aging-val" style="color:var(--g9);" id="cu-late">-</div></div>
+      <div class="aging-cell" style="border:1px solid var(--g2);"><div class="aging-label" style="color:var(--s);">مسدَّد الشهر</div><div class="aging-val" style="color:var(--g9);" id="cu-paid">-</div></div>
     </div>
 
     <!-- Alerts -->
