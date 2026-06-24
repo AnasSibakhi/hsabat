@@ -17,6 +17,10 @@ export const go = (pageId, activeElement = null) => {
     } else {
       content.classList.remove('qs-mode');
       content.scrollTop = 0;
+      // أوقفي الكاميرا الدائمة لو غادرنا صفحة البيع السريع بدون إغلاقها يدوياً
+      import('../services/BarcodeScanner.js').then(({ BarcodeScanner }) => {
+        if (BarcodeScanner.isActive()) BarcodeScanner.stop();
+      });
     }
   }
 
