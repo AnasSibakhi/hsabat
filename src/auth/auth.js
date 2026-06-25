@@ -46,6 +46,20 @@ export const Auth = {
       }
     } catch(err) {
       console.error('[Auth.init]', err);
+      // فشل شبكي وقت فحص الجلسة (لا نت أصلاً عند فتح الموقع) — لا نفترض خروجاً، نحاول القراءة
+      // المباشرة من التخزين المحلي الذي يحفظه Supabase نفسه، ونكمل الإقلاع بالبيانات المحفوظة
+      const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+      if (isNetworkFailure) {
+        try {
+          const raw = localStorage.getItem(`sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, '').split('.')[0]}-auth-token`);
+          const stored = raw ? JSON.parse(raw) : null;
+          if (stored?.access_token) {
+            Loading.show();
+            await Auth._bootFromSession(stored);
+            return;
+          }
+        } catch {}
+      }
       Loading.hide();
       Auth._showLogin();
     }
@@ -114,12 +128,27 @@ export const Auth = {
       }
 
       if (!account) {
+        // فشل الجلب — قد يكون فعلياً "لا حساب"، أو فقط انقطاع نت. نحاول الرجوع لآخر بيانات
+        // حساب محفوظة محلياً قبل افتراض الأسوأ — تسجيل خروج هنا يدمّر إمكانية العمل بدون نت بالكامل
+        const isNetworkFailure = !navigator.onLine;
+        if (isNetworkFailure) {
+          try {
+            const cachedAccount = JSON.parse(localStorage.getItem('hsb_cached_account') || 'null');
+            if (cachedAccount) account = cachedAccount;
+          } catch {}
+        }
+      }
+
+      if (!account) {
         Loading.hide();
         Auth._showLogin();
-        Auth._showError('لم يُوجد حساب مرتبط. تواصل مع المسؤول.');
-        await sb.auth.signOut();
+        Auth._showError(navigator.onLine ? 'لم يُوجد حساب مرتبط. تواصل مع المسؤول.' : 'لا يوجد اتصال بالإنترنت، ولا توجد بيانات محفوظة بعد.');
+        if (navigator.onLine) await sb.auth.signOut(); // فقط نسجّل خروج فعلياً لو متأكدين إن المشكلة بالحساب نفسه، لا بالشبكة
         return;
       }
+
+      // حفظ نسخة من بيانات الحساب محلياً — تُستخدم فقط كخط دفاع أخير عند انقطاع نت كامل لاحقاً
+      try { localStorage.setItem('hsb_cached_account', JSON.stringify(account)); } catch {}
 
       if (!account.is_active) {
         Loading.hide();
