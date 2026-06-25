@@ -19,35 +19,23 @@ let _handler = null;
 
 const DEBOUNCE = 1200;
 
-// ── الطبقة 1: تحقق checksum رياضي حقيقي — EAN-8, EAN-13, UPC-A, UPC-E ──
-const eanOk = (code) => {
-  if (/^\d{8}$|^\d{13}$/.test(code)) {
-    // EAN-8 / EAN-13
-    const d = code.split('').map(Number);
-    const c = d.pop();
-    const s = d.reverse().reduce((a,n,i) => a + (i%2===0 ? n*3 : n), 0);
-    return (10 - s%10) %10 === c;
-  }
-  if (/^\d{12}$/.test(code)) {
-    // UPC-A — كان مفقوداً تماماً، نفس خوارزمية EAN-13 لكن بأوزان معكوسة
-    const d = code.split('').map(Number);
-    const c = d.pop();
-    const s = d.reverse().reduce((a,n,i) => a + (i%2===0 ? n*3 : n), 0);
-    return (10 - s%10) %10 === c;
-  }
-  if (/^\d{6,8}$/.test(code)) return true; // UPC-E مضغوط — لا checksum مباشر موثوق بدون فك التشفير الكامل، يُترك للطبقة 2
-  return true; // صيغ أخرى (code_128, qr_code...) لا تحتوي checksum رياضي قابل للتحقق هنا — تعتمد على الطبقة 2
+// ── الطبقة 1: تحقق checksum رياضي حقيقي — EAN-8, EAN-13, UPC-A ──
+// هذا الفحص الرياضي وحده موثوق به بنسبة عالية جداً (يكتشف أي خطأ برقم واحد، وأغلب
+// أخطاء تبديل رقمين متجاورين). لا نضيف أي "كاشف تكرار/تذبذب" فوقه لأن أي خوارزمية
+// توقيتية مبنية على "استقرار القراءة" ستفشل بالضرورة أمام باركود تالف يعطي نفس
+// القراءة الخاطئة بثبات — استقرار القراءة لا يعني صحتها، الـ checksum وحده يثبت ذلك
+const upcCheck = (twelveOrThirteen) => {
+  const d = twelveOrThirteen.split('').map(Number);
+  const c = d.pop();
+  const s = d.reverse().reduce((a,n,i) => a + (i%2===0 ? n*3 : n), 0);
+  return (10 - s%10) %10 === c;
 };
 
-// ── الطبقة 2: كاشف عدم استقرار حقيقي — سريع بالقراءة الواضحة، صارم عند التذبذب الفعلي ──
-// المبدأ: نقبل القراءة فوراً من أول مرة إن نجحت بـ checksum (موثوق به جداً، ~99.9%).
-// لكن إن رصدنا كودين مختلفين (كلاهما عابر للفحوصات) خلال نافذة زمنية قصيرة، هذا مؤشر
-// حقيقي على باركود غير واضح يجعل الكاميرا "تتذبذب" — في هذي الحالة فقط نطلب استقراراً
-// (تكرار نفس الكود) قبل القبول. لا تأخير على القراءة الواضحة المستقرة من أول لحظة
-const INSTABILITY_WINDOW = 700; // ms
-let _lastSeenCode  = null;
-let _lastSeenTime  = 0;
-let _unstableCode  = null; // الكود الذي يحتاج تأكيداً إضافياً بسبب تذبذب رُصد فعلياً
+const eanOk = (code) => {
+  if (/^\d{8}$|^\d{13}$/.test(code)) return upcCheck(code); // EAN-8 / EAN-13
+  if (/^\d{12}$/.test(code))         return upcCheck(code); // UPC-A
+  return true; // UPC-E وصيغ أخرى (code_128, qr_code...) لا تحتوي checksum رياضي قابل للتحقق هنا بأمان
+};
 
 // ── الطبقة 3: فحص شكلي حسب الصيغة — طول وتنسيق متوقع لكل نوع ──
 const formatSanityOk = (code, fmt) => {
@@ -73,34 +61,8 @@ const validateAndFire = (code, fmt) => {
   if (!formatSanityOk(code, fmt)) return; // فشل الفحص الشكلي — رفض فوري
 
   const isEAN = ['ean_13', 'ean_8', 'upc_a'].includes(fmt);
-  if (isEAN && !eanOk(code)) return; // فشل checksum رياضي — رفض فوري وقاطع
+  if (isEAN && !eanOk(code)) return; // فشل checksum رياضي — رفض فوري وقاطع، هذا الفحص وحده كافٍ وموثوق
 
-  const now = Date.now();
-
-  // الكود ده هو نفسه المعلَّق كمشكوك فيه من قراءة سابقة — تكرار فعلي، نقبل الآن
-  if (_unstableCode === code) {
-    _unstableCode = null;
-    _lastSeenCode = code;
-    _lastSeenTime = now;
-    fire(code);
-    return;
-  }
-
-  // يوجد كود مشكوك فيه (غير هذا) لسا بانتظار تأكيده — نتجاهل أي كود آخر مؤقتاً حتى ينتهي الانتظار
-  if (_unstableCode) return;
-
-  // هل ظهر كود مختلف قبل لحظات قصيرة؟ هذا تذبذب حقيقي — نعلّم هذا الكود كمشكوك فيه، ننتظر تكراره
-  if (_lastSeenCode && _lastSeenCode !== code && (now - _lastSeenTime) < INSTABILITY_WINDOW) {
-    _unstableCode = code;
-    _lastSeenCode = code;
-    _lastSeenTime = now;
-    return;
-  }
-
-  _lastSeenCode = code;
-  _lastSeenTime = now;
-
-  // لا تذبذب مرصود — القراءة مستقرة من أول لحظة، الـ checksum/الفحص الشكلي كافيان، نقبل فوراً
   fire(code);
 };
 
@@ -338,7 +300,6 @@ export const BarcodeScanner = {
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
     _stream = null; _video = null; _handler = null;
     _cb = null; _last = null;
-    _lastSeenCode = null; _lastSeenTime = 0; _unstableCode = null;
     clearTimeout(_timer);
   },
 };
