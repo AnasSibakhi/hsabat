@@ -1021,6 +1021,36 @@ table.sa-dt tr:hover td{background:var(--g0);}
 .scn-dot.tl{top:-5px;left:-5px;}.scn-dot.tr{top:-5px;right:-5px;}
 .scn-dot.bl{bottom:-5px;left:-5px;}.scn-dot.br{bottom:-5px;right:-5px;}
 .scn-shimmer{position:absolute;left:8%;right:8%;height:2px;top:50%;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);animation:scn-shimmer-move 2.4s ease-in-out infinite;}
+
+/* ── الومضة الواحدة — تأثير نجاح المسح، لحظي فقط ثم يُحذف تلقائياً ── */
+.scn-box.success .scn-glow-ring{
+  border-color: var(--s) !important;
+  box-shadow: 0 0 0 1px var(--s), 0 0 40px 6px rgba(14,159,110,.35);
+  animation: scn-success-settle 0.7s ease forwards !important;
+}
+@keyframes scn-success-settle{
+  0%{border-color:var(--s);box-shadow:0 0 0 1px var(--s),0 0 40px 6px rgba(14,159,110,.35);}
+  100%{border-color:rgba(255,255,255,.95);box-shadow:none;}
+}
+.scn-check{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:0;height:0;border-radius:50%;background:var(--s);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  pointer-events:none;z-index:6;
+}
+.scn-box.success .scn-check{
+  animation: scn-check-reveal 0.5s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes scn-check-reveal{
+  0%{width:0;height:0;}
+  60%{width:50px;height:50px;}
+  100%{width:44px;height:44px;}
+}
+.scn-check i{ color:#fff; font-size:0; }
+.scn-box.success .scn-check i{
+  animation: scn-check-icon-in 0.3s ease 0.3s forwards;
+}
+@keyframes scn-check-icon-in{ to{ font-size:22px; } }
 @keyframes scn-shimmer-move{0%{top:8%;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:92%;opacity:0;}}
 
 .scn-float-card{position:absolute;bottom:11%;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.97);backdrop-filter:blur(20px);border-radius:18px;padding:11px 20px;display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap;}
