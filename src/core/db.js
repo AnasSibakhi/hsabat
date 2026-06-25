@@ -95,23 +95,67 @@ function secureInventoryTable() {
   };
 }
 
+// ── طبقة العرض بدون نت — تخزين مؤقت شفاف لنتائج القراءة، نقطة واحدة تخدم كل الموقع ──
+const OFFLINE_CACHE_PREFIX = 'hsb_cache_';
+const OFFLINE_CACHE_VERSION = 'v1';
+
+function offlineCacheKey(table, action, params) {
+  // مفتاح ثابت ومميَّز لكل تركيبة (جدول + نوع عملية + فلاتر)، بدون تضمين بيانات حساسة بالمفتاح نفسه
+  const sig = JSON.stringify({ table, action, params });
+  let hash = 0;
+  for (let i = 0; i < sig.length; i++) { hash = (hash * 31 + sig.charCodeAt(i)) | 0; }
+  return `${OFFLINE_CACHE_PREFIX}${OFFLINE_CACHE_VERSION}_${table}_${hash}`;
+}
+
+function saveToOfflineCache(table, action, params, data) {
+  // فقط عمليات القراءة تُخزَّن — الكتابة (insert/update/delete) لا تُحفَظ هنا لتجنّب أي التباس بالبيانات الفعلية
+  if (action !== 'select') return;
+  try {
+    localStorage.setItem(offlineCacheKey(table, action, params), JSON.stringify({ data, savedAt: Date.now() }));
+  } catch {} // لو امتلأت المساحة المحلية، نتجاهل بصمت — هذا تحسين اختياري، لا وظيفة حرجة
+}
+
+function loadFromOfflineCache(table, action, params) {
+  if (action !== 'select') return null;
+  try {
+    const raw = localStorage.getItem(offlineCacheKey(table, action, params));
+    if (!raw) return null;
+    const { data } = JSON.parse(raw);
+    return data;
+  } catch { return null; }
+}
+
 // ── استدعاء عام لكل الجداول المتبقية عبر Edge Function موحّدة آمنة ──
 async function callStoreDB(table, action, params) {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) throw new Error('غير مسجّل دخول');
+  const cacheKey = { table, action, params };
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('غير مسجّل دخول');
 
-  const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/store-db`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization':  `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ table, action, params }),
-  });
+    const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/store-db`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization':  `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ table, action, params }),
+    });
 
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || 'فشل الاتصال بالخدمة');
-  return json.data;
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'فشل الاتصال بالخدمة');
+
+    saveToOfflineCache(table, action, params, json.data); // تخزين شفاف بعد كل نجاح — صفر تأثير على المسار الطبيعي
+    return json.data;
+
+  } catch (err) {
+    // فشل الشبكة (لا نت، أو انقطاع وسط الطلب) — نحاول الرجوع لآخر نسخة محفوظة بدل رمي الخطأ
+    const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+    if (isNetworkFailure && action === 'select') {
+      const cached = loadFromOfflineCache(table, action, params);
+      if (cached !== null) return cached; // وجدنا نسخة محفوظة — نرجعها بصمت، الصفحة تعمل بشكل طبيعي بالبيانات القديمة
+    }
+    throw err; // لا نسخة محفوظة، أو هذي عملية كتابة (لا تُخزَّن أبداً) — الخطأ الحقيقي يظهر كما كان سابقاً
+  }
 }
 
 // ── Query builder آمن — نفس الواجهة المتسلسلة المستخدمة بالموقع بالضبط، لكل الجداول المتبقية ──
