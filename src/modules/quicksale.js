@@ -456,8 +456,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       QuickSale.addToCart(product.id);
       QuickSale._beep('success');
       QuickSale._resetIdleTimer();
-      const c = DOM.get('qs-scanner-container');
-      if (c) { c.style.transition='transform .15s'; c.style.transform='scale(1.15)'; setTimeout(()=>c.style.transform='scale(1)',200); }
+      const box = DOM.get('qs-scn-box');
+      if (box) {
+        box.classList.remove('success'); // احتياط: لو لسا الكلاس عالق من قراءة سابقة سريعة جداً
+        void box.offsetWidth; // إعادة تدفّق فورية — تضمن إعادة تشغيل الأنيميشن حتى لو الكلاس أُزيل وأُعيد بسرعة
+        box.classList.add('success');
+        setTimeout(() => box.classList.remove('success'), 700);
+      }
     } else {
       QuickSale._beep('error');
       // الكاميرا دائمة — لا نوقفها نهائياً، فقط نوقفها لحظياً لمنع تكرار قراءة نفس الكود الخاطئ، ثم تعمل تلقائياً
