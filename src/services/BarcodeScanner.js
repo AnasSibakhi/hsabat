@@ -142,6 +142,42 @@ export const BarcodeScanner = {
     }
   },
 
+  // ── فحص حدّة الصورة (Laplacian Variance) — يرفض الإطارات الضبابية قبل تحليلها أصلاً ──
+  // مقياس معياري حقيقي بمعالجة الصور: الإطار الواضح فيه تغيّرات حادة بالسطوع (حواف الباركود
+  // نفسها)، الإطار الضبابي يكون "أنعم" بلا تباين حقيقي. هذا يمنع المشكلة من جذرها — لا
+  // نحاول قراءة باركود من صورة غير واضحة من البداية، بدل محاولة تصحيح القراءة الخاطئة بعدها
+  _isFrameSharp(video) {
+    if (!BarcodeScanner._sharpCanvas) {
+      BarcodeScanner._sharpCanvas = document.createElement('canvas');
+      BarcodeScanner._sharpCanvas.width  = 160; // حجم صغير كافٍ للتقييم، يحافظ على السرعة
+      BarcodeScanner._sharpCanvas.height = 90;
+    }
+    const canvas = BarcodeScanner._sharpCanvas;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    const w = canvas.width, h = canvas.height;
+    const gray = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) {
+      const p = i * 4;
+      gray[i] = data[p] * 0.299 + data[p+1] * 0.587 + data[p+2] * 0.114;
+    }
+
+    let sum = 0, sumSq = 0, n = 0;
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const idx = y * w + x;
+        const lap = -4 * gray[idx] + gray[idx-1] + gray[idx+1] + gray[idx-w] + gray[idx+w];
+        sum += lap; sumSq += lap * lap; n++;
+      }
+    }
+    const mean = sum / n;
+    const variance = (sumSq / n) - (mean * mean);
+
+    return variance > 35; // حد أدنى عملي — أقل منه يعني الإطار ضبابي بشكل يستحيل قراءته بدقة
+  },
+
   // ── Native BarcodeDetector loop ──
   _nativeLoop() {
     const det = new BarcodeDetector({
@@ -149,7 +185,7 @@ export const BarcodeScanner = {
     });
     const loop = async () => {
       if (!_active) return;
-      if (_video?.readyState >= 2) {
+      if (_video?.readyState >= 2 && BarcodeScanner._isFrameSharp(_video)) {
         try {
           const r = await det.detect(_video);
           if (r.length) validateAndFire(r[0].rawValue, r[0].format);
@@ -238,6 +274,12 @@ export const BarcodeScanner = {
         _handler = (res) => {
           const code = res?.codeResult?.code;
           const fmt  = res?.codeResult?.format;
+          // ── فحص ثقة فك التشفير المدمج بـ Quagga2 نفسها — يرفض القراءات منخفضة الثقة قبل أي شي آخر ──
+          // decodedCodes[].error هي قيمة موثَّقة رسمياً من Quagga2 (0 = ثقة كاملة، 1 = خطأ مرجَّح)
+          // محسوبة من داخل خوارزمية فك التشفير نفسها وقت قراءة كل شريط/فراغ بالباركود فعلياً
+          const codes = res?.codeResult?.decodedCodes || [];
+          const hasHighError = codes.some(c => typeof c?.error === 'number' && c.error > 0.15);
+          if (hasHighError) return; // رفض فوري — الخوارزمية نفسها غير واثقة من هذي القراءة
           validateAndFire(code, fmt);
         };
         Quagga.onDetected(_handler);
