@@ -149,8 +149,8 @@ export const BarcodeScanner = {
   _isFrameSharp(video) {
     if (!BarcodeScanner._sharpCanvas) {
       BarcodeScanner._sharpCanvas = document.createElement('canvas');
-      BarcodeScanner._sharpCanvas.width  = 160; // حجم صغير كافٍ للتقييم، يحافظ على السرعة
-      BarcodeScanner._sharpCanvas.height = 90;
+      BarcodeScanner._sharpCanvas.width  = 48; // عينة مصغَّرة — كافية تماماً لقياس الحدّة، تقلل التكلفة الحسابية بشكل كبير
+      BarcodeScanner._sharpCanvas.height = 27;
     }
     const canvas = BarcodeScanner._sharpCanvas;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -175,7 +175,7 @@ export const BarcodeScanner = {
     const mean = sum / n;
     const variance = (sumSq / n) - (mean * mean);
 
-    return variance > 35; // حد أدنى عملي — أقل منه يعني الإطار ضبابي بشكل يستحيل قراءته بدقة
+    return variance > 250; // معايَرة بدقة على عينة 48×27 — أعلى من نطاق الإطارات الضبابية بشكل حقيقي
   },
 
   // ── Native BarcodeDetector loop ──
