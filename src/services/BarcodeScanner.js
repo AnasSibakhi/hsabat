@@ -39,13 +39,10 @@ const eanOk = (code) => {
   return true; // صيغ أخرى (code_128, qr_code...) لا تحتوي checksum رياضي قابل للتحقق هنا — تعتمد على الطبقة 2
 };
 
-// ── الطبقة 2: تأكيد بالتكرار — صيغ بلا checksum رياضي تحتاج قراءتين متطابقتين بفارق زمني قصير ──
-const NO_CHECKSUM_FORMATS = ['code_128', 'code_39', 'qr_code', 'data_matrix', 'itf', 'upc_e'];
+// ── الطبقة 2: تأكيد بالتكرار — قراءتان متطابقتان بفارق زمني قصير، تُطبَّق على كل الصيغ ──
 const CONFIRM_WINDOW = 350; // ms — فارق زمني قصير كافٍ لإطارين متتاليين من نفس القراءة الحقيقية
 let _pendingCode = null;
 let _pendingTime = 0;
-
-const needsConfirmation = (fmt) => NO_CHECKSUM_FORMATS.includes(fmt);
 
 // ── الطبقة 3: فحص شكلي حسب الصيغة — طول وتنسيق متوقع لكل نوع ──
 const formatSanityOk = (code, fmt) => {
@@ -73,21 +70,20 @@ const validateAndFire = (code, fmt) => {
   const isEAN = ['ean_13', 'ean_8', 'upc_a'].includes(fmt);
   if (isEAN && !eanOk(code)) return; // فشل checksum رياضي — رفض فوري وقاطع
 
-  if (needsConfirmation(fmt)) {
+  {
+    // كل الصيغ تحتاج تأكيد بالتكرار، بما فيها EAN/UPC — الـ checksum يكتشف أغلب الأخطاء
+    // العشوائية، لكنه ضعيف رياضياً أمام أخطاء "تبديل رقمين متجاورين"، وهي بالضبط
+    // النوع الأكثر شيوعاً عندما تقرأ الكاميرا باركود مجعلت أو غير واضح بوضوح كافٍ
     const now = Date.now();
     if (_pendingCode === code && (now - _pendingTime) < CONFIRM_WINDOW) {
-      // قراءتان متطابقتان بفارق زمني قصير — تأكيد حقيقي، نقبل
       _pendingCode = null;
       fire(code);
     } else {
-      // أول قراءة لهذا الكود — نخزّنها وننتظر التأكيد، لا نقبلها بعد
       _pendingCode = code;
       _pendingTime = now;
     }
     return;
   }
-
-  // EAN/UPC-A: الـ checksum الرياضي وحده كافٍ ودقيق، لا حاجة لانتظار تكرار
   fire(code);
 };
 
