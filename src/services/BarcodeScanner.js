@@ -39,6 +39,16 @@ const eanOk = (code) => {
   return true; // صيغ أخرى (code_128, qr_code...) لا تحتوي checksum رياضي قابل للتحقق هنا — تعتمد على الطبقة 2
 };
 
+// ── الطبقة 2: كاشف عدم استقرار حقيقي — سريع بالقراءة الواضحة، صارم عند التذبذب الفعلي ──
+// المبدأ: نقبل القراءة فوراً من أول مرة إن نجحت بـ checksum (موثوق به جداً، ~99.9%).
+// لكن إن رصدنا كودين مختلفين (كلاهما عابر للفحوصات) خلال نافذة زمنية قصيرة، هذا مؤشر
+// حقيقي على باركود غير واضح يجعل الكاميرا "تتذبذب" — في هذي الحالة فقط نطلب استقراراً
+// (تكرار نفس الكود) قبل القبول. لا تأخير على القراءة الواضحة المستقرة من أول لحظة
+const INSTABILITY_WINDOW = 700; // ms
+let _lastSeenCode  = null;
+let _lastSeenTime  = 0;
+let _unstableCode  = null; // الكود الذي يحتاج تأكيداً إضافياً بسبب تذبذب رُصد فعلياً
+
 // ── الطبقة 3: فحص شكلي حسب الصيغة — طول وتنسيق متوقع لكل نوع ──
 const formatSanityOk = (code, fmt) => {
   if (!code) return false;
@@ -65,42 +75,32 @@ const validateAndFire = (code, fmt) => {
   const isEAN = ['ean_13', 'ean_8', 'upc_a'].includes(fmt);
   if (isEAN && !eanOk(code)) return; // فشل checksum رياضي — رفض فوري وقاطع
 
-  {
-    // كل الصيغ تحتاج تأكيد ثلاثي، بما فيها EAN/UPC — الـ checksum يكتشف أغلب الأخطاء
-    // العشوائية، لكنه ضعيف رياضياً أمام أخطاء "تبديل رقمين متجاورين"، وقراءتان متطابقتان
-    // فقط يمكن تحقيقهما بسهولة من إضاءة/زاوية سيئة تعطي نفس الخطأ بثبات لعشرات الإطارات
-    const now = Date.now();
+  const now = Date.now();
 
-    if (_pendingCode !== code) {
-      // كود مختلف عن المعلَّق — بداية تتبّع جديد من الصفر
-      _pendingCode  = code;
-      _pendingCount = 1;
-      _pendingFirst = now;
-      _pendingLast  = now;
-      return;
-    }
-
-    // نفس الكود — لكن يجب فاصل زمني حقيقي كافٍ منذ آخر قراءة محسوبة، لا تكرار فوري لنفس الإطار
-    if ((now - _pendingLast) < MIN_FRAME_GAP) return;
-
-    // تجاوزت المدة الكلية المسموحة — ابدأ التتبّع من جديد بدل رفض كل شي بصمت
-    if ((now - _pendingFirst) > CONFIRM_WINDOW) {
-      _pendingCount = 1;
-      _pendingFirst = now;
-      _pendingLast  = now;
-      return;
-    }
-
-    _pendingCount++;
-    _pendingLast = now;
-
-    if (_pendingCount >= READS_NEEDED) {
-      _pendingCode  = null;
-      _pendingCount = 0;
-      fire(code);
-    }
+  // الكود ده هو نفسه المعلَّق كمشكوك فيه من قراءة سابقة — تكرار فعلي، نقبل الآن
+  if (_unstableCode === code) {
+    _unstableCode = null;
+    _lastSeenCode = code;
+    _lastSeenTime = now;
+    fire(code);
     return;
   }
+
+  // يوجد كود مشكوك فيه (غير هذا) لسا بانتظار تأكيده — نتجاهل أي كود آخر مؤقتاً حتى ينتهي الانتظار
+  if (_unstableCode) return;
+
+  // هل ظهر كود مختلف قبل لحظات قصيرة؟ هذا تذبذب حقيقي — نعلّم هذا الكود كمشكوك فيه، ننتظر تكراره
+  if (_lastSeenCode && _lastSeenCode !== code && (now - _lastSeenTime) < INSTABILITY_WINDOW) {
+    _unstableCode = code;
+    _lastSeenCode = code;
+    _lastSeenTime = now;
+    return;
+  }
+
+  _lastSeenCode = code;
+  _lastSeenTime = now;
+
+  // لا تذبذب مرصود — القراءة مستقرة من أول لحظة، الـ checksum/الفحص الشكلي كافيان، نقبل فوراً
   fire(code);
 };
 
@@ -338,7 +338,7 @@ export const BarcodeScanner = {
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
     _stream = null; _video = null; _handler = null;
     _cb = null; _last = null;
-    _pendingCode = null; _pendingCount = 0; _pendingFirst = 0; _pendingLast = 0;
+    _lastSeenCode = null; _lastSeenTime = 0; _unstableCode = null;
     clearTimeout(_timer);
   },
 };
