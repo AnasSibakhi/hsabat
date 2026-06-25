@@ -24,6 +24,7 @@ let _scanner  = null;
 let _lastScan = null;
 let _scanTimer = null; // مؤقّت الإيقاف الذكي للكاميرا (دقيقة بدون نشاط)
 let _active   = false;
+let _docClickHandler = null; // مرجع لمعالج الضغط على document — يُحذف قبل إضافة جديد لمنع التسريب
 let _transferEntities = [];
 let _selectedTransferEntity = null;
 
@@ -52,15 +53,18 @@ export const QuickSale = {
   _barcodeTimer:  null,
 
   _initPhysicalScanner() {
+    // أزل المعالج القديم أولاً — كان يتراكم بكل دخول للصفحة بدون حذف، يتسبب بتسريب ذاكرة حقيقي
+    if (_docClickHandler) document.removeEventListener('click', _docClickHandler);
+
     // Close search dropdown on outside click
-    document.addEventListener('click', (e) => {
+    _docClickHandler = (e) => {
       const grid = DOM.get('qs-product-grid');
       const input = DOM.get('qs-barcode-input');
       if (grid && !grid.contains(e.target) && e.target !== input) {
         grid.style.display = 'none';
       }
-    });
-
+    };
+    document.addEventListener('click', _docClickHandler);
   },
 
   // Called on every input change
