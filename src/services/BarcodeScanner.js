@@ -39,11 +39,6 @@ const eanOk = (code) => {
   return true; // صيغ أخرى (code_128, qr_code...) لا تحتوي checksum رياضي قابل للتحقق هنا — تعتمد على الطبقة 2
 };
 
-// ── الطبقة 2: تأكيد بالتكرار — قراءتان متطابقتان بفارق زمني قصير، تُطبَّق على كل الصيغ ──
-const CONFIRM_WINDOW = 350; // ms — فارق زمني قصير كافٍ لإطارين متتاليين من نفس القراءة الحقيقية
-let _pendingCode = null;
-let _pendingTime = 0;
-
 // ── الطبقة 3: فحص شكلي حسب الصيغة — طول وتنسيق متوقع لكل نوع ──
 const formatSanityOk = (code, fmt) => {
   if (!code) return false;
@@ -71,16 +66,38 @@ const validateAndFire = (code, fmt) => {
   if (isEAN && !eanOk(code)) return; // فشل checksum رياضي — رفض فوري وقاطع
 
   {
-    // كل الصيغ تحتاج تأكيد بالتكرار، بما فيها EAN/UPC — الـ checksum يكتشف أغلب الأخطاء
-    // العشوائية، لكنه ضعيف رياضياً أمام أخطاء "تبديل رقمين متجاورين"، وهي بالضبط
-    // النوع الأكثر شيوعاً عندما تقرأ الكاميرا باركود مجعلت أو غير واضح بوضوح كافٍ
+    // كل الصيغ تحتاج تأكيد ثلاثي، بما فيها EAN/UPC — الـ checksum يكتشف أغلب الأخطاء
+    // العشوائية، لكنه ضعيف رياضياً أمام أخطاء "تبديل رقمين متجاورين"، وقراءتان متطابقتان
+    // فقط يمكن تحقيقهما بسهولة من إضاءة/زاوية سيئة تعطي نفس الخطأ بثبات لعشرات الإطارات
     const now = Date.now();
-    if (_pendingCode === code && (now - _pendingTime) < CONFIRM_WINDOW) {
-      _pendingCode = null;
+
+    if (_pendingCode !== code) {
+      // كود مختلف عن المعلَّق — بداية تتبّع جديد من الصفر
+      _pendingCode  = code;
+      _pendingCount = 1;
+      _pendingFirst = now;
+      _pendingLast  = now;
+      return;
+    }
+
+    // نفس الكود — لكن يجب فاصل زمني حقيقي كافٍ منذ آخر قراءة محسوبة، لا تكرار فوري لنفس الإطار
+    if ((now - _pendingLast) < MIN_FRAME_GAP) return;
+
+    // تجاوزت المدة الكلية المسموحة — ابدأ التتبّع من جديد بدل رفض كل شي بصمت
+    if ((now - _pendingFirst) > CONFIRM_WINDOW) {
+      _pendingCount = 1;
+      _pendingFirst = now;
+      _pendingLast  = now;
+      return;
+    }
+
+    _pendingCount++;
+    _pendingLast = now;
+
+    if (_pendingCount >= READS_NEEDED) {
+      _pendingCode  = null;
+      _pendingCount = 0;
       fire(code);
-    } else {
-      _pendingCode = code;
-      _pendingTime = now;
     }
     return;
   }
@@ -321,7 +338,7 @@ export const BarcodeScanner = {
     try { _stream?.getTracks().forEach(t => t.stop()); } catch {}
     _stream = null; _video = null; _handler = null;
     _cb = null; _last = null;
-    _pendingCode = null; _pendingTime = 0;
+    _pendingCode = null; _pendingCount = 0; _pendingFirst = 0; _pendingLast = 0;
     clearTimeout(_timer);
   },
 };
