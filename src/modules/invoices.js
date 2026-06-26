@@ -663,6 +663,7 @@ const Invoices = {
   // ── Print Invoice ──
   printInvoice(invId) {
     DB.invoices().select('*').eq('id', invId).single().then(({ data: inv }) => {
+      if (!inv) { Notify.error("تعذّر تحميل الفاتورة — تحققي من الاتصال"); return; }
       DB.invoiceItems().select('*').eq('invoice_id', invId).then(({ data: items }) => {
         const store   = State.user?.store_name || 'حسابات';
         const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
