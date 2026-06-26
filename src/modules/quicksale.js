@@ -36,6 +36,7 @@ export const QuickSale = {
     _cart     = [];
     _discount = 0;
     _active   = true;
+    QuickSale._restoreCartFromStorage(); // استعادة سلة محفوظة لو وُجدت (حماية من إغلاق متصفح/تحديث غير متوقع)
     QuickSale._renderCart();
     DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
     // ── Physical barcode scanner (USB/BT) ──
@@ -331,7 +332,38 @@ export const QuickSale = {
     QuickSale._renderCart();
   },
 
+  // ── حفظ/استعادة السلة — حماية من الضياع عند إغلاق المتصفح أو إعادة التحميل لأي سبب ──
+  _saveCartToStorage() {
+    try {
+      localStorage.setItem('hsb_qs_cart_draft', JSON.stringify({ cart: _cart, discount: _discount, savedAt: Date.now() }));
+    } catch {}
+  },
+
+  _restoreCartFromStorage() {
+    try {
+      const raw = localStorage.getItem('hsb_qs_cart_draft');
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      // لو السلة المحفوظة قديمة جداً (أكثر من 24 ساعة)، لا نستعيدها — احتمال نسيان من جلسة سابقة بعيدة
+      if (Date.now() - (draft.savedAt || 0) > 24 * 3600 * 1000) {
+        localStorage.removeItem('hsb_qs_cart_draft');
+        return;
+      }
+      if (Array.isArray(draft.cart) && draft.cart.length) {
+        _cart     = draft.cart;
+        _discount = draft.discount || 0;
+        Notify.warn('🛒 تمت استعادة سلة محفوظة من قبل — تحققي منها قبل الإكمال');
+      }
+    } catch {}
+  },
+
+  _clearCartStorage() {
+    try { localStorage.removeItem('hsb_qs_cart_draft'); } catch {}
+  },
+
   _renderCart() {
+    QuickSale._saveCartToStorage(); // حفظ تلقائي بكل تغيير — يحمي السلة من الضياع عند إغلاق المتصفح/إعادة التحميل
+
     const el = DOM.get('qs-cart-items');
     if (!el) return;
 
@@ -415,6 +447,7 @@ export const QuickSale = {
   clearCart() {
     _cart = []; _discount = 0;
     _selectedTransferEntity = null;
+    QuickSale._clearCartStorage();
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input'); if (si) { si.value = ''; }
     const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); }
@@ -1266,7 +1299,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       } else {
         const { Customers } = await import('./customers.js');
         const newC = await Customers.createInline(custName, debtSnapshot.phone || '');
-        if (newC?.id) custId = newC.id;
+        if (newC?.id && !newC._isLocalPending) custId = newC.id;
       }
     }
 
@@ -1289,7 +1322,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         } else {
           const { Customers } = await import('./customers.js');
           const newC = await Customers.createInline(deferName, d.phone || '');
-          if (newC?.id) custId = newC.id;
+          if (newC?.id && !newC._isLocalPending) custId = newC.id;
         }
       }
       QuickSale._deferData   = null;
