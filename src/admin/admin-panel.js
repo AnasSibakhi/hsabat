@@ -17,14 +17,23 @@ async function callAdminFunction(action, params) {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) throw new Error('غير مسجّل دخول');
 
+  
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/admin-service`, {
     method: 'POST',
+        signal: controller.signal,
     headers: {
       'Content-Type':  'application/json',
       'Authorization':  `Bearer ${session.access_token}`,
     },
     body: JSON.stringify({ action, params }),
   });
+
+  
+  clearTimeout(timeoutId);
 
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || 'فشل الاتصال بخدمة الإدارة');
