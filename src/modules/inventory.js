@@ -148,7 +148,7 @@ const Inventory = {
       : '<div class="er" style="padding:20px;text-align:center;color:var(--g5);">لا يوجد سجل مشتريات</div>';
 
     // سجل المبيعات
-    const { data: soldItems } = await sb.from('invoice_items')
+    const { data: soldItems } = await DB.invoiceItems()
       .select('quantity, price, invoices(id, invoice_date, invoice_number)')
       .eq('inventory_id', id)
       .order('created_at', { ascending: false })
