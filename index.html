@@ -318,6 +318,10 @@
 
       <!-- RIGHT: Search + Cart -->
       <div class="pos-left">
+        <!-- شارة الطابور المعلَّق — تظهر فقط لو فيه فواتير لم تُزامَن بعد -->
+        <div id="qs-offline-badge" style="display:none;background:var(--wl);border:1px solid var(--w);border-radius:8px;padding:7px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--w);">
+          <span>📡 <span id="qs-offline-count">0</span> فاتورة بانتظار المزامنة</span>
+        </div>
         <!-- Search + Barcode -->
         <div class="pos-search-bar" id="qs-search-wrap">
           <i class="ti ti-barcode"></i>
