@@ -9,22 +9,40 @@ export const sb = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
 // ── استدعاء عام لجدول inventory عبر Edge Function آمنة ──
 async function callInventoryDB(action, params) {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) throw new Error('غير مسجّل دخول');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('غير مسجّل دخول');
 
-  const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/inventory-db`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization':  `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ action, params }),
-  });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || 'فشل الاتصال بخدمة المخزون');
-  return json.data;
+    const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/inventory-db`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization':  `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ action, params }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'فشل الاتصال بخدمة المخزون');
+
+    saveToOfflineCache('inventory', action, params, json.data);
+    return json.data;
+
+  } catch (err) {
+    const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+    if (isNetworkFailure && action === 'select') {
+      const cached = loadFromOfflineCache('inventory', action, params);
+      if (cached !== null) return cached;
+    }
+    throw err;
+  }
 }
+
 
 // ── Query builder آمن لجدول inventory — نفس الواجهة المتسلسلة المستخدمة بالموقع بالضبط ──
 function secureInventoryTable() {
@@ -127,10 +145,12 @@ function loadFromOfflineCache(table, action, params) {
 
 // ── استدعاء عام لكل الجداول المتبقية عبر Edge Function موحّدة آمنة ──
 async function callStoreDB(table, action, params) {
-  const cacheKey = { table, action, params };
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) throw new Error('غير مسجّل دخول');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/store-db`, {
       method: 'POST',
@@ -139,17 +159,19 @@ async function callStoreDB(table, action, params) {
         'Authorization':  `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ table, action, params }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'فشل الاتصال بالخدمة');
 
-    saveToOfflineCache(table, action, params, json.data); // تخزين شفاف بعد كل نجاح — صفر تأثير على المسار الطبيعي
+    saveToOfflineCache(table, action, params, json.data);
     return json.data;
 
   } catch (err) {
     // فشل الشبكة (لا نت، أو انقطاع وسط الطلب) — نحاول الرجوع لآخر نسخة محفوظة بدل رمي الخطأ
-    const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+    const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
     if (isNetworkFailure && action === 'select') {
       const cached = loadFromOfflineCache(table, action, params);
       if (cached !== null) return cached; // وجدنا نسخة محفوظة — نرجعها بصمت، الصفحة تعمل بشكل طبيعي بالبيانات القديمة
