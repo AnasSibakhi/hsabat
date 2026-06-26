@@ -1,7 +1,7 @@
 /**
  * notifications.js — User Notifications
  */
-import { sb }     from '../core/db.js';
+import { DB, sb }     from '../core/db.js';
 import { State }  from '../core/state.js';
 import * as DOM   from '../core/dom.js';
 import { escape } from '../core/utils.js';
@@ -33,14 +33,14 @@ export const Notifications = {
     const today = new Date().toISOString().split('T')[0];
 
     const [notifsRes, debtsRes, inventoryRes, purchasesRes] = await Promise.all([
-      sb.from('notifications').select('*')
+      DB.notifications().select('*')
         .or(`to_store_id.eq.${State.user.id},to_store_id.is.null`)
         .order('created_at', { ascending: false }).limit(20),
-      sb.from('debts').select('*, customers(name)')
+      DB.debts().select('*, customers(name)')
         .eq('store_id', State.user.id).eq('archived', false).gt('amount', 0).limit(50),
-      sb.from('inventory').select('id,name,quantity,low_stock_alert,unit')
+      DB.inventory().select('id,name,quantity,low_stock_alert,unit')
         .eq('store_id', State.user.id),
-      sb.from('purchases').select('*')
+      DB.purchases().select('*')
         .eq('store_id', State.user.id).eq('payment_status', 'defer').gt('remaining', 0),
     ]);
 
@@ -230,7 +230,7 @@ export const Notifications = {
   async open(id) {
     Notifications._markRead(id);
     if (!String(id).includes('-')) {
-      await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
+      await DB.notifications().update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
     }
     await Notifications.load();
   },
@@ -238,7 +238,7 @@ export const Notifications = {
   async markAllRead() {
     const items = document.querySelectorAll('[data-notif-id]');
     items.forEach(el => Notifications._markRead(el.dataset.notifId));
-    await sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+    await DB.notifications().update({ read_at: new Date().toISOString() }).is('read_at', null);
     await Notifications.load();
   },
 };
