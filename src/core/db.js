@@ -251,4 +251,5 @@ export const DB = {
   netCardPurchases: () => secureStoreTable('net_card_purchases'),
   expenses:         () => secureStoreTable('expenses'),
   returns:          () => secureStoreTable('returns'),
+  notifications:    () => secureStoreTable('notifications'),
 };
