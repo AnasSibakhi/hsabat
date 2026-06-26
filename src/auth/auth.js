@@ -48,7 +48,7 @@ export const Auth = {
       console.error('[Auth.init]', err);
       // فشل شبكي وقت فحص الجلسة (لا نت أصلاً عند فتح الموقع) — لا نفترض خروجاً، نحاول القراءة
       // المباشرة من التخزين المحلي الذي يحفظه Supabase نفسه، ونكمل الإقلاع بالبيانات المحفوظة
-      const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
       if (isNetworkFailure) {
         try {
           const raw = localStorage.getItem(`sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, '').split('.')[0]}-auth-token`);
@@ -117,10 +117,14 @@ export const Auth = {
       // جلب حساب التطبيق عبر Edge Function آمنة — لا يصل مفتاح service_role أبداً للمتصفح
       let account = null;
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/get-account`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${session.access_token}` },
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         const json = await res.json();
         if (res.ok) account = json.data;
       } catch (fetchErr) {
@@ -130,7 +134,7 @@ export const Auth = {
       if (!account) {
         // فشل الجلب — قد يكون فعلياً "لا حساب"، أو فقط انقطاع نت. نحاول الرجوع لآخر بيانات
         // حساب محفوظة محلياً قبل افتراض الأسوأ — تسجيل خروج هنا يدمّر إمكانية العمل بدون نت بالكامل
-        const isNetworkFailure = !navigator.onLine;
+        const isNetworkFailure = !navigator.onLine || fetchErr?.name === 'AbortError';
         if (isNetworkFailure) {
           try {
             const cachedAccount = JSON.parse(localStorage.getItem('hsb_cached_account') || 'null');
