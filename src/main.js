@@ -8,6 +8,7 @@ import * as Nav       from './nav/nav.js';
 import * as Modal     from './nav/modal.js';
 import { Notify }     from './core/notify.js';
 import * as DOM       from './core/dom.js';
+import { OfflineQueue } from './core/offline-queue.js';
 import './core/errors.js';
 
 // Modules
@@ -92,6 +93,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Boot auth
   Auth.init();
+  OfflineQueue.init();
 });
 
 // ─────────────────────────────────────────
