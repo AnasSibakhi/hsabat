@@ -1,6 +1,6 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
 // (السبب الجذري للمشكلة السابقة: الاسم كان ثابتاً "hesabat-v1" فلا يعتبر المتصفح أي نشر تحديثاً حقيقياً)
-const CACHE_VERSION = 'hesabat-v2-' + '20260619';
+const CACHE_VERSION = 'hesabat-v3-' + '20260626';
 const ASSETS = ['/', '/pos.css'];
 
 self.addEventListener('install', e => {
@@ -22,7 +22,11 @@ self.addEventListener('fetch', e => {
     fetch(e.request)
       .then(response => {
         // خزّن نسخة من أي رد ناجح بالكاش الحالي (يضمن تحديث مستمر بدل تجميد قديم)
-        if (response && response.status === 200) {
+        // ملاحظة: الموارد من نطاقات خارجية بدون CORS صريح (خطوط Google، أيقونات CDN) تُرجِع
+        // status:0 مع type:'opaque' حتى عند النجاح الحقيقي — الفحص السابق status===200 كان
+        // يرفضها بصمت من التخزين رغم نجاح التحميل فعلياً، فتبقى غير متاحة عند انقطاع النت
+        const looksOk = response && (response.ok || response.type === 'opaque');
+        if (looksOk) {
           const clone = response.clone();
           caches.open(CACHE_VERSION).then(c => c.put(e.request, clone)).catch(() => {});
         }
