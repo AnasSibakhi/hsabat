@@ -291,8 +291,11 @@ const Purchases = {
     try {
       // ── استدعاء واحد فقط ينفّذ كل العملية (شراء + ربط/تحديث مخزون + FIFO) على السيرفر دفعة وحدة ──
       const { data: { session } } = await sb.auth.getSession();
+            const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-purchase`, {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({
           supplier, productName, quantity: qty, cost, purchaseDate: DOM.val('pud'),
@@ -303,6 +306,7 @@ const Purchases = {
           invId, lowStockDefault: CONFIG.lowStockDefault,
         }),
       });
+            clearTimeout(timeoutId);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية الشراء');
 
