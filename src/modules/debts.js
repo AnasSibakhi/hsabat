@@ -189,7 +189,7 @@ const Debts = {
     const inp = document.getElementById('dc-search');
     if (!dd || !inp) return;
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; Debts.showAllCustomers(); });
       return;
     }
@@ -208,7 +208,7 @@ const Debts = {
   async openModal() {
     // تحميل الزبائن مسبقاً لضمان البحث الفوري
     if (!State.customers?.length) {
-      const { data } = await sb.from('customers')
+      const { data } = await DB.customers()
         .select('id,name,phone').eq('store_id', State.user.id).order('name');
       State.customers = data || [];
     }
@@ -225,7 +225,7 @@ const Debts = {
 
     // لو ما في زبائن محمّلين — اطلبهم وأعد البحث
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => {
           State.customers = data || [];
           Debts.searchCustomer(val);
@@ -321,17 +321,17 @@ const Debts = {
     let inv;
 
     if (invoiceNumber) {
-      const { data } = await sb.from('invoices').select('*').eq('invoice_number', invoiceNumber).maybeSingle();
+      const { data } = await DB.invoices().select('*').eq('invoice_number', invoiceNumber).maybeSingle();
       inv = data;
     }
 
     // لو ما في رقم فاتورة — نبحث عن فاتورة مرتبطة بالدين
     if (!inv && debtId) {
-      const { data: debt } = await sb.from('debts').select('notes, amount, debt_date, customer_id').eq('id', debtId).maybeSingle();
+      const { data: debt } = await DB.debts().select('notes, amount, debt_date, customer_id').eq('id', debtId).maybeSingle();
       if (debt?.notes) {
         const num = (debt.notes).match(/INV-\d+/)?.[0];
         if (num) {
-          const { data } = await sb.from('invoices').select('*').eq('invoice_number', num).maybeSingle();
+          const { data } = await DB.invoices().select('*').eq('invoice_number', num).maybeSingle();
           inv = data;
         }
       }
@@ -341,7 +341,7 @@ const Debts = {
       Notify.error('لا توجد فاتورة مرتبطة بهذا الدين');
       return;
     }
-    const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', inv.id);
+    const { data: items } = await DB.invoiceItems().select('*').eq('invoice_id', inv.id);
 
     const payLabel = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' }[inv.payment_type] || inv.payment_type;
     const itemsHtml = (items || []).map(it =>
