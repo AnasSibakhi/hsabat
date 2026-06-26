@@ -721,7 +721,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   showAllCustomers(nameId, phoneId, ddId) {
     if (!State.customers?.length) {
       DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; QuickSale.showAllCustomers(nameId, phoneId, ddId); });
+        .then(({ data }) => { State.customers = data || []; QuickSale.showAllCustomers(nameId, phoneId, ddId); })
+        .catch(() => { State.customers = []; QuickSale.showAllCustomers(nameId, phoneId, ddId); });
       return;
     }
     const dd = DOM.get(ddId);
@@ -744,7 +745,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     if (!State.customers?.length) {
       DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
+        .then(({ data }) => { State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); })
+        .catch(() => { State.customers = []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
       return;
     }
 
@@ -1171,6 +1173,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => {
           State.customers = data || [];
+          QuickSale.searchDebtCustomer(val);
+        })
+        .catch(() => {
+          State.customers = [];
           QuickSale.searchDebtCustomer(val);
         });
       if (!val.trim()) { dd.style.display = 'none'; return; }
