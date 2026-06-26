@@ -939,9 +939,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       });
       const json = await res.json();
       _transferEntities = res.ok ? (json.data || []) : [];
+      if (res.ok) {
+        try { localStorage.setItem('hsb_transfer_entities_cache', JSON.stringify(_transferEntities)); } catch {}
+      }
     } catch (e) {
       console.warn('[loadTransferEntities] فشل الاتصال بالخدمة:', e.message);
-      _transferEntities = [];
+      // فشل شبكي — نحاول الرجوع لآخر قائمة جهات محفوظة محلياً بدل ترك القائمة فاضية بصمت
+      try {
+        const cached = JSON.parse(localStorage.getItem('hsb_transfer_entities_cache') || '[]');
+        _transferEntities = Array.isArray(cached) ? cached : [];
+      } catch {
+        _transferEntities = [];
+      }
     }
   },
 
@@ -1384,19 +1393,25 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
       try {
         const { data: { session } } = await sb.auth.getSession();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // حد زمني صريح — يمنع التعليق اللانهائي على شبكة بطيئة/متقطعة، لا منقطعة تماماً
+
         const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
           body: JSON.stringify(salePayload),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية البيع');
         inv = json.data.invoice;
 
       } catch (err) {
-        // فشل شبكي حقيقي (لا نت) — لا نوقف البيع، نخزّنه بالطابور المحلي ونعرض فاتورة محلية فورية.
-        // فشل من نوع آخر (مثل رفض السيرفر للكمية) يجب أن يظهر كخطأ حقيقي، لا يُخزَّن بصمت
-        const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+        // فشل شبكي حقيقي (لا نت، أو شبكة بطيئة جداً تجاوزت الحد الزمني) — لا نوقف البيع، نخزّنه
+        // بالطابور المحلي ونعرض فاتورة محلية فورية. فشل من نوع آخر (مثل رفض السيرفر للكمية)
+        // يجب أن يظهر كخطأ حقيقي، لا يُخزَّن بصمت
+        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
         if (!isNetworkFailure) throw err;
 
         OfflineQueue.add(salePayload);
