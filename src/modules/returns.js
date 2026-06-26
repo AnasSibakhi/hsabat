@@ -112,14 +112,18 @@ const Returns = {
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (تحقق + إرجاع مخزون + FIFO + شطب دين + تسجيل) على السيرفر دفعة وحدة ──
       const { data: { session } } = await sb.auth.getSession();
+            const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/process-return`, {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({
           invId, buyerName, retType, retAmount,
           notes: DOM.val('ret-notes') || '',
         }),
       });
+            clearTimeout(timeoutId);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'فشل تسجيل الإرجاع');
 
