@@ -43,7 +43,7 @@ const Invoices = {
 
     // تحميل الزبائن والمخزون مسبقاً — المخزون ضروري لإضافة المنتجات بشكل صحيح
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; });
     }
     if (!State.inventory?.length) {
@@ -82,7 +82,7 @@ const Invoices = {
       return;
     }
     if (!State.customers?.length) {
-      const { data } = await sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name');
+      const { data } = await DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name');
       State.customers = data || [];
     }
     const q = val.trim().toLowerCase();
@@ -135,7 +135,7 @@ const Invoices = {
     const inp = document.getElementById('inv-cust-search');
     if (!dd || !inp) return;
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; Invoices.showAllCustomers(); });
       return;
     }
@@ -496,7 +496,7 @@ const Invoices = {
   // ── Load items counts ──
   async _loadItemsCounts(ids) {
     if (!ids.length) return;
-    const { data } = await sb.from('invoice_items')
+    const { data } = await DB.invoiceItems()
       .select('invoice_id, quantity')
       .in('invoice_id', ids);
     const counts = {};
@@ -517,9 +517,9 @@ const Invoices = {
   // ── Invoice Details Modal ──
   async openDetails(invId) {
     const [{ data: inv }, { data: items }, { data: retData }] = await Promise.all([
-      sb.from('invoices').select('*').eq('id', invId).single(),
-      sb.from('invoice_items').select('*').eq('invoice_id', invId),
-      sb.from('returns').select('*').eq('store_id', State.user?.id).eq('invoice_id', invId).maybeSingle(),
+      DB.invoices().select('*').eq('id', invId).single(),
+      DB.invoiceItems().select('*').eq('invoice_id', invId),
+      DB.returns().select('*').eq('store_id', State.user?.id).eq('invoice_id', invId).maybeSingle(),
     ]);
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
 
@@ -662,8 +662,8 @@ const Invoices = {
 
   // ── Print Invoice ──
   printInvoice(invId) {
-    sb.from('invoices').select('*').eq('id', invId).single().then(({ data: inv }) => {
-      sb.from('invoice_items').select('*').eq('invoice_id', invId).then(({ data: items }) => {
+    DB.invoices().select('*').eq('id', invId).single().then(({ data: inv }) => {
+      DB.invoiceItems().select('*').eq('invoice_id', invId).then(({ data: items }) => {
         const store   = State.user?.store_name || 'حسابات';
         const payLabel = PAY_LABELS[inv.payment_type] || inv.payment_type;
         const itemsHtml = (items||[]).map(it =>
@@ -893,7 +893,7 @@ const Invoices = {
     State.isMutating = true;
     try {
       // جلب أصناف الفاتورة قبل حذفها — لازم نعرفهم لنرجّع الكمية صحيح
-      const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', id);
+      const { data: items } = await DB.invoiceItems().select('*').eq('invoice_id', id);
 
       // إرجاع كل صنف للمخزون (الكمية المباشرة + التراجع عن batch الـ FIFO الأصلي)
       if (items?.length) {
@@ -912,7 +912,7 @@ const Invoices = {
       }
 
       // حذف أصناف الفاتورة، ثم الفاتورة نفسها
-      await sb.from('invoice_items').delete().eq('invoice_id', id);
+      await DB.invoiceItems().delete().eq('invoice_id', id);
       await DB.invoices().delete().eq('id', id);
 
       Notify.success('تم الحذف وإرجاع الكمية للمخزون');
