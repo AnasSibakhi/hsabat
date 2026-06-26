@@ -431,13 +431,33 @@ export const Customers = {
     }
 
     // لا يوجد تطابق فعلي — أنشئي زبون جديد فعلاً
-    const { data, error } = await DB.customers().insert({
-      store_id: State.user.id, name: name.trim(), phone: phone ?? '',
-    }).select().single();
-    if (error) throw error;
-    if (!State.customers) State.customers = [];
-    State.customers.push(data);
-    return data;
+    try {
+      const { data, error } = await DB.customers().insert({
+        store_id: State.user.id, name: name.trim(), phone: phone ?? '',
+      }).select().single();
+      if (error) throw error;
+      if (!State.customers) State.customers = [];
+      State.customers.push(data);
+      return data;
+    } catch (err) {
+      // فشل شبكي حقيقي (لا نت) — لا نوقف عملية البيع، ننشئ سجل زبون محلي مؤقت برقم سالب
+      // مميَّز (يستحيل تعارضه مع id حقيقي من قاعدة البيانات)، يُستخدم فقط لإكمال هذي العملية
+      // محلياً. اسم/جوال الزبون الحقيقيان يُرسَلان مباشرة ضمن بيانات البيع نفسها عند المزامنة،
+      // فالزبون الحقيقي يُنشأ فعلياً بالسيرفر كجزء طبيعي من معالجة الفاتورة — لا تكرار أو فقدان
+      const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+      if (!isNetworkFailure) throw err;
+
+      const tempCustomer = {
+        id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        store_id: State.user.id,
+        name: name.trim(),
+        phone: phone ?? '',
+        _isLocalPending: true, // علامة داخلية — لا تُستخدم بأي مكان كمعرّف حقيقي بقاعدة البيانات
+      };
+      if (!State.customers) State.customers = [];
+      State.customers.push(tempCustomer);
+      return tempCustomer;
+    }
   },
 
   /** Show account statement modal */
