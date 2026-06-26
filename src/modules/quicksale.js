@@ -16,6 +16,7 @@ import { Customers }       from './customers.js';
 import { FIFOService }     from '../services/FIFOService.js';
 import { rateGuard }       from '../core/ratelimit.js';
 import { BarcodeScanner }  from '../services/BarcodeScanner.js';
+import { OfflineQueue }    from '../core/offline-queue.js';
 
 // ── State ──
 let _cart     = [];   // [{id, name, barcode, unit, price, cost, qty, maxQty}]
@@ -1326,24 +1327,47 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       }
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + مخزون + FIFO + دين) على السيرفر دفعة وحدة ──
-      const { data: { session } } = await sb.auth.getSession();
-      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          cart: _cart, subtotal, discount, total, paymentType,
-          customerId: custId, customerName: custName, buyerName, buyerPhone,
-          invoiceDate: Utils.today(),
-          saleTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-          invoiceNumber: invNum,
-          transferEntityId:   _selectedTransferEntity?.id   || null,
-          transferEntityName: _selectedTransferEntity?.name || null,
-          debtAmount, debtNote, remindDate,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية البيع');
-      const inv = json.data.invoice;
+      const salePayload = {
+        cart: _cart, subtotal, discount, total, paymentType,
+        customerId: custId, customerName: custName, buyerName, buyerPhone,
+        invoiceDate: Utils.today(),
+        saleTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        invoiceNumber: invNum,
+        transferEntityId:   _selectedTransferEntity?.id   || null,
+        transferEntityName: _selectedTransferEntity?.name || null,
+        debtAmount, debtNote, remindDate,
+      };
+
+      let inv;
+      let isOfflineSale = false;
+
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify(salePayload),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية البيع');
+        inv = json.data.invoice;
+
+      } catch (err) {
+        // فشل شبكي حقيقي (لا نت) — لا نوقف البيع، نخزّنه بالطابور المحلي ونعرض فاتورة محلية فورية.
+        // فشل من نوع آخر (مثل رفض السيرفر للكمية) يجب أن يظهر كخطأ حقيقي، لا يُخزَّن بصمت
+        const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+        if (!isNetworkFailure) throw err;
+
+        OfflineQueue.add(salePayload);
+        isOfflineSale = true;
+        inv = {
+          invoice_number: invNum,
+          invoice_date:   salePayload.invoiceDate,
+          sale_time:      salePayload.saleTime,
+          id:             null, // لا id حقيقي بعد — يُحدَّد فعلياً وقت المزامنة بالسيرفر
+        };
+        Notify.warn('📡 لا يوجد اتصال — تم حفظ البيعة محلياً وستُزامَن تلقائياً عند رجوع النت');
+      }
 
       // ── تحديث الكاش المحلي للمخزون فوراً (بدون أي طلب شبكي إضافي) — يعكس الكمية الجديدة بالواجهة مباشرة ──
       _cart.forEach(item => {
@@ -1380,7 +1404,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
       // عرض الفاتورة فوراً — بدون انتظار أي طلب شبكي إضافي (المخزون محدّث محلياً أعلى، يكفي للعرض الفوري)
-      QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone, debtAmount);
+      QuickSale._showReceipt(inv, cartSnapshot, total, paymentType, custName, buyerPhone, debtAmount, isOfflineSale);
 
       // تحديث لوحة التحكم والمخزون بالخلفية (بدون انتظار، لا يؤخر ظهور الفاتورة للمستخدمة)
       getDashboard()?.load();
@@ -1393,7 +1417,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   // ── Daily Stats ──
-  _showReceipt(inv, cart, total, paymentType, custName, phone, debtAmount = 0) {
+  _showReceipt(inv, cart, total, paymentType, custName, phone, debtAmount = 0, isOffline = false) {
     if (!inv) return;
     const PAY = { cash: 'نقدي', transfer: 'تحويل', defer: 'دين', partial: 'جزئي' };
     const store = State.user?.store_name || 'حسابات';
@@ -1456,6 +1480,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       : '';
     if (el) {
       el.innerHTML = `
+        ${isOffline ? `
+        <div style="background:var(--wl);border:1px solid var(--w);border-radius:8px;padding:8px 12px;margin-bottom:10px;text-align:center;font-size:12px;font-weight:800;color:var(--w);">
+          📡 لا يوجد اتصال — هذي الفاتورة محفوظة محلياً وستُزامَن تلقائياً عند رجوع النت
+        </div>` : ''}
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:22px;">${msg.icon}</div>
           <div style="font-size:16px;font-weight:900;color:${msg.color};">${msg.text}</div>
