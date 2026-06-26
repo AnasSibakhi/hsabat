@@ -30,7 +30,7 @@ const Returns = {
       const invIds = [...new Set(returnsList.map(r => r.invoice_id).filter(Boolean))];
       let invoiceNumMap = {};
       if (invIds.length) {
-        const { data: invs } = await sb.from('invoices').select('id,invoice_number').in('id', invIds);
+        const { data: invs } = await DB.invoices().select('id,invoice_number').in('id', invIds);
         invoiceNumMap = Object.fromEntries((invs || []).map(i => [i.id, i.invoice_number]));
       }
 
