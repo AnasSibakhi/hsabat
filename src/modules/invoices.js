@@ -836,8 +836,11 @@ const Invoices = {
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + خصم مخزون + دين) على السيرفر دفعة وحدة ──
       const { data: { session } } = await sb.auth.getSession();
+            const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({
           items, subtotal, discount, total, paymentType, partialPaid,
@@ -847,6 +850,7 @@ const Invoices = {
           debtAmount,
         }),
       });
+            clearTimeout(timeoutId);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
       const invoice = json.data.invoice;
