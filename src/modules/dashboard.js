@@ -30,7 +30,7 @@ const Dashboard = {
         DB.inventory().select('id,name,quantity,low_stock_alert,cost_price').limit(1000),
         DB.purchases().select('*').eq('payment_status','defer').gt('remaining',0).limit(100),
         todayInvIds.length > 0
-          ? sb.from('invoice_items').select('quantity, price, inventory_id, inventory(cost_price)').in('invoice_id', todayInvIds)
+          ? DB.invoiceItems().select('quantity, price, inventory_id, inventory(cost_price)').in('invoice_id', todayInvIds)
           : Promise.resolve({ data: [] }),
       ]);
 
