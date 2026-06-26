@@ -646,7 +646,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       );
       QuickSale._deferData = null;
       if (!State.customers?.length) {
-        sb.from('customers').select('id,name,phone')
+        DB.customers().select('id,name,phone')
           .eq('store_id', State.user.id).order('name')
           .then(({ data }) => { State.customers = data || []; });
       }
@@ -664,7 +664,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         b.classList.toggle('active', i === 0)
       );
       if (!State.customers?.length) {
-        sb.from('customers').select('id,name,phone')
+        DB.customers().select('id,name,phone')
           .eq('store_id', State.user.id).order('name')
           .then(({ data }) => { State.customers = data || []; });
       }
@@ -687,7 +687,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   showAllCustomers(nameId, phoneId, ddId) {
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; QuickSale.showAllCustomers(nameId, phoneId, ddId); });
       return;
     }
@@ -710,7 +710,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
 
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
       return;
     }
@@ -869,7 +869,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     // جيب الزبائن لو ما محمّلين
     if (!State.customers?.length) {
-      const { data } = await sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name');
+      const { data } = await DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name');
       State.customers = data || [];
     }
 
@@ -991,7 +991,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     // تحميل الزبائن إذا لم تكن محملة
     if (!State.customers?.length) {
-      const { data } = await sb.from('customers')
+      const { data } = await DB.customers()
         .select('id,name,phone').eq('store_id', State.user.id).order('name');
       State.customers = data || [];
     }
@@ -1055,7 +1055,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale._deferData   = null;
     // preload customers
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone')
+      DB.customers().select('id,name,phone')
         .eq('store_id', State.user.id).order('name')
         .then(({ data }) => { State.customers = data || []; });
     }
@@ -1126,7 +1126,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale._debtNewCust = null;
 
     if (!State.customers?.length) {
-      sb.from('customers').select('id,name,phone').eq('store_id', State.user.id).order('name')
+      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
         .then(({ data }) => {
           State.customers = data || [];
           QuickSale.searchDebtCustomer(val);
