@@ -195,7 +195,7 @@ export const Customers = {
     Customers._renderDetailDebts(custDebts);
 
     // سجل المشتريات (فواتيره) — يُطلب فقط عند الحاجة
-    const { data: invoices } = await sb.from('invoices').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+    const { data: invoices } = await DB.invoices().select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
     Customers._renderDetailInvoices(invoices || []);
   },
 
@@ -350,7 +350,7 @@ export const Customers = {
       const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
       const cleanPhone = phone.trim().replace(/[\s-]/g, '');
 
-      const { data: allCustomers } = await sb.from('customers').select('*').eq('store_id', State.user.id);
+      const { data: allCustomers } = await DB.customers().select('*').eq('store_id', State.user.id);
       let existing = null;
 
       if (cleanPhone) {
@@ -405,7 +405,7 @@ export const Customers = {
       );
       if (byPhoneCache) return byPhoneCache;
 
-      const { data: allCustomers } = await sb.from('customers')
+      const { data: allCustomers } = await DB.customers()
         .select('*').eq('store_id', State.user.id);
       const byPhoneDb = (allCustomers || []).find(c =>
         (c.phone || '').trim().replace(/[\s-]/g, '') === cleanPhone
@@ -421,7 +421,7 @@ export const Customers = {
     const byNameCache = (State.customers || []).find(c => normalize(c.name) === cleanName);
     if (byNameCache) return byNameCache;
 
-    const { data: byNameDb } = await sb.from('customers')
+    const { data: byNameDb } = await DB.customers()
       .select('*').eq('store_id', State.user.id)
       .ilike('name', name.trim()).maybeSingle();
     if (byNameDb) {
@@ -448,9 +448,9 @@ export const Customers = {
 
     const [{ data: debts }, { data: invoices }] = await Promise.all([
       DB.sb?.from('debts').select('*').eq('customer_id', customerId).order('debt_date')
-        ?? import('../core/db.js').then(m => m.sb.from('debts').select('*').eq('customer_id', customerId).order('debt_date')),
+        ?? import('../core/db.js').then(m => m.DB.debts().select('*').eq('customer_id', customerId).order('debt_date')),
       DB.sb?.from('invoices').select('*').eq('customer_id', customerId).order('invoice_date')
-        ?? import('../core/db.js').then(m => m.sb.from('invoices').select('*').eq('customer_id', customerId).order('invoice_date')),
+        ?? import('../core/db.js').then(m => m.DB.invoices().select('*').eq('customer_id', customerId).order('invoice_date')),
     ]);
 
     const totalDebt = (debts ?? []).reduce((s, d) => s + (d.amount - d.paid), 0);
