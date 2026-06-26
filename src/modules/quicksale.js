@@ -1237,6 +1237,26 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   // ── Checkout ──
   // ── توليد رقم فاتورة فريد بشكل مضمون — يتحقق من عدم وجود تكرار فعلياً قبل الإرجاع ──
   // (السبب الجذري لتكرار أرقام الفواتير: العدّ فقط غير آمن لو حُفظت فاتورتان بنفس اللحظة تقريباً)
+  async _generateUniqueInvoiceNumber() {
+    try {
+      const { count } = await DB.invoices().select('*', { count: 'exact', head: true });
+      let nextNum = (count || 0) + 1;
+
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const candidate = 'INV-' + String(nextNum).padStart(4, '0');
+        const { data: existing } = await DB.invoices().select('id').eq('invoice_number', candidate).maybeSingle();
+        if (!existing) return candidate;
+        nextNum++;
+      }
+      return 'INV-' + Date.now().toString().slice(-6);
+    } catch (err) {
+      // فشل شبكي — لا يمكن التحقق الفعلي من تفرّد الرقم بدون نت بطبيعة هذا الفحص.
+      // نولّد رقماً مؤقتاً محلياً واضحاً، الرقم الحقيقي والنهائي يُحدَّد بالسيرفر وقت المزامنة
+      const isNetworkFailure = err instanceof TypeError || err?.message?.includes('fetch') || !navigator.onLine;
+      if (!isNetworkFailure) throw err;
+      return 'OFFLINE-' + Date.now().toString().slice(-8);
+    }
+  },
 
   async sell(paymentType) {
     // Rate limiting — منع 3 مبيعات في ثانية واحدة
