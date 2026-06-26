@@ -74,11 +74,16 @@ export const OfflineQueue = {
         if (!session) break; // لا جلسة — نوقف المزامنة، نحاول لاحقاً
 
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 ثانية — حد زمني صريح يمنع التعليق اللانهائي على شبكة متقطعة/بطيئة
+
           const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
             body: JSON.stringify(entry.payload),
+            signal: controller.signal,
           });
+          clearTimeout(timeoutId);
           const json = await res.json();
 
           if (res.ok) {
