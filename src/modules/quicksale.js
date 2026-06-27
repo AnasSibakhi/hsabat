@@ -744,9 +744,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
 
     if (!State.customers?.length) {
+      alert("دخلنا: State.customers فاضية");
       DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); })
-        .catch(() => { State.customers = []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
+        .then(({ data }) => { alert('نجح .then، data=' + JSON.stringify(data)); State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); })
+        .catch((err) => { alert('وقعنا بـ .catch، الخطأ: ' + (err&&err.message)); State.customers = []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
       return;
     }
 
