@@ -1343,8 +1343,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           custId = existing.id;
         } else {
           const { Customers } = await import('./customers.js');
+          alert('قبل createInline');
           const newC = await Customers.createInline(deferName, d.phone || '');
           if (newC?.id && !newC._isLocalPending) custId = newC.id;
+          alert('بعد createInline، custId=' + custId);
         }
       }
       QuickSale._deferData   = null;
@@ -1353,7 +1355,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     State.isMutating = true;
     try {
+      alert('قبل generateUniqueInvoiceNumber');
       const invNum = await QuickSale._generateUniqueInvoiceNumber();
+      alert('نجح generateUniqueInvoiceNumber: ' + invNum);
 
       // Buyer info
       const buyerName  = DOM.val('qs-buyer-name') || custName || '';
