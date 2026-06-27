@@ -1311,53 +1311,55 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       }
     }
 
-    if (isAutoPartialCash) {
-      // نفس منطق ربط/إنشاء الزبون المستخدم بحالة الدين العادي، لكن للكاش الجزئي
-      const existing = (State.customers || []).find(c =>
-        c.name.toLowerCase() === custName.toLowerCase()
-      );
-      if (existing) {
-        custId = existing.id;
-      } else {
-        const { Customers } = await import('./customers.js');
-        const newC = await Customers.createInline(custName, debtSnapshot.phone || '');
-        if (newC?.id && !newC._isLocalPending) custId = newC.id;
-      }
-    }
-
-    if (!isAutoPartialCash && (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL)) {
-      const d        = QuickSale._deferData || {};
-      const deferName = (d.name || '').trim();
-
-      if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
-      custName = deferName;
-      debtSnapshot = { ...d };
-
-      if (d.custId) {
-        custId = d.custId;
-      } else {
+    try {
+      if (isAutoPartialCash) {
+        // نفس منطق ربط/إنشاء الزبون المستخدم بحالة الدين العادي، لكن للكاش الجزئي
         const existing = (State.customers || []).find(c =>
-          c.name.toLowerCase() === deferName.toLowerCase()
+          c.name.toLowerCase() === custName.toLowerCase()
         );
         if (existing) {
           custId = existing.id;
         } else {
           const { Customers } = await import('./customers.js');
-          alert('قبل createInline');
-          const newC = await Customers.createInline(deferName, d.phone || '');
+          const newC = await Customers.createInline(custName, debtSnapshot.phone || '');
           if (newC?.id && !newC._isLocalPending) custId = newC.id;
-          alert('بعد createInline، custId=' + custId);
         }
       }
-      QuickSale._deferData   = null;
-      QuickSale._debtNewCust = null;
+
+      if (!isAutoPartialCash && (paymentType === PAYMENT.DEFER || paymentType === PAYMENT.PARTIAL)) {
+        const d        = QuickSale._deferData || {};
+        const deferName = (d.name || '').trim();
+
+        if (!deferName) { Notify.error('أدخل اسم الزبون'); return; }
+        custName = deferName;
+        debtSnapshot = { ...d };
+
+        if (d.custId) {
+          custId = d.custId;
+        } else {
+          const existing = (State.customers || []).find(c =>
+            c.name.toLowerCase() === deferName.toLowerCase()
+          );
+          if (existing) {
+            custId = existing.id;
+          } else {
+            const { Customers } = await import('./customers.js');
+            const newC = await Customers.createInline(deferName, d.phone || '');
+            if (newC?.id && !newC._isLocalPending) custId = newC.id;
+          }
+        }
+        QuickSale._deferData   = null;
+        QuickSale._debtNewCust = null;
+      }
+    } catch (err) {
+      // فشل غير متوقَّع بمنطق ربط/إنشاء الزبون (دفعة جزئية أو دين) — نعرض خطأ واضح بدل ترك استثناء غير معالَج يتسرّب كخطأ متصفح خام
+      Notify.error('تعذّر معالجة بيانات الزبون: ' + (err?.message || 'خطأ غير معروف'));
+      return;
     }
 
     State.isMutating = true;
     try {
-      alert('قبل generateUniqueInvoiceNumber');
       const invNum = await QuickSale._generateUniqueInvoiceNumber();
-      alert('نجح generateUniqueInvoiceNumber: ' + invNum);
 
       // Buyer info
       const buyerName  = DOM.val('qs-buyer-name') || custName || '';
@@ -1368,7 +1370,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (buyerName && buyerName !== 'زبون عادي' && !custId) {
         const { Customers } = await import('./customers.js');
         const saved = await Customers.createInline(buyerName, buyerPhone);
-        if (saved?.id) custId = saved.id;
+        if (saved?.id && !saved._isLocalPending) custId = saved.id;
       }
 
       // حساب الدين (لو دفعة جزئية أو آجل كامل) — يُمرَّر جاهز للسيرفر
