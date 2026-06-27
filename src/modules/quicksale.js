@@ -938,10 +938,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { _transferEntities = []; return; }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/get-transfer-entities`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        method: "GET",
+        headers: { "Authorization": `Bearer ${session.access_token}` },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       const json = await res.json();
       _transferEntities = res.ok ? (json.data || []) : [];
       if (res.ok) {
