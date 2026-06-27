@@ -31,6 +31,18 @@ let _selectedTransferEntity = null;
 
 export const QuickSale = {
 
+  // ── تحميل ذكي وآمن لقائمة الزبائن — نقطة واحدة موحَّدة، مضمونة عدم رمي أي استثناء على الإطلاق ──
+  // تُستخدَم بكل مكان يحتاج تحميل State.customers، بدل تكرار نفس .then() الخطير بكل موديل
+  async _ensureCustomersLoaded() {
+    if (State.customers?.length) return;
+    try {
+      const { data } = await DB.customers().select("id,name,phone").eq("store_id", State.user.id).order("name");
+      State.customers = data || [];
+    } catch {
+      State.customers = [];
+    }
+  },
+
   // ── Init ──
   async init() {
     _cart     = [];
@@ -678,11 +690,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         b.classList.toggle('active', i === 0)
       );
       QuickSale._deferData = null;
-      if (!State.customers?.length) {
-        DB.customers().select('id,name,phone')
-          .eq('store_id', State.user.id).order('name')
-          .then(({ data }) => { State.customers = data || []; });
-      }
+      QuickSale._ensureCustomersLoaded();
       Modal.open('m-qs-pay-debt');
       setTimeout(() => DOM.get('qs-debt-pay-name')?.focus(), 150);
 
@@ -696,11 +704,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       document.querySelectorAll('[data-defer-days]').forEach((b, i) =>
         b.classList.toggle('active', i === 0)
       );
-      if (!State.customers?.length) {
-        DB.customers().select('id,name,phone')
-          .eq('store_id', State.user.id).order('name')
-          .then(({ data }) => { State.customers = data || []; });
-      }
+      QuickSale._ensureCustomersLoaded();
       Modal.open('m-qs-pay-defer');
       setTimeout(() => DOM.get('qs-buyer-name-df')?.focus(), 150);
     }
@@ -744,10 +748,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
 
     if (!State.customers?.length) {
-      alert("دخلنا: State.customers فاضية");
-      DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { alert('نجح .then، data=' + JSON.stringify(data)); State.customers = data || []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); })
-        .catch((err) => { alert('وقعنا بـ .catch، الخطأ: ' + (err&&err.message)); State.customers = []; QuickSale.searchBuyerField(nameId, phoneId, ddId, val); });
+      QuickSale._ensureCustomersLoaded().then(() => QuickSale.searchBuyerField(nameId, phoneId, ddId, val));
       return;
     }
 
@@ -1099,11 +1100,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     QuickSale._debtNewCust = null;
     QuickSale._deferData   = null;
     // preload customers
-    if (!State.customers?.length) {
-      DB.customers().select('id,name,phone')
-        .eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; });
-    }
+    QuickSale._ensureCustomersLoaded();
     setTimeout(() => DOM.get('qs-debt-search')?.focus(), 150);
   },
 
