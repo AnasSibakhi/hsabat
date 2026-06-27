@@ -516,11 +516,18 @@ const Invoices = {
 
   // ── Invoice Details Modal ──
   async openDetails(invId) {
-    const [{ data: inv }, { data: items }, { data: retData }] = await Promise.all([
-      DB.invoices().select('*').eq('id', invId).single(),
-      DB.invoiceItems().select('*').eq('invoice_id', invId),
-      DB.returns().select('*').eq('store_id', State.user?.id).eq('invoice_id', invId).maybeSingle(),
-    ]);
+    let inv, items, retData;
+    try {
+      const result = await Promise.all([
+        DB.invoices().select("*").eq("id", invId).single(),
+        DB.invoiceItems().select("*").eq("invoice_id", invId),
+        DB.returns().select("*").eq("store_id", State.user?.id).eq("invoice_id", invId).maybeSingle(),
+      ]);
+      inv = result[0].data; items = result[1].data; retData = result[2].data;
+    } catch {
+      Notify.error("تعذّر تحميل الفاتورة — تحققي من الاتصال");
+      return;
+    }
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
 
     const ret = retData; // معلومات الإرجاع لو موجودة
