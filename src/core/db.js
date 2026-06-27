@@ -34,12 +34,15 @@ async function callInventoryDB(action, params) {
     return json.data;
 
   } catch (err) {
-    const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-    if (isNetworkFailure && action === 'select') {
-      const cached = loadFromOfflineCache('inventory', action, params);
+    const isNetworkFailure = err instanceof TypeError || err?.name === "AbortError" || err?.message?.includes("fetch") || !navigator.onLine;
+    if (isNetworkFailure && action === "select") {
+      const cached = loadFromOfflineCache("inventory", action, params);
       if (cached !== null) return cached;
+      // فشل شبكي بدون كاش متاح، وهذي عملية قراءة — نرجع نتيجة فاضية بأمان بدل تحطيم كل
+      // الدوال التي تستدعي هذا (عشرات نقاط القراءة بكل الموقع)، أهم من رمي خطأ غير متوقَّع
+      return params.single || params.maybeSingle ? null : (params.count !== undefined ? { count: 0 } : []);
     }
-    throw err;
+    throw err; // عمليات الكتابة (insert/update/delete) تبقى ترمي الخطأ الحقيقي — لا نخفي فشل حفظ بيانات
   }
 }
 
@@ -170,13 +173,13 @@ async function callStoreDB(table, action, params) {
     return json.data;
 
   } catch (err) {
-    // فشل الشبكة (لا نت، أو انقطاع وسط الطلب) — نحاول الرجوع لآخر نسخة محفوظة بدل رمي الخطأ
-    const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-    if (isNetworkFailure && action === 'select') {
+    const isNetworkFailure = err instanceof TypeError || err?.name === "AbortError" || err?.message?.includes("fetch") || !navigator.onLine;
+    if (isNetworkFailure && action === "select") {
       const cached = loadFromOfflineCache(table, action, params);
-      if (cached !== null) return cached; // وجدنا نسخة محفوظة — نرجعها بصمت، الصفحة تعمل بشكل طبيعي بالبيانات القديمة
+      if (cached !== null) return cached;
+      return params.single || params.maybeSingle ? null : (params.countOnly ? { count: 0 } : []);
     }
-    throw err; // لا نسخة محفوظة، أو هذي عملية كتابة (لا تُخزَّن أبداً) — الخطأ الحقيقي يظهر كما كان سابقاً
+    throw err;
   }
 }
 
