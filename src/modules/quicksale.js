@@ -492,13 +492,17 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     // ٢. لو مش موجود — ابحث في DB
     if (!product) {
-      const { data } = await DB.inventory()
-        .select('id,name,barcode,sale_price,quantity,unit,category')
-        .eq('barcode', code)
-        .maybeSingle();
-      if (data) {
-        product = data;
-        if (!State.inventory.find(p => p.id === data.id)) State.inventory.push(data);
+      try {
+        const { data } = await DB.inventory()
+          .select("id,name,barcode,sale_price,quantity,unit,category")
+          .eq("barcode", code)
+          .maybeSingle();
+        if (data) {
+          product = data;
+          if (!State.inventory.find(p => p.id === data.id)) State.inventory.push(data);
+        }
+      } catch {
+        // فشل شبكي ولا يوجد بالكاش — المنتج يبقى غير موجود، يُعامَل كـ"غير معروف" طبيعياً بالأسفل
       }
     }
 
@@ -905,10 +909,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (!val.trim()) { if(dd) dd.style.display = 'none'; return; }
 
     // جيب الزبائن لو ما محمّلين
-    if (!State.customers?.length) {
-      const { data } = await DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name');
-      State.customers = data || [];
-    }
+    await QuickSale._ensureCustomersLoaded();
 
     const q = val.trim().toLowerCase();
     const matches = (State.customers || []).filter(c =>
@@ -1036,11 +1037,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     Modal.close('m-qs-pay-debt');
 
     // تحميل الزبائن إذا لم تكن محملة
-    if (!State.customers?.length) {
-      const { data } = await DB.customers()
-        .select('id,name,phone').eq('store_id', State.user.id).order('name');
-      State.customers = data || [];
-    }
+    await QuickSale._ensureCustomersLoaded();
 
     // ملء حقول m-debt مسبقاً
     const searchEl = DOM.get('dc-search');
