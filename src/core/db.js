@@ -194,6 +194,7 @@ function secureStoreTable(table) {
         gt:  (c, v) => { filters.push({ op: 'gt',  col: c, val: v }); return b; },
         gte: (c, v) => { filters.push({ op: 'gte', col: c, val: v }); return b; },
         in:  (c, v) => { filters.push({ op: 'in',  col: c, val: v }); return b; },
+        ilike: (c, v) => { filters.push({ op: 'ilike', col: c, val: v }); return b; },
         order: (c, o) => { orderSpec = { col: c, ascending: o?.ascending !== false }; return b; },
         limit: (n)    => { limitSpec = n; return b; },
         offset: (n)   => { offsetSpec = n; return b; },
