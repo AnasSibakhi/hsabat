@@ -59,12 +59,23 @@ const Dashboard = {
 
       // ٣ج. شريط النسبة المالي — نسبة الربح من إجمالي المبيعات
       const costOfGoods = todaySales - todayProfit;
-      const profitPct = todaySales > 0 ? Math.max(0, Math.min(100, (todayProfit / todaySales) * 100)) : 0;
+      const rawProfitPct = todaySales > 0 ? (todayProfit / todaySales) * 100 : 0;
+      const profitPct = Math.max(0, Math.min(100, rawProfitPct)); // مقيَّدة بين 0-100 لعرض الشريط البصري فقط
       const segProfitEl = DOM.get('flow-seg-profit');
       const segCostEl   = DOM.get('flow-seg-cost');
       if (segProfitEl) segProfitEl.style.width = profitPct + '%';
       if (segCostEl)   segCostEl.style.width   = (100 - profitPct) + '%';
       DOM.setText('flow-cost-val', Utils.currency(costOfGoods));
+
+      // تحذير واضح ومنفصل لو الخسارة فعلياً كبيرة جداً (التكلفة تتجاوز المبيعات بشكل كبير) —
+      // الشريط البصري وحده لا يكفي لأنه مقيَّد بـ100% دائماً، فلا يفرّق بين خسارة بسيطة وكارثية
+      const flowWarnEl = DOM.get('flow-loss-warning');
+      if (flowWarnEl) {
+        flowWarnEl.style.display = rawProfitPct < 0 ? 'block' : 'none';
+        if (rawProfitPct < 0) {
+          flowWarnEl.textContent = '⚠️ خسارة فعلية اليوم: ' + Utils.currency(Math.abs(todayProfit)) + ' — التكلفة أكبر من المبيعات';
+        }
+      }
 
       const debts = debtsFull.data || [];
 
