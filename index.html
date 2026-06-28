@@ -916,6 +916,16 @@
  <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-pay')">إلغاء</button><button class="btn btn-s" onclick="Debts.pay()">تأكيد</button></div>
 </div></div>
 
+<!-- Pay Total Debts (FIFO) -->
+<div class="mo" id="m-pay-total"><div class="modal">
+ <div class="mhdr"><span class="mtitle">تسديد الإجمالي</span><button class="mclose" onclick="Modal.close('m-pay-total')">✕</button></div>
+ <input type="hidden" id="ptid">
+ <div style="background:var(--g0);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:13px;display:flex;justify-content:space-between;"><span>إجمالي الديون المتبقي:</span><strong id="ptrem" style="color:var(--d);">-</strong></div>
+ <div style="background:var(--pl);border-radius:8px;padding:10px 14px;margin-bottom:.75rem;font-size:12px;color:var(--p);">سيُطبَّق المبلغ على الديون بدءاً من الأقدم تاريخاً، حتى ينتهي المبلغ أو تُسدَّد كل الديون</div>
+ <div class="fg"><label class="lbl">المبلغ المُراد تسديده (₪)</label><input class="inp" type="number" id="ptamt" inputmode="decimal" placeholder="مثال: 100"></div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-pay-total')">إلغاء</button><button class="btn btn-s" onclick="Debts.payTotal()">تأكيد</button></div>
+</div></div>
+
 <!-- Invoice -->
 <div class="mo" id="m-invoice"><div class="modal" style="max-width:560px;">
  <div class="mhdr">
