@@ -594,10 +594,29 @@ const Debts = {
       }
 
       Modal.close('m-pay-total');
+
+      // تحديث الكاش المحلي (Customers._allData) فوراً بنفس القيم الجديدة — بدون هذا، كل
+      // العروض الأخرى (إجمالي الديون بصفحة الزبائن، عداد المتأخرين، تفاصيل الزبون نفسه)
+      // تبقى تعرض أرقاماً قديمة حتى يُعاد تحميل الصفحة بالكامل، رغم نجاح التحديث بقاعدة البيانات
+      const { Customers } = await import('./customers.js');
+      if (Customers._allData?.debts) {
+        Customers._allData.debts = Customers._allData.debts.map(d => {
+          const u = updates.find(x => x.id === d.id);
+          return u ? { ...d, paid: u.newPaid } : d;
+        });
+      }
+      // تحديث الكاش المحلي الخاص بصفحة "الديون" المنفصلة كذلك (_allDebts) — كاش ثالث مستقل
+      // تماماً عن Customers._allData، يحتاج تحديثاً صريحاً منفصلاً بنفس القيم الجديدة
+      _allDebts = _allDebts.map(d => {
+        const u = updates.find(x => x.id === d.id);
+        return u ? { ...d, paid: u.newPaid } : d;
+      });
+      Debts._renderList();
+      Debts._renderStats();
+
       await Debts.loadBadge();
 
-      // إعادة تحميل تفاصيل الزبون لعرض الحالة المحدَّثة فوراً
-      const { Customers } = await import('./customers.js');
+      // إعادة عرض تفاصيل الزبون — الآن تقرأ من الكاش المحدَّث فعلياً، تعرض الحالة الصحيحة الجديدة
       await Customers.openDetail(customerId);
       Customers._refreshStats();
     } catch (err) {
