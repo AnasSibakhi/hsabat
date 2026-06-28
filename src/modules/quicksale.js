@@ -58,8 +58,10 @@ export const QuickSale = {
     QuickSale._loadSmartCards();
     // load stats and best selling
     QuickSale._loadStats();
-    // ── الكاميرا دائمة الفتح — لا تحتاج ضغطة زر ──
-    QuickSale.startScanner();
+    // ── الكاميرا تبدأ موقوفة لتوفير الطاقة — تظهر شاشة "اضغطي للتشغيل" الموجودة فعلاً بالـHTML،
+    // المستخدمة تضغط عليها يدوياً (onclick="QuickSale.startScanner()" بالعنصر نفسه) لتشغيلها فعلياً
+    DOM.get('qs-scanner-paused') && (DOM.get('qs-scanner-paused').style.display = 'flex');
+    DOM.get('qs-scanner-stage') && (DOM.get('qs-scanner-stage').style.display = 'none');
   },
 
   // ── Physical Scanner ──
