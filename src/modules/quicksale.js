@@ -778,8 +778,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         Utils.customerSuggestRow(c, `onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)"`)
       ),
       `<div class="dc-opt new"
-        onclick="document.getElementById('${ddId}').style.display='none'">
-        ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
+        onclick="QuickSale.useName('${nameId}','${ddId}')">
+        ➕ إضافة "<b>${escape(val.trim())}</b>" كزبون جديد
       </div>`
     ].join('');
     dd.style.display = 'block';
@@ -787,8 +787,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   useName(nameId, ddId) {
     const dd = DOM.get(ddId);
-    dd.style.display = 'none';
+    if (dd) dd.style.display = 'none';
     DOM.get(nameId)?.focus();
+    // تلميح خفيف يطمئن المستخدمة إن الاسم سيُضاف فعلياً كزبون جديد عند تأكيد البيع
+    Notify.success('✅ تم — سيُضاف "' + DOM.val(nameId) + '" كزبون جديد عند تأكيد البيع');
   },
 
   selectBuyerById(nameId, phoneId, ddId, customerId) {
