@@ -552,6 +552,62 @@ const Debts = {
     DOM.get('pawrap')?.classList.toggle('hidden', radio.value === 'full');
   },
 
+  // ── تسديد إجمالي على عدة ديون دفعة واحدة — توزيع تلقائي بترتيب الأقدم أولاً (FIFO) ──
+  openTotalPayModal(customerId, totalRemaining) {
+    DOM.get('ptid').value = customerId;
+    DOM.setText('ptrem', '₪' + parseFloat(totalRemaining).toFixed(2));
+    DOM.get('ptamt').value = '';
+    DOM.get('ptamt').max = totalRemaining;
+    Modal.open('m-pay-total');
+  },
+
+  async payTotal() {
+    const customerId = DOM.val('ptid');
+    const amount = parseFloat(DOM.val('ptamt')) || 0;
+    if (amount <= 0) { Notify.error('أدخل مبلغ التسديد'); return; }
+
+    State.isMutating = true;
+    try {
+      // نجلب كل ديون الزبون النشطة، بترتيب الأقدم أولاً (debt_date تصاعدياً) — نفس فلسفة FIFO
+      const { data: debts } = await DB.debts().select('*').eq('customer_id', customerId).order('debt_date', { ascending: true });
+      const active = (debts || []).filter(d => (d.amount - (d.paid || 0)) > 0);
+
+      let remaining = amount;
+      const updates = [];
+      for (const d of active) {
+        if (remaining <= 0) break;
+        const debtRemaining = d.amount - (d.paid || 0);
+        const applied = Math.min(remaining, debtRemaining);
+        updates.push({ id: d.id, newPaid: (d.paid || 0) + applied });
+        remaining -= applied;
+      }
+
+      // نطبّق كل التحديثات بالترتيب — لو فشل أحدها بمنتصف الطريق، الباقي يبقى صحيحاً (كل دين مستقل)
+      for (const u of updates) {
+        await DB.debts().update({ paid: u.newPaid }).eq('id', u.id);
+      }
+
+      const appliedTotal = amount - remaining;
+      Notify.success('تم توزيع ₪' + appliedTotal.toFixed(2) + ' على ' + updates.length + (updates.length === 1 ? ' دين' : ' ديون') + ' بالترتيب الأقدم أولاً ✅');
+      if (remaining > 0) {
+        Notify.warn('تنبيه: المبلغ المدخَل أكبر من إجمالي الديون — تم تطبيق ₪' + appliedTotal.toFixed(2) + ' فقط (كل الديون مسدَّدة الآن)');
+      }
+
+      Modal.close('m-pay-total');
+      await Debts.loadBadge();
+
+      // إعادة تحميل تفاصيل الزبون لعرض الحالة المحدَّثة فوراً
+      const { Customers } = await import('./customers.js');
+      await Customers.openDetail(customerId);
+      Customers._refreshStats();
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يتم التسديد، حاولي مرة أخرى' : (err.message || 'فشل تسديد الإجمالي'));
+    } finally {
+      setTimeout(() => { State.isMutating = false; }, 500);
+    }
+  },
+
   async pay() {
     const id   = DOM.val('pid');
     const type = document.querySelector('input[name="pt"]:checked').value;
