@@ -136,7 +136,8 @@ const Invoices = {
     if (!dd || !inp) return;
     if (!State.customers?.length) {
       DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; Invoices.showAllCustomers(); });
+        .then(({ data }) => { State.customers = data || []; Invoices.showAllCustomers(); })
+        .catch(() => { State.customers = []; Invoices.showAllCustomers(); });
       return;
     }
     const r = inp.getBoundingClientRect();
