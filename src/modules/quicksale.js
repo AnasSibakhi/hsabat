@@ -60,8 +60,8 @@ export const QuickSale = {
     QuickSale._loadStats();
     // ── تحميل مسبق لجهات التحويل بالخلفية — يضمن وجود كاش جاهز لو انقطع النت لاحقاً، بدون تأخير فتح الصفحة ──
     QuickSale.loadTransferEntities();
-    // ── الكاميرا دائمة الفتح — لا تحتاج ضغطة زر ──
-    QuickSale.startScanner();
+    // ── الكاميرا تبدأ موقوفة لتوفير الطاقة — نفس واجهة "توقف بعد عدم نشاط" الموجودة، تظهر من البداية
+    QuickSale._showCameraPausedState();
   },
 
   // ── Physical Scanner ──
@@ -565,6 +565,16 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   _resetIdleTimer() {
     clearTimeout(_scanTimer);
     _scanTimer = setTimeout(() => QuickSale._pauseForIdle(), 60000);
+  },
+
+  // ── عرض حالة "متوقفة" من البداية — توفير طاقة، نفس واجهة _pauseForIdle بالضبط لاتساق التجربة ──
+  _showCameraPausedState() {
+    const stage  = DOM.get('qs-scanner-stage');
+    const paused = DOM.get('qs-scanner-paused');
+    const hint   = DOM.get('qs-scanner-hint');
+    if (stage)  stage.style.display  = 'none';
+    if (paused) paused.style.display = 'flex';
+    if (hint)   hint.style.display   = 'none';
   },
 
   _pauseForIdle() {
