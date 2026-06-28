@@ -12,6 +12,7 @@ import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getCustomers, getDebts, getInventory, getDashboard, getQuickSale } from '../core/registry.js';
 import { FIFOService } from '../services/FIFOService.js';
+import { OfflineQueue } from '../core/offline-queue.js';
 
 // ── State ──
 let _allInvoices  = [];
@@ -847,27 +848,46 @@ const Invoices = {
         : 0;
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + خصم مخزون + دين) على السيرفر دفعة وحدة ──
-      const { data: { session } } = await sb.auth.getSession();
-            const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
-        method: 'POST',
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          items, subtotal, discount, total, paymentType, partialPaid,
-          customerId: customerId || null, customerName, customerPhone,
-          invoiceDate: today, saleTime: timeNow, invoiceNumber,
-          notes: DOM.val('inotes'),
-          debtAmount,
-        }),
-      });
-            clearTimeout(timeoutId);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
-      const invoice = json.data.invoice;
+      const salePayload = {
+        items, subtotal, discount, total, paymentType, partialPaid,
+        customerId: customerId || null, customerName, customerPhone,
+        invoiceDate: today, saleTime: timeNow, invoiceNumber,
+        notes: DOM.val('inotes'),
+        debtAmount,
+      };
 
-      Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
+      let invoice;
+      let isOfflineInvoice = false;
+
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify(salePayload),
+        });
+        clearTimeout(timeoutId);
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
+        invoice = json.data.invoice;
+
+      } catch (err) {
+        // فشل شبكي حقيقي (لا نت، أو شبكة بطيئة جداً تجاوزت الحد الزمني) — لا نوقف العملية، نخزّنها
+        // بالطابور المحلي (نفس آلية البيع السريع بالضبط) ونعرض فاتورة محلية فورية
+        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+        if (!isNetworkFailure) throw err;
+
+        OfflineQueue.add(salePayload, 'invoice');
+        isOfflineInvoice = true;
+        invoice = { invoice_number: invoiceNumber, id: null };
+        Notify.warn('📡 لا يوجد اتصال — تم حفظ الفاتورة محلياً وستُزامَن تلقائياً عند رجوع النت');
+      }
+
+
+      if (!isOfflineInvoice) Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
       Modal.close('m-invoice');
       Invoices.resetForm();
       DOM.get('new-cust-wrap')?.classList.add('hidden');
