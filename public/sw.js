@@ -1,24 +1,29 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
-const CACHE_VERSION = 'hesabat-v37-REVERT-20260628b';
+const CACHE_VERSION = 'hesabat-v38-FULLREVERT-20260628c';
+const ASSETS = ['/', '/pos.css'];
 
 self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(ASSETS).catch(() => {})));
   self.skipWaiting(); // فعّل النسخة الجديدة فوراً بدون انتظار إغلاق كل التابات القديمة
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    // حذف قاطع لكل كاش قديم بأي اسم سابق — يضمن صفر أثر لأي نسخة معطوبة محتملة من تحديثات سابقة
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => self.clients.claim()) // تحكّم فوري بكل التابات المفتوحة بدون إعادة تحميل يدوي
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim()) // تحكّم فوري بكل التابات المفتوحة بدون إعادة تحميل يدوي
   );
 });
 
 self.addEventListener('fetch', e => {
-  // Network-first بسيط — نخزّن فقط بعد نجاح الشبكة، نرجع للكاش فقط عند فشل الشبكة الحقيقي.
-  // لا تخزين أثناء install، صفر تعقيد إضافي — يقلل احتمالات أي سباق أو تلف بالتخزين
+  // Network-first مع تحديث فعلي للكاش — لو نجحت الشبكة، نحدّث الكاش بالنسخة الجديدة لحظياً
   e.respondWith(
     fetch(e.request)
       .then(response => {
+        // خزّن نسخة من أي رد ناجح بالكاش الحالي (يضمن تحديث مستمر بدل تجميد قديم)
+        // ملاحظة: الموارد من نطاقات خارجية بدون CORS صريح (خطوط Google، أيقونات CDN) تُرجِع
+        // status:0 مع type:'opaque' حتى عند النجاح الحقيقي — الفحص السابق status===200 كان
+        // يرفضها بصمت من التخزين رغم نجاح التحميل فعلياً، فتبقى غير متاحة عند انقطاع النت
         const looksOk = response && (response.ok || response.type === 'opaque');
         if (looksOk) {
           const clone = response.clone();
@@ -26,10 +31,11 @@ self.addEventListener('fetch', e => {
         }
         return response;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => caches.match(e.request)) // فقط عند فشل الشبكة فعلياً (بدون نت) نرجع للكاش
   );
 });
 
+// السماح بالتحديث الفوري من main.js عند اكتشاف نسخة جديدة (بدون انتظار إغلاق كل التابات)
 self.addEventListener('message', e => {
   if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
