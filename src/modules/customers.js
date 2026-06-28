@@ -346,49 +346,60 @@ export const Customers = {
     const phone = DOM.val('cph');
 
     await State.mutate(async () => {
-      // نفس منطق المطابقة المركزي — تمنع تكرار الزبون لو الجوال أو الاسم مطابق لزبون موجود مسبقاً
-      const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
-      const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+      try {
+        // نفس منطق المطابقة المركزي — تمنع تكرار الزبون لو الجوال أو الاسم مطابق لزبون موجود مسبقاً
+        const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        const cleanPhone = phone.trim().replace(/[\s-]/g, '');
 
-      const { data: allCustomers } = await DB.customers().select('*').eq('store_id', State.user.id);
-      let existing = null;
+        const { data: allCustomers } = await DB.customers().select('*').eq('store_id', State.user.id);
+        let existing = null;
 
-      if (cleanPhone) {
-        existing = (allCustomers || []).find(c => (c.phone || '').trim().replace(/[\s-]/g, '') === cleanPhone);
+        if (cleanPhone) {
+          existing = (allCustomers || []).find(c => (c.phone || '').trim().replace(/[\s-]/g, '') === cleanPhone);
+        }
+        if (!existing) {
+          existing = (allCustomers || []).find(c => normalize(c.name) === normalize(name));
+        }
+
+        if (existing) {
+          Notify.error('هذا الزبون موجود مسبقاً: ' + existing.name + (existing.phone ? ' — ' + existing.phone : ''));
+          return;
+        }
+
+        const { error } = await DB.customers().insert({
+          store_id: State.user.id,
+          name,
+          phone,
+          address: DOM.val('cad'),
+          notes:   DOM.val('cno'),
+        });
+        if (error) throw error;
+        Notify.success('تم إضافة الزبون');
+        Modal.close('m-customer');
+        DOM.clearInputs('cn', 'cph', 'cad', 'cno');
+        await Customers.loadAll();
+        await Customers.loadUnified();
+      } catch (err) {
+        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+        Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحفَظ الزبون، حاولي مرة أخرى' : (err.message || 'فشل إضافة الزبون'));
       }
-      if (!existing) {
-        existing = (allCustomers || []).find(c => normalize(c.name) === normalize(name));
-      }
-
-      if (existing) {
-        Notify.error('هذا الزبون موجود مسبقاً: ' + existing.name + (existing.phone ? ' — ' + existing.phone : ''));
-        return;
-      }
-
-      const { error } = await DB.customers().insert({
-        store_id: State.user.id,
-        name,
-        phone,
-        address: DOM.val('cad'),
-        notes:   DOM.val('cno'),
-      });
-      if (error) throw error;
-      Notify.success('تم إضافة الزبون');
-      Modal.close('m-customer');
-      DOM.clearInputs('cn', 'cph', 'cad', 'cno');
-      await Customers.loadAll();
-      await Customers.loadUnified();
     });
   },
+
 
   /** Delete a customer */
   async delete(id) {
     if (!confirm('حذف هذا الزبون؟')) return;
     await State.mutate(async () => {
-      await DB.customers().delete().eq('id', id);
-      Notify.success('تم الحذف');
-      await Customers.loadAll();
-      await Customers.loadUnified();
+      try {
+        await DB.customers().delete().eq('id', id);
+        Notify.success('تم الحذف');
+        await Customers.loadAll();
+        await Customers.loadUnified();
+      } catch (err) {
+        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+        Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحذف الزبون، حاولي مرة أخرى' : (err.message || 'فشل حذف الزبون'));
+      }
     });
   },
 
