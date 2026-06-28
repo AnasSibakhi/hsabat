@@ -12,7 +12,6 @@ import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal from '../nav/modal.js';
 import { getCustomers, getDebts, getInventory, getDashboard, getQuickSale } from '../core/registry.js';
 import { FIFOService } from '../services/FIFOService.js';
-import { OfflineQueue } from '../core/offline-queue.js';
 
 // ── State ──
 let _allInvoices  = [];
@@ -106,15 +105,12 @@ const Invoices = {
 
     if (!dd) return;
     if (!matches.length) {
-      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--s);font-weight:700;">✅ سيُضاف "<b>${escape(val.trim())}</b>" كزبون جديد</div>`;
+      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--g5);">لا يوجد زبون — سيُضاف كزبون جديد</div>`;
       dd.style.display = 'block';
       if (ic) ic.value = '__new__';
+      // تعبئة حقل الاسم الجديد
       const nm = DOM.get('inv-new-name'); if (nm) nm.value = val.trim();
       DOM.get('new-cust-wrap')?.classList.remove('hidden');
-      // تختفي الرسالة تلقائياً بعد لحظة — المستخدمة تشوف التأكيد، ثم تختفي القائمة من نفسها
-      // بدون حاجة لأي ضغطة أو إغلاق يدوي، يبقى قسم "بيانات الزبون الجديد" ظاهراً كمؤشر دائم
-      clearTimeout(Invoices._dismissTimer);
-      Invoices._dismissTimer = setTimeout(() => { if (dd) dd.style.display = 'none'; }, 1500);
       return;
     }
     dd.innerHTML = matches.map(c =>
@@ -140,8 +136,7 @@ const Invoices = {
     if (!dd || !inp) return;
     if (!State.customers?.length) {
       DB.customers().select('id,name,phone').eq('store_id', State.user.id).order('name')
-        .then(({ data }) => { State.customers = data || []; Invoices.showAllCustomers(); })
-        .catch(() => { State.customers = []; Invoices.showAllCustomers(); });
+        .then(({ data }) => { State.customers = data || []; Invoices.showAllCustomers(); });
       return;
     }
     const r = inp.getBoundingClientRect();
@@ -528,11 +523,13 @@ const Invoices = {
         DB.invoiceItems().select("*").eq("invoice_id", invId),
         DB.returns().select("*").eq("store_id", State.user?.id).eq("invoice_id", invId).maybeSingle(),
       ]);
+      alert('STEP1: Promise.all resolved successfully');
       inv = result[0].data; items = result[1].data; retData = result[2].data;
     } catch {
       Notify.error("تعذّر تحميل الفاتورة — تحققي من الاتصال");
       return;
     }
+    alert('STEP2: inv=' + (inv ? 'EXISTS' : 'NULL') + ', items count=' + (items ? items.length : 'undefined'));
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
 
     const ret = retData; // معلومات الإرجاع لو موجودة
@@ -836,7 +833,7 @@ const Invoices = {
         const newName = DOM.val('inv-new-name') || searchVal;
         if (!newName) { Notify.error('أدخل اسم الزبون'); State.isMutating = false; return; }
         const newCustomer = await getCustomers().createInline(newName, DOM.val('inv-new-phone'));
-        customerId = newCustomer._isLocalPending ? null : newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone') || newCustomer.phone || '';
+        customerId = newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone') || newCustomer.phone || '';
       } else if (customerId) {
         const found = State.customers.find(c => c.id === customerId);
         customerName = found?.name || searchVal || ''; customerPhone = found?.phone || '';
@@ -848,46 +845,27 @@ const Invoices = {
         : 0;
 
       // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + خصم مخزون + دين) على السيرفر دفعة وحدة ──
-      const salePayload = {
-        items, subtotal, discount, total, paymentType, partialPaid,
-        customerId: customerId || null, customerName, customerPhone,
-        invoiceDate: today, saleTime: timeNow, invoiceNumber,
-        notes: DOM.val('inotes'),
-        debtAmount,
-      };
+      const { data: { session } } = await sb.auth.getSession();
+            const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          items, subtotal, discount, total, paymentType, partialPaid,
+          customerId: customerId || null, customerName, customerPhone,
+          invoiceDate: today, saleTime: timeNow, invoiceNumber,
+          notes: DOM.val('inotes'),
+          debtAmount,
+        }),
+      });
+            clearTimeout(timeoutId);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
+      const invoice = json.data.invoice;
 
-      let invoice;
-      let isOfflineInvoice = false;
-
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
-          method: 'POST',
-          signal: controller.signal,
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify(salePayload),
-        });
-        clearTimeout(timeoutId);
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
-        invoice = json.data.invoice;
-
-      } catch (err) {
-        // فشل شبكي حقيقي (لا نت، أو شبكة بطيئة جداً تجاوزت الحد الزمني) — لا نوقف العملية، نخزّنها
-        // بالطابور المحلي (نفس آلية البيع السريع بالضبط) ونعرض فاتورة محلية فورية
-        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-        if (!isNetworkFailure) throw err;
-
-        OfflineQueue.add(salePayload, 'invoice');
-        isOfflineInvoice = true;
-        invoice = { invoice_number: invoiceNumber, id: null };
-        Notify.warn('📡 لا يوجد اتصال — تم حفظ الفاتورة محلياً وستُزامَن تلقائياً عند رجوع النت');
-      }
-
-
-      if (!isOfflineInvoice) Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
+      Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
       Modal.close('m-invoice');
       Invoices.resetForm();
       DOM.get('new-cust-wrap')?.classList.add('hidden');
@@ -904,13 +882,8 @@ const Invoices = {
       getDashboard().load();
       getCustomers().loadUnified();
     } catch (err) {
-      console.error("[Invoices.save]", err);
-      const isNetworkFailure = err instanceof TypeError || err?.name === "AbortError" || err?.message?.includes("fetch") || !navigator.onLine;
-      if (isNetworkFailure) {
-        Notify.error("📡 لا يوجد اتصال بالإنترنت — لم تُحفَظ الفاتورة، حاولي مرة أخرى بعد رجوع النت");
-      } else {
-        Notify.error(err.message);
-      }
+      console.error('[Invoices.save]', err);
+      Notify.error(err.message);
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
