@@ -1,6 +1,6 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
 // (السبب الجذري للمشكلة السابقة: الاسم كان ثابتاً "hesabat-v1" فلا يعتبر المتصفح أي نشر تحديثاً حقيقياً)
-const CACHE_VERSION = 'hesabat-v17-' + '20260626s';
+const CACHE_VERSION = 'hesabat-v18-' + '20260626t';
 const ASSETS = ['/', '/pos.css'];
 
 self.addEventListener('install', e => {
