@@ -53,7 +53,12 @@ export const Auth = {
         try {
           const raw = localStorage.getItem(`sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, '').split('.')[0]}-auth-token`);
           const stored = raw ? JSON.parse(raw) : null;
-          if (stored?.access_token) {
+          // فحص أمني محلي — التوكن المحفوظ صالح فعلياً عند الإصدار، لكن له تاريخ انتهاء حقيقي.
+          // بدون نت لا نقدر نتحقق من الخادم، فنضع حد سماحية معقول (7 أيام) قبل رفض توكن قديم
+          // جداً بدل قبوله للأبد بثقة كاملة — هذا يقلل نافذة الخطر لو الجهاز فُقد أو حساب أُوقف
+          const expiresAt = stored?.expires_at ? stored.expires_at * 1000 : 0;
+          const isReasonablyFresh = expiresAt > 0 && (Date.now() - expiresAt) < 7 * 24 * 3600 * 1000;
+          if (stored?.access_token && isReasonablyFresh) {
             Loading.show();
             await Auth._bootFromSession(stored);
             return;
