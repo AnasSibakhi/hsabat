@@ -185,13 +185,21 @@ export const BarcodeScanner = {
     const det = new BarcodeDetector({
       formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code','data_matrix','itf'],
     });
-    const loop = async () => {
+    // تحديد معدل الفحص الفعلي — تشغيل التحليل بكل إطار (60 مرة بالثانية) يثقل أجهزة Android
+    // الأضعف بشكل ملحوظ، بينما 10 محاولات بالثانية كافية تماماً لمسح ناجح وسريع عملياً (نفس
+    // فلسفة Quagga2 المُستخدَمة على iOS بـ frequency:20 — هنا أخف، تحفّظاً أكبر لتنوع أجهزة Android)
+    let lastCheck = 0;
+    const CHECK_INTERVAL = 100; // مللي ثانية — يعادل 10 فحوصات بالثانية
+    const loop = async (timestamp) => {
       if (!_active) return;
-      if (_video?.readyState >= 2 && BarcodeScanner._isFrameSharp(_video)) {
-        try {
-          const r = await det.detect(_video);
-          if (r.length) validateAndFire(r[0].rawValue, r[0].format);
-        } catch {}
+      if (timestamp - lastCheck >= CHECK_INTERVAL) {
+        lastCheck = timestamp;
+        if (_video?.readyState >= 2 && BarcodeScanner._isFrameSharp(_video)) {
+          try {
+            const r = await det.detect(_video);
+            if (r.length) validateAndFire(r[0].rawValue, r[0].format);
+          } catch {}
+        }
       }
       if (_active) _raf = requestAnimationFrame(loop);
     };
