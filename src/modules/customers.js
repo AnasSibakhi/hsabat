@@ -211,7 +211,18 @@ export const Customers = {
     if (!panel) return;
     const active = custDebts.filter(d => d.amount - (d.paid||0) > 0);
 
-    panel.innerHTML = active.length
+    // بطاقة "تسديد الإجمالي" — تظهر فقط لو أكثر من دين نشط واحد، تسدّد بالترتيب الزمني
+    // (الأقدم أولاً) بضغطة واحدة، بدل الاضطرار لتسديد كل فاتورة منفصلة يدوياً
+    const totalRem = active.reduce((s, d) => s + (d.amount - (d.paid||0)), 0);
+    const summaryHtml = active.length > 1 ? `<div class="cd-debt-summary">
+        <div>
+          <div class="cd-debt-summary-label">إجمالي المتبقي (${active.length} ديون)</div>
+          <div class="cd-debt-summary-total">₪${totalRem.toFixed(2)}</div>
+        </div>
+        <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${Customers._detailCustomerId}',${totalRem})">تسديد الإجمالي</button>
+      </div>` : '';
+
+    panel.innerHTML = summaryHtml + (active.length
       ? active.map(d => {
           const rem  = d.amount - (d.paid||0);
           const days = Math.floor((new Date().setHours(0,0,0,0) - new Date(d.debt_date)) / 86400000);
@@ -224,7 +235,7 @@ export const Customers = {
             <button class="ibg" onclick="Debts.openPayModal('${d.id}','${escape(State.customers.find(c=>c.id===Customers._detailCustomerId)?.name||'')}',${rem})">تسديد</button>
           </div>`;
         }).join('')
-      : '<div class="cd-empty">✅ لا توجد ديون نشطة</div>';
+      : '<div class="cd-empty">✅ لا توجد ديون نشطة</div>');
   },
 
   _renderDetailInvoices(invoices) {
