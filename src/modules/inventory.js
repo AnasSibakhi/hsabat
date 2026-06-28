@@ -13,7 +13,6 @@ import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 import { FIFOService }    from '../services/FIFOService.js';
 import { BarcodeScanner } from '../services/BarcodeScanner.js';
-import { OfflineQueue } from '../core/offline-queue.js';
 import { Guard }          from '../core/ratelimit.js';
 
 // ─────────────────────────────────────────
@@ -106,22 +105,11 @@ const Inventory = {
     const unitEl = document.getElementById('prod-unit');
     if (unitEl) unitEl.textContent = item.unit || '';
 
-    // هامش الربح — لون ديناميكي حسب القيمة الفعلية (أحمر للخسارة، أخضر للربح)، لا أخضر ثابت
-    const marginVal = item.sale_price && item.cost_price && item.cost_price > 0
-      ? ((item.sale_price - item.cost_price) / item.cost_price) * 100
-      : null;
-    const marginEl = document.getElementById('prod-margin');
-    if (marginEl) {
-      marginEl.textContent = marginVal !== null ? marginVal.toFixed(1) + '%' : '-';
-      marginEl.style.color = marginVal !== null && marginVal < 0 ? 'var(--d)' : 'var(--s)';
-    }
-    // تحذير صريح ومنفصل عن حالة المخزون لو سعر البيع فعلياً أقل من التكلفة — يمنع الالتباس
-    // بين "متوفر بالكمية" (حالة المخزون) و"مربح" (حالة السعر)، فهما مفهومان مختلفان تماماً
-    const lossWarnEl = document.getElementById('prod-loss-warning');
-    if (lossWarnEl) {
-      lossWarnEl.style.display = (marginVal !== null && marginVal < 0) ? 'block' : 'none';
-    }
-
+    // هامش الربح
+    const margin = item.sale_price && item.cost_price && item.cost_price > 0
+      ? (((item.sale_price - item.cost_price) / item.cost_price) * 100).toFixed(1) + '%'
+      : '-';
+    document.getElementById('prod-margin').textContent = margin;
 
     // حالة المخزون
     const statusEl = document.getElementById('prod-status-badge');
@@ -427,55 +415,29 @@ const Inventory = {
   async save() {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
-    const _sp = parseFloat(DOM.val("insp")) || 0;
-    const _cp = parseFloat(DOM.val("incp")) || 0;
-    if (_sp > 0 && _cp > 0 && _sp < _cp) {
-      if (!confirm("⚠️ سعر البيع (" + _sp + ") أقل من التكلفة (" + _cp + ") — هذا يعني بيع بخسارة. متأكدة من الاستمرار؟")) return;
-    }
     State.isMutating = true;
-
-    const productRow = {
-      store_id:        State.user.id,
-      name,
-      barcode:         DOM.val('inb') || null,
-      brand:           DOM.val('inbrand') || null,
-      category:        DOM.val('inc'),
-      unit:            DOM.val('inu'),
-      quantity:        parseFloat(DOM.val('inq')) || 0,
-      sale_price:      parseFloat(DOM.val('insp')) || 0,
-      cost_price:      parseFloat(DOM.val('incp')) || 0,
-      low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
-    };
-
     try {
-      const { error } = await DB.inventory().insert(productRow);
+      const { error } = await DB.inventory().insert({
+        store_id:        State.user.id,
+        name,
+        barcode:         DOM.val('inb') || null,
+        brand:           DOM.val('inbrand') || null,
+        category:        DOM.val('inc'),
+        unit:            DOM.val('inu'),
+        quantity:        parseFloat(DOM.val('inq')) || 0,
+        sale_price:      parseFloat(DOM.val('insp')) || 0,
+        cost_price:      parseFloat(DOM.val('incp')) || 0,
+        low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
+      });
       if (error) throw error;
       Notify.success('تم إضافة الصنف');
       Modal.close('m-inv');
       DOM.clearInputs('inn', 'insp', 'incp');
       Inventory.loadList();
       Inventory.load();
-    } catch (err) {
-      // فشل شبكي حقيقي (لا نت) — لا نوقف الإضافة، نخزّنها بالطابور المحلي (نفس آلية البيع
-      // السريع بالضبط) ونعرض تأكيداً محلياً فورياً. الإضافة بسيطة الاتجاه (لا تعتمد على
-      // قراءة كمية حالية قد تتغيّر بجهاز آخر بنفس الوقت)، فهي آمنة لهذا النمط من الطوابير
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      if (!isNetworkFailure) {
-        Notify.error(err.message || 'فشل إضافة الصنف');
-      } else {
-        OfflineQueue.add(productRow, 'inventory');
-        // إضافة محلية فورية للقائمة المعروضة — تعطي إحساساً حقيقياً بالنجاح، تُستبدَل
-        // ببيانات السيرفر الحقيقية تلقائياً بعد المزامنة، لكن لا نستدعي loadList() هنا (يستبدل
-        // State.inventory بالكامل من السيرفر، يمحو المنتج المحلي المؤقت قبل نجاح مزامنته)
-        State.inventory = [...(State.inventory || []), { ...productRow, id: 'local_' + Date.now(), _isLocalPending: true }];
-        Notify.warn('📡 لا يوجد اتصال — تم حفظ الصنف محلياً وسيُزامَن تلقائياً عند رجوع النت');
-        Modal.close('m-inv');
-        DOM.clearInputs('inn', 'insp', 'incp');
-        Inventory._renderList(State.inventory);
-      }
-    } finally { setTimeout(() => { State.isMutating = false; }, 500); }
+    } catch (err) { Notify.error(err.message); }
+    finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
-
 
   openEditModal(id) {
     const item = State.inventory.find(i => i.id === id);
@@ -527,10 +489,6 @@ const Inventory = {
 
     if (!name) { Notify.error('أدخل اسم المنتج'); return; }
 
-    if (price > 0 && cost > 0 && price < cost) {
-      if (!confirm("⚠️ سعر البيع (" + price + ") أقل من التكلفة (" + cost + ") — هذا يعني بيع بخسارة. متأكدة من الاستمرار؟")) return;
-    }
-
     const finalQty = qty + addQty;
     try {
       const { error } = await DB.inventory().update({
@@ -549,28 +507,17 @@ const Inventory = {
 
   async delete(id) {
     if (!confirm('حذف؟')) return;
-    try {
-      await DB.inventory().delete().eq('id', id);
-      Notify.success('تم');
-      await Inventory.load();
-    } catch (err) {
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحذف المنتج، حاولي مرة أخرى' : (err.message || 'فشل حذف المنتج'));
-    }
+    await DB.inventory().delete().eq('id', id);
+    Notify.success('تم');
+    await Inventory.load();
   },
 
   /** Deduct quantities after a sale — called by Invoices and QuickSale */
   async deductItems(items) {
-    try {
-      for (const item of items) {
-        if (!item.inventory_id) continue;
-        const { data } = await DB.inventory().select('quantity').eq('id', item.inventory_id).single();
-        if (data) await DB.inventory().update({ quantity: Math.max(0, data.quantity - item.quantity) }).eq('id', item.inventory_id);
-      }
-    } catch (err) {
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — تحديث المخزون لم يكتمل بالكامل، تحققي يدوياً' : (err.message || 'فشل تحديث المخزون'));
-      throw err; // نرمي الخطأ للمستدعي — هذي عملية حرجة، يجب يعرف المستدعي إنها فشلت لمعالجتها بمنطقه الخاص
+    for (const item of items) {
+      if (!item.inventory_id) continue;
+      const { data } = await DB.inventory().select('quantity').eq('id', item.inventory_id).single();
+      if (data) await DB.inventory().update({ quantity: Math.max(0, data.quantity - item.quantity) }).eq('id', item.inventory_id);
     }
   },
 };
