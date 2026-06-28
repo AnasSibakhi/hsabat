@@ -424,32 +424,13 @@ const Inventory = {
     await BarcodeScanner.toggleFlash();
   },
 
-  // ── تحقق لحظي وذكي أثناء الكتابة — يعطّل زر الحفظ فوراً لو سعر البيع أقل من التكلفة
-  // (منع جذري من الإدخال نفسه، لا انتظار للضغط على حفظ ثم تحذير قابل للتجاوز) ──
-  checkPriceWarning() {
-    const sp = parseFloat(DOM.val('insp')) || 0;
-    const cp = parseFloat(DOM.val('incp')) || 0;
-    const isInvalid = sp > 0 && cp > 0 && sp < cp;
-    const warnEl = document.getElementById('inv-price-warning');
-    const saveBtn = document.getElementById('inv-save-btn');
-    if (warnEl) warnEl.style.display = isInvalid ? 'block' : 'none';
-    if (saveBtn) {
-      saveBtn.disabled = isInvalid;
-      saveBtn.style.opacity = isInvalid ? '0.5' : '1';
-      saveBtn.style.cursor = isInvalid ? 'not-allowed' : 'pointer';
-    }
-  },
-
   async save() {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
-    const _sp = parseFloat(DOM.val('insp')) || 0;
-    const _cp = parseFloat(DOM.val('incp')) || 0;
-    // منع قاطع، لا تحذير قابل للتجاوز — الزر معطَّل أصلاً بفضل checkPriceWarning() اللحظية،
-    // هذا الفحص النهائي خط دفاع إضافي يضمن عدم الحفظ حتى لو تجاوز المستخدمة الواجهة بأي شكل
+    const _sp = parseFloat(DOM.val("insp")) || 0;
+    const _cp = parseFloat(DOM.val("incp")) || 0;
     if (_sp > 0 && _cp > 0 && _sp < _cp) {
-      Notify.error('⚠️ سعر البيع أقل من سعر التكلفة — صحّحي السعر قبل الحفظ');
-      return;
+      if (!confirm("⚠️ سعر البيع (" + _sp + ") أقل من التكلفة (" + _cp + ") — هذا يعني بيع بخسارة. متأكدة من الاستمرار؟")) return;
     }
     State.isMutating = true;
 
@@ -517,7 +498,6 @@ const Inventory = {
     const prev = document.getElementById('einv-qty-preview');
     if (prev) prev.style.display = 'none';
     Modal.open('m-editinv');
-    Inventory.checkEditPriceWarning(); // تحقق فوري عند فتح الموديل — لو منتج موجود فعلاً بهامش سالب
   },
 
   calcNewQty() {
@@ -530,21 +510,6 @@ const Inventory = {
       prev.textContent   = '✅ الكمية الجديدة: ' + (current + add);
     } else {
       prev.style.display = 'none';
-    }
-  },
-
-  // ── نفس فلسفة checkPriceWarning، لكن لحقول موديل التعديل المختلفة (einvprice/einvcost) ──
-  checkEditPriceWarning() {
-    const sp = parseFloat(DOM.val('einvprice')) || 0;
-    const cp = parseFloat(DOM.val('einvcost')) || 0;
-    const isInvalid = sp > 0 && cp > 0 && sp < cp;
-    const warnEl = document.getElementById('einv-price-warning');
-    const saveBtn = document.getElementById('einv-save-btn');
-    if (warnEl) warnEl.style.display = isInvalid ? 'block' : 'none';
-    if (saveBtn) {
-      saveBtn.disabled = isInvalid;
-      saveBtn.style.opacity = isInvalid ? '0.5' : '1';
-      saveBtn.style.cursor = isInvalid ? 'not-allowed' : 'pointer';
     }
   },
 
@@ -562,10 +527,8 @@ const Inventory = {
 
     if (!name) { Notify.error('أدخل اسم المنتج'); return; }
 
-    // منع قاطع، لا تحذير قابل للتجاوز — نفس فلسفة save()، خط دفاع نهائي
     if (price > 0 && cost > 0 && price < cost) {
-      Notify.error('⚠️ سعر البيع أقل من سعر التكلفة — صحّحي السعر قبل الحفظ');
-      return;
+      if (!confirm("⚠️ سعر البيع (" + price + ") أقل من التكلفة (" + cost + ") — هذا يعني بيع بخسارة. متأكدة من الاستمرار؟")) return;
     }
 
     const finalQty = qty + addQty;
