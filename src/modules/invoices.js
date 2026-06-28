@@ -523,13 +523,11 @@ const Invoices = {
         DB.invoiceItems().select("*").eq("invoice_id", invId),
         DB.returns().select("*").eq("store_id", State.user?.id).eq("invoice_id", invId).maybeSingle(),
       ]);
-      alert('STEP1: Promise.all resolved successfully');
       inv = result[0].data; items = result[1].data; retData = result[2].data;
     } catch {
       Notify.error("تعذّر تحميل الفاتورة — تحققي من الاتصال");
       return;
     }
-    alert('STEP2: inv=' + (inv ? 'EXISTS' : 'NULL') + ', items count=' + (items ? items.length : 'undefined'));
     if (!inv) { Notify.error('تعذّر تحميل الفاتورة'); return; }
 
     const ret = retData; // معلومات الإرجاع لو موجودة
