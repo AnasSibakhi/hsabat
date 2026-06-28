@@ -116,6 +116,7 @@ export const Auth = {
     try {
       // جلب حساب التطبيق عبر Edge Function آمنة — لا يصل مفتاح service_role أبداً للمتصفح
       let account = null;
+      let fetchErr = null;
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -127,14 +128,15 @@ export const Auth = {
         clearTimeout(timeoutId);
         const json = await res.json();
         if (res.ok) account = json.data;
-      } catch (fetchErr) {
-        console.error('[Auth] فشل الاتصال بخدمة الحسابات:', fetchErr.message);
+      } catch (err) {
+        fetchErr = err;
+        console.error('[Auth] فشل الاتصال بخدمة الحسابات:', err.message);
       }
 
       if (!account) {
         // فشل الجلب — قد يكون فعلياً "لا حساب"، أو فقط انقطاع نت. نحاول الرجوع لآخر بيانات
         // حساب محفوظة محلياً قبل افتراض الأسوأ — تسجيل خروج هنا يدمّر إمكانية العمل بدون نت بالكامل
-        const isNetworkFailure = !navigator.onLine || fetchErr?.name === 'AbortError';
+        const isNetworkFailure = !navigator.onLine || fetchErr?.name === 'AbortError' || fetchErr instanceof TypeError;
         if (isNetworkFailure) {
           try {
             const cachedAccount = JSON.parse(localStorage.getItem('hsb_cached_account') || 'null');
