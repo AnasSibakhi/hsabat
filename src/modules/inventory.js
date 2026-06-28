@@ -507,17 +507,28 @@ const Inventory = {
 
   async delete(id) {
     if (!confirm('حذف؟')) return;
-    await DB.inventory().delete().eq('id', id);
-    Notify.success('تم');
-    await Inventory.load();
+    try {
+      await DB.inventory().delete().eq('id', id);
+      Notify.success('تم');
+      await Inventory.load();
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحذف المنتج، حاولي مرة أخرى' : (err.message || 'فشل حذف المنتج'));
+    }
   },
 
   /** Deduct quantities after a sale — called by Invoices and QuickSale */
   async deductItems(items) {
-    for (const item of items) {
-      if (!item.inventory_id) continue;
-      const { data } = await DB.inventory().select('quantity').eq('id', item.inventory_id).single();
-      if (data) await DB.inventory().update({ quantity: Math.max(0, data.quantity - item.quantity) }).eq('id', item.inventory_id);
+    try {
+      for (const item of items) {
+        if (!item.inventory_id) continue;
+        const { data } = await DB.inventory().select('quantity').eq('id', item.inventory_id).single();
+        if (data) await DB.inventory().update({ quantity: Math.max(0, data.quantity - item.quantity) }).eq('id', item.inventory_id);
+      }
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — تحديث المخزون لم يكتمل بالكامل، تحققي يدوياً' : (err.message || 'فشل تحديث المخزون'));
+      throw err; // نرمي الخطأ للمستدعي — هذي عملية حرجة، يجب يعرف المستدعي إنها فشلت لمعالجتها بمنطقه الخاص
     }
   },
 };
