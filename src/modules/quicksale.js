@@ -58,10 +58,8 @@ export const QuickSale = {
     QuickSale._loadSmartCards();
     // load stats and best selling
     QuickSale._loadStats();
-    // ── تحميل مسبق لجهات التحويل بالخلفية — يضمن وجود كاش جاهز لو انقطع النت لاحقاً، بدون تأخير فتح الصفحة ──
-    QuickSale.loadTransferEntities();
-    // ── الكاميرا تبدأ موقوفة لتوفير الطاقة — نفس واجهة "توقف بعد عدم نشاط" الموجودة، تظهر من البداية
-    QuickSale._showCameraPausedState();
+    // ── الكاميرا دائمة الفتح — لا تحتاج ضغطة زر ──
+    QuickSale.startScanner();
   },
 
   // ── Physical Scanner ──
@@ -567,16 +565,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     _scanTimer = setTimeout(() => QuickSale._pauseForIdle(), 60000);
   },
 
-  // ── عرض حالة "متوقفة" من البداية — توفير طاقة، نفس واجهة _pauseForIdle بالضبط لاتساق التجربة ──
-  _showCameraPausedState() {
-    const stage  = DOM.get('qs-scanner-stage');
-    const paused = DOM.get('qs-scanner-paused');
-    const hint   = DOM.get('qs-scanner-hint');
-    if (stage)  stage.style.display  = 'none';
-    if (paused) paused.style.display = 'flex';
-    if (hint)   hint.style.display   = 'none';
-  },
-
   _pauseForIdle() {
     if (!BarcodeScanner.isActive()) return; // الصفحة مغادَرة أصلاً أو الكاميرا متوقفة فعلاً
     BarcodeScanner.stop();
@@ -790,8 +778,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         Utils.customerSuggestRow(c, `onclick="QuickSale.selectBuyerById('${nameId}','${phoneId}','${ddId}',this.dataset.cid)"`)
       ),
       `<div class="dc-opt new"
-        onclick="QuickSale.useName('${nameId}','${ddId}')">
-        ➕ إضافة "<b>${escape(val.trim())}</b>" كزبون جديد
+        onclick="document.getElementById('${ddId}').style.display='none'">
+        ✏️ استخدم "<b>${escape(val.trim())}</b>" كما هو
       </div>`
     ].join('');
     dd.style.display = 'block';
@@ -799,10 +787,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   useName(nameId, ddId) {
     const dd = DOM.get(ddId);
-    if (dd) dd.style.display = 'none';
+    dd.style.display = 'none';
     DOM.get(nameId)?.focus();
-    // تلميح خفيف يطمئن المستخدمة إن الاسم سيُضاف فعلياً كزبون جديد عند تأكيد البيع
-    Notify.success('✅ تم — سيُضاف "' + DOM.val(nameId) + '" كزبون جديد عند تأكيد البيع');
   },
 
   selectBuyerById(nameId, phoneId, ddId, customerId) {
