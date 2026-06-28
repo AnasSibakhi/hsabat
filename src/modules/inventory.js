@@ -13,6 +13,7 @@ import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 import { FIFOService }    from '../services/FIFOService.js';
 import { BarcodeScanner } from '../services/BarcodeScanner.js';
+import { OfflineQueue } from '../core/offline-queue.js';
 import { Guard }          from '../core/ratelimit.js';
 
 // ─────────────────────────────────────────
@@ -416,28 +417,49 @@ const Inventory = {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
     State.isMutating = true;
+
+    const productRow = {
+      store_id:        State.user.id,
+      name,
+      barcode:         DOM.val('inb') || null,
+      brand:           DOM.val('inbrand') || null,
+      category:        DOM.val('inc'),
+      unit:            DOM.val('inu'),
+      quantity:        parseFloat(DOM.val('inq')) || 0,
+      sale_price:      parseFloat(DOM.val('insp')) || 0,
+      cost_price:      parseFloat(DOM.val('incp')) || 0,
+      low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
+    };
+
     try {
-      const { error } = await DB.inventory().insert({
-        store_id:        State.user.id,
-        name,
-        barcode:         DOM.val('inb') || null,
-        brand:           DOM.val('inbrand') || null,
-        category:        DOM.val('inc'),
-        unit:            DOM.val('inu'),
-        quantity:        parseFloat(DOM.val('inq')) || 0,
-        sale_price:      parseFloat(DOM.val('insp')) || 0,
-        cost_price:      parseFloat(DOM.val('incp')) || 0,
-        low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
-      });
+      const { error } = await DB.inventory().insert(productRow);
       if (error) throw error;
       Notify.success('تم إضافة الصنف');
       Modal.close('m-inv');
       DOM.clearInputs('inn', 'insp', 'incp');
       Inventory.loadList();
       Inventory.load();
-    } catch (err) { Notify.error(err.message); }
-    finally { setTimeout(() => { State.isMutating = false; }, 500); }
+    } catch (err) {
+      // فشل شبكي حقيقي (لا نت) — لا نوقف الإضافة، نخزّنها بالطابور المحلي (نفس آلية البيع
+      // السريع بالضبط) ونعرض تأكيداً محلياً فورياً. الإضافة بسيطة الاتجاه (لا تعتمد على
+      // قراءة كمية حالية قد تتغيّر بجهاز آخر بنفس الوقت)، فهي آمنة لهذا النمط من الطوابير
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      if (!isNetworkFailure) {
+        Notify.error(err.message || 'فشل إضافة الصنف');
+      } else {
+        OfflineQueue.add(productRow, 'inventory');
+        // إضافة محلية فورية للقائمة المعروضة — تعطي إحساساً حقيقياً بالنجاح، تُستبدَل
+        // ببيانات السيرفر الحقيقية تلقائياً بعد المزامنة، لكن لا نستدعي loadList() هنا (يستبدل
+        // State.inventory بالكامل من السيرفر، يمحو المنتج المحلي المؤقت قبل نجاح مزامنته)
+        State.inventory = [...(State.inventory || []), { ...productRow, id: 'local_' + Date.now(), _isLocalPending: true }];
+        Notify.warn('📡 لا يوجد اتصال — تم حفظ الصنف محلياً وسيُزامَن تلقائياً عند رجوع النت');
+        Modal.close('m-inv');
+        DOM.clearInputs('inn', 'insp', 'incp');
+        Inventory._renderList(State.inventory);
+      }
+    } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
+
 
   openEditModal(id) {
     const item = State.inventory.find(i => i.id === id);
