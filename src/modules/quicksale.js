@@ -58,6 +58,8 @@ export const QuickSale = {
     QuickSale._loadSmartCards();
     // load stats and best selling
     QuickSale._loadStats();
+    // ── تحميل مسبق لجهات التحويل بالخلفية — يضمن وجود كاش جاهز لو انقطع النت لاحقاً، بدون تأخير فتح الصفحة ──
+    QuickSale.loadTransferEntities();
     // ── الكاميرا دائمة الفتح — لا تحتاج ضغطة زر ──
     QuickSale.startScanner();
   },
