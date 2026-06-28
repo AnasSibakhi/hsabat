@@ -392,19 +392,30 @@ const Debts = {
   },
 
   async archive(id) {
-    await DB.debts().update({ archived: true }).eq('id', id);
-    _allDebts = _allDebts.map(d => d.id === id ? { ...d, archived: true } : d);
-    Debts._renderList();
-    Debts._renderStats();
-    Notify.show('تم الأرشفة');
+    try {
+      await DB.debts().update({ archived: true }).eq('id', id);
+      _allDebts = _allDebts.map(d => d.id === id ? { ...d, archived: true } : d);
+      Debts._renderList();
+      Debts._renderStats();
+      Notify.show('تم الأرشفة');
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم تتم الأرشفة، حاولي مرة أخرى' : (err.message || 'فشل الأرشفة'));
+    }
   },
 
   async unarchive(id) {
-    await DB.debts().update({ archived: false }).eq('id', id);
-    _allDebts = _allDebts.map(d => d.id === id ? { ...d, archived: false } : d);
-    Debts._renderList();
-    Notify.show('تم إلغاء الأرشفة');
+    try {
+      await DB.debts().update({ archived: false }).eq('id', id);
+      _allDebts = _allDebts.map(d => d.id === id ? { ...d, archived: false } : d);
+      Debts._renderList();
+      Notify.show('تم إلغاء الأرشفة');
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُلغَ الأرشفة، حاولي مرة أخرى' : (err.message || 'فشل إلغاء الأرشفة'));
+    }
   },
+
 
   printDebts() {
     const active = _allDebts.filter(d => d.amount - d.paid > 0 && !d.archived)
@@ -502,7 +513,7 @@ const Debts = {
       Debts.load();
       Debts.loadBadge();
       getDashboard().load();
-    } catch (err) { Notify.error(err.message); }
+    } catch (err) { const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine; Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحفَظ الدين، حاولي مرة أخرى' : (err.message || 'فشل حفظ الدين')); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
@@ -516,8 +527,12 @@ const Debts = {
       Debts._renderList();
       Debts._renderStats();
       await Debts.loadBadge();
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحذف الدين، حاولي مرة أخرى' : (err.message || 'فشل حذف الدين'));
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
+
 
   async quickPay(id, name, remaining) {
     // تأكيد سريع
@@ -604,8 +619,13 @@ const Debts = {
 
   async addFromInvoice(customerId, amount, date, invoiceNumber) {
     if (!customerId || amount <= 0) return;
-    await DB.debts().insert({ store_id: State.user.id, customer_id: customerId, amount, paid: 0, debt_date: date, notes: 'فاتورة ' + invoiceNumber });
-    await Debts.loadBadge();
+    try {
+      await DB.debts().insert({ store_id: State.user.id, customer_id: customerId, amount, paid: 0, debt_date: date, notes: 'فاتورة ' + invoiceNumber });
+      await Debts.loadBadge();
+    } catch (err) {
+      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُسجَّل الدين من الفاتورة' : (err.message || 'فشل تسجيل الدين'));
+    }
   },
 };
 
