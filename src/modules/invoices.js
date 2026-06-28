@@ -105,12 +105,15 @@ const Invoices = {
 
     if (!dd) return;
     if (!matches.length) {
-      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--g5);">لا يوجد زبون — سيُضاف كزبون جديد</div>`;
+      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--s);font-weight:700;">✅ سيُضاف "<b>${escape(val.trim())}</b>" كزبون جديد</div>`;
       dd.style.display = 'block';
       if (ic) ic.value = '__new__';
-      // تعبئة حقل الاسم الجديد
       const nm = DOM.get('inv-new-name'); if (nm) nm.value = val.trim();
       DOM.get('new-cust-wrap')?.classList.remove('hidden');
+      // تختفي الرسالة تلقائياً بعد لحظة — المستخدمة تشوف التأكيد، ثم تختفي القائمة من نفسها
+      // بدون حاجة لأي ضغطة أو إغلاق يدوي، يبقى قسم "بيانات الزبون الجديد" ظاهراً كمؤشر دائم
+      clearTimeout(Invoices._dismissTimer);
+      Invoices._dismissTimer = setTimeout(() => { if (dd) dd.style.display = 'none'; }, 1500);
       return;
     }
     dd.innerHTML = matches.map(c =>
