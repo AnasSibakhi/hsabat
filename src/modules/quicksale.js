@@ -1359,7 +1359,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     State.isMutating = true;
     try {
+      alert('CHECKPOINT-B: entering try, before invNum');
       const invNum = await QuickSale._generateUniqueInvoiceNumber();
+      alert('CHECKPOINT-C: invNum generated = ' + invNum);
 
       // Buyer info
       const buyerName  = DOM.val('qs-buyer-name') || custName || '';
@@ -1370,6 +1372,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (buyerName && buyerName !== 'زبون عادي' && !custId) {
         const { Customers } = await import('./customers.js');
         const saved = await Customers.createInline(buyerName, buyerPhone);
+        alert('CHECKPOINT-A: after createInline');
         if (saved?.id && !saved._isLocalPending) custId = saved.id;
       }
 
@@ -1399,6 +1402,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         debtAmount, debtNote, remindDate,
       };
 
+      alert('CHECKPOINT-D: salePayload built, about to call complete-sale');
       let inv;
       let isOfflineSale = false;
 
