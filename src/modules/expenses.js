@@ -57,21 +57,14 @@ const Expenses = {
       Modal.close('m-expense');
       DOM.clearInputs('exp-amount', 'exp-notes');
       await Expenses.load();
-    } catch (err) { const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine; Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُسجَّل المصروف، حاولي مرة أخرى' : (err.message || 'فشل تسجيل المصروف')); }
+    } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
   async delete(id) {
     if (!confirm('حذف هذا المصروف؟')) return;
     State.isMutating = true;
-    try {
-      await DB.expenses().delete().eq('id', id);
-      Notify.success('تم الحذف');
-      await Expenses.load();
-    } catch (err) {
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحذف المصروف، حاولي مرة أخرى' : (err.message || 'فشل حذف المصروف'));
-    }
+    try { await DB.expenses().delete().eq('id', id); Notify.success('تم الحذف'); await Expenses.load(); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 };
