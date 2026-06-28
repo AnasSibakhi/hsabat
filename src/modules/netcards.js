@@ -99,8 +99,6 @@ const NetCards = {
     if (qty < 1)  { Notify.error('أدخل العدد'); return; }
     if (!batchId) { Notify.error('اختاري المورد اللي بدك تبيعي من مخزونه'); return; }
 
-    if (!navigator.onLine) { Notify.error('📡 لا يوجد اتصال — لا يمكن التحقق من المخزون حالياً'); return; }
-
     const { data: batch } = await DB.netCardPurchases().select('id,remaining_qty,final_cost,supplier_name').eq('id', batchId).maybeSingle();
     if (!batch || batch.remaining_qty < qty) { Notify.error('مخزون هذا المورد غير كافٍ — المتبقي: ' + (batch?.remaining_qty || 0)); return; }
 
@@ -129,7 +127,7 @@ const NetCards = {
       DOM.get('nsq').value = 1;
       NetCards.calcTotal();
       await Promise.all([NetCards.loadStock(), NetCards.loadSales('day')]);
-    } catch (err) { const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine; Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُسجَّل البيع، تحققي من المخزون قبل إعادة المحاولة' : (err.message || 'فشل تسجيل البيع')); }
+    } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
@@ -203,49 +201,38 @@ const NetCards = {
     const costPerCard = price * (1 - discount / 100);
     const finalCost    = costPerCard / multiplier;
 
-    try {
-      const { data: s } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).maybeSingle();
-      if (s) {
-        // متوسط مرجّح للتكلفة لو كان فيه مخزون قديم بتكلفة مختلفة (دقة أعلى لحساب الربح)
-        const oldQty  = s.quantity || 0;
-        const oldCost = s.cost_price || 0;
-        const newAvgCost = (oldQty + qty) > 0 ? ((oldQty * oldCost) + (qty * finalCost)) / (oldQty + qty) : finalCost;
-        await DB.netCardStock().update({ quantity: oldQty + qty, cost_price: newAvgCost, updated_at: new Date().toISOString() }).eq('id', s.id);
-      } else {
-        await DB.netCardStock().insert({ store_id: State.user.id, card_type: type, quantity: qty, cost_price: finalCost });
-      }
-
-      // سجل كامل لهذي دفعة الشراء بالذات، مع اسم المورد الخاص بها (الكمية المسجَّلة هي الفعلية بعد الضرب)
-      await DB.netCardPurchases().insert({
-        store_id: State.user.id, card_type: type, supplier_name: supplier || null,
-        quantity: qty, remaining_qty: qty, unit_price: price, discount_pct: discount, final_cost: finalCost,
-        purchase_date: Utils.today(),
-      });
-
-      Notify.success('تم إضافة المخزون' + (finalCost > 0 ? ' — التكلفة: ₪' + finalCost.toFixed(3) + '/وحدة' : ''));
-      Modal.close('m-addstock');
-      DOM.get('asq').value = 100;
-      DOM.clearInputs('asd', 'ast-supplier');
-      NetCards.autofillPrice();
-      DOM.get('ast-final-cost').textContent = '₪0.00';
-      await NetCards.loadStock();
-    } catch (err) {
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُضاف المخزون، تحققي قبل إعادة المحاولة لتجنّب تكرار الإضافة' : (err.message || 'فشل إضافة المخزون'));
+    const { data: s } = await DB.netCardStock().select('id,quantity,cost_price').eq('card_type', type).maybeSingle();
+    if (s) {
+      // متوسط مرجّح للتكلفة لو كان فيه مخزون قديم بتكلفة مختلفة (دقة أعلى لحساب الربح)
+      const oldQty  = s.quantity || 0;
+      const oldCost = s.cost_price || 0;
+      const newAvgCost = (oldQty + qty) > 0 ? ((oldQty * oldCost) + (qty * finalCost)) / (oldQty + qty) : finalCost;
+      await DB.netCardStock().update({ quantity: oldQty + qty, cost_price: newAvgCost, updated_at: new Date().toISOString() }).eq('id', s.id);
+    } else {
+      await DB.netCardStock().insert({ store_id: State.user.id, card_type: type, quantity: qty, cost_price: finalCost });
     }
-  },
 
+    // سجل كامل لهذي دفعة الشراء بالذات، مع اسم المورد الخاص بها (الكمية المسجَّلة هي الفعلية بعد الضرب)
+    await DB.netCardPurchases().insert({
+      store_id: State.user.id, card_type: type, supplier_name: supplier || null,
+      quantity: qty, remaining_qty: qty, unit_price: price, discount_pct: discount, final_cost: finalCost,
+      purchase_date: Utils.today(),
+    });
+
+    Notify.success('تم إضافة المخزون' + (finalCost > 0 ? ' — التكلفة: ₪' + finalCost.toFixed(3) + '/وحدة' : ''));
+    Modal.close('m-addstock');
+    DOM.get('asq').value = 100;
+    DOM.clearInputs('asd', 'ast-supplier');
+    NetCards.autofillPrice();
+    DOM.get('ast-final-cost').textContent = '₪0.00';
+    await NetCards.loadStock();
+  },
 
   async deleteSale(id) {
     if (!confirm('حذف؟')) return;
-    try {
-      await DB.netCardSales().delete().eq('id', id);
-      Notify.success('تم');
-      await NetCards.loadSales('day');
-    } catch (err) {
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يُحذف البيع، حاولي مرة أخرى' : (err.message || 'فشل حذف البيع'));
-    }
+    await DB.netCardSales().delete().eq('id', id);
+    Notify.success('تم');
+    await NetCards.loadSales('day');
   },
 };
 
