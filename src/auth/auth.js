@@ -287,7 +287,23 @@ export const Auth = {
 
   async logout() {
     Loading.show();
-    await sb.auth.signOut();
+    try {
+      await sb.auth.signOut();
+    } catch (err) {
+      // فشل شبكي وقت الخروج (لا نت) — لا نوقف عملية الخروج بصرياً بسببها، الجلسة المحلية
+      // ستُمحى بكل الأحوال أدناه، فلا يمكن استخدامها مجدداً للدخول التلقائي حتى لو الخادم
+      // لم يُعلَم بعد بإلغاء الجلسة (سيحدث تلقائياً لاحقاً عبر آلية Supabase الداخلية)
+      console.warn('[Auth.logout] فشل إلغاء الجلسة من الخادم (الجلسة المحلية ستُمحى بكل الأحوال):', err.message);
+    }
+    // محو نسخة الحساب المحفوظة محلياً — تمنع استخدامها لإعادة دخول تلقائي بعد خروج صريح
+    try { localStorage.removeItem("hsb_cached_account"); } catch {}
+    // محو مفتاح جلسة Supabase نفسه صريحاً — حماية إضافية حرجة: لو signOut() فشلت بدون نت
+    // (لا اتصال لإلغاء التوكن من الخادم)، هذا يضمن عدم بقاء جلسة صالحة محلياً تُستخدَم
+    // تلقائياً بالمرة القادمة، بغض النظر عن نجاح/فشل الاستدعاء الشبكي أعلاه
+    try {
+      const tokenKey = `sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, "").split(".")[0]}-auth-token`;
+      localStorage.removeItem(tokenKey);
+    } catch {}
     State.reset();
     const { Realtime } = await import('../nav/realtime.js');
     Realtime.stop();
