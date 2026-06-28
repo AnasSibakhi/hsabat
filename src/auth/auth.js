@@ -53,12 +53,7 @@ export const Auth = {
         try {
           const raw = localStorage.getItem(`sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, '').split('.')[0]}-auth-token`);
           const stored = raw ? JSON.parse(raw) : null;
-          // فحص أمني محلي — التوكن المحفوظ صالح فعلياً عند الإصدار، لكن له تاريخ انتهاء حقيقي.
-          // بدون نت لا نقدر نتحقق من الخادم، فنضع حد سماحية معقول (7 أيام) قبل رفض توكن قديم
-          // جداً بدل قبوله للأبد بثقة كاملة — هذا يقلل نافذة الخطر لو الجهاز فُقد أو حساب أُوقف
-          const expiresAt = stored?.expires_at ? stored.expires_at * 1000 : 0;
-          const isReasonablyFresh = expiresAt > 0 && (Date.now() - expiresAt) < 7 * 24 * 3600 * 1000;
-          if (stored?.access_token && isReasonablyFresh) {
+          if (stored?.access_token) {
             Loading.show();
             await Auth._bootFromSession(stored);
             return;
@@ -121,7 +116,6 @@ export const Auth = {
     try {
       // جلب حساب التطبيق عبر Edge Function آمنة — لا يصل مفتاح service_role أبداً للمتصفح
       let account = null;
-      let fetchErr = null;
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -133,15 +127,14 @@ export const Auth = {
         clearTimeout(timeoutId);
         const json = await res.json();
         if (res.ok) account = json.data;
-      } catch (err) {
-        fetchErr = err;
-        console.error('[Auth] فشل الاتصال بخدمة الحسابات:', err.message);
+      } catch (fetchErr) {
+        console.error('[Auth] فشل الاتصال بخدمة الحسابات:', fetchErr.message);
       }
 
       if (!account) {
         // فشل الجلب — قد يكون فعلياً "لا حساب"، أو فقط انقطاع نت. نحاول الرجوع لآخر بيانات
         // حساب محفوظة محلياً قبل افتراض الأسوأ — تسجيل خروج هنا يدمّر إمكانية العمل بدون نت بالكامل
-        const isNetworkFailure = !navigator.onLine || fetchErr?.name === 'AbortError' || fetchErr instanceof TypeError;
+        const isNetworkFailure = !navigator.onLine || fetchErr?.name === 'AbortError';
         if (isNetworkFailure) {
           try {
             const cachedAccount = JSON.parse(localStorage.getItem('hsb_cached_account') || 'null');
@@ -287,23 +280,7 @@ export const Auth = {
 
   async logout() {
     Loading.show();
-    try {
-      await sb.auth.signOut();
-    } catch (err) {
-      // فشل شبكي وقت الخروج (لا نت) — لا نوقف عملية الخروج بصرياً بسببها، الجلسة المحلية
-      // ستُمحى بكل الأحوال أدناه، فلا يمكن استخدامها مجدداً للدخول التلقائي حتى لو الخادم
-      // لم يُعلَم بعد بإلغاء الجلسة (سيحدث تلقائياً لاحقاً عبر آلية Supabase الداخلية)
-      console.warn('[Auth.logout] فشل إلغاء الجلسة من الخادم (الجلسة المحلية ستُمحى بكل الأحوال):', err.message);
-    }
-    // محو نسخة الحساب المحفوظة محلياً — تمنع استخدامها لإعادة دخول تلقائي بعد خروج صريح
-    try { localStorage.removeItem("hsb_cached_account"); } catch {}
-    // محو مفتاح جلسة Supabase نفسه صريحاً — حماية إضافية حرجة: لو signOut() فشلت بدون نت
-    // (لا اتصال لإلغاء التوكن من الخادم)، هذا يضمن عدم بقاء جلسة صالحة محلياً تُستخدَم
-    // تلقائياً بالمرة القادمة، بغض النظر عن نجاح/فشل الاستدعاء الشبكي أعلاه
-    try {
-      const tokenKey = `sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, "").split(".")[0]}-auth-token`;
-      localStorage.removeItem(tokenKey);
-    } catch {}
+    await sb.auth.signOut();
     State.reset();
     const { Realtime } = await import('../nav/realtime.js');
     Realtime.stop();
