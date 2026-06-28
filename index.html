@@ -1083,9 +1083,10 @@
    </div>
  </div>
  <div class="fr"><div class="fg"><label class="lbl">الفئة</label><select class="inp" id="inc"><option>مواد غذائية</option><option>خضروات</option><option>منظفات</option><option>مشروبات</option><option>عام</option></select></div><div class="fg"><label class="lbl">النوع</label><select class="inp" id="inu"><option>كيلو (kg)</option><option>غرام (g)</option><option>قطعة (pcs)</option><option>علبة (box)</option><option>كرتون (ctn)</option><option>كيس (bag)</option><option>لتر (L)</option><option>مل (ml)</option><option>زجاجة (bottle)</option><option>ربطة (bundle)</option><option>طبق (tray)</option><option>شوال (sack)</option><option>دستة (dozen)</option><option>رول (roll)</option></select></div></div>
- <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="inq" value="0" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="insp" value="0" inputmode="decimal"></div></div>
- <div class="fr"><div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="incp" value="0" inputmode="decimal" placeholder="اختياري"></div><div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="ina" value="10" inputmode="decimal"></div></div>
- <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv')">إلغاء</button><button class="btn btn-s" onclick="Guard.run('save-inventory', () => Inventory.save(), this)">إضافة</button></div>
+ <div class="fr"><div class="fg"><label class="lbl">الكمية</label><input class="inp" type="number" id="inq" value="0" inputmode="decimal"></div><div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="insp" value="0" inputmode="decimal" oninput="Inventory.checkPriceWarning()"></div></div>
+ <div class="fr"><div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="incp" value="0" inputmode="decimal" placeholder="اختياري" oninput="Inventory.checkPriceWarning()"></div><div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="ina" value="10" inputmode="decimal"></div></div>
+ <div id="inv-price-warning" style="display:none;margin:0 0 12px;padding:10px 14px;background:var(--dl);color:var(--d);border-radius:10px;font-size:13px;font-weight:700;">⚠️ سعر البيع أقل من سعر التكلفة — لن يُحفَظ الصنف حتى يُصحَّح السعر</div>
+ <div class="mfoot"><button class="btn btn-o" onclick="Modal.close('m-inv')">إلغاء</button><button id="inv-save-btn" class="btn btn-s" onclick="Guard.run('save-inventory', () => Inventory.save(), this)">إضافة</button></div>
 </div></div>
 
 <!-- Edit Inventory -->
@@ -1124,13 +1125,14 @@
  <!-- مجموع الكمية -->
  <div id="einv-qty-preview" style="display:none;background:var(--sl);color:var(--s);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;margin-bottom:8px;"></div>
  <div class="fr">
-   <div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="einvprice" inputmode="decimal"></div>
-   <div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="einvcost" inputmode="decimal"></div>
+   <div class="fg"><label class="lbl">سعر البيع (₪)</label><input class="inp" type="number" id="einvprice" inputmode="decimal" oninput="Inventory.checkEditPriceWarning()"></div>
+   <div class="fg"><label class="lbl">سعر التكلفة (₪)</label><input class="inp" type="number" id="einvcost" inputmode="decimal" oninput="Inventory.checkEditPriceWarning()"></div>
  </div>
+ <div id="einv-price-warning" style="display:none;margin:0 0 12px;padding:10px 14px;background:var(--dl);color:var(--d);border-radius:10px;font-size:13px;font-weight:700;">⚠️ سعر البيع أقل من سعر التكلفة — لن يُحفَظ التعديل حتى يُصحَّح السعر</div>
  <div class="fg"><label class="lbl">تنبيه عند أقل من</label><input class="inp" type="number" id="einvalert" inputmode="decimal"></div>
  <div class="mfoot">
    <button class="btn btn-o" onclick="Modal.close('m-editinv')">إلغاء</button>
-   <button class="btn btn-s" onclick="Guard.run('update-inventory', () => Inventory.update(), this)">حفظ التعديل</button>
+   <button id="einv-save-btn" class="btn btn-s" onclick="Guard.run('update-inventory', () => Inventory.update(), this)">حفظ التعديل</button>
  </div>
 </div></div>
 
