@@ -230,15 +230,24 @@ export const Notifications = {
   async open(id) {
     Notifications._markRead(id);
     if (!String(id).includes('-')) {
-      await DB.notifications().update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
+      try {
+        await DB.notifications().update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
+      } catch (err) {
+        console.warn('[Notifications.open] فشل تحديث حالة القراءة (لا يؤثر على عرض الإشعار):', err.message);
+      }
     }
     await Notifications.load();
   },
 
+
   async markAllRead() {
     const items = document.querySelectorAll('[data-notif-id]');
     items.forEach(el => Notifications._markRead(el.dataset.notifId));
-    await DB.notifications().update({ read_at: new Date().toISOString() }).is('read_at', null);
+    try {
+      await DB.notifications().update({ read_at: new Date().toISOString() }).is('read_at', null);
+    } catch (err) {
+      console.warn('[Notifications.markAllRead] فشل التحديث (لا يؤثر على عرض الإشعارات):', err.message);
+    }
     await Notifications.load();
   },
 };
