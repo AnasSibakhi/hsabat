@@ -833,7 +833,7 @@ const Invoices = {
         const newName = DOM.val('inv-new-name') || searchVal;
         if (!newName) { Notify.error('أدخل اسم الزبون'); State.isMutating = false; return; }
         const newCustomer = await getCustomers().createInline(newName, DOM.val('inv-new-phone'));
-        customerId = newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone') || newCustomer.phone || '';
+        customerId = newCustomer._isLocalPending ? null : newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone') || newCustomer.phone || '';
       } else if (customerId) {
         const found = State.customers.find(c => c.id === customerId);
         customerName = found?.name || searchVal || ''; customerPhone = found?.phone || '';
@@ -882,8 +882,13 @@ const Invoices = {
       getDashboard().load();
       getCustomers().loadUnified();
     } catch (err) {
-      console.error('[Invoices.save]', err);
-      Notify.error(err.message);
+      console.error("[Invoices.save]", err);
+      const isNetworkFailure = err instanceof TypeError || err?.name === "AbortError" || err?.message?.includes("fetch") || !navigator.onLine;
+      if (isNetworkFailure) {
+        Notify.error("📡 لا يوجد اتصال بالإنترنت — لم تُحفَظ الفاتورة، حاولي مرة أخرى بعد رجوع النت");
+      } else {
+        Notify.error(err.message);
+      }
     } finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
 
