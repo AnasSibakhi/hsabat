@@ -416,6 +416,11 @@ const Inventory = {
   async save() {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
+    const _sp = parseFloat(DOM.val("insp")) || 0;
+    const _cp = parseFloat(DOM.val("incp")) || 0;
+    if (_sp > 0 && _cp > 0 && _sp < _cp) {
+      if (!confirm("⚠️ سعر البيع (" + _sp + ") أقل من التكلفة (" + _cp + ") — هذا يعني بيع بخسارة. متأكدة من الاستمرار؟")) return;
+    }
     State.isMutating = true;
 
     const productRow = {
@@ -510,6 +515,10 @@ const Inventory = {
     const unit    = DOM.val('einvunit') || 'قطعة (pcs)';
 
     if (!name) { Notify.error('أدخل اسم المنتج'); return; }
+
+    if (price > 0 && cost > 0 && price < cost) {
+      if (!confirm("⚠️ سعر البيع (" + price + ") أقل من التكلفة (" + cost + ") — هذا يعني بيع بخسارة. متأكدة من الاستمرار؟")) return;
+    }
 
     const finalQty = qty + addQty;
     try {
