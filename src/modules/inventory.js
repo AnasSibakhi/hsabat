@@ -106,11 +106,22 @@ const Inventory = {
     const unitEl = document.getElementById('prod-unit');
     if (unitEl) unitEl.textContent = item.unit || '';
 
-    // هامش الربح
-    const margin = item.sale_price && item.cost_price && item.cost_price > 0
-      ? (((item.sale_price - item.cost_price) / item.cost_price) * 100).toFixed(1) + '%'
-      : '-';
-    document.getElementById('prod-margin').textContent = margin;
+    // هامش الربح — لون ديناميكي حسب القيمة الفعلية (أحمر للخسارة، أخضر للربح)، لا أخضر ثابت
+    const marginVal = item.sale_price && item.cost_price && item.cost_price > 0
+      ? ((item.sale_price - item.cost_price) / item.cost_price) * 100
+      : null;
+    const marginEl = document.getElementById('prod-margin');
+    if (marginEl) {
+      marginEl.textContent = marginVal !== null ? marginVal.toFixed(1) + '%' : '-';
+      marginEl.style.color = marginVal !== null && marginVal < 0 ? 'var(--d)' : 'var(--s)';
+    }
+    // تحذير صريح ومنفصل عن حالة المخزون لو سعر البيع فعلياً أقل من التكلفة — يمنع الالتباس
+    // بين "متوفر بالكمية" (حالة المخزون) و"مربح" (حالة السعر)، فهما مفهومان مختلفان تماماً
+    const lossWarnEl = document.getElementById('prod-loss-warning');
+    if (lossWarnEl) {
+      lossWarnEl.style.display = (marginVal !== null && marginVal < 0) ? 'block' : 'none';
+    }
+
 
     // حالة المخزون
     const statusEl = document.getElementById('prod-status-badge');
