@@ -19,13 +19,17 @@ export const open = (id) => {
 /** Close a modal by ID */
 export const close = (id) => {
   document.getElementById(id)?.classList.remove('open');
+  // إغلاق ذكي تلقائي — القوائم المنبثقة لبحث الزبائن مصمَّمة عمداً خارج الموديلات
+  // (لمشاكل z-index)، فلا تُغلَق تلقائياً مع الموديل. نضمن إغلاقها هنا بمكان واحد،
+  // يحمي كل الموديلات الحالية والمستقبلية من تسريب القائمة المنبثقة بعد الإغلاق
+  document.querySelectorAll('.cust-suggest-dropdown').forEach(dd => { dd.style.display = 'none'; });
 };
 
 /** Initialize click-outside-to-close behavior */
 export const init = () => {
   document.querySelectorAll('.mo').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.classList.remove('open');
+      if (e.target === overlay) close(overlay.id);
     });
   });
 };
