@@ -1,11 +1,10 @@
 /**
- * offline-queue.js — طابور العمليات بدون نت (بيع سريع + فاتورة جديدة)
+ * offline-queue.js — طابور العمليات بدون نت (بيع سريع + فاتورة جديدة + إضافة منتج)
  *
- * الفلسفة: لو فشل إرسال عملية (بيع أو فاتورة) بسبب انقطاع نت (لا أي سبب آخر)، نخزّنها
- * محلياً بترتيبها الزمني، ونعرض على المستخدمة نتيجة محلية فورية (تجربة لا تنقطع)، ثم
- * نزامن كل عملية بالترتيب نفسه فور رجوع النت — بنفس Edge Function الحقيقية الخاصة بنوعها
- * (complete-sale للبيع، complete-invoice للفاتورة الجديدة)، صفر تكرار منطق. كل عملية
- * تُحذف من الطابور فقط بعد تأكيد نجاحها فعلياً من السيرفر — لا حذف متفائل قبل التأكد.
+ * الفلسفة: لو فشل إرسال عملية بسبب انقطاع نت (لا أي سبب آخر)، نخزّنها محلياً بترتيبها
+ * الزمني، ونعرض على المستخدمة نتيجة محلية فورية (تجربة لا تنقطع)، ثم نزامن كل عملية
+ * بالترتيب نفسه فور رجوع النت — كل نوع يُرسَل بصيغته الحقيقية الصحيحة لخدمته الخاصة،
+ * صفر تكرار منطق. كل عملية تُحذف من الطابور فقط بعد تأكيد نجاحها فعلياً من السيرفر.
  */
 
 import { sb }      from './db.js';
@@ -15,15 +14,19 @@ import { Notify }  from './notify.js';
 const QUEUE_KEY = 'hsb_offline_sale_queue';
 let _syncing = false;
 
-// ── خريطة: نوع العملية → اسم الـEdge Function الحقيقية التي تنفّذها فعلياً ──
+// ── خريطة: نوع العملية → طريقة الاستدعاء الصحيحة لخدمتها الحقيقية ──
+// 'sale'/'invoice' تستدعيان Edge Function مخصَّصة (complete-sale/complete-invoice) بمنطق
+// معقَّد (FIFO، خصم مخزون). 'inventory' تستدعي الطبقة العامة (inventory-db) بنفس صيغة
+// insert البسيطة التي يستخدمها db.js نفسه — لا تكرار منطق، فقط استدعاء حقيقي مطابق
 const ENDPOINT_BY_TYPE = {
-  sale:    'complete-sale',
-  invoice: 'complete-invoice',
+  sale:      'complete-sale',
+  invoice:   'complete-invoice',
+  inventory: 'inventory-db',
 };
 
 export const OfflineQueue = {
 
-  // ── إضافة عملية فاشلة (بسبب نت فقط) للطابور المحلي — type: 'sale' أو 'invoice' ──
+  // ── إضافة عملية فاشلة (بسبب نت فقط) للطابور المحلي — type: 'sale'/'invoice'/'inventory' ──
   add(payload, type = 'sale') {
     const queue = OfflineQueue._read();
     const entry = {
@@ -65,9 +68,18 @@ export const OfflineQueue = {
     if (countEl) countEl.textContent = count;
   },
 
+  // ── بناء جسم الطلب الصحيح حسب نوع العملية — كل نوع له صيغة مختلفة لخدمته الحقيقية ──
+  _buildRequestBody(entry) {
+    if (entry.type === 'inventory') {
+      // نفس الصيغة التي يستخدمها db.js نفسه فعلياً عبر callInventoryDB('insert', { row })
+      return JSON.stringify({ action: 'insert', params: { row: entry.payload } });
+    }
+    // sale/invoice ترسل الـpayload مباشرة كما هو، بنفس صيغة complete-sale/complete-invoice
+    return JSON.stringify(entry.payload);
+  },
+
   // ── مزامنة الطابور بالكامل، بالترتيب الزمني الصحيح، عملية تلو الأخرى ──
-  // لا تُرسَل العمليات بالتوازي عمداً — الترتيب الزمني مهم لصحة حسابات المخزون والديون،
-  // بغض النظر عن كونها بيعاً أو فاتورة — كلاهما يؤثر على نفس جداول المخزون والديون
+  // لا تُرسَل العمليات بالتوازي عمداً — الترتيب الزمني مهم لصحة حسابات المخزون والديون
   async sync() {
     if (_syncing) return; // منع تشغيل مزامنتين بالتوازي بالخطأ
     if (!navigator.onLine) return;
@@ -93,7 +105,7 @@ export const OfflineQueue = {
           const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/${endpoint}${regionParam}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-            body: JSON.stringify(entry.payload),
+            body: OfflineQueue._buildRequestBody(entry),
             signal: controller.signal,
           });
           clearTimeout(timeoutId);
@@ -105,14 +117,14 @@ export const OfflineQueue = {
             OfflineQueue._write(remaining);
             syncedCount++;
           } else {
-            // فشل حقيقي من السيرفر (لا مشكلة شبكة) — مثل نفاد كمية المنتج فعلياً بين وقت
-            // الإنشاء المحلي ووقت المزامنة. نوقفها هنا، تحتاج مراجعة يدوية، لا حذف صامت لبيانات حقيقية
+            // فشل حقيقي من السيرفر (لا مشكلة شبكة) — مثل باركود مكرر فعلياً بين وقت الإنشاء
+            // المحلي ووقت المزامنة. نوقفها هنا، تحتاج مراجعة يدوية، لا حذف صامت لبيانات حقيقية
             entry.attempts = (entry.attempts || 0) + 1;
             entry.lastError = json.error || 'فشل غير معروف';
             const updated = OfflineQueue._read().map(e => e.localId === entry.localId ? entry : e);
             OfflineQueue._write(updated);
-            const typeLabel = entry.type === 'invoice' ? 'فاتورة' : 'فاتورة بيع';
-            Notify.error('⚠️ ' + typeLabel + ' معلَّقة فشلت بالمزامنة: ' + entry.lastError + ' — تحتاج مراجعة');
+            const typeLabel = entry.type === 'invoice' ? 'فاتورة' : entry.type === 'inventory' ? 'منتج' : 'فاتورة بيع';
+            Notify.error('⚠️ ' + typeLabel + ' معلَّق فشل بالمزامنة: ' + entry.lastError + ' — تحتاج مراجعة');
             break; // نوقف الترتيب هنا لتجنّب مزامنة عمليات لاحقة قبل حل هذي، حفاظاً على الترتيب الصحيح
           }
         } catch (err) {
