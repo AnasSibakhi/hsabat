@@ -1134,3 +1134,11 @@ table.sa-dt tr:hover td{background:var(--g0);}
   transition:opacity .15s, transform .1s;
 }
 .ibg-primary:active{ opacity:.85;transform:scale(.97); }
+
+/* ── صف الدين بصفحة الفواتير — منفصل تماماً عن رأس البطاقة المزدحم، عرض كامل بدون تزاحم ── */
+.cust-debt-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--dl);padding:8px 14px;border-top:1px solid var(--g1);
+}
+.cust-debt-row-label{font-size:11px;color:var(--d);font-weight:700;margin-left:6px;}
+.cust-debt-row-total{font-size:14px;color:var(--d);font-weight:800;}
