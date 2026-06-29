@@ -15,6 +15,7 @@ import { FIFOService } from '../services/FIFOService.js';
 
 // ── State ──
 let _allInvoices  = [];
+let _debtsByCustomer = {}; // { customer_id: { count, total } } — مُحدَّث مرة واحدة عند تحميل الصفحة
 let _filtered     = [];
 let _period       = 'all';
 let _page         = 1;
@@ -282,7 +283,10 @@ const Invoices = {
     _page        = 1;
 
     const offset = (serverPage - 1) * PAGE_SIZE;
-    const [invRes, retRes] = await Promise.all([
+    // طلب واحد فقط لكل الديون النشطة — بدل طلب منفصل لكل زبون بالقائمة (كان السبب الجذري
+    // للتأخير الملحوظ عند فتح الصفحة، خصوصاً مع عدد زبائن كبير أو شبكة بطيئة)، نجلب كل الديون
+    // دفعة واحدة بالتوازي مع باقي البيانات، ونصفّيها محلياً لكل زبون عند الحاجة بدون أي طلب إضافي
+    const [invRes, retRes, debtsRes] = await Promise.all([
       DB.invoices()
         .select('*')
         .order('created_at', { ascending: false })
@@ -290,6 +294,7 @@ const Invoices = {
         .offset(offset),
       // جلب IDs الفواتير المُرجَعة
       DB.returns().select('invoice_id'),
+      DB.debts().select('customer_id,amount,paid'),
     ]);
 
     // بناء Set من IDs المُرجَعة للبحث السريع
@@ -299,6 +304,17 @@ const Invoices = {
       ...inv,
       _returned: returnedIds.has(inv.id),
     }));
+
+    // تجميع الديون النشطة محلياً حسب customer_id — يُستخدَم لاحقاً لعرض ملخص الدين فوراً
+    // بدون أي طلب شبكي إضافي عند رسم بطاقات الزبائن
+    _debtsByCustomer = {};
+    (debtsRes.data || []).forEach(d => {
+      const rem = d.amount - (d.paid || 0);
+      if (rem <= 0 || !d.customer_id) return;
+      if (!_debtsByCustomer[d.customer_id]) _debtsByCustomer[d.customer_id] = { count: 0, total: 0 };
+      _debtsByCustomer[d.customer_id].count++;
+      _debtsByCustomer[d.customer_id].total += rem;
+    });
 
     _totalCount = _allInvoices.length;
     Invoices.applyFilters();
@@ -432,29 +448,24 @@ const Invoices = {
   // ── تحميل ملخص ديون كل زبون بالقائمة الحالية، بالخلفية وبدون حجب العرض الأساسي ──
   // نطابق كل اسم بمعرّف زبون حقيقي بـ State.customers (المصدر الوحيد المتاح هنا)، ثم نجلب
   // ديونه النشطة لعرض زر التسديد فقط عند وجود دين فعلي
-  async _loadDebtSummaries(groups) {
-    // كل الطلبات بالتوازي (Promise.all) بدل التسلسل — السبب الجذري للتأخير الملحوظ بالثواني
-    // كان حلقة for/await تنتظر كل زبون يكتمل قبل الانتقال للتالي (20 زبون = 20 طلب متتالٍ).
-    // بالتوازي، الوقت الكلي يصبح أطول طلب واحد فقط، لا مجموع كل الطلبات
-    await Promise.all(groups.map(async (g, idx) => {
-      const slot = DOM.get('cust-debt-' + idx);
-      if (!slot || !g.customerId) return;
 
-      try {
-        const { data: debts } = await DB.debts().select('amount,paid').eq('customer_id', g.customerId);
-        const active = (debts || []).filter(d => (d.amount - (d.paid || 0)) > 0);
-        if (!active.length) return;
-
-        const totalRem = active.reduce((s, d) => s + (d.amount - (d.paid || 0)), 0);
-        slot.innerHTML = `<div class="cust-debt-summary" onclick="event.stopPropagation()">
-          <div><div class="cust-debt-summary-label">دين متبقٍ (${active.length} ${active.length === 1 ? 'فاتورة' : 'فواتير'})</div>
-          <div class="cust-debt-summary-total">₪${totalRem.toFixed(2)}</div></div>
-          <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${g.customerId}',${totalRem})">تسديد الإجمالي</button>
-        </div>`;
-      } catch {
-        // فشل شبكي بصمت — لا نعرض شي، لا نقاطع المستخدمة برسالة خطأ لمجرد تحميل ملخص ثانوي
-      }
-    }));
+  // ── تحديث كاش الديون المحلي فقط (بدون إعادة جلب الفواتير نفسها) — تُستدعى من Debts بعد
+  // نجاح "تسديد الإجمالي" لتعكس الحالة الجديدة فوراً بدون إعادة تحميل الصفحة بالكامل ──
+  async refreshDebtsCache() {
+    try {
+      const { data: debts } = await DB.debts().select('customer_id,amount,paid');
+      _debtsByCustomer = {};
+      (debts || []).forEach(d => {
+        const rem = d.amount - (d.paid || 0);
+        if (rem <= 0 || !d.customer_id) return;
+        if (!_debtsByCustomer[d.customer_id]) _debtsByCustomer[d.customer_id] = { count: 0, total: 0 };
+        _debtsByCustomer[d.customer_id].count++;
+        _debtsByCustomer[d.customer_id].total += rem;
+      });
+      Invoices._renderTable();
+    } catch {
+      // فشل صامت — ملخص ثانوي، لا يؤثر على البيانات الحقيقية بقاعدة البيانات
+    }
   },
 
   _renderTable() {
@@ -470,6 +481,7 @@ const Invoices = {
           const totalAmount = g.invoices.reduce((s, inv) => s + inv.total, 0);
           const hasReturned = g.invoices.some(inv => inv._returned);
           const initials    = g.name.trim().slice(0, 2);
+          const debtInfo    = g.customerId ? _debtsByCustomer[g.customerId] : null;
           const invoicesHtml = g.invoices.map(inv => Invoices._renderInvoiceCard(inv)).join('');
 
           return `<div class="cust-card${idx === 0 && groups.length === 1 ? ' open' : ''}" id="cust-card-${idx}">
@@ -487,11 +499,15 @@ const Invoices = {
                   <div class="pur-stat-label">إجمالي مشترياته</div>
                   <div class="pur-stat-val" style="color:var(--p);">₪${totalAmount.toFixed(2)}</div>
                 </div>
+                ${debtInfo ? `<div class="pur-stat" style="background:none;padding:0;">
+                  <div class="pur-stat-label" style="color:var(--d);">دين متبقٍ (${debtInfo.count})</div>
+                  <div class="pur-stat-val" style="color:var(--d);">₪${debtInfo.total.toFixed(2)}</div>
+                </div>
+                <button class="ibg ibg-primary" onclick="event.stopPropagation();Debts.openTotalPayModal('${g.customerId}',${debtInfo.total})">تسديد</button>` : ''}
                 ${hasReturned ? '<span class="sup-debt-dot" title="يوجد فاتورة مُرجَعة لهذا الزبون"></span>' : ''}
                 <span class="sup-chevron">‹</span>
               </div>
             </div>
-            <div id="cust-debt-${idx}" class="cust-debt-summary-slot"></div>
             <div class="cust-invoices">${invoicesHtml}</div>
           </div>`;
         }).join('')
@@ -521,7 +537,6 @@ const Invoices = {
 
     // Load items count in background
     Invoices._loadItemsCounts(page.map(i => i.id));
-    Invoices._loadDebtSummaries(groups);
   },
 
   goPage(p) {
