@@ -1300,11 +1300,24 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       return;
     }
     if (!_cart.length) { Notify.error('السلة فارغة'); return; }
-    Modal.close('m-qs-checkout');
 
     const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
     const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
     const total    = Math.max(0, subtotal - discount);
+
+    // تأكيد صريح فقط عند الكاش بحقل "المبلغ المستلم" فاضياً تماماً (لا أي رقم مكتوب، حتى صفر)
+    // — السبب: حقل فاضٍ كان يُعامَل بصمت كـ"دفع كامل بثقة"، وهذا قد يكون نسياناً حقيقياً، لا
+    // قصداً صريحاً. التأكيد لا يُعطّل السرعة إطلاقاً لو كُتب أي رقم (كامل أو جزئي أو نص المبلغ)
+    if (paymentType === PAYMENT.CASH) {
+      const receivedRaw = DOM.val('qs-cash-received');
+      if (!receivedRaw) {
+        const confirmed = confirm('تأكيد: استلمتِ كامل المبلغ ₪' + total.toFixed(2) + ' كاش؟');
+        if (!confirmed) return;
+      }
+    }
+
+    Modal.close('m-qs-checkout');
+
     let   custId   = null, custName = 'زبون عادي';
     let   debtSnapshot = null; // نسخة محفوظة من _deferData قبل محوها — تُستخدم لاحقاً عند إنشاء الدين
 
