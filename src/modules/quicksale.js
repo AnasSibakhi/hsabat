@@ -632,31 +632,34 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     // نشيل أي رسالة سابقة
     document.getElementById('qs-not-found-toast')?.remove();
 
-    const toast = document.createElement('div');
-    toast.id = 'qs-not-found-toast';
-    toast.style.cssText = `
-      position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-      background:var(--g9);color:#fff;border-radius:14px;padding:14px 18px;
-      z-index:999;min-width:280px;max-width:340px;text-align:center;
-      box-shadow:0 8px 24px rgba(0,0,0,0.3);
-      animation:fadeInUp .2s ease;
+    // شريط سفلي خفيف بدل بطاقة عائمة وسط الشاشة — لا يحجب السلة/الكاميرا، نفس نظام ألوان
+    // الموقع الحقيقي (أحمر فاتح للخطأ بدل رمادي غامق لا يطابق أي نمط آخر بالموقع)
+    const sheet = document.createElement('div');
+    sheet.id = 'qs-not-found-toast';
+    sheet.className = 'qs-notfound-sheet';
+    sheet.innerHTML = `
+      <div class="qs-notfound-row">
+        <div class="qs-notfound-icon">❌</div>
+        <div>
+          <div class="qs-notfound-title">المنتج غير موجود</div>
+          <div class="qs-notfound-code">${barcode || ''}</div>
+        </div>
+      </div>
+      <button class="qs-notfound-add-btn" onclick="document.getElementById('qs-not-found-toast')?.remove();QuickSale.openQuickAdd('${barcode || ''}')">➕ إضافة للمخزون</button>
     `;
-    toast.innerHTML = `
-      <div style="font-size:22px;margin-bottom:6px;">❌</div>
-      <div style="font-weight:800;font-size:15px;margin-bottom:4px;">المنتج غير موجود</div>
-      <div style="font-size:12px;color:var(--g4);margin-bottom:12px;font-family:monospace;">${barcode || ''}</div>
-      <button onclick="QuickSale.openQuickAdd('${barcode || ''}')" style="background:var(--p);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
-        ➕ إضافة للمخزون
-      </button>
-      <button onclick="document.getElementById('qs-not-found-toast').remove();"
-        style="background:transparent;color:var(--g4);border:none;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;margin-top:8px;width:100%;">
-        إغلاق
-      </button>
-    `;
-    document.body.appendChild(toast);
+    document.body.appendChild(sheet);
 
-    // يختفي تلقائياً بعد 8 ثواني
-    setTimeout(() => toast.remove(), 8000);
+    // إغلاق بضغطة بأي مكان خارج الشريط — لا حاجة لزر "إغلاق" منفصل يكرر وظيفة الاختفاء التلقائي
+    const dismiss = (e) => {
+      if (!sheet.contains(e.target)) {
+        sheet.remove();
+        document.removeEventListener('click', dismiss);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', dismiss), 50); // تأخير بسيط يمنع نفس ضغطة الفتح من إغلاقه فوراً
+
+    // يختفي تلقائياً بعد 8 ثواني لو لم تُغلَق يدوياً
+    setTimeout(() => { sheet.remove(); document.removeEventListener('click', dismiss); }, 8000);
   },
 
   // ── Debt modal ──
