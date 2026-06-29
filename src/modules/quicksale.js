@@ -529,8 +529,13 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       setTimeout(() => QuickSale.startScanner(), 1800);
     }
 
-    // Re-focus للصنف التالي
-    setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150);
+    // Re-focus للصنف التالي — فقط لو الكاميرا متوقفة فعلياً (المستخدمة تكتب يدوياً، لا تمسح
+    // بالكاميرا). السبب الجذري لمشكلة "الكيبورد يظهر فوق الكاميرا على Android": كان يعيد
+    // التركيز لحقل النص دائماً بعد كل مسح ناجح، حتى أثناء استخدام الكاميرا الفعلي نفسه،
+    // فيفتح المتصفح لوحة المفاتيح تلقائياً فوق الكاميرا المستمرة بالعمل
+    if (!BarcodeScanner.isActive()) {
+      setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150);
+    }
   },
 
   // ── Camera Scanner ──
