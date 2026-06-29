@@ -424,6 +424,19 @@ const Inventory = {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
 
+    // تحقق صريح من الحقول الإلزامية (الكمية، سعر البيع) — لا يصح المرور بقيمة صفر صامتة
+    // لحقل فاضٍ، يجب رفض الحفظ فعلياً وطلب إدخال قيمة حقيقية بوضوح
+    const qtyRaw = DOM.val('inq');
+    const priceRaw = DOM.val('insp');
+    if (qtyRaw === '' || qtyRaw === null || isNaN(parseFloat(qtyRaw))) {
+      Notify.error('أدخلي الكمية — هذا الحقل إلزامي');
+      return;
+    }
+    if (priceRaw === '' || priceRaw === null || isNaN(parseFloat(priceRaw)) || parseFloat(priceRaw) <= 0) {
+      Notify.error('أدخلي سعر البيع — هذا الحقل إلزامي ويجب أن يكون أكبر من صفر');
+      return;
+    }
+
     const productRow = {
       store_id:        State.user.id,
       name,
@@ -431,8 +444,8 @@ const Inventory = {
       brand:           DOM.val('inbrand') || null,
       category:        DOM.val('inc'),
       unit:            DOM.val('inu'),
-      quantity:        parseFloat(DOM.val('inq')) || 0,
-      sale_price:      parseFloat(DOM.val('insp')) || 0,
+      quantity:        parseFloat(qtyRaw),
+      sale_price:      parseFloat(priceRaw),
       cost_price:      parseFloat(DOM.val('incp')) || 0,
       low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
     };
