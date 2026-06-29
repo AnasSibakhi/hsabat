@@ -18,11 +18,9 @@ import { Debts }      from './modules/debts.js';
 import { Invoices }   from './modules/invoices.js';
 import { Sales }      from './modules/sales.js';
 import { Inventory }  from './modules/inventory.js';
-import { Purchases }  from './modules/purchases.js';
-import { NetCards }   from './modules/netcards.js';
-import { Returns }    from './modules/returns.js';
+// Purchases, NetCards, Returns, Reports — تُحمَّل وتُعرَّف على window بشكل كسول من store-boot.js
+// عند أول دخول فعلي لصفحاتها، لا حاجة لاستيرادها هنا مطلقاً
 import { Expenses }   from './modules/expenses.js';
-import { Reports }    from './modules/reports.js';
 import { QuickSale }      from './modules/quicksale.js';
 import { Notifications }  from './modules/notifications.js';
 import { Settings }       from './nav/store-boot.js';
@@ -40,11 +38,7 @@ Registry.register('Customers',  Customers);
 Registry.register('Debts',      Debts);
 Registry.register('Invoices',   Invoices);
 Registry.register('Inventory',  Inventory);
-Registry.register('Purchases',  Purchases);
-Registry.register('NetCards',   NetCards);
-Registry.register('Returns',    Returns);
 Registry.register('Expenses',   Expenses);
-Registry.register('Reports',    Reports);
 Registry.register('QuickSale',  QuickSale);
 Registry.register('Sales',      Sales);
 
@@ -59,11 +53,7 @@ window.Debts             = Debts;
 window.Invoices          = Invoices;
 window.Sales             = Sales;
 window.Inventory         = Inventory;
-window.Purchases         = Purchases;
-window.NetCards          = NetCards;
-window.Returns           = Returns;
 window.Expenses          = Expenses;
-window.Reports           = Reports;
 window.QuickSale         = QuickSale;
 window.Notifications     = Notifications;
 window.Registry          = Registry;
@@ -132,8 +122,7 @@ Object.assign(window, {
 
   // Modules
   Dashboard, Customers, Debts, Invoices,
-  Sales, Inventory, Purchases, NetCards,
-  Returns, Expenses, Reports, QuickSale, Notifications,
+  Sales, Inventory, Expenses, QuickSale, Notifications,
 
   // Convenience wrappers for inline onclick
   navGo:   (id, el) => Nav.go(id, el),
