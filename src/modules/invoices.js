@@ -408,12 +408,20 @@ const Invoices = {
     const groups = {};
     data.forEach(inv => {
       const name = (inv.buyer_name || inv.customer_name || '').trim() || 'زبون عادي';
-      const key  = name.toLowerCase();
+      // المفتاح الصحيح والدقيق: customer_id الحقيقي المحفوظ بالفاتورة من السيرفر، لو موجود —
+      // هذا السبب الجذري لمشكلة "أسماء خاطئة بالتسديد" التي أصلحناها: التجميع والمطابقة
+      // كانا يعتمدان فقط على نص الاسم (هش جداً، يخطئ مع أسماء متشابهة أو زبائن مكرَّرين بنفس
+      // الاسم)، رغم أن customer_id الحقيقي والدقيق كان متوفراً بالبيانات نفسها طوال الوقت.
+      // لو الفاتورة بدون customer_id فعلياً (زبون كاش بدون ربط، أو "زبون عادي")، نستخدم الاسم
+      // كحل بديل فقط — لكن مع تمييز كل اسم بمفتاح خاص به (لا تجميع كل فواتير "بدون زبون" معاً)
+      const key = inv.customer_id ? ('id:' + inv.customer_id) : ('name:' + name.toLowerCase());
       if (!groups[key]) {
-        groups[key] = { name, phone: inv.buyer_phone || '', invoices: [] };
+        groups[key] = { name, phone: inv.buyer_phone || '', customerId: inv.customer_id || null, invoices: [] };
       }
       groups[key].invoices.push(inv);
       if (inv.buyer_phone) groups[key].phone = inv.buyer_phone;
+      // لو فاتورة لاحقة لها customer_id حقيقي بينما الأولى لم يكن لها (نادر، لكن ممكن)، نثبّته
+      if (inv.customer_id && !groups[key].customerId) groups[key].customerId = inv.customer_id;
     });
     // الأحدث أولاً (الزبون الذي له فاتورة أحدث يظهر بالأعلى)
     return Object.values(groups).sort((a, b) =>
@@ -430,11 +438,12 @@ const Invoices = {
       const slot = DOM.get('cust-debt-' + idx);
       if (!slot) continue;
 
-      const customer = (State.customers || []).find(c => c.name.trim().toLowerCase() === g.name.trim().toLowerCase());
-      if (!customer) continue; // اسم بدون زبون مسجَّل فعلياً (مثل "زبون عادي") — لا دين لمتابعته
+      // نستخدم customer_id الحقيقي المحفوظ بالفاتورة من السيرفر مباشرة — لا تخمين بالاسم على
+      // الإطلاق. لو الفاتورة بدون customer_id فعلياً (زبون كاش غير مسجَّل)، لا يوجد دين لمتابعته
+      if (!g.customerId) continue;
 
       try {
-        const { data: debts } = await DB.debts().select('amount,paid').eq('customer_id', customer.id);
+        const { data: debts } = await DB.debts().select('amount,paid').eq('customer_id', g.customerId);
         const active = (debts || []).filter(d => (d.amount - (d.paid || 0)) > 0);
         if (!active.length) continue; // صفر دين نشط — لا حاجة لإظهار أي زر
 
@@ -442,7 +451,7 @@ const Invoices = {
         slot.innerHTML = `<div class="cust-debt-summary" onclick="event.stopPropagation()">
           <div><div class="cust-debt-summary-label">دين متبقٍ (${active.length} ${active.length === 1 ? 'فاتورة' : 'فواتير'})</div>
           <div class="cust-debt-summary-total">₪${totalRem.toFixed(2)}</div></div>
-          <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${customer.id}',${totalRem})">تسديد الإجمالي</button>
+          <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${g.customerId}',${totalRem})">تسديد الإجمالي</button>
         </div>`;
       } catch {
         // فشل شبكي بصمت — لا نعرض شي، لا نقاطع المستخدمة برسالة خطأ لمجرد تحميل ملخص ثانوي
