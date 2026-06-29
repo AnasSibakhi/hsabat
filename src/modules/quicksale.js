@@ -1391,11 +1391,14 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       const custRecord = custId ? State.customers.find(x => x.id === custId) : null;
       const buyerPhone = DOM.val('qs-buyer-phone') || custRecord?.phone || '';
 
-      // لو في اسم مشتري وما في customer_id — أضفه أو اربطه
+      // لو في اسم مشتري وما في customer_id — اربطه محلياً فوراً (بحث بالكاش فقط، صفر طلب
+      // شبكي). لو غير موجود محلياً، يبقى custId فاضياً ويُرسَل الاسم نصاً للسيرفر، الذي يربطه
+      // أو ينشئه تلقائياً بدقة بنفسه أثناء معالجة البيع (نفس آلية complete-sale المؤكَّدة)
       if (buyerName && buyerName !== 'زبون عادي' && !custId) {
-        const { Customers } = await import('./customers.js');
-        const saved = await Customers.createInline(buyerName, buyerPhone);
-        if (saved?.id && !saved._isLocalPending) custId = saved.id;
+        const existingByName = (State.customers || []).find(c =>
+          c.name.toLowerCase() === buyerName.toLowerCase()
+        );
+        if (existingByName) custId = existingByName.id;
       }
 
       // حساب الدين (لو دفعة جزئية أو آجل كامل) — يُمرَّر جاهز للسيرفر
@@ -1426,12 +1429,12 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
       let inv;
       let isOfflineSale = false;
-      // هل هذا بيع "آجل كامل" (DEFER)؟ هذا المسار الوحيد المُفعَّل حالياً بنظام العرض الفوري
-      // (Optimistic UI) — نعرض الفاتورة فوراً محلياً، والإرسال الحقيقي للخادم يحصل بالكامل
-      // بالخلفية بعد ذلك، بصفر انتظار على واجهة المستخدمة بغض النظر عن سرعة الشبكة
-      const isInstantDefer = paymentType === PAYMENT.DEFER;
+      // كل طرق الدفع الآن تستخدم نظام العرض الفوري (Optimistic UI) — نعرض الفاتورة فوراً محلياً
+      // لكل بيع، والإرسال الحقيقي للخادم يحصل بالكامل بالخلفية بعد ذلك، بصفر انتظار على واجهة
+      // المستخدمة بغض النظر عن سرعة الشبكة أو نوع الدفع (كاش/تحويل/دين/دفعة جزئية)
+      const isInstantSale = true;
 
-      if (isInstantDefer) {
+      if (isInstantSale) {
         // فاتورة محلية مؤقتة فورية للعرض — نفس آلية الطابور المحلي الموجودة فعلاً لحالة فشل
         // النت، لكن مُطبَّقة هنا دائماً من البداية، لا فقط بعد فشل فعلي
         inv = {
@@ -1473,40 +1476,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
             }
           }
         })();
-      } else {
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // حد زمني صريح — يمنع التعليق اللانهائي على شبكة بطيئة/متقطعة، لا منقطعة تماماً
-
-        const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify(salePayload),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية البيع');
-        inv = json.data.invoice;
-
-      } catch (err) {
-        // فشل شبكي حقيقي (لا نت، أو شبكة بطيئة جداً تجاوزت الحد الزمني) — لا نوقف البيع، نخزّنه
-        // بالطابور المحلي ونعرض فاتورة محلية فورية. فشل من نوع آخر (مثل رفض السيرفر للكمية)
-        // يجب أن يظهر كخطأ حقيقي، لا يُخزَّن بصمت
-        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-        if (!isNetworkFailure) throw err;
-
-        OfflineQueue.add(salePayload);
-        isOfflineSale = true;
-        inv = {
-          invoice_number: invNum,
-          invoice_date:   salePayload.invoiceDate,
-          sale_time:      salePayload.saleTime,
-          id:             null, // لا id حقيقي بعد — يُحدَّد فعلياً وقت المزامنة بالسيرفر
-        };
-        Notify.warn('📡 لا يوجد اتصال — تم حفظ البيعة محلياً وستُزامَن تلقائياً عند رجوع النت');
-      }
       }
 
       // ── تحديث الكاش المحلي للمخزون فوراً (بدون أي طلب شبكي إضافي) — يعكس الكمية الجديدة بالواجهة مباشرة ──
@@ -1545,26 +1514,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       // الفاتورة، وهذا السبب الجذري للتأخير المُحسّ خصوصاً بنت ضعيف. الآن تحصل بالخلفية تماماً
       // بعد عرض الفاتورة فعلياً، صفر تأثير على سرعة استجابة الواجهة للمستخدمة
       if (debtAmount > 0) {
-        if (isInstantDefer) {
-          // مسار البيع الفوري (DEFER): الخادم نفسه يضمن إنشاء/ربط الزبون بدقة بداخل
-          // complete-sale (مؤكَّد بكودها الفعلي)، فمحاولة إنشاء زبون محلي مستقلة هنا بالتوازي
-          // مع طلب الخلفية تخلق خطر سباق حقيقي (إنشاء زبونين منفصلين بنفس الاسم بنفس اللحظة،
-          // لأن كل مسار لا يعرف بالآخر). نكتفي بتحديث البادج، بدون أي إنشاء زبون محلي مستقل
-          getDebts()?.loadBadge();
-        } else {
-          (async () => {
-            try {
-              if (!custId && custName && custName !== 'زبون عادي') {
-                const { Customers } = await import('./customers.js');
-                await Customers.createInline(custName, buyerPhone);
-              }
-              await getDebts()?.loadBadge();
-            } catch {
-              // فشل صامت — هذي عمليات ثانوية (إنشاء سجل زبون، عداد بصري)، البيع نفسه نجح فعلياً
-              // وسُجِّل بالكامل بالخادم، فلا نقاطع المستخدمة برسالة خطأ لشي لا يؤثر على البيع
-            }
-          })();
-        }
+        // الخادم نفسه يضمن إنشاء/ربط الزبون بدقة بداخل complete-sale (مؤكَّد بكودها الفعلي)،
+        // فمحاولة إنشاء زبون محلي مستقلة هنا بالتوازي مع طلب الخلفية تخلق خطر سباق حقيقي
+        // (إنشاء زبونين منفصلين بنفس الاسم بنفس اللحظة). نكتفي بتحديث البادج فقط
+        getDebts()?.loadBadge();
       }
     } catch (err) {
       Notify.error(err.message);
