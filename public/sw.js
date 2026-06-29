@@ -1,5 +1,5 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
-const CACHE_VERSION = 'hesabat-v73-' + '20260629n';
+const CACHE_VERSION = 'hesabat-v74-CRASHFIX-' + '20260629o';
 
 self.addEventListener('install', e => {
   self.skipWaiting(); // فعّل النسخة الجديدة فوراً بدون انتظار إغلاق كل التابات القديمة
@@ -14,6 +14,15 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // السبب الجذري لتعطّل/توقّف PWA المتكرر على Android — Cache.put() ترفض رياضياً وقاطعاً أي
+  // طلب غير GET (يرمي TypeError حقيقي: "Request method 'POST' is unsupported")، وهذا يحصل
+  // بكل عملية بيع/إضافة منتج (كل استدعاءات complete-sale، inventory-db، إلخ كلها POST)،
+  // فاستثناء JS غير مُعالَج يتكرر بكل عملية بالموقع بداخل Service Worker نفسه. لا نحاول
+  // تخزين أي شي سوى طلبات GET على الإطلاق — طلبات POST تمر مباشرة للشبكة بدون أي تخزين محاوَل
+  if (e.request.method !== 'GET') {
+    return; // نترك المتصفح يتعامل معها طبيعياً، صفر تدخّل من Service Worker لغير GET
+  }
+
   // Network-first بسيط — نخزّن فقط بعد نجاح الشبكة، نرجع للكاش فقط عند فشل الشبكة الحقيقي.
   // لا تخزين أثناء install، صفر تعقيد إضافي — يقلل احتمالات أي سباق أو تلف بالتخزين
   e.respondWith(
