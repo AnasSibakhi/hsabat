@@ -628,7 +628,7 @@ const Debts = {
       // لو الزر استُخدم من صفحة الفواتير، نعيد رسمها لتحديث ملخص الدين المعروض فوراً
       try {
         const { Invoices } = await import('./invoices.js');
-        if (typeof Invoices._renderTable === 'function') Invoices._renderTable();
+        if (typeof Invoices.refreshDebtsCache === 'function') Invoices.refreshDebtsCache();
       } catch {}
     } catch (err) {
       const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
