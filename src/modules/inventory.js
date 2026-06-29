@@ -417,7 +417,7 @@ const Inventory = {
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
     State.isMutating = true;
     try {
-      const { error } = await DB.inventory().insert({
+      const { data, error } = await DB.inventory().insert({
         store_id:        State.user.id,
         name,
         barcode:         DOM.val('inb') || null,
@@ -428,13 +428,21 @@ const Inventory = {
         sale_price:      parseFloat(DOM.val('insp')) || 0,
         cost_price:      parseFloat(DOM.val('incp')) || 0,
         low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
-      });
+      }).select().single();
       if (error) throw error;
       Notify.success('تم إضافة الصنف');
       Modal.close('m-inv');
       DOM.clearInputs('inn', 'insp', 'incp');
-      Inventory.loadList();
+      await Inventory.loadList();
       Inventory.load();
+
+      // إضافة سريعة من البيع السريع — تُكمل البيع فوراً بإضافة المنتج الجديد للسلة، بدون
+      // مغادرة الصفحة أو فقدان السياق (السلة، الزبون، الكاميرا تستمر كما كانت)
+      const { QuickSale } = await import('./quicksale.js');
+      if (QuickSale._quickAddActive && data) {
+        QuickSale._quickAddActive = false;
+        QuickSale.addToCart(data.id);
+      }
     } catch (err) { Notify.error(err.message); }
     finally { setTimeout(() => { State.isMutating = false; }, 500); }
   },
