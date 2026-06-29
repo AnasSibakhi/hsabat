@@ -464,7 +464,7 @@ export const QuickSale = {
     QuickSale._clearCartStorage();
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input'); if (si) { si.value = ''; }
-    const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); }
+    const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); alert('SOURCE: clearCart line 467'); }
     const pi = DOM.get('qs-paid'); if (pi) pi.value = '';
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
     const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
@@ -534,7 +534,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     // التركيز لحقل النص دائماً بعد كل مسح ناجح، حتى أثناء استخدام الكاميرا الفعلي نفسه،
     // فيفتح المتصفح لوحة المفاتيح تلقائياً فوق الكاميرا المستمرة بالعمل
     if (!BarcodeScanner.isActive()) {
-      setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150);
+      setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150); alert('SOURCE: _onBarcode re-focus line 537');
     }
   },
 
@@ -599,7 +599,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (wrap) wrap.style.display = 'none';
     const container = DOM.get('qs-scanner-container');
     if (container) container.innerHTML = '';
-    DOM.get('qs-barcode-input')?.focus();
+    DOM.get('qs-barcode-input')?.focus(); alert('SOURCE: stopScanner line 602');
   },
 
   // ── Add new product from scanner ──
