@@ -91,10 +91,9 @@ export const Store = {
       if (State.currentPage === 'purchases' && _Purchases) _Purchases.load();
     });
 
-    // Initial data load
-    await Inventory.loadList();
-    await Promise.all([Customers.loadAll(), Debts.loadBadge()]);
-    await Dashboard.load();
+    // Initial data load — كل الاستدعاءات الثلاثة بالتوازي معاً (لا تعتمد على بعضها منطقياً)
+    // بدل 3 خطوات متسلسلة كانت تنتظر كل واحدة الأخرى بصمت، يقلل وقت تحميل الإقلاع فعلياً
+    await Promise.all([Inventory.loadList(), Customers.loadAll(), Debts.loadBadge(), Dashboard.load()]);
 
     // بدء التنبيهات التلقائية
     Notifications.startAutoRefresh();
