@@ -13,6 +13,7 @@ import { PAYMENT, ROLES, RETURN_TYPE, CONFIG } from '../config/constants.js';
 import * as Modal   from '../nav/modal.js';
 import { FIFOService }    from '../services/FIFOService.js';
 import { BarcodeScanner } from '../services/BarcodeScanner.js';
+import { OfflineQueue } from '../core/offline-queue.js';
 import { Guard }          from '../core/ratelimit.js';
 
 // ─────────────────────────────────────────
@@ -299,12 +300,19 @@ const Inventory = {
               </div>
             </div>
             <div class="pcv2-bottom">
-              <span class="pcv2-barcode">${i.barcode ? Utils.escape(i.barcode) : 'بدون باركود'}</span>
+              <span class="pcv2-barcode">${i._isLocalPending ? '⏳ قيد الحفظ...' : (i.barcode ? Utils.escape(i.barcode) : 'بدون باركود')}</span>
               <div class="pcv2-actions">
+                ${i._isLocalPending ? `
+                <button disabled title="بانتظار اكتمال الحفظ">✎</button>
+                <button disabled title="بانتظار اكتمال الحفظ">ℹ</button>
+                <button disabled title="بانتظار اكتمال الحفظ">🖨</button>
+                <button class="danger" disabled title="بانتظار اكتمال الحفظ">🗑</button>
+                ` : `
                 <button onclick="event.stopPropagation();Inventory.openEditModal('${i.id}')" title="تعديل">✎</button>
                 <button onclick="event.stopPropagation();Inventory.openProduct('${i.id}')" title="تفاصيل">ℹ</button>
                 <button ${canPrint ? `onclick="event.stopPropagation();Inventory.printBarcode('${i.id}')"` : 'disabled'} title="طباعة باركود">🖨</button>
                 <button class="danger" onclick="event.stopPropagation();Inventory.delete('${i.id}')" title="حذف">🗑</button>
+                `}
               </div>
             </div>
           </div>`;
@@ -415,36 +423,79 @@ const Inventory = {
   async save() {
     const name = DOM.val('inn');
     if (!name) { Notify.error('أدخل اسم الصنف'); return; }
-    State.isMutating = true;
-    try {
-      const { data, error } = await DB.inventory().insert({
-        store_id:        State.user.id,
-        name,
-        barcode:         DOM.val('inb') || null,
-        brand:           DOM.val('inbrand') || null,
-        category:        DOM.val('inc'),
-        unit:            DOM.val('inu'),
-        quantity:        parseFloat(DOM.val('inq')) || 0,
-        sale_price:      parseFloat(DOM.val('insp')) || 0,
-        cost_price:      parseFloat(DOM.val('incp')) || 0,
-        low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
-      }).select().single();
-      if (error) throw error;
-      Notify.success('تم إضافة الصنف');
-      Modal.close('m-inv');
-      DOM.clearInputs('inn', 'insp', 'incp');
-      await Inventory.loadList();
-      Inventory.load();
 
-      // إضافة سريعة من البيع السريع — تُكمل البيع فوراً بإضافة المنتج الجديد للسلة، بدون
-      // مغادرة الصفحة أو فقدان السياق (السلة، الزبون، الكاميرا تستمر كما كانت)
-      const { QuickSale } = await import('./quicksale.js');
-      if (QuickSale._quickAddActive && data) {
+    const productRow = {
+      store_id:        State.user.id,
+      name,
+      barcode:         DOM.val('inb') || null,
+      brand:           DOM.val('inbrand') || null,
+      category:        DOM.val('inc'),
+      unit:            DOM.val('inu'),
+      quantity:        parseFloat(DOM.val('inq')) || 0,
+      sale_price:      parseFloat(DOM.val('insp')) || 0,
+      cost_price:      parseFloat(DOM.val('incp')) || 0,
+      low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
+    };
+
+    const { QuickSale } = await import('./quicksale.js');
+
+    // ── مسار "الإضافة السريعة من البيع السريع" — يحتاج id حقيقي فوراً لإضافة المنتج للسلة
+    // النشطة، فيبقى ينتظر تأكيد السيرفر كما كان (لا عرض فوري هنا عمداً: لو أعطيناها id محلياً
+    // مؤقتاً ثم تغيّر لاحقاً بصمت بمنتصف عملية بيع نشطة، هذا خطر حقيقي على سلامة السلة، لا فائدة
+    // حقيقية من العرض الفوري بما أن الهدف المباشر هو استخدام النتيجة فوراً لا فقط رؤية تأكيد) ──
+    if (QuickSale._quickAddActive) {
+      State.isMutating = true;
+      try {
+        const { data, error } = await DB.inventory().insert(productRow).select().single();
+        if (error) throw error;
+        Notify.success('تم إضافة الصنف');
+        Modal.close('m-inv');
+        DOM.clearInputs('inn', 'insp', 'incp');
+        await Inventory.loadList();
+        Inventory.load();
         QuickSale._quickAddActive = false;
         QuickSale.addToCart(data.id);
+      } catch (err) { Notify.error(err.message); }
+      finally { setTimeout(() => { State.isMutating = false; }, 500); }
+      return;
+    }
+
+    // ── مسار الإضافة العادية من صفحة المخزون — عرض فوري (Optimistic UI)، نفس فلسفة البيع.
+    // الهدف هنا هو فقط رؤية تأكيد الإضافة، صفر اعتماد على id حقيقي فوري لأي خطوة تالية،
+    // فالعرض الفوري آمن منطقياً 100% ولا يخلق أي تعارض محتمل ──
+    Notify.success('تم إضافة الصنف');
+    Modal.close('m-inv');
+    DOM.clearInputs('inn', 'insp', 'incp');
+
+    // إضافة محلية فورية للقائمة المعروضة — id مؤقت، تُستبدَل تلقائياً ببيانات السيرفر الحقيقية
+    // بعد نجاح المزامنة (loadList تالياً تُعيد القراءة الصحيحة الكاملة من الجديد)
+    const localId = 'local_' + Date.now();
+    State.inventory = [...(State.inventory || []), { ...productRow, id: localId, _isLocalPending: true }];
+    Inventory._renderList(State.inventory);
+
+    // الإرسال الحقيقي يحصل بالكامل بالخلفية — بدون أي await هنا، صفر تأثير على سرعة العرض
+    (async () => {
+      try {
+        const { error } = await DB.inventory().insert(productRow);
+        if (error) throw error;
+        // نجح فعلياً بالخلفية — نُحدِّث القائمة بصمت لتُستبدَل النسخة المؤقتة بالبيانات الحقيقية
+        await Inventory.loadList();
+        Inventory.load();
+      } catch (err) {
+        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+        if (isNetworkFailure) {
+          // فشل شبكي حقيقي بالخلفية — نخزّن بالطابور المحلي لمزامنة تلقائية لاحقة، صفر فقدان بيانات
+          OfflineQueue.add(productRow, 'inventory');
+        } else {
+          // فشل حقيقي من السيرفر (مثل باركود مكرر فعلياً) — هذا يستدعي تنبيهاً واضحاً، لأن
+          // المستخدمة رأت تأكيد إضافة بالفعل بينما الإضافة الحقيقية لم تكتمل بالخادم. نحذف
+          // النسخة المحلية المؤقتة من القائمة المعروضة لتعكس الفشل الحقيقي بدقة
+          State.inventory = (State.inventory || []).filter(p => p.id !== localId);
+          Inventory._renderList(State.inventory);
+          Notify.error('⚠️ إضافة "' + name + '" فشلت فعلياً بالخادم: ' + (err.message || 'خطأ غير معروف'));
+        }
       }
-    } catch (err) { Notify.error(err.message); }
-    finally { setTimeout(() => { State.isMutating = false; }, 500); }
+    })();
   },
 
   openEditModal(id) {
