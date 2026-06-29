@@ -132,20 +132,12 @@ Object.assign(window, {
 });
 
 // ── PWA Service Worker — مع تحديث تلقائي فوري عند نشر نسخة جديدة ──
-// حل جذري لمشكلة تعطّل/توقّف الاختصار على Android بعد حذفه وإعادة تثبيته: حذف الاختصار من
-// الشاشة الرئيسية لا يُلغي تسجيل Service Worker فعلياً (موثَّق رسمياً — يبقى نشطاً بصمت
-// بخلفية المتصفح)، فلو كانت نسخة قديمة عالقة بحالة معطوبة (من إصلاحات سابقة بمنتصف التطوير)،
-// إعادة التثبيت قد تتعارض معها. نُلغي تسجيل أي Service Worker قديم بشكل قاطع وصريح أولاً،
-// بكل تحميل صفحة، قبل تسجيل الجديد — يضمن صفر احتمال لتعارض مع نسخة عالقة معطوبة
+// تنبيه مهم من توثيق Chrome الرسمي: استدعاء unregister() على Service Worker يتحكّم فعلياً
+// بالصفحة الحالية لا يأخذ مفعوله فوراً ("must wait for clients to refresh")، فمحاولة ذلك هنا
+// كانت ستخلق تعارض توقيت حقيقي إضافي بدل حل المشكلة. الاعتماد الصحيح هو على CACHE_VERSION
+// المتغيّرة بكل نشر (تُجبر تثبيت نسخة جديدة فعلياً عبر آلية المتصفح القياسية نفسها)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    // نُلغي تسجيل كل Service Workers القديمة فعلياً أولاً — يضمن بداية نظيفة 100%، صفر احتمال
-    // لتعارض مع نسخة عالقة معطوبة من إصلاحات سابقة بمنتصف التطوير
-    try {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
-    } catch {}
-
+  window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(reg => {
       // فحص تحديثات فوري عند تحميل الصفحة
       reg.update().catch(() => {});
