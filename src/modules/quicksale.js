@@ -464,7 +464,7 @@ export const QuickSale = {
     QuickSale._clearCartStorage();
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input'); if (si) { si.value = ''; }
-    const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); alert('SOURCE: clearCart line 467'); }
+    const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); }
     const pi = DOM.get('qs-paid'); if (pi) pi.value = '';
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
     const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
@@ -519,6 +519,15 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         box.classList.add('success');
         setTimeout(() => box.classList.remove('success'), 700);
       }
+      // Re-focus للصنف التالي — فقط هنا، بمسار النجاح، وفقط لو الكاميرا متوقفة فعلياً بشكل
+      // دائم ومقصود (المستخدمة تكتب يدوياً، لا تمسح بالكاميرا). السبب الجذري للمشكلة الحقيقي:
+      // هذا السطر كان مشترَكاً بين مساري النجاح والفشل معاً. بمسار الفشل، الكاميرا تتوقف
+      // مؤقتاً (BarcodeScanner.stop() أدناه) قبل إعادة تشغيلها تلقائياً بعد 1800ms — خلال هذي
+      // الفترة الانتقالية القصيرة، isActive() ترجع false فتعيد التركيز خطأً وتفتح الكيبورد
+      // فوق الكاميرا رغم أنها ستعمل من جديد تلقائياً بعد لحظات. فصلناه ليكون فقط بمسار النجاح
+      if (!BarcodeScanner.isActive()) {
+        setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150);
+      }
     } else {
       QuickSale._beep('error');
       // الكاميرا دائمة — لا نوقفها نهائياً، فقط نوقفها لحظياً لمنع تكرار قراءة نفس الكود الخاطئ، ثم تعمل تلقائياً
@@ -527,14 +536,8 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       if (c) c.innerHTML = '';
       QuickSale._showNotFound(code);
       setTimeout(() => QuickSale.startScanner(), 1800);
-    }
-
-    // Re-focus للصنف التالي — فقط لو الكاميرا متوقفة فعلياً (المستخدمة تكتب يدوياً، لا تمسح
-    // بالكاميرا). السبب الجذري لمشكلة "الكيبورد يظهر فوق الكاميرا على Android": كان يعيد
-    // التركيز لحقل النص دائماً بعد كل مسح ناجح، حتى أثناء استخدام الكاميرا الفعلي نفسه،
-    // فيفتح المتصفح لوحة المفاتيح تلقائياً فوق الكاميرا المستمرة بالعمل
-    if (!BarcodeScanner.isActive()) {
-      setTimeout(() => DOM.get('qs-barcode-input')?.focus(), 150); alert('SOURCE: _onBarcode re-focus line 537');
+      // صفر إعادة تركيز هنا عمداً — الكاميرا ستعمل تلقائياً من جديد بعد لحظات، إعادة التركيز
+      // بهذي الفترة الانتقالية تفتح الكيبورد فوق الكاميرا بصمت رغم استمرار المسح فعلياً
     }
   },
 
@@ -599,7 +602,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     if (wrap) wrap.style.display = 'none';
     const container = DOM.get('qs-scanner-container');
     if (container) container.innerHTML = '';
-    DOM.get('qs-barcode-input')?.focus(); alert('SOURCE: stopScanner line 602');
+    DOM.get('qs-barcode-input')?.focus();
   },
 
   // ── Add new product from scanner ──
