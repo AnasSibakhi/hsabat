@@ -464,7 +464,14 @@ export const QuickSale = {
     QuickSale._clearCartStorage();
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input'); if (si) { si.value = ''; }
-    const bi = DOM.get('qs-barcode-input'); if (bi) { bi.value = ''; bi.focus(); }
+    // إعادة التركيز فقط لو الكاميرا متوقفة فعلياً — نفس السبب الجذري المُصلَح بـ_onBarcode سابقاً:
+    // إعادة تركيز غير مشروطة تفتح الكيبورد فوق الكاميرا لو كانت نشطة بنفس لحظة استدعاء clearCart
+    // (يحصل تحديداً بعد نجاح بيع، حيث الكاميرا تستمر بالعمل بصفحة البيع السريع)
+    const bi = DOM.get('qs-barcode-input');
+    if (bi) {
+      bi.value = '';
+      if (!BarcodeScanner.isActive()) bi.focus();
+    }
     const pi = DOM.get('qs-paid'); if (pi) pi.value = '';
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
     const bn = DOM.get('qs-buyer-name');  if (bn) bn.value = '';
