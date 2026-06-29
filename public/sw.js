@@ -1,5 +1,5 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
-const CACHE_VERSION = 'hesabat-v75-FORCEUNREG-' + '20260629p';
+const CACHE_VERSION = 'hesabat-v76-NEVERUNDEFINED-' + '20260629q';
 
 self.addEventListener('install', e => {
   self.skipWaiting(); // فعّل النسخة الجديدة فوراً بدون انتظار إغلاق كل التابات القديمة
@@ -14,17 +14,19 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // السبب الجذري لتعطّل/توقّف PWA المتكرر على Android — Cache.put() ترفض رياضياً وقاطعاً أي
-  // طلب غير GET (يرمي TypeError حقيقي: "Request method 'POST' is unsupported")، وهذا يحصل
-  // بكل عملية بيع/إضافة منتج (كل استدعاءات complete-sale، inventory-db، إلخ كلها POST)،
-  // فاستثناء JS غير مُعالَج يتكرر بكل عملية بالموقع بداخل Service Worker نفسه. لا نحاول
-  // تخزين أي شي سوى طلبات GET على الإطلاق — طلبات POST تمر مباشرة للشبكة بدون أي تخزين محاوَل
+  // السبب الجذري الأول لتعطّل/توقّف PWA المتكرر على Android — Cache.put() ترفض رياضياً وقاطعاً
+  // أي طلب غير GET (يرمي TypeError حقيقي: "Request method 'POST' is unsupported")، وهذا يحصل
+  // بكل عملية بيع/إضافة منتج بالموقع كله. لا نحاول تخزين أي شي سوى طلبات GET على الإطلاق
   if (e.request.method !== 'GET') {
     return; // نترك المتصفح يتعامل معها طبيعياً، صفر تدخّل من Service Worker لغير GET
   }
 
-  // Network-first بسيط — نخزّن فقط بعد نجاح الشبكة، نرجع للكاش فقط عند فشل الشبكة الحقيقي.
-  // لا تخزين أثناء install، صفر تعقيد إضافي — يقلل احتمالات أي سباق أو تلف بالتخزين
+  // السبب الجذري الثاني والأهم، مؤكَّد رسمياً بمواصفة W3C نفسها: لو فشلت الشبكة (شائع جداً
+  // عند فتح اختصار PWA من شاشة باردة، قبل استقرار الاتصال) و caches.match() ترجع undefined
+  // (الكاش فاضٍ تماماً، حالة "أول فتح بعد إعادة تثبيت اختصار جديد")، فإن respondWith(undefined)
+  // يُعامَل رسمياً كـ"NetworkError" حقيقي — يعني فشل تحميل الصفحة بالكامل، يطابق بدقة "توقف
+  // كلي خارج المتصفح". الحل: نضمن دائماً إرجاع Response حقيقية، حتى لو رسالة خطأ بسيطة بدل
+  // undefined أبداً، تحت أي ظرف
   e.respondWith(
     fetch(e.request)
       .then(response => {
@@ -35,7 +37,19 @@ self.addEventListener('fetch', e => {
         }
         return response;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        caches.match(e.request).then(cached => {
+          if (cached) return cached;
+          // صفر كاش وصفر شبكة — نُرجع استجابة حقيقية دائماً، لا undefined أبداً تحت أي ظرف
+          if (e.request.mode === 'navigate') {
+            return new Response(
+              '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>حسابات</title></head><body style="font-family:sans-serif;text-align:center;padding:40px 20px;"><h2>لا يوجد اتصال بالإنترنت</h2><p>تحققي من الاتصال وحاولي مرة أخرى</p><button onclick="location.reload()" style="padding:10px 24px;font-size:16px;">إعادة المحاولة</button></body></html>',
+              { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+            );
+          }
+          return new Response('', { status: 503 });
+        })
+      )
   );
 });
 
