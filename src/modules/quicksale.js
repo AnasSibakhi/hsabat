@@ -1356,16 +1356,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         if (d.custId) {
           custId = d.custId;
         } else {
+          // بحث محلي فقط بالكاش الموجود فعلاً — صفر طلب شبكي هنا (السبب الجذري للتأخير
+          // المُحسّ على نت ضعيف). لو لم يُوجد الزبون محلياً، نُنشئ سجلاً محلياً مؤقتاً فوراً
+          // (نفس آلية _isLocalPending الموجودة فعلاً للعمل بدون نت)، والربط الحقيقي بمعرّف
+          // السيرفر يحصل تلقائياً بالخلفية عند مزامنة البيع نفسه — صفر تأخير على واجهة المستخدمة
           const existing = (State.customers || []).find(c =>
             c.name.toLowerCase() === deferName.toLowerCase()
           );
           if (existing) {
             custId = existing.id;
-          } else {
-            const { Customers } = await import('./customers.js');
-            const newC = await Customers.createInline(deferName, d.phone || '');
-            if (newC?.id && !newC._isLocalPending) custId = newC.id;
           }
+          // ملاحظة: لو لم يُوجد محلياً، custId تبقى null والاسم (buyerName) يُرسَل كنص للسيرفر،
+          // الذي يُنشئ الزبون الحقيقي تلقائياً وقت معالجة البيع (نفس آلية complete-sale الموجودة)
         }
         QuickSale._deferData   = null;
         QuickSale._debtNewCust = null;
@@ -1378,7 +1380,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
     State.isMutating = true;
     try {
-      const invNum = await QuickSale._generateUniqueInvoiceNumber();
+      // رقم محلي فوري للعرض فقط، صفر طلب شبكي — السيرفر يولّد دائماً رقمه الحقيقي الخاص بنفسه
+      // ويتجاهل تماماً أي رقم يُرسَل من العميل (مؤكَّد بالكود الفعلي لـ complete-sale نفسها)،
+      // فهذا الرقم المحلي لا يؤثر على الرقم النهائي الحقيقي أبداً، فقط يُستخدَم للعرض الفوري
+      // وكمفتاح مؤقت بالطابور المحلي حتى تكتمل المزامنة الحقيقية بالخلفية
+      const invNum = 'LOCAL-' + Date.now().toString().slice(-8);
 
       // Buyer info
       const buyerName  = DOM.val('qs-buyer-name') || custName || '';
@@ -1420,7 +1426,54 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
       let inv;
       let isOfflineSale = false;
+      // هل هذا بيع "آجل كامل" (DEFER)؟ هذا المسار الوحيد المُفعَّل حالياً بنظام العرض الفوري
+      // (Optimistic UI) — نعرض الفاتورة فوراً محلياً، والإرسال الحقيقي للخادم يحصل بالكامل
+      // بالخلفية بعد ذلك، بصفر انتظار على واجهة المستخدمة بغض النظر عن سرعة الشبكة
+      const isInstantDefer = paymentType === PAYMENT.DEFER;
 
+      if (isInstantDefer) {
+        // فاتورة محلية مؤقتة فورية للعرض — نفس آلية الطابور المحلي الموجودة فعلاً لحالة فشل
+        // النت، لكن مُطبَّقة هنا دائماً من البداية، لا فقط بعد فشل فعلي
+        inv = {
+          invoice_number: invNum,
+          invoice_date:   salePayload.invoiceDate,
+          sale_time:      salePayload.saleTime,
+          id:             null,
+        };
+        // 'pending' لا 'true' — رسالة محايدة "قيد المعالجة" بدل "لا يوجد اتصال" المضلِّلة هنا،
+        // لأن هذا الوضع طبيعي ومتوقَّع بكل بيع آجل بغض النظر عن وجود النت فعلياً، لا يعني انقطاعاً
+        isOfflineSale = 'pending';
+
+        // الإرسال الحقيقي يحصل بالكامل بالخلفية — بدون أي await هنا، صفر تأثير على سرعة العرض
+        (async () => {
+          try {
+            const { data: { session } } = await sb.auth.getSession();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+              body: JSON.stringify(salePayload),
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'فشل تنفيذ عملية البيع');
+            // نجح فعلياً وبصمت بالخلفية — الفاتورة المعروضة محلياً تبقى كما هي (المستخدمة شافتها
+            // بالفعل)، لا حاجة لتحديث الواجهة لأن البيع انتهى من منظورها. فقط لو فشل نخزّن بالطابور
+          } catch (err) {
+            const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+            if (isNetworkFailure) {
+              // فشل شبكي حقيقي بالخلفية — نخزّن بالطابور المحلي لمزامنة تلقائية لاحقة، صفر فقدان بيانات
+              OfflineQueue.add(salePayload);
+            } else {
+              // فشل حقيقي من السيرفر (مثل نفاد الكمية فعلياً) — هذا يستدعي تنبيهاً واضحاً، لأن
+              // المستخدمة رأت فاتورة "ناجحة" بالفعل بينما البيع الحقيقي لم يكتمل بالخادم
+              Notify.error('⚠️ فاتورة ' + invNum + ' فشلت فعلياً بالخادم: ' + (err.message || 'خطأ غير معروف') + ' — راجعي المخزون والديون يدوياً');
+            }
+          }
+        })();
+      } else {
       try {
         const { data: { session } } = await sb.auth.getSession();
         const controller = new AbortController();
@@ -1453,6 +1506,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
           id:             null, // لا id حقيقي بعد — يُحدَّد فعلياً وقت المزامنة بالسيرفر
         };
         Notify.warn('📡 لا يوجد اتصال — تم حفظ البيعة محلياً وستُزامَن تلقائياً عند رجوع النت');
+      }
       }
 
       // ── تحديث الكاش المحلي للمخزون فوراً (بدون أي طلب شبكي إضافي) — يعكس الكمية الجديدة بالواجهة مباشرة ──
@@ -1491,18 +1545,26 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       // الفاتورة، وهذا السبب الجذري للتأخير المُحسّ خصوصاً بنت ضعيف. الآن تحصل بالخلفية تماماً
       // بعد عرض الفاتورة فعلياً، صفر تأثير على سرعة استجابة الواجهة للمستخدمة
       if (debtAmount > 0) {
-        (async () => {
-          try {
-            if (!custId && custName && custName !== 'زبون عادي') {
-              const { Customers } = await import('./customers.js');
-              await Customers.createInline(custName, buyerPhone);
+        if (isInstantDefer) {
+          // مسار البيع الفوري (DEFER): الخادم نفسه يضمن إنشاء/ربط الزبون بدقة بداخل
+          // complete-sale (مؤكَّد بكودها الفعلي)، فمحاولة إنشاء زبون محلي مستقلة هنا بالتوازي
+          // مع طلب الخلفية تخلق خطر سباق حقيقي (إنشاء زبونين منفصلين بنفس الاسم بنفس اللحظة،
+          // لأن كل مسار لا يعرف بالآخر). نكتفي بتحديث البادج، بدون أي إنشاء زبون محلي مستقل
+          getDebts()?.loadBadge();
+        } else {
+          (async () => {
+            try {
+              if (!custId && custName && custName !== 'زبون عادي') {
+                const { Customers } = await import('./customers.js');
+                await Customers.createInline(custName, buyerPhone);
+              }
+              await getDebts()?.loadBadge();
+            } catch {
+              // فشل صامت — هذي عمليات ثانوية (إنشاء سجل زبون، عداد بصري)، البيع نفسه نجح فعلياً
+              // وسُجِّل بالكامل بالخادم، فلا نقاطع المستخدمة برسالة خطأ لشي لا يؤثر على البيع
             }
-            await getDebts()?.loadBadge();
-          } catch {
-            // فشل صامت — هذي عمليات ثانوية (إنشاء سجل زبون، عداد بصري)، البيع نفسه نجح فعلياً
-            // وسُجِّل بالكامل بالخادم، فلا نقاطع المستخدمة برسالة خطأ لشي لا يؤثر على البيع
-          }
-        })();
+          })();
+        }
       }
     } catch (err) {
       Notify.error(err.message);
@@ -1575,7 +1637,10 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       : '';
     if (el) {
       el.innerHTML = `
-        ${isOffline ? `
+        ${isOffline === 'pending' ? `
+        <div style="background:var(--pl);border:1px solid var(--p);border-radius:8px;padding:8px 12px;margin-bottom:10px;text-align:center;font-size:12px;font-weight:800;color:var(--p);">
+          ⏳ جاري تأكيد الفاتورة بالخادم — البيع مسجَّل بالكامل، هذي خطوة تأكيد تلقائية بالخلفية
+        </div>` : isOffline ? `
         <div style="background:var(--wl);border:1px solid var(--w);border-radius:8px;padding:8px 12px;margin-bottom:10px;text-align:center;font-size:12px;font-weight:800;color:var(--w);">
           📡 لا يوجد اتصال — هذي الفاتورة محفوظة محلياً وستُزامَن تلقائياً عند رجوع النت
         </div>` : ''}
