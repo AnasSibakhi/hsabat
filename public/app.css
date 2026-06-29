@@ -1022,6 +1022,16 @@ table.sa-dt tr:hover td{background:var(--g0);}
 .scn-dot.bl{bottom:-5px;left:-5px;}.scn-dot.br{bottom:-5px;right:-5px;}
 .scn-shimmer{position:absolute;left:8%;right:8%;height:2px;top:50%;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);animation:scn-shimmer-move 2.4s ease-in-out infinite;}
 
+/* تخفيف حمل الأنيميشن المستمرة (توهج الإطار + الخط المتحرك) أثناء تشغيل الكاميرا فعلياً —
+   كانت تستهلك معالجة CSS مستمرة بلا توقف طوال فترة المسح، وهذا عبء حقيقي إضافي على أجهزة
+   Android الأضعف فوق عبء معالجة الباركود نفسها. نُبطّئها فقط بدل حذفها بالكامل، فتبقى الجمالية
+   البصرية موجودة (الإطار يتوهج، الخط يتحرك) لكن بمعدل أقل تكراراً يقلل الحمل التراكمي فعلياً */
+@media (max-width:900px){
+  .scn-glow-ring{animation-duration:4s;}
+  .scn-box.green .scn-glow-ring{animation-duration:4s;}
+  .scn-shimmer{animation-duration:4s;}
+}
+
 /* ── الومضة الواحدة — تأثير نجاح المسح، لحظي فقط ثم يُحذف تلقائياً ── */
 .scn-box.success .scn-glow-ring{
   border-color: var(--s) !important;
