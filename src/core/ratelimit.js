@@ -11,6 +11,7 @@ const HARD_TIMEOUT = 15000; // أمان: لو علقت أي عملية أكثر 
 
 export const Guard = {
   async run(key, fn, btn = null) {
+    alert('DIAG1: Guard.run started, key=' + key);
     if (_active.has(key)) return; // مشغول فعلاً — تجاهل
     _active.add(key);
 
