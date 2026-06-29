@@ -5,6 +5,7 @@
 import { DB, sb } from '../core/db.js';
 import { State }  from '../core/state.js';
 import { Notify } from '../core/notify.js';
+import { OfflineQueue } from '../core/offline-queue.js';
 import * as DOM   from '../core/dom.js';
 import * as Utils from '../core/utils.js';
 import { escape, currency } from '../core/utils.js';
@@ -877,67 +878,90 @@ const Invoices = {
     const today       = Utils.today();
     const timeNow     = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
 
+    // ربط الزبون محلياً فقط (بحث بالكاش، صفر طلب شبكي) — نفس فلسفة sell() بالضبط. لو الزبون
+    // غير موجود محلياً، يبقى customerId فاضياً ويُرسَل الاسم نصاً، السيرفر يربطه/ينشئه تلقائياً
     let customerId = DOM.val('ic'), customerName = 'زبون عادي', customerPhone = '';
-    State.isMutating = true;
-    try {
-      const searchVal = DOM.val('inv-cust-search')?.trim();
+    const searchVal = DOM.val('inv-cust-search')?.trim();
+    let newNameForBackground = null, newPhoneForBackground = null;
 
-      if (customerId === '__new__' || (!customerId && searchVal)) {
-        const newName = DOM.val('inv-new-name') || searchVal;
-        if (!newName) { Notify.error('أدخل اسم الزبون'); State.isMutating = false; return; }
-        const newCustomer = await getCustomers().createInline(newName, DOM.val('inv-new-phone'));
-        customerId = newCustomer.id; customerName = newName; customerPhone = DOM.val('inv-new-phone') || newCustomer.phone || '';
-      } else if (customerId) {
-        const found = State.customers.find(c => c.id === customerId);
-        customerName = found?.name || searchVal || ''; customerPhone = found?.phone || '';
+    if (customerId === '__new__' || (!customerId && searchVal)) {
+      const newName = DOM.val('inv-new-name') || searchVal;
+      if (!newName) { Notify.error('أدخل اسم الزبون'); return; }
+      const existingByName = (State.customers || []).find(c => c.name.toLowerCase() === newName.toLowerCase());
+      if (existingByName) {
+        customerId = existingByName.id; customerName = newName; customerPhone = existingByName.phone || '';
+      } else {
+        customerName = newName; customerPhone = DOM.val('inv-new-phone') || '';
+        newNameForBackground = newName; newPhoneForBackground = customerPhone;
       }
+    } else if (customerId) {
+      const found = State.customers.find(c => c.id === customerId);
+      customerName = found?.name || searchVal || ''; customerPhone = found?.phone || '';
+    }
 
-      const invoiceNumber = await Invoices._generateInvoiceNumber();
-      const debtAmount = ([PAYMENT.DEFER, PAYMENT.PARTIAL].includes(paymentType) && customerId)
-        ? (paymentType === PAYMENT.PARTIAL ? total - partialPaid : total)
-        : 0;
+    // رقم محلي فوري للعرض فقط، صفر طلب شبكي — السيرفر (بعد الإصلاح المطلوب نشره) يولّد دائماً
+    // رقمه الحقيقي الخاص ذرّياً، نفس فلسفة complete-sale، يتجاهل أي رقم مُرسَل من العميل
+    const invNum = 'LOCAL-' + Date.now().toString().slice(-8);
+    const debtAmount = ([PAYMENT.DEFER, PAYMENT.PARTIAL].includes(paymentType) && customerId)
+      ? (paymentType === PAYMENT.PARTIAL ? total - partialPaid : total)
+      : 0;
 
-      // ── استدعاء واحد فقط ينفّذ كل العملية (فاتورة + بنود + خصم مخزون + دين) على السيرفر دفعة وحدة ──
-      const { data: { session } } = await sb.auth.getSession();
-            const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
-        method: 'POST',
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          items, subtotal, discount, total, paymentType, partialPaid,
-          customerId: customerId || null, customerName, customerPhone,
-          invoiceDate: today, saleTime: timeNow, invoiceNumber,
-          notes: DOM.val('inotes'),
-          debtAmount,
-        }),
-      });
-            clearTimeout(timeoutId);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
-      const invoice = json.data.invoice;
+    const invoicePayload = {
+      items, subtotal, discount, total, paymentType, partialPaid,
+      customerId: customerId || null, customerName, customerPhone,
+      invoiceDate: today, saleTime: timeNow, invoiceNumber: invNum,
+      notes: DOM.val('inotes'),
+      debtAmount,
+    };
 
-      Notify.success('فاتورة ' + invoiceNumber + ' — ' + Utils.currency(total));
-      Modal.close('m-invoice');
-      Invoices.resetForm();
-      DOM.get('new-cust-wrap')?.classList.add('hidden');
-      DOM.clearInputs('inv-new-name', 'inv-new-phone', 'inotes');
-      DOM.get('idiscount').value = '0';
+    // ── عرض فوري (Optimistic UI) — نفس فلسفة sell() بالضبط. الفاتورة تظهر فوراً محلياً،
+    // والإرسال الحقيقي يحصل بالكامل بالخلفية، بصفر انتظار على الواجهة بغض النظر عن الشبكة ──
+    Notify.success('فاتورة ' + invNum + ' — ' + Utils.currency(total));
+    Modal.close('m-invoice');
+    Invoices.resetForm();
+    DOM.get('new-cust-wrap')?.classList.add('hidden');
+    DOM.clearInputs('inv-new-name', 'inv-new-phone', 'inotes');
+    DOM.get('idiscount').value = '0';
 
-      // أفرغ سلة البيع السريع — الفاتورة كانت نسخة من نفس منتجاتها، يجب ألا يُباع نفس المنتج مرتين
-      const qs = getQuickSale();
-      if (qs) qs.clearCart();
+    // أفرغ سلة البيع السريع فوراً — الفاتورة كانت نسخة من نفس منتجاتها، يجب ألا يُباع نفس المنتج مرتين
+    const qs = getQuickSale();
+    if (qs) qs.clearCart(true);
 
-      // تحديث البيانات الثانوية بالخلفية — بدون تأخير إغلاق الموديل أو ظهور رسالة النجاح
-      getInventory().loadList();
-      Invoices.load();
-      getDashboard().load();
-      getCustomers().loadUnified();
-    } catch (err) {
-      console.error('[Invoices.save]', err);
-      Notify.error(err.message);
-    } finally { setTimeout(() => { State.isMutating = false; }, 500); }
+    // الإرسال الحقيقي بالكامل بالخلفية — بدون أي await هنا
+    (async () => {
+      try {
+        // إنشاء الزبون الجديد بالخلفية لو لم يُوجَد محلياً — منفصل عن استدعاء الفاتورة نفسها
+        // لتجنّب أي تعارض، السيرفر سيربط/ينشئ الزبون تلقائياً بنفسه أثناء معالجة complete-invoice
+        // أصلاً، فهذا فقط لتحديث الكاش المحلي لاحقاً بشكل أسرع لو فشل لسبب آخر
+        const { data: { session } } = await sb.auth.getSession();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-invoice`, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify(invoicePayload),
+        });
+        clearTimeout(timeoutId);
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'فشل حفظ الفاتورة');
+
+        // نجحت فعلياً بالخلفية — نحدّث البيانات الثانوية بصمت
+        getInventory().loadList();
+        Invoices.load();
+        getDashboard().load();
+        getCustomers().loadUnified();
+      } catch (err) {
+        const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
+        if (isNetworkFailure) {
+          // فشل شبكي حقيقي — نخزّن بالطابور المحلي لمزامنة تلقائية لاحقة، صفر فقدان بيانات
+          OfflineQueue.add(invoicePayload, 'invoice');
+        } else {
+          // فشل حقيقي من السيرفر — المستخدمة رأت فاتورة "ناجحة" بالفعل، فهذا يستدعي تنبيهاً واضحاً
+          Notify.error('⚠️ فاتورة ' + invNum + ' فشلت فعلياً بالخادم: ' + (err.message || 'خطأ غير معروف') + ' — راجعي المخزون والديون يدوياً');
+        }
+      }
+    })();
   },
 
   delete(id) {
