@@ -81,13 +81,21 @@ export const OfflineQueue = {
   // ── مزامنة الطابور بالكامل، بالترتيب الزمني الصحيح، عملية تلو الأخرى ──
   // لا تُرسَل العمليات بالتوازي عمداً — الترتيب الزمني مهم لصحة حسابات المخزون والديون
   async sync() {
-    if (_syncing) return; // منع تشغيل مزامنتين بالتوازي بالخطأ
-    if (!navigator.onLine) return;
+    // السبب الجذري لـ"زامن أول عملية وتوقف الباقي بصمت" — كان يوجد فاصل زمني حقيقي (Race
+    // Window) بين فحص `if (_syncing) return` وتعيين `_syncing = true` فعلياً، لأن سطرين
+    // مختلفين بـinit() يستدعيان sync() بدون await بنفس اللحظة تقريباً (عند رجوع النت تماماً
+    // وقت تحميل الصفحة، الحدث 'online' قد يُطلَق بنفس لحظة الفحص الأولي navigator.onLine).
+    // مزامنتان متزامنتان فعلياً كانتا تتنازعان على نفس localStorage بصمت. التعيين الفوري هنا،
+    // قبل أي سطر آخر أو await، يضمن أتومية حقيقية — لا توجد فجوة زمنية يمكن لاستدعاء ثانٍ
+    // يدخل بمنتصفها
+    if (_syncing) return;
+    _syncing = true;
+
+    if (!navigator.onLine) { _syncing = false; return; }
 
     const queue = OfflineQueue._read();
-    if (!queue.length) return;
+    if (!queue.length) { _syncing = false; return; }
 
-    _syncing = true;
     let syncedCount = 0;
 
     try {
