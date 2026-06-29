@@ -1312,7 +1312,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       return;
     }
     if (!_cart.length) { Notify.error('السلة فارغة'); return; }
-    alert('DIAG2: sell() reached after rateGuard, before confirm');
 
     const subtotal = _cart.reduce((s, c) => s + c.qty * c.price, 0);
     const discount = _discount > 0 ? subtotal * (_discount / 100) : 0;
@@ -1330,7 +1329,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
     }
 
     Modal.close('m-qs-checkout');
-    alert('DIAG3: after confirm + modal close, about to build payload');
 
     let   custId   = null, custName = 'زبون عادي';
     let   debtSnapshot = null; // نسخة محفوظة من _deferData قبل محوها — تُستخدم لاحقاً عند إنشاء الدين
