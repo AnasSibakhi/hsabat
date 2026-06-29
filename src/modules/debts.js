@@ -616,9 +616,20 @@ const Debts = {
 
       await Debts.loadBadge();
 
-      // إعادة عرض تفاصيل الزبون — الآن تقرأ من الكاش المحدَّث فعلياً، تعرض الحالة الصحيحة الجديدة
-      await Customers.openDetail(customerId);
+      // إعادة عرض السياق الصحيح فقط — لا نفتح موديل تفاصيل الزبون تلقائياً لو لم يكن مفتوحاً
+      // أصلاً (مثلاً لو استُخدم الزر من صفحة الفواتير، لا صفحة الزبائن)، لتجنّب فتح موديل
+      // غير متوقَّع فوق صفحة مختلفة تماماً عن السياق الذي ضغطت المستخدمة منه فعلياً
+      const custModalOpen = document.getElementById('m-cust-detail')?.classList.contains('open');
+      if (custModalOpen && Customers._detailCustomerId === customerId) {
+        await Customers.openDetail(customerId);
+      }
       Customers._refreshStats();
+
+      // لو الزر استُخدم من صفحة الفواتير، نعيد رسمها لتحديث ملخص الدين المعروض فوراً
+      try {
+        const { Invoices } = await import('./invoices.js');
+        if (typeof Invoices._renderTable === 'function') Invoices._renderTable();
+      } catch {}
     } catch (err) {
       const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
       Notify.error(isNetworkFailure ? '📡 لا يوجد اتصال — لم يتم التسديد، حاولي مرة أخرى' : (err.message || 'فشل تسديد الإجمالي'));
