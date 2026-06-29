@@ -437,16 +437,32 @@ const Inventory = {
       return;
     }
 
+    // سعر التكلفة إلزامي كذلك — بدونه، كل حسابات الربح/الخسارة بكل الموقع (لوحة التحكم،
+    // هامش الربح، تحذير البيع بخسارة) تصبح بلا معنى فعلياً وتعرض "100% ربح" وهمياً مضلِّلاً
+    const costRaw = DOM.val('incp');
+    if (costRaw === '' || costRaw === null || isNaN(parseFloat(costRaw)) || parseFloat(costRaw) <= 0) {
+      Notify.error('أدخلي سعر التكلفة — هذا الحقل إلزامي ويجب أن يكون أكبر من صفر');
+      return;
+    }
+
+    // النوع إلزامي كذلك — القائمة المنسدلة تبدأ فاضية فعلياً (عنصر "اختر النوع..." الفاضي)،
+    // فالاختيار الفعلي إلزامي ولا يمر بصمت بأول خيار افتراضي يخالف نوع المنتج الحقيقي
+    const unitRaw = DOM.val('inu');
+    if (!unitRaw) {
+      Notify.error('اختاري نوع الوحدة — هذا الحقل إلزامي');
+      return;
+    }
+
     const productRow = {
       store_id:        State.user.id,
       name,
       barcode:         DOM.val('inb') || null,
       brand:           DOM.val('inbrand') || null,
       category:        DOM.val('inc'),
-      unit:            DOM.val('inu'),
+      unit:            unitRaw,
       quantity:        parseFloat(qtyRaw),
       sale_price:      parseFloat(priceRaw),
-      cost_price:      parseFloat(DOM.val('incp')) || 0,
+      cost_price:      parseFloat(costRaw),
       low_stock_alert: parseFloat(DOM.val('ina')) || CONFIG.lowStockDefault,
     };
 
