@@ -6,9 +6,27 @@
 import { Notify } from './notify.js';
 
 // ── تسجيل الأخطاء (قابل للتوسع لـ Sentry لاحقاً) ──
+// تسجيل دائم بـ localStorage — يبقى محفوظاً حتى لو توقف التطبيق بالكامل بعدها (خلاف console،
+// الذي يُفقَد فوراً عند أي توقف فعلي). يمكن قراءته لاحقاً من نفس الجهاز عبر فتح أي صفحة من
+// نفس الموقع وكتابة: localStorage.getItem('hsb_error_log') بأدوات المطوّر، أو من شاشة /debug
 function logError(context, error) {
   const msg = error?.message || String(error);
   console.error(`[حسابات] ${context}:`, msg, error);
+
+  try {
+    const entry = {
+      time: new Date().toISOString(),
+      context,
+      message: msg,
+      stack: error?.stack || null,
+      url: location.href,
+      userAgent: navigator.userAgent,
+    };
+    const log = JSON.parse(localStorage.getItem('hsb_error_log') || '[]');
+    log.push(entry);
+    // نحتفظ بآخر 20 خطأ فقط — يكفي للتشخيص، لا يستهلك مساحة بلا حدود
+    localStorage.setItem('hsb_error_log', JSON.stringify(log.slice(-20)));
+  } catch {}
 
   // هنا تقدري تضيفي Sentry لاحقاً:
   // Sentry.captureException(error, { extra: { context } });
