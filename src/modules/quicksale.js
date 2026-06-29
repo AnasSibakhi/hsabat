@@ -607,6 +607,18 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
 
   // ── Add new product from scanner ──
 
+  // ── إضافة منتج سريعة من البيع السريع نفسه — يفتح موديل المخزون الكامل (نفس الحقول، صفر
+  // بيانات ناقصة)، فوق الصفحة الحالية بدون مغادرتها، ويضيف المنتج تلقائياً للسلة بعد الحفظ ──
+  openQuickAdd(barcode) {
+    document.getElementById('qs-not-found-toast')?.remove();
+    QuickSale._quickAddActive = true;
+    DOM.clearInputs('inn', 'inbrand', 'inq', 'insp', 'incp');
+    const bcEl = DOM.get('inb');
+    if (bcEl) bcEl.value = barcode || '';
+    Modal.open('m-inv');
+    setTimeout(() => DOM.get('inn')?.focus(), 150);
+  },
+
   _showNotFound(barcode) {
     // نشيل أي رسالة سابقة
     document.getElementById('qs-not-found-toast')?.remove();
@@ -624,15 +636,7 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       <div style="font-size:22px;margin-bottom:6px;">❌</div>
       <div style="font-weight:800;font-size:15px;margin-bottom:4px;">المنتج غير موجود</div>
       <div style="font-size:12px;color:var(--g4);margin-bottom:12px;font-family:monospace;">${barcode || ''}</div>
-      <button onclick="
-        document.getElementById('qs-not-found-toast').remove();
-        Nav.goTo('inventory');
-        setTimeout(() => {
-          Modal.open('m-inv');
-          const el = document.getElementById('inb');
-          if(el){ el.value='${barcode || ''}'; Inventory.onBarcodeInput('${barcode || ''}'); }
-        }, 300);
-      " style="background:var(--p);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
+      <button onclick="QuickSale.openQuickAdd('${barcode || ''}')" style="background:var(--p);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:Cairo,sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
         ➕ إضافة للمخزون
       </button>
       <button onclick="document.getElementById('qs-not-found-toast').remove();"
