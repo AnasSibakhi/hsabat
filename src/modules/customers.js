@@ -222,6 +222,11 @@ export const Customers = {
         <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${Customers._detailCustomerId}',${totalRem})">تسديد الإجمالي</button>
       </div>` : '';
 
+    // زر "تسديد" المنفرد لكل دين يظهر فقط لو دين واحد نشط — لو أكثر من دين، "تسديد الإجمالي"
+    // أعلى القائمة يكفي ويُغطّيها بترتيب صحيح (الأقدم أولاً)، فلا حاجة لزر منفرد قد يُسدِّد
+    // دفعة جزئية على دين واحد بترتيب عشوائي يخالف منطق "الأقدم أولاً" المعتمَد بالموقع
+    const showIndividualPayButton = active.length === 1;
+
     panel.innerHTML = summaryHtml + (active.length
       ? active.map(d => {
           const rem  = d.amount - (d.paid||0);
@@ -232,7 +237,7 @@ export const Customers = {
               <div class="cd-debt-date">${d.debt_date} ${days > 0 ? '· متأخر ' + days + ' يوم' : ''}</div>
               ${d.notes ? `<div class="cd-debt-notes">${escape(d.notes)}</div>` : ''}
             </div>
-            <button class="ibg" onclick="Debts.openPayModal('${d.id}','${escape(State.customers.find(c=>c.id===Customers._detailCustomerId)?.name||'')}',${rem})">تسديد</button>
+            ${showIndividualPayButton ? `<button class="ibg" onclick="Debts.openPayModal('${d.id}','${escape(State.customers.find(c=>c.id===Customers._detailCustomerId)?.name||'')}',${rem})">تسديد</button>` : ''}
           </div>`;
         }).join('')
       : '<div class="cd-empty">✅ لا توجد ديون نشطة</div>');
