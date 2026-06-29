@@ -539,6 +539,11 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
   },
 
   async startScanner() {
+    // إغلاق لوحة المفاتيح أولاً لو كان حقل البحث/الباركود مفعَّلاً (مكتوب فيه قبل الضغط على
+    // تشغيل الكاميرا) — بدون هذا، المتصفح (خصوصاً Android) يبقي الكيبورد مفتوحاً فوق الكاميرا
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
     const stage  = DOM.get('qs-scanner-stage');
     const paused = DOM.get('qs-scanner-paused');
     const hint   = DOM.get('qs-scanner-hint');
