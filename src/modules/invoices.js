@@ -433,19 +433,17 @@ const Invoices = {
   // نطابق كل اسم بمعرّف زبون حقيقي بـ State.customers (المصدر الوحيد المتاح هنا)، ثم نجلب
   // ديونه النشطة لعرض زر التسديد فقط عند وجود دين فعلي
   async _loadDebtSummaries(groups) {
-    for (let idx = 0; idx < groups.length; idx++) {
-      const g = groups[idx];
+    // كل الطلبات بالتوازي (Promise.all) بدل التسلسل — السبب الجذري للتأخير الملحوظ بالثواني
+    // كان حلقة for/await تنتظر كل زبون يكتمل قبل الانتقال للتالي (20 زبون = 20 طلب متتالٍ).
+    // بالتوازي، الوقت الكلي يصبح أطول طلب واحد فقط، لا مجموع كل الطلبات
+    await Promise.all(groups.map(async (g, idx) => {
       const slot = DOM.get('cust-debt-' + idx);
-      if (!slot) continue;
-
-      // نستخدم customer_id الحقيقي المحفوظ بالفاتورة من السيرفر مباشرة — لا تخمين بالاسم على
-      // الإطلاق. لو الفاتورة بدون customer_id فعلياً (زبون كاش غير مسجَّل)، لا يوجد دين لمتابعته
-      if (!g.customerId) continue;
+      if (!slot || !g.customerId) return;
 
       try {
         const { data: debts } = await DB.debts().select('amount,paid').eq('customer_id', g.customerId);
         const active = (debts || []).filter(d => (d.amount - (d.paid || 0)) > 0);
-        if (!active.length) continue; // صفر دين نشط — لا حاجة لإظهار أي زر
+        if (!active.length) return;
 
         const totalRem = active.reduce((s, d) => s + (d.amount - (d.paid || 0)), 0);
         slot.innerHTML = `<div class="cust-debt-summary" onclick="event.stopPropagation()">
@@ -456,7 +454,7 @@ const Invoices = {
       } catch {
         // فشل شبكي بصمت — لا نعرض شي، لا نقاطع المستخدمة برسالة خطأ لمجرد تحميل ملخص ثانوي
       }
-    }
+    }));
   },
 
   _renderTable() {
