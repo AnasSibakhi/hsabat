@@ -1,5 +1,5 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
-const CACHE_VERSION = 'hesabat-v58-' + '20260628y';
+const CACHE_VERSION = 'hesabat-v59-' + '20260628z';
 
 self.addEventListener('install', e => {
   self.skipWaiting(); // فعّل النسخة الجديدة فوراً بدون انتظار إغلاق كل التابات القديمة
