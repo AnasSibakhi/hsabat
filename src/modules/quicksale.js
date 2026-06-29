@@ -1466,15 +1466,6 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
         }
       });
 
-      if (debtAmount > 0) {
-        // لو ما عنده customer_id — أضفه للـ customers
-        if (!custId && custName && custName !== 'زبون عادي') {
-          const { Customers } = await import('./customers.js');
-          await Customers.createInline(custName, buyerPhone);
-        }
-        await getDebts()?.loadBadge();
-      }
-
       if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
       QuickSale._beep('success');
 
@@ -1495,6 +1486,24 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       // تحديث لوحة التحكم والمخزون بالخلفية (بدون انتظار، لا يؤخر ظهور الفاتورة للمستخدمة)
       getDashboard()?.load();
       getInventory()?.loadList();
+
+      // عمليات الدين الثانوية (إنشاء زبون جديد، تحديث بادج الديون) — كانت سابقاً await قبل عرض
+      // الفاتورة، وهذا السبب الجذري للتأخير المُحسّ خصوصاً بنت ضعيف. الآن تحصل بالخلفية تماماً
+      // بعد عرض الفاتورة فعلياً، صفر تأثير على سرعة استجابة الواجهة للمستخدمة
+      if (debtAmount > 0) {
+        (async () => {
+          try {
+            if (!custId && custName && custName !== 'زبون عادي') {
+              const { Customers } = await import('./customers.js');
+              await Customers.createInline(custName, buyerPhone);
+            }
+            await getDebts()?.loadBadge();
+          } catch {
+            // فشل صامت — هذي عمليات ثانوية (إنشاء سجل زبون، عداد بصري)، البيع نفسه نجح فعلياً
+            // وسُجِّل بالكامل بالخادم، فلا نقاطع المستخدمة برسالة خطأ لشي لا يؤثر على البيع
+          }
+        })();
+      }
     } catch (err) {
       Notify.error(err.message);
     } finally {
