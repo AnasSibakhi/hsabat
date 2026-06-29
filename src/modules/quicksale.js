@@ -458,19 +458,21 @@ export const QuickSale = {
     return _cart.map(c => ({ ...c }));
   },
 
-  clearCart() {
+  // skipFocus=true تُستخدَم بمسار "بعد نجاح بيع" تحديداً — لا يصح إعادة تركيز فورية هناك على
+  // الإطلاق (تفتح كيبورد فوق فاتورة معروضة مباشرة بعدها، مربك وخاطئ)، بعكس زر "حذف السلة"
+  // اليدوي حيث إعادة التركيز فعلاً مفيدة لتسهيل بدء بيع جديد فوراً بالكتابة
+  clearCart(skipFocus = false) {
     _cart = []; _discount = 0;
     _selectedTransferEntity = null;
     QuickSale._clearCartStorage();
     QuickSale._renderCart();
     const si = DOM.get('qs-search-input'); if (si) { si.value = ''; }
-    // إعادة التركيز فقط لو الكاميرا متوقفة فعلياً — نفس السبب الجذري المُصلَح بـ_onBarcode سابقاً:
-    // إعادة تركيز غير مشروطة تفتح الكيبورد فوق الكاميرا لو كانت نشطة بنفس لحظة استدعاء clearCart
-    // (يحصل تحديداً بعد نجاح بيع، حيث الكاميرا تستمر بالعمل بصفحة البيع السريع)
     const bi = DOM.get('qs-barcode-input');
     if (bi) {
       bi.value = '';
-      if (!BarcodeScanner.isActive()) bi.focus();
+      // إعادة تركيز فقط لو لم تُطلَب صراحةً تجاهلها، وفقط لو الكاميرا متوقفة فعلياً (نفس السبب
+      // الجذري المُصلَح بـ_onBarcode سابقاً: تركيز غير مشروط يفتح الكيبورد فوق كاميرا نشطة)
+      if (!skipFocus && !BarcodeScanner.isActive()) bi.focus();
     }
     const pi = DOM.get('qs-paid'); if (pi) pi.value = '';
     const ch = DOM.get('qs-change'); if (ch) { ch.textContent = '—'; ch.style.color = 'var(--g4)'; }
@@ -1520,7 +1522,9 @@ document.querySelectorAll('.pos-disc').forEach(b => b.classList.remove('active')
       // احفظ نسخة من السلة قبل المسح
       const cartSnapshot = _cart.map(c => ({ ...c }));
 
-      QuickSale.clearCart();
+      // skipFocus=true — الفاتورة ستُعرَض مباشرة بعد هذا السطر، إعادة تركيز فورية هنا تفتح
+      // كيبورد فوقها مباشرة، مربك وخاطئ بصرياً (هذا تحديداً السبب الجذري للمشكلة المُبلَّغ عنها)
+      QuickSale.clearCart(true);
       DOM.get('qs-product-grid') && (DOM.get('qs-product-grid').style.display='none');
 
       // عرض الفاتورة فوراً — بدون انتظار أي طلب شبكي إضافي (المخزون محدّث محلياً أعلى، يكفي للعرض الفوري)
