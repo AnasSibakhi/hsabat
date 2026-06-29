@@ -421,6 +421,35 @@ const Invoices = {
     );
   },
 
+  // ── تحميل ملخص ديون كل زبون بالقائمة الحالية، بالخلفية وبدون حجب العرض الأساسي ──
+  // نطابق كل اسم بمعرّف زبون حقيقي بـ State.customers (المصدر الوحيد المتاح هنا)، ثم نجلب
+  // ديونه النشطة لعرض زر التسديد فقط عند وجود دين فعلي
+  async _loadDebtSummaries(groups) {
+    for (let idx = 0; idx < groups.length; idx++) {
+      const g = groups[idx];
+      const slot = DOM.get('cust-debt-' + idx);
+      if (!slot) continue;
+
+      const customer = (State.customers || []).find(c => c.name.trim().toLowerCase() === g.name.trim().toLowerCase());
+      if (!customer) continue; // اسم بدون زبون مسجَّل فعلياً (مثل "زبون عادي") — لا دين لمتابعته
+
+      try {
+        const { data: debts } = await DB.debts().select('amount,paid').eq('customer_id', customer.id);
+        const active = (debts || []).filter(d => (d.amount - (d.paid || 0)) > 0);
+        if (!active.length) continue; // صفر دين نشط — لا حاجة لإظهار أي زر
+
+        const totalRem = active.reduce((s, d) => s + (d.amount - (d.paid || 0)), 0);
+        slot.innerHTML = `<div class="cust-debt-summary" onclick="event.stopPropagation()">
+          <div><div class="cust-debt-summary-label">دين متبقٍ (${active.length} ${active.length === 1 ? 'فاتورة' : 'فواتير'})</div>
+          <div class="cust-debt-summary-total">₪${totalRem.toFixed(2)}</div></div>
+          <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${customer.id}',${totalRem})">تسديد الإجمالي</button>
+        </div>`;
+      } catch {
+        // فشل شبكي بصمت — لا نعرض شي، لا نقاطع المستخدمة برسالة خطأ لمجرد تحميل ملخص ثانوي
+      }
+    }
+  },
+
   _renderTable() {
     const start  = (_page - 1) * UI_SIZE;
     const page   = _filtered.slice(start, start + UI_SIZE);
@@ -455,6 +484,7 @@ const Invoices = {
                 <span class="sup-chevron">‹</span>
               </div>
             </div>
+            <div id="cust-debt-${idx}" class="cust-debt-summary-slot"></div>
             <div class="cust-invoices">${invoicesHtml}</div>
           </div>`;
         }).join('')
@@ -484,6 +514,7 @@ const Invoices = {
 
     // Load items count in background
     Invoices._loadItemsCounts(page.map(i => i.id));
+    Invoices._loadDebtSummaries(groups);
   },
 
   goPage(p) {
