@@ -499,15 +499,17 @@ const Invoices = {
                   <div class="pur-stat-label">إجمالي مشترياته</div>
                   <div class="pur-stat-val" style="color:var(--p);">₪${totalAmount.toFixed(2)}</div>
                 </div>
-                ${debtInfo ? `<div class="pur-stat" style="background:none;padding:0;">
-                  <div class="pur-stat-label" style="color:var(--d);">دين متبقٍ (${debtInfo.count})</div>
-                  <div class="pur-stat-val" style="color:var(--d);">₪${debtInfo.total.toFixed(2)}</div>
-                </div>
-                <button class="ibg ibg-primary" onclick="event.stopPropagation();Debts.openTotalPayModal('${g.customerId}',${debtInfo.total})">تسديد</button>` : ''}
                 ${hasReturned ? '<span class="sup-debt-dot" title="يوجد فاتورة مُرجَعة لهذا الزبون"></span>' : ''}
                 <span class="sup-chevron">‹</span>
               </div>
             </div>
+            ${debtInfo ? `<div class="cust-debt-row" onclick="event.stopPropagation()">
+              <div>
+                <span class="cust-debt-row-label">دين متبقٍ (${debtInfo.count})</span>
+                <span class="cust-debt-row-total">₪${debtInfo.total.toFixed(2)}</span>
+              </div>
+              <button class="ibg ibg-primary" onclick="Debts.openTotalPayModal('${g.customerId}',${debtInfo.total})">تسديد</button>
+            </div>` : ''}
             <div class="cust-invoices">${invoicesHtml}</div>
           </div>`;
         }).join('')
