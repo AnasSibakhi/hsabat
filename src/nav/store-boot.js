@@ -20,12 +20,18 @@ import { Notifications } from '../modules/notifications.js';
 import { Invoices }   from '../modules/invoices.js';
 import { Sales }      from '../modules/sales.js';
 import { Inventory }  from '../modules/inventory.js';
-import { Purchases }  from '../modules/purchases.js';
-import { NetCards }   from '../modules/netcards.js';
-import { Returns }    from '../modules/returns.js';
 import { Expenses }   from '../modules/expenses.js';
-import { Reports }    from '../modules/reports.js';
 import { QuickSale }  from '../modules/quicksale.js';
+// Purchases, NetCards, Returns, Reports — تحميل كسول (lazy) عند أول دخول فعلي لهذي الصفحات
+// تحديداً، يقلل وزن التحميل الأولي للموقع دون أي تأثير على وظائفها (تبقى كاملة 100% بعد التحميل)
+let _Purchases = null, _NetCards = null, _Returns = null, _Reports = null;
+let _pPurchases = null, _pNetCards = null, _pReturns = null, _pReports = null;
+// نضمن استيراداً واحداً فقط حتى لو استُدعيت الدالة مرات متعددة بسرعة (مثلاً ضغطة مزدوجة سريعة
+// على الزر قبل اكتمال أول تحميل) — كل الاستدعاءات تنتظر نفس الـ Promise الجاري بدل بدء استيراد جديد
+async function _loadPurchases() { if (_Purchases) return _Purchases; if (!_pPurchases) _pPurchases = import('../modules/purchases.js'); _Purchases = (await _pPurchases).Purchases; window.Purchases = _Purchases; return _Purchases; }
+async function _loadNetCards()  { if (_NetCards)  return _NetCards;  if (!_pNetCards)  _pNetCards  = import('../modules/netcards.js');  _NetCards  = (await _pNetCards).NetCards;   window.NetCards  = _NetCards;  return _NetCards; }
+async function _loadReturns()   { if (_Returns)   return _Returns;   if (!_pReturns)   _pReturns   = import('../modules/returns.js');   _Returns   = (await _pReturns).Returns;     window.Returns   = _Returns;   return _Returns; }
+async function _loadReports()   { if (_Reports)   return _Reports;   if (!_pReports)   _pReports   = import('../modules/reports.js');   _Reports   = (await _pReports).Reports;     window.Reports   = _Reports;   return _Reports; }
 
 export const Store = {
   async boot(account) {
@@ -56,11 +62,11 @@ export const Store = {
     Nav.register('sales',     () => { Sales.load('day'); Sales.loadDailyReport(); });
     Nav.register('inventory', () => Inventory.load());
     Nav.register('product',   () => {});
-    Nav.register('purchases', () => Purchases.load());
-    Nav.register('netcards',  () => { NetCards.loadStock(); NetCards.loadSales('day'); });
-    Nav.register('returns',   () => Returns.load());
+    Nav.register('purchases', async () => { const P = await _loadPurchases(); P.load(); });
+    Nav.register('netcards',  async () => { const N = await _loadNetCards();  N.loadStock(); N.loadSales('day'); });
+    Nav.register('returns',   async () => { const R = await _loadReturns();   R.load(); });
     Nav.register('expenses',  () => Expenses.load());
-    Nav.register('reports',   () => Reports.load('month'));
+    Nav.register('reports',   async () => { const Rp = await _loadReports();  Rp.load('month'); });
 
     // Register realtime handlers
     Realtime.on('inventory', async () => {
@@ -80,7 +86,9 @@ export const Store = {
       if (State.currentPage === 'customers') Customers.loadTable();
     });
     Realtime.on('purchases', async () => {
-      if (State.currentPage === 'purchases') Purchases.load();
+      // لا نحمّل الوحدة هنا لمجرد إشعار وصل بالخلفية — فقط لو المستخدمة فعلياً بصفحة المشتريات
+      // الآن (يعني الوحدة محمَّلة فعلياً مسبقاً من Nav.register أعلاه عند دخولها للصفحة)
+      if (State.currentPage === 'purchases' && _Purchases) _Purchases.load();
     });
 
     // Initial data load
