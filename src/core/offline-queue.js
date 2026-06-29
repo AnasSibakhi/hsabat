@@ -1,11 +1,10 @@
 /**
- * offline-queue.js — طابور البيع بدون نت
+ * offline-queue.js — طابور العمليات بدون نت/نت ضعيف (بيع + فاتورة + إضافة منتج)
  *
- * الفلسفة: لو فشل إرسال عملية بيع بسبب انقطاع نت (لا أي سبب آخر)، نخزّنها محلياً
- * بترتيبها الزمني، ونعرض على المستخدمة فاتورة محلية فورية (تجربة بيع لا تنقطع)،
- * ثم نزامن كل عملية بالترتيب نفسه فور رجوع النت — بنفس Edge Function الحالية
- * (complete-sale)، صفر تكرار منطق. كل عملية تُحذف من الطابور فقط بعد تأكيد نجاحها
- * فعلياً من السيرفر — لا حذف متفائل قبل التأكد.
+ * الفلسفة: لو فشل إرسال عملية بسبب انقطاع نت (لا أي سبب آخر)، نخزّنها محلياً بترتيبها
+ * الزمني، ونعرض على المستخدمة نتيجة محلية فورية (تجربة لا تنقطع)، ثم نزامن كل عملية
+ * بالترتيب نفسه فور رجوع النت — كل نوع يُرسَل بصيغته الحقيقية الصحيحة لخدمته الخاصة،
+ * صفر تكرار منطق. كل عملية تُحذف من الطابور فقط بعد تأكيد نجاحها فعلياً من السيرفر.
  */
 
 import { sb }      from './db.js';
@@ -15,14 +14,25 @@ import { Notify }  from './notify.js';
 const QUEUE_KEY = 'hsb_offline_sale_queue';
 let _syncing = false;
 
+// ── خريطة: نوع العملية → طريقة الاستدعاء الصحيحة لخدمتها الحقيقية ──
+// 'sale'/'invoice' تستدعيان Edge Function مخصَّصة (complete-sale/complete-invoice) بمنطق
+// معقَّد (FIFO، خصم مخزون). 'inventory' تستدعي الطبقة العامة (inventory-db) بنفس صيغة
+// insert البسيطة التي يستخدمها db.js نفسه — لا تكرار منطق، فقط استدعاء حقيقي مطابق
+const ENDPOINT_BY_TYPE = {
+  sale:      'complete-sale',
+  invoice:   'complete-invoice',
+  inventory: 'inventory-db',
+};
+
 export const OfflineQueue = {
 
-  // ── إضافة عملية بيع فاشلة (بسبب نت فقط) للطابور المحلي ──
-  add(salePayload) {
+  // ── إضافة عملية فاشلة (بسبب نت فقط) للطابور المحلي — type: 'sale'/'invoice'/'inventory' ──
+  add(payload, type = 'sale') {
     const queue = OfflineQueue._read();
     const entry = {
       localId:  'offline_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-      payload:  salePayload,
+      type,
+      payload,
       queuedAt: Date.now(),
       attempts: 0,
     };
@@ -39,7 +49,9 @@ export const OfflineQueue = {
   _read() {
     try {
       const raw = localStorage.getItem(QUEUE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      const queue = raw ? JSON.parse(raw) : [];
+      // توافق مع طابور قديم لم يحمل type أصلاً (كل العمليات القديمة كانت بيعاً فقط)
+      return queue.map(e => ({ type: e.type || 'sale', ...e }));
     } catch { return []; }
   },
 
@@ -54,6 +66,16 @@ export const OfflineQueue = {
     if (!badge) return;
     badge.style.display = count > 0 ? 'flex' : 'none';
     if (countEl) countEl.textContent = count;
+  },
+
+  // ── بناء جسم الطلب الصحيح حسب نوع العملية — كل نوع له صيغة مختلفة لخدمته الحقيقية ──
+  _buildRequestBody(entry) {
+    if (entry.type === 'inventory') {
+      // نفس الصيغة التي يستخدمها db.js نفسه فعلياً عبر callInventoryDB('insert', { row })
+      return JSON.stringify({ action: 'insert', params: { row: entry.payload } });
+    }
+    // sale/invoice ترسل الـpayload مباشرة كما هو، بنفس صيغة complete-sale/complete-invoice
+    return JSON.stringify(entry.payload);
   },
 
   // ── مزامنة الطابور بالكامل، بالترتيب الزمني الصحيح، عملية تلو الأخرى ──
@@ -73,14 +95,17 @@ export const OfflineQueue = {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) break; // لا جلسة — نوقف المزامنة، نحاول لاحقاً
 
+        const endpoint = ENDPOINT_BY_TYPE[entry.type] || ENDPOINT_BY_TYPE.sale;
+        const regionParam = entry.type === 'sale' ? '?forceFunctionRegion=eu-central-1' : '';
+
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 ثانية — حد زمني صريح يمنع التعليق اللانهائي على شبكة متقطعة/بطيئة
 
-          const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/complete-sale?forceFunctionRegion=eu-central-1`, {
+          const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/${endpoint}${regionParam}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-            body: JSON.stringify(entry.payload),
+            body: OfflineQueue._buildRequestBody(entry),
             signal: controller.signal,
           });
           clearTimeout(timeoutId);
@@ -92,13 +117,14 @@ export const OfflineQueue = {
             OfflineQueue._write(remaining);
             syncedCount++;
           } else {
-            // فشل حقيقي من السيرفر (لا مشكلة شبكة) — مثل نفاد كمية المنتج فعلياً بين وقت
-            // البيع المحلي ووقت المزامنة. نوقفها هنا، تحتاج مراجعة يدوية، لا حذف صامت لبيانات بيع حقيقية
+            // فشل حقيقي من السيرفر (لا مشكلة شبكة) — مثل باركود مكرر فعلياً بين وقت الإنشاء
+            // المحلي ووقت المزامنة. نوقفها هنا، تحتاج مراجعة يدوية، لا حذف صامت لبيانات حقيقية
             entry.attempts = (entry.attempts || 0) + 1;
             entry.lastError = json.error || 'فشل غير معروف';
             const updated = OfflineQueue._read().map(e => e.localId === entry.localId ? entry : e);
             OfflineQueue._write(updated);
-            Notify.error('⚠️ فاتورة معلَّقة فشلت بالمزامنة: ' + entry.lastError + ' — تحتاج مراجعة');
+            const typeLabel = entry.type === 'invoice' ? 'فاتورة' : entry.type === 'inventory' ? 'منتج' : 'فاتورة بيع';
+            Notify.error('⚠️ ' + typeLabel + ' معلَّق فشل بالمزامنة: ' + entry.lastError + ' — تحتاج مراجعة');
             break; // نوقف الترتيب هنا لتجنّب مزامنة عمليات لاحقة قبل حل هذي، حفاظاً على الترتيب الصحيح
           }
         } catch (err) {
@@ -111,7 +137,7 @@ export const OfflineQueue = {
     }
 
     if (syncedCount > 0) {
-      Notify.success(`✅ تمت مزامنة ${syncedCount} فاتورة معلَّقة بنجاح`);
+      Notify.success(`✅ تمت مزامنة ${syncedCount} عملية معلَّقة بنجاح`);
     }
   },
 
