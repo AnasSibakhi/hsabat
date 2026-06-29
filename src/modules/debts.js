@@ -568,9 +568,22 @@ const Debts = {
 
     State.isMutating = true;
     try {
-      // نجلب كل ديون الزبون النشطة، بترتيب الأقدم أولاً (debt_date تصاعدياً) — نفس فلسفة FIFO
-      const { data: debts } = await DB.debts().select('*').eq('customer_id', customerId).order('debt_date', { ascending: true });
-      const active = (debts || []).filter(d => (d.amount - (d.paid || 0)) > 0);
+      // نقرأ الديون من الكاش المحلي الموجود فعلياً (Customers._allData.debts، مُحدَّث ومتزامن
+      // مع السيرفر فعلياً) بدل طلب شبكي جديد لإعادة جلب نفس البيانات — يقلل خطوة كاملة من
+      // التأخير. الترتيب بالأقدم أولاً (debt_date تصاعدياً) محفوظ بنفس فلسفة FIFO
+      const { Customers } = await import('./customers.js');
+      // احتياط آمن: لو الكاش المحلي غير محمَّل فعلياً (مثلاً فُتح الموديل من صفحة الفواتير
+      // مباشرة بدون زيارة سابقة لصفحة الزبائن بهذي الجلسة)، نجلب من السيرفر كحالة نادرة فقط
+      let debts;
+      if (Customers._allData?.debts) {
+        debts = Customers._allData.debts
+          .filter(d => d.customer_id === customerId)
+          .sort((a, b) => new Date(a.debt_date) - new Date(b.debt_date));
+      } else {
+        const { data } = await DB.debts().select('*').eq('customer_id', customerId).order('debt_date', { ascending: true });
+        debts = data || [];
+      }
+      const active = debts.filter(d => (d.amount - (d.paid || 0)) > 0);
 
       let remaining = amount;
       const updates = [];
@@ -582,10 +595,10 @@ const Debts = {
         remaining -= applied;
       }
 
-      // نطبّق كل التحديثات بالترتيب — لو فشل أحدها بمنتصف الطريق، الباقي يبقى صحيحاً (كل دين مستقل)
-      for (const u of updates) {
-        await DB.debts().update({ paid: u.newPaid }).eq('id', u.id);
-      }
+      // التحديثات بالتوازي (Promise.all) بدل التسلسل — آمن هنا لأن كل تحديث مستقل تماماً بمعرّفه
+      // الخاص (eq('id', ...)), لا تعارض بين تحديثات مختلفة بنفس الدفعة. يقلل الوقت الكلي من
+      // "مجموع كل التحديثات" إلى "أطول تحديث واحد فقط" — السبب الجذري للتأخير الملحوظ سابقاً
+      await Promise.all(updates.map(u => DB.debts().update({ paid: u.newPaid }).eq('id', u.id)));
 
       const appliedTotal = amount - remaining;
       Notify.success('تم توزيع ₪' + appliedTotal.toFixed(2) + ' على ' + updates.length + (updates.length === 1 ? ' دين' : ' ديون') + ' بالترتيب الأقدم أولاً ✅');
@@ -598,7 +611,6 @@ const Debts = {
       // تحديث الكاش المحلي (Customers._allData) فوراً بنفس القيم الجديدة — بدون هذا، كل
       // العروض الأخرى (إجمالي الديون بصفحة الزبائن، عداد المتأخرين، تفاصيل الزبون نفسه)
       // تبقى تعرض أرقاماً قديمة حتى يُعاد تحميل الصفحة بالكامل، رغم نجاح التحديث بقاعدة البيانات
-      const { Customers } = await import('./customers.js');
       if (Customers._allData?.debts) {
         Customers._allData.debts = Customers._allData.debts.map(d => {
           const u = updates.find(x => x.id === d.id);
