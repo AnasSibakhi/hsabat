@@ -206,7 +206,7 @@ document.addEventListener('click', e => {
   // لو الضغط على خيار في dropdown — لا تغلقه
   if (e.target.closest('.dc-opt')) return;
 
-  ['dc-dropdown','inv-cust-dropdown','qs-buyer-dropdown','qs-buyer-dd-tr','qs-buyer-dd-df','qs-debt-pay-dd'].forEach(id => {
+  ['dc-dropdown','inv-cust-dropdown','qs-buyer-dropdown','qs-buyer-dd-tr','qs-buyer-dd-df','qs-debt-pay-dd','qs-debt-dropdown'].forEach(id => {
     const dd = document.getElementById(id);
     if (!dd || dd.style.display === 'none') return;
     if (!dd.contains(e.target)) {
