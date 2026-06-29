@@ -100,26 +100,40 @@ export const BarcodeScanner = {
     if ('BarcodeDetector' in window) {
       // ── Android Chrome: Native API ──
       _starting = true;
-      // أمان: لو استغرق طلب صلاحية الكاميرا أكثر من المعتاد، حرر القفل تلقائياً
-      const safetyRelease = setTimeout(() => { _starting = false; }, 12000);
+      // أمان حقيقي: السبب الجذري للتجمّد الطويل الملحوظ — Timeout السابق كان يحرر فقط متغيّر
+      // داخلي (_starting)، لكن await getUserMedia() نفسها تبقى عالقة فعلياً بانتظار رد لن يأتي
+      // (شائع على بعض أجهزة Android: صلاحية مرفوضة بصمت من النظام، أو تعارض مع تطبيق آخر يستخدم
+      // الكاميرا). Promise.race يضمن خروجاً حقيقياً من الانتظار بعد مدة معقولة، لا فقط تحرير قفل
+      const getStreamPromise = navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          // دقة معتدلة (640×480) بدل Full HD — سبب جذري إضافي للتجمّد: طلب دقة عالية جداً
+          // يجعل تفاوض الكاميرا أبطأ بشكل حقيقي على هاردوير متفاوت القدرة. لا تضيف أي قيمة
+          // حقيقية لجودة المسح أصلاً، لأن التحليل يُصغَّر لعينة 48×27 بكسل بكل الأحوال
+          width:  { ideal: 640 },
+          height: { ideal: 480 },
+        },
+        audio: false,
+      });
+      // لو الطلب وصل متأخراً بعد انتهاء الـTimeout (سمحت المستخدمة بالصلاحية بعد تأخير مثلاً)،
+      // نوقف التيار فوراً بدل تركه يعمل بصمت بالخلفية بلا مرجع يمكن إيقافه لاحقاً (تسريب بطارية حقيقي)
+      let _timedOut = false;
+      getStreamPromise.then(s => { if (_timedOut) s.getTracks().forEach(t => t.stop()); }).catch(() => {});
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => { _timedOut = true; reject(new Error('TIMEOUT')); }, 10000)
+      );
       try {
-        _stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width:  { ideal: 1920 },
-            height: { ideal: 1080 },
-          },
-          audio: false,
-        });
+        _stream = await Promise.race([getStreamPromise, timeoutPromise]);
       } catch(e) {
-        clearTimeout(safetyRelease);
         _starting = false;
-        onError?.(e.name === 'NotAllowedError'
-          ? 'يرجى السماح بالوصول للكاميرا'
-          : 'لا يمكن فتح الكاميرا');
+        onError?.(e.message === 'TIMEOUT'
+          ? 'تعذّر فتح الكاميرا — تحققي من صلاحية الكاميرا بإعدادات الجهاز وأعيدي المحاولة'
+          : e.name === 'NotAllowedError'
+            ? 'يرجى السماح بالوصول للكاميرا'
+            : 'لا يمكن فتح الكاميرا');
         return;
       }
-      clearTimeout(safetyRelease);
       _starting = false;
 
       _video = document.createElement('video');
