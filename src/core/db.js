@@ -147,7 +147,26 @@ function loadFromOfflineCache(table, action, params) {
 }
 
 // ── استدعاء عام لكل الجداول المتبقية عبر Edge Function موحّدة آمنة ──
+// نمط Stale-While-Revalidate: لو يوجد كاش محلي من جلسة سابقة، نُرجعه فوراً بدون انتظار
+// (صفر spinner، صفر فراغ)، ونُطلق الطلب الحقيقي بالخلفية ليُحدِّثه بصمت عند وصوله.
+// العمليات الكتابية (insert/update/delete) تبقى تنتظر السيرفر كما كانت — هذا مقصود (دقة البيانات).
 async function callStoreDB(table, action, params) {
+  // ── Stale-While-Revalidate لطلبات القراءة فقط ──
+  if (action === 'select') {
+    const cached = loadFromOfflineCache(table, action, params);
+    if (cached !== null) {
+      // يوجد كاش — أرجعه فوراً وأطلق تحديثاً خلفياً بصمت
+      _refreshInBackground(table, action, params);
+      return cached;
+    }
+  }
+
+  // لا كاش موجود (أول استخدام) أو عملية كتابة — انتظر السيرفر كالمعتاد
+  return _fetchFromServer(table, action, params);
+}
+
+// ── الطلب الحقيقي للسيرفر — مُشترَك بين المسارين ──
+async function _fetchFromServer(table, action, params) {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) throw new Error('غير مسجّل دخول');
@@ -181,6 +200,15 @@ async function callStoreDB(table, action, params) {
     }
     throw err;
   }
+}
+
+// ── تحديث خلفي صامت — يُحدِّث الكاش ويُشعر الصفحة النشطة فعلياً بصمت ──
+function _refreshInBackground(table, action, params) {
+  _fetchFromServer(table, action, params).then(freshData => {
+    // البيانات الجديدة وصلت وحُفظت بالكاش — نُطلق حدثاً يسمح للصفحة النشطة بتحديث نفسها
+    // لو تغيّرت البيانات فعلاً (مثلاً رقم مخزون تغيّر منذ آخر زيارة) — بدون أي تدخّل يدوي
+    window.dispatchEvent(new CustomEvent('hsb:cache-refreshed', { detail: { table } }));
+  }).catch(() => {}); // فشل صامت — الكاش القديم يبقى كافياً
 }
 
 // ── Query builder آمن — نفس الواجهة المتسلسلة المستخدمة بالموقع بالضبط، لكل الجداول المتبقية ──
@@ -279,3 +307,6 @@ export const DB = {
   returns:          () => secureStoreTable('returns'),
   notifications:    () => secureStoreTable('notifications'),
 };
+
+// ── تصدير دالة القراءة من الكاش المحلي — تُستخدم بـstore-boot.js للـPre-hydration الفوري ──
+export { loadFromOfflineCache };
