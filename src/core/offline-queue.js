@@ -56,7 +56,25 @@ export const OfflineQueue = {
   },
 
   _write(queue) {
-    try { localStorage.setItem(QUEUE_KEY, JSON.stringify(queue)); } catch {}
+    try {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    } catch (err) {
+      // فشل حفظ الطابور المحلي — الأسباب الشائعة: امتلاء localStorage (حد 5 ميغابايت مشترك)،
+      // أو وضع التصفح الخاص (Safari يمنع الكتابة أحياناً). هذا خطر فقدان بيانات حقيقي لو تُركنا
+      // صامتين — نُنبّه المستخدمة فوراً بدل ابتلاع الخطأ بصمت كامل
+      console.error('[OfflineQueue] فشل حفظ الطابور المحلي:', err);
+      // نعرض تحذيراً طارئاً بأي وسيلة متاحة — Notify قد لا تكون محمَّلة بعد عند الإقلاع المبكر
+      try {
+        const n = document.getElementById('notify-container') || document.body;
+        if (n) {
+          const div = document.createElement('div');
+          div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:#fff;padding:14px;text-align:center;font-family:Cairo,sans-serif;font-size:14px;font-weight:700;z-index:9999;';
+          div.textContent = '⚠️ تحذير: فشل حفظ البيانات محلياً — تأكدي من اتصال النت قبل المتابعة، وإلا قد تفقدين البيانات غير المُزامَنة';
+          document.body.prepend(div);
+          setTimeout(() => div.remove(), 10000);
+        }
+      } catch {}
+    }
     OfflineQueue._updateBadge(queue.length);
   },
 
