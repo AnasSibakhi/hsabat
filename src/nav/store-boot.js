@@ -30,8 +30,8 @@ let _pPurchases = null, _pNetCards = null, _pReturns = null, _pReports = null;
 // على الزر قبل اكتمال أول تحميل) — كل الاستدعاءات تنتظر نفس الـ Promise الجاري بدل بدء استيراد جديد
 async function _loadPurchases() { if (_Purchases) return _Purchases; if (!_pPurchases) _pPurchases = import('../modules/purchases.js'); _Purchases = (await _pPurchases).Purchases; window.Purchases = _Purchases; return _Purchases; }
 async function _loadNetCards()  { if (_NetCards)  return _NetCards;  if (!_pNetCards)  _pNetCards  = import('../modules/netcards.js');  _NetCards  = (await _pNetCards).NetCards;   window.NetCards  = _NetCards;  return _NetCards; }
-async function _loadReturns()   { if (_Returns)   return _Returns;   if (!_pReturns)   _pReturns   = import('../modules/returns.js');   _Returns   = (await _pReturns).Returns;     window.Returns   = _Returns;   return _Returns; }
-async function _loadReports()   { if (_Reports)   return _Reports;   if (!_pReports)   _pReports   = import('../modules/reports.js');   _Reports   = (await _pReports).Reports;     window.Reports   = _Reports;   return _Reports; }
+async function _loadReturns()   { if (_Returns) return _Returns; if (window.Returns) { _Returns = window.Returns; return _Returns; } if (!_pReturns)   _pReturns   = import('../modules/returns.js');   _Returns   = (await _pReturns).Returns;     window.Returns   = _Returns;   return _Returns; }
+async function _loadReports()   { if (_Reports) return _Reports; if (window.Reports) { _Reports = window.Reports; return _Reports; } if (!_pReports)   _pReports   = import('../modules/reports.js');   _Reports   = (await _pReports).Reports;     window.Reports   = _Reports;   return _Reports; }
 
 export const Store = {
 
@@ -51,18 +51,29 @@ export const Store = {
       // الرئيسية
       wrap(() => Dashboard.load()),
     ]);
-    // صفحات أقل تكراراً — نُحمّلها بعد ثانية لإعطاء الأولوية للصفحات الرئيسية
-    setTimeout(() => {
-      Promise.all([
-        wrap(async () => {
-          const { Expenses } = await import('../modules/expenses.js').catch(() => ({}));
-          if (Expenses?.load) Expenses.load();
-        }),
-        wrap(async () => {
-          const { Purchases } = await import('../modules/purchases.js').catch(() => ({}));
-          if (Purchases?.load) Purchases.load();
-        }),
+    // صفحات ثانوية — نُحمّل ملفاتها JS مسبقاً بعد ثانيتين (بدون تشغيل load)
+    // هذا يحذف تأخير "تحميل ملف JS" عند أول دخول للصفحة، ويُبقي أولوية للصفحات الرئيسية
+    setTimeout(async () => {
+      // pre-import فقط — يُخزّن الملف بكاش المتصفح، لا يُنفَّذ load() بعد
+      const [
+        { Expenses },
+        { Purchases },
+        { Returns },
+        { Reports },
+      ] = await Promise.all([
+        import('../modules/expenses.js').catch(() => ({})),
+        import('../modules/purchases.js').catch(() => ({})),
+        import('../modules/returns.js').catch(() => ({})),
+        import('../modules/reports.js').catch(() => ({})),
       ]);
+      // نُخزّن المراجع عالمياً لتجنّب إعادة import عند الدخول للصفحة
+      if (Expenses)  window.Expenses  = Expenses;
+      if (Purchases) window.Purchases = Purchases;
+      if (Returns)   window.Returns   = Returns;
+      if (Reports)   window.Reports   = Reports;
+      // pre-load البيانات كذلك (invoices وexpenses مشتركة مع صفحات أخرى — الكاش سيخدمها)
+      wrap(() => Expenses?.load?.() || Promise.resolve());
+      wrap(() => Reports?.load?.('month') || Promise.resolve());
     }, 2000);
   },
 
