@@ -38,8 +38,12 @@ export const Customers = {
 
   /** Unified customers + debts page */
   async loadUnified() {
-    const list = DOM.get('cu-list');
-    if (list) list.innerHTML = '<div class="empty-state"><span class="spin">↻</span></div>';
+    // عرض فوري من الكاش المحلي لو موجود (مملوء من preload) — صفر انتظار مرئي
+    if (Customers._allData) {
+      requestAnimationFrame(() => Customers._renderUnified(
+        Customers._allData.customers, Customers._allData.debts
+      ));
+    }
 
     const [custRes, debtsRes] = await Promise.all([
       DB.customers().select('*').order('name'),
