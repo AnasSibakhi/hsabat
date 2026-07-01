@@ -77,6 +77,10 @@ export const Auth = {
     sb.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         State.reset();
+        // مسح كاشات localStorage عند أي حدث خروج (تلقائي أو يدوي)
+        Object.keys(localStorage)
+          .filter(k => k.startsWith('hsb_cache_'))
+          .forEach(k => localStorage.removeItem(k));
         Loading.hide();
         Auth._showLogin();
       }
@@ -343,7 +347,29 @@ export const Auth = {
   async logout() {
     Loading.show();
     await sb.auth.signOut();
+
+    // ── مسح كامل وقاطع لكل بيانات المتجر الحالي ──
+    // State الأساسية
     State.reset();
+
+    // كاش الوحدات (Module-level variables) — لا تُصفَّر بـState.reset()
+    // يجب مسحها صريحاً لمنع تسرّب بيانات متجر لآخر لو تغيَّر الحساب على نفس الجهاز
+    try {
+      const { Customers } = await import('../modules/customers.js');
+      Customers._allData = null;
+    } catch {}
+    try {
+      const { Invoices } = await import('../modules/invoices.js');
+      Invoices._clearCache?.();
+    } catch {}
+
+    // مسح كل كاشات localStorage (SWR cache) — مفاتيح hsb_cache_*
+    // مع إبقاء الطابور المحلي (hsb_offline_sale_queue) والجلسة (hsb_cached_account)
+    const keepKeys = ['hsb_offline_sale_queue', 'hsb_cached_account', 'notif_read_today'];
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('hsb_cache_'))
+      .forEach(k => localStorage.removeItem(k));
+
     const { Realtime } = await import('../nav/realtime.js');
     Realtime.stop();
     DOM.show('app-wrap', false);
