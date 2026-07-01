@@ -1165,3 +1165,58 @@ table.sa-dt tr:hover td{background:var(--g0);}
   width:100%;background:var(--p);color:#fff;border:none;border-radius:10px;
   padding:12px;font-family:'Cairo',sans-serif;font-weight:700;font-size:14px;cursor:pointer;
 }
+
+/* ════════════════════════════════════════════════════════════
+   SKELETON LOADER — عناصر تحميل احترافية
+   يظهر فوراً مع HTML بدون أي JS، يختفي عند استدعاء JS للـrender
+   ════════════════════════════════════════════════════════════ */
+
+@keyframes sk-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.sk {
+  background: linear-gradient(90deg, var(--g1) 25%, var(--g0) 50%, var(--g1) 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+
+/* أشكال أساسية */
+.sk-line     { height: 14px; margin-bottom: 8px; }
+.sk-line-sm  { height: 10px; margin-bottom: 6px; }
+.sk-line-lg  { height: 20px; margin-bottom: 10px; }
+.sk-circle   { border-radius: 50%; flex-shrink: 0; }
+.sk-w-40     { width: 40%; }
+.sk-w-60     { width: 60%; }
+.sk-w-80     { width: 80%; }
+.sk-w-full   { width: 100%; }
+
+/* بطاقة skeleton عامة */
+.sk-card {
+  background: #fff;
+  border: 1px solid var(--g1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+/* بطاقة مُقسَّمة (أيقونة + نص) */
+.sk-row        { display: flex; align-items: center; gap: 12px; }
+.sk-col        { display: flex; flex-direction: column; flex: 1; gap: 6px; }
+
+/* شبكة بطاقات (مخزون) */
+.sk-grid       { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (min-width: 600px) { .sk-grid { grid-template-columns: repeat(3,1fr); } }
+
+/* صفحة كاملة skeleton — تُزال تلقائياً عند الـrender الفعلي */
+.sk-page       { padding: 0 4px; }
+.sk-page > .sk-card:last-child { margin-bottom: 0; }
+
+/* KPI row (4 خانات صغيرة بصف) */
+.sk-kpi-row    { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 10px; }
+.sk-kpi-cell   { background:#fff; border:1px solid var(--g1); border-radius:10px; padding:12px; }
+
+/* إخفاء skeleton تلقائياً لو الـcontainer حصل على محتوى حقيقي */
+.sk-placeholder:not(:empty) > .sk-page { display: none; }
