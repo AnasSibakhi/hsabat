@@ -34,6 +34,38 @@ async function _loadReturns()   { if (_Returns)   return _Returns;   if (!_pRetu
 async function _loadReports()   { if (_Reports)   return _Reports;   if (!_pReports)   _pReports   = import('../modules/reports.js');   _Reports   = (await _pReports).Reports;     window.Reports   = _Reports;   return _Reports; }
 
 export const Store = {
+
+  // ── Pre-load ذكي لكل الصفحات — يُملأ الكاش مرة واحدة عند الإقلاع ──
+  // يستدعي نفس الطلبات التي ستستدعيها كل صفحة عند فتحها، بنفس الـparams بالضبط
+  // لضمان تطابق مفاتيح الكاش (SWR يبحث بالـhash عن params مطابقة تماماً)
+  // الطلبات كلها بالتوازي (Promise.all) — أسرع ما يمكن، وكلها بدون await بالخارج
+  _preloadAllPages() {
+    const wrap = fn => fn().catch(() => {});
+    Promise.all([
+      // الرئيسية + البيع السريع + المخزون
+      wrap(() => Inventory.loadList()),
+      // الزبائن + الديون + الفواتير (تحتاج customers)
+      wrap(() => Customers.loadAll()),
+      // الديون
+      wrap(() => Debts.loadBadge()),
+      // الرئيسية
+      wrap(() => Dashboard.load()),
+    ]);
+    // صفحات أقل تكراراً — نُحمّلها بعد ثانية لإعطاء الأولوية للصفحات الرئيسية
+    setTimeout(() => {
+      Promise.all([
+        wrap(async () => {
+          const { Expenses } = await import('../modules/expenses.js').catch(() => ({}));
+          if (Expenses?.load) Expenses.load();
+        }),
+        wrap(async () => {
+          const { Purchases } = await import('../modules/purchases.js').catch(() => ({}));
+          if (Purchases?.load) Purchases.load();
+        }),
+      ]);
+    }, 2000);
+  },
+
   async boot(account) {
     DOM.get('exp-wrap').style.display    = 'none';
     DOM.get('app-wrap').classList.add('ready');
@@ -103,30 +135,17 @@ export const Store = {
       if (table === 'expenses'   && page === 'expenses')   Expenses.load?.();
     });
 
-    // ── الإقلاع الفوري (Zero-Wait Boot) ──
-    // لا ننتظر أي بيانات من السيرفر قبل إظهار الواجهة — كل الجلب يحصل بالخلفية بعد الفتح
-    // مباشرة. المستخدمة ترى الواجهة فوراً، والبيانات تظهر خلال ثوانٍ بصمت بدون أي spinner
-    // إضافي. لو كان عندها كاش محلي من جلسة سابقة (يحفظه db.js تلقائياً)، ستُعرَض البيانات
-    // القديمة فوراً ثم تُستبدَل بالجديدة بصمت — تجربة سلسة تماماً بدون أي انتظار مرئي
+    // ── الإقلاع الفوري مع Pre-load ذكي ──
+    // الواجهة تفتح فوراً (بدون await)، ثم نجلب بيانات كل الصفحات بالخلفية دفعة واحدة.
+    // هذا يملأ الكاش المحلي (db.js يحفظه تلقائياً) فأي صفحة تُفتَح لاحقاً تجد بياناتها
+    // جاهزة فوراً من SWR بدون أي انتظار شبكي — أول زيارة وكل زيارة تالية كلتيهما فوريتان
     if (navigator.onLine) {
-      // جلب بالخلفية بدون await — الواجهة تفتح فوراً
-      Promise.all([
-        Inventory.loadList().catch(() => {}),
-        Customers.loadAll().catch(() => {}),
-        Debts.loadBadge().catch(() => {}),
-        Dashboard.load().catch(() => {}),
-      ]);
+      Store._preloadAllPages();
       Notifications.startAutoRefresh();
       Realtime.start();
     } else {
-      // بدون نت: نسجّل مستمع يبدأ تلقائياً عند رجوع النت
       window.addEventListener('online', () => {
-        Promise.all([
-          Inventory.loadList().catch(() => {}),
-          Customers.loadAll().catch(() => {}),
-          Debts.loadBadge().catch(() => {}),
-          Dashboard.load().catch(() => {}),
-        ]);
+        Store._preloadAllPages();
         Notifications.startAutoRefresh();
         Realtime.start();
       }, { once: true });
