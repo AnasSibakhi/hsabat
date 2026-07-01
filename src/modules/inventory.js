@@ -26,11 +26,13 @@ const Inventory = {
   },
 
   async load() {
+    // عرض ما في State فوراً (مملوء من preload عند الإقلاع) — صفر انتظار مرئي
+    // ثم loadList يجلب التحديث من الكاش/الشبكة ويعيد الـrender بصمت
+    if (State.inventory?.length) {
+      requestAnimationFrame(() => Inventory._renderList(State.inventory));
+    }
     await Inventory.loadList();
-    const list = State.inventory;
-    // رسم الإطار الأول أولاً (الصفحة تظهر فارغة لأجزاء من ثانية) ثم نبني الـHTML
-    // هذا يجعل التنقل للصفحة يبدو فورياً بدل تجميد المتصفح أثناء بناء مئات البطاقات
-    requestAnimationFrame(() => Inventory._renderList(list));
+    requestAnimationFrame(() => Inventory._renderList(State.inventory));
   },
 
   _existingProduct: null,
