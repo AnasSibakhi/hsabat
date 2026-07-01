@@ -91,6 +91,18 @@ export const Store = {
       if (State.currentPage === 'purchases' && _Purchases) _Purchases.load();
     });
 
+    // ── مستمع تحديث الكاش الخلفي — يُحدِّث الصفحة النشطة فعلياً بصمت لو تغيّرت بياناتها ──
+    // يُطلَق من db.js بعد كل تحديث خلفي ناجح (Stale-While-Revalidate)، نفس فلسفة Realtime
+    // لكن للبيانات غير المشتركة (لا يوجد Realtime مُفعَّل لها بـSupabase)
+    window.addEventListener('hsb:cache-refreshed', ({ detail: { table } }) => {
+      const page = State.currentPage;
+      if (table === 'inventory'  && (page === 'inventory' || page === 'quicksale')) Inventory.load();
+      if (table === 'customers'  && page === 'customers')  Customers.loadTable?.();
+      if (table === 'invoices'   && page === 'invoices')   Invoices.load();
+      if (table === 'sales'      && page === 'sales')      Sales.load?.('day');
+      if (table === 'expenses'   && page === 'expenses')   Expenses.load?.();
+    });
+
     // ── الإقلاع الفوري (Zero-Wait Boot) ──
     // لا ننتظر أي بيانات من السيرفر قبل إظهار الواجهة — كل الجلب يحصل بالخلفية بعد الفتح
     // مباشرة. المستخدمة ترى الواجهة فوراً، والبيانات تظهر خلال ثوانٍ بصمت بدون أي spinner
