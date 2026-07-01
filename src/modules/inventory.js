@@ -28,10 +28,9 @@ const Inventory = {
   async load() {
     await Inventory.loadList();
     const list = State.inventory;
-    const low  = list.filter(i => i.quantity > 0 && i.quantity <= (i.low_stock_alert || 5));
-    const out  = list.filter(i => i.quantity <= 0);
-
-    Inventory._renderList(list);
+    // رسم الإطار الأول أولاً (الصفحة تظهر فارغة لأجزاء من ثانية) ثم نبني الـHTML
+    // هذا يجعل التنقل للصفحة يبدو فورياً بدل تجميد المتصفح أثناء بناء مئات البطاقات
+    requestAnimationFrame(() => Inventory._renderList(list));
   },
 
   _existingProduct: null,
