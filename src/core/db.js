@@ -124,8 +124,16 @@ const OFFLINE_CACHE_PREFIX = 'hsb_cache_';
 const OFFLINE_CACHE_VERSION = 'v1';
 
 function offlineCacheKey(table, action, params) {
-  // مفتاح ثابت ومميَّز لكل تركيبة (جدول + نوع عملية + فلاتر)، بدون تضمين بيانات حساسة بالمفتاح نفسه
-  const sig = JSON.stringify({ table, action, params });
+  // store_id مضمَّنة بالمفتاح لضمان عزل بيانات كل متجر — لو تغيَّر الحساب على نفس الجهاز
+  // لا يرى المتجر الجديد بيانات المتجر القديم من الكاش أبداً
+  // نقرأها من session Supabase المحفوظة بـlocalStorage — بدون import دائري لـState
+  const storeId = (() => {
+    try {
+      const cached = localStorage.getItem('hsb_cached_account');
+      return cached ? JSON.parse(cached).id : 'anon';
+    } catch { return 'anon'; }
+  })();
+  const sig = JSON.stringify({ table, action, params, storeId });
   let hash = 0;
   for (let i = 0; i < sig.length; i++) { hash = (hash * 31 + sig.charCodeAt(i)) | 0; }
   return `${OFFLINE_CACHE_PREFIX}${OFFLINE_CACHE_VERSION}_${table}_${hash}`;
