@@ -18,7 +18,16 @@ export const setText = (id, text) => {
 /** Set innerHTML — only use with escaped content */
 export const setHTML = (id, html) => {
   const el = document.getElementById(id);
-  if (el) el.innerHTML = html;
+  if (!el) return;
+  // إزالة skeleton تلقائياً عند أول محتوى حقيقي — يعمل لأن sk-placeholder
+  // يُزيل .sk-page عند وجود محتوى بـel.innerHTML غير فارغ (انظر CSS)
+  el.classList.remove('sk-placeholder');
+  el.innerHTML = html;
+};
+
+/** إزالة skeleton من container عند أول render حقيقي */
+export const clearSkeleton = (id) => {
+  document.getElementById(id)?.classList.remove('sk-placeholder');
 };
 
 /** Show or hide element */
