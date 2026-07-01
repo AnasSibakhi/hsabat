@@ -283,11 +283,6 @@ const Invoices = {
     _serverPage  = serverPage;
     _page        = 1;
 
-    // عرض فوري لو عندنا فواتير محفوظة من جلسة سابقة أو preload
-    if (_allInvoices?.length && serverPage === 1) {
-      requestAnimationFrame(() => Invoices.applyFilters());
-    }
-
     const offset = (serverPage - 1) * PAGE_SIZE;
     // طلب واحد فقط لكل الديون النشطة — بدل طلب منفصل لكل زبون بالقائمة (كان السبب الجذري
     // للتأخير الملحوظ عند فتح الصفحة، خصوصاً مع عدد زبائن كبير أو شبكة بطيئة)، نجلب كل الديون
