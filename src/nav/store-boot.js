@@ -91,14 +91,36 @@ export const Store = {
       if (State.currentPage === 'purchases' && _Purchases) _Purchases.load();
     });
 
-    // Initial data load — كل الاستدعاءات الثلاثة بالتوازي معاً (لا تعتمد على بعضها منطقياً)
-    // بدل 3 خطوات متسلسلة كانت تنتظر كل واحدة الأخرى بصمت، يقلل وقت تحميل الإقلاع فعلياً
-    await Promise.all([Inventory.loadList(), Customers.loadAll(), Debts.loadBadge(), Dashboard.load()]);
+    // Initial data load — بالتوازي لتقليل وقت الإقلاع
+    // لو بدون نت (وضع Offline Boot): الكاش المحلي كافٍ، نتخطى الجلب بأمان — البيانات
+    // موجودة من آخر جلسة بنت، ستُحدَّث تلقائياً عند رجوع النت
+    if (navigator.onLine) {
+      await Promise.all([
+        Inventory.loadList().catch(() => {}),
+        Customers.loadAll().catch(() => {}),
+        Debts.loadBadge().catch(() => {}),
+        Dashboard.load().catch(() => {}),
+      ]);
+    }
 
-    // بدء التنبيهات التلقائية
-    Notifications.startAutoRefresh();
-
-    Realtime.start();
+    // بدء التنبيهات التلقائية والـRealtime — فقط لو نت موجود
+    // بدون نت: نسجّل مستمع يبدأ تلقائياً عند رجوع النت
+    if (navigator.onLine) {
+      Notifications.startAutoRefresh();
+      Realtime.start();
+    } else {
+      window.addEventListener('online', () => {
+        Notifications.startAutoRefresh();
+        Realtime.start();
+        // تحديث البيانات فور رجوع النت
+        Promise.all([
+          Inventory.loadList().catch(() => {}),
+          Customers.loadAll().catch(() => {}),
+          Debts.loadBadge().catch(() => {}),
+          Dashboard.load().catch(() => {}),
+        ]);
+      }, { once: true });
+    }
 
   },
 
