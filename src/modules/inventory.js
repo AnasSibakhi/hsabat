@@ -26,11 +26,6 @@ const Inventory = {
   },
 
   async load() {
-    // عرض ما في State فوراً (مملوء من preload عند الإقلاع) — صفر انتظار مرئي
-    // ثم loadList يجلب التحديث من الكاش/الشبكة ويعيد الـrender بصمت
-    if (State.inventory?.length) {
-      requestAnimationFrame(() => Inventory._renderList(State.inventory));
-    }
     await Inventory.loadList();
     requestAnimationFrame(() => Inventory._renderList(State.inventory));
   },
