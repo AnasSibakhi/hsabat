@@ -91,34 +91,32 @@ export const Store = {
       if (State.currentPage === 'purchases' && _Purchases) _Purchases.load();
     });
 
-    // Initial data load — بالتوازي لتقليل وقت الإقلاع
-    // لو بدون نت (وضع Offline Boot): الكاش المحلي كافٍ، نتخطى الجلب بأمان — البيانات
-    // موجودة من آخر جلسة بنت، ستُحدَّث تلقائياً عند رجوع النت
+    // ── الإقلاع الفوري (Zero-Wait Boot) ──
+    // لا ننتظر أي بيانات من السيرفر قبل إظهار الواجهة — كل الجلب يحصل بالخلفية بعد الفتح
+    // مباشرة. المستخدمة ترى الواجهة فوراً، والبيانات تظهر خلال ثوانٍ بصمت بدون أي spinner
+    // إضافي. لو كان عندها كاش محلي من جلسة سابقة (يحفظه db.js تلقائياً)، ستُعرَض البيانات
+    // القديمة فوراً ثم تُستبدَل بالجديدة بصمت — تجربة سلسة تماماً بدون أي انتظار مرئي
     if (navigator.onLine) {
-      await Promise.all([
+      // جلب بالخلفية بدون await — الواجهة تفتح فوراً
+      Promise.all([
         Inventory.loadList().catch(() => {}),
         Customers.loadAll().catch(() => {}),
         Debts.loadBadge().catch(() => {}),
         Dashboard.load().catch(() => {}),
       ]);
-    }
-
-    // بدء التنبيهات التلقائية والـRealtime — فقط لو نت موجود
-    // بدون نت: نسجّل مستمع يبدأ تلقائياً عند رجوع النت
-    if (navigator.onLine) {
       Notifications.startAutoRefresh();
       Realtime.start();
     } else {
+      // بدون نت: نسجّل مستمع يبدأ تلقائياً عند رجوع النت
       window.addEventListener('online', () => {
-        Notifications.startAutoRefresh();
-        Realtime.start();
-        // تحديث البيانات فور رجوع النت
         Promise.all([
           Inventory.loadList().catch(() => {}),
           Customers.loadAll().catch(() => {}),
           Debts.loadBadge().catch(() => {}),
           Dashboard.load().catch(() => {}),
         ]);
+        Notifications.startAutoRefresh();
+        Realtime.start();
       }, { once: true });
     }
 
