@@ -148,6 +148,7 @@ export const Customers = {
       return hb - ha;
     });
 
+    list.classList.remove('sk-placeholder');
     if (!sorted.length) {
       list.innerHTML = '<div class="empty-state">لا يوجد زبائن مسجّلين</div>';
       return;
