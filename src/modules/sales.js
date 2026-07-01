@@ -42,14 +42,14 @@ const Sales = {
     const list       = invs || [];
     const totalSales = Utils.sumBy(list, 'total');
 
-    // صافي الربح الصحيح = المبيعات - تكلفة البضاعة المباعة فعلياً (COGS من FIFO) — عبر Edge Function آمنة
-    // وليس "المبيعات - مشتريات اليوم" (معادلة خاطئة لأن الشراء والبيع عمليتان منفصلتان زمنياً)
+    // COGS Edge Function ثقيلة — نعرض إجمالي المبيعات أولاً فوراً ثم نكمل
+    DOM.setText('sv1', Utils.currency(totalSales));
     let totalCOGS = 0;
     const invoiceIds = list.map(i => i.id);
     if (invoiceIds.length) {
       try {
         totalCOGS = await FIFOService.calculateCOGS(invoiceIds);
-      } catch (e) { /* يبقى 0 لو فشل الاتصال بالخدمة */ }
+      } catch (e) { /* يبقى 0 لو فشل */ }
     }
 
     const profit     = totalSales - totalCOGS;
