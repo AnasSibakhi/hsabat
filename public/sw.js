@@ -1,5 +1,5 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
-const CACHE_VERSION = 'hesabat-v85-NOSPINNER-' + '20260629ab';
+const CACHE_VERSION = 'hesabat-v86-CDNFIX-' + '20260629ac';
 
 self.addEventListener('install', e => {
   self.skipWaiting(); // فعّل النسخة الجديدة فوراً بدون انتظار إغلاق كل التابات القديمة
@@ -14,12 +14,17 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // السبب الجذري الأول لتعطّل/توقّف PWA المتكرر على Android — Cache.put() ترفض رياضياً وقاطعاً
-  // أي طلب غير GET (يرمي TypeError حقيقي: "Request method 'POST' is unsupported")، وهذا يحصل
-  // بكل عملية بيع/إضافة منتج بالموقع كله. لا نحاول تخزين أي شي سوى طلبات GET على الإطلاق
-  if (e.request.method !== 'GET') {
-    return; // نترك المتصفح يتعامل معها طبيعياً، صفر تدخّل من Service Worker لغير GET
-  }
+  // لا تدخّل لغير GET — POST يُترك للمتصفح مباشرة (Cache.put ترفضه وترمي TypeError)
+  if (e.request.method !== 'GET') return;
+
+  // لا تدخّل لطلبات CDN الخارجية (Quagga2, Tabler Icons, Google Fonts, إلخ) — نتركها
+  // للمتصفح مباشرة بدون أي respondWith. السبب: CACHE_VERSION تتغيّر بكل نشر وتمسح الكاش
+  // كاملاً، فأي CDN لم يُحمَّل بعد يُعامَل كـ503 بدل انتظار الشبكة، مما يُفشل تحميل Quagga2
+  // ويظهر "فشل تحميل الباركود" حتى على نت سليم
+  // طلبات خارجية (CDN، API) تمرّ للشبكة مباشرة — فقط موارد الموقع نفسه تُخزَّن
+  const url = e.request.url;
+  const isSameOrigin = url.startsWith(self.location.origin);
+  if (!isSameOrigin) return;
 
   // السبب الجذري الثاني والأهم، مؤكَّد رسمياً بمواصفة W3C نفسها: لو فشلت الشبكة (شائع جداً
   // عند فتح اختصار PWA من شاشة باردة، قبل استقرار الاتصال) و caches.match() ترجع undefined
