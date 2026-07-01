@@ -106,7 +106,7 @@ export const Customers = {
       </div>`;
 
     Customers._allData = { customers: State.customers, debts };
-    Customers._renderUnified(State.customers, debts);
+    requestAnimationFrame(() => Customers._renderUnified(State.customers, debts));
   },
 
   _renderUnified(customers, debts) {
