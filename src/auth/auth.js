@@ -37,28 +37,38 @@ export const Auth = {
     try {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
-        // Has session — show loading then boot
+        // جلسة صالحة محلياً — أقلع فوراً (مع أو بدون نت، Supabase يجدّد التوكن بالخلفية)
         Loading.show();
         await Auth._bootFromSession(session);
       } else {
-        // No session — show login directly
+        // لا جلسة صالحة — قد يكون منتهية الصلاحية أو لم يسجّل دخول قبلاً
+        // لو بدون نت وكان مسجّلاً دخول قبلاً، نحاول الإقلاع بالبيانات المحفوظة مباشرة
+        if (!navigator.onLine) {
+          const cachedAccount = (() => {
+            try { return JSON.parse(localStorage.getItem('hsb_cached_account') || 'null'); } catch { return null; }
+          })();
+          if (cachedAccount) {
+            // يوجد حساب محفوظ — نبني جلسة "وهمية" بما يكفي للإقلاع المحلي بدون أي طلب شبكي
+            // البيانات الكافية: user.id (=store_id)، role، store_name، is_active، subscription_end
+            Loading.show();
+            await Auth._bootOffline(cachedAccount);
+            return;
+          }
+        }
+        // لا نت ولا بيانات محفوظة، أو في نت وانتهت الجلسة — عرض شاشة تسجيل الدخول
         Auth._showLogin();
+        if (!navigator.onLine) Auth._showError('لا يوجد اتصال. سجّلي دخول مرة واحدة بنت لتفعيل الوصول بدون نت.');
       }
     } catch(err) {
       console.error('[Auth.init]', err);
-      // فشل شبكي وقت فحص الجلسة (لا نت أصلاً عند فتح الموقع) — لا نفترض خروجاً، نحاول القراءة
-      // المباشرة من التخزين المحلي الذي يحفظه Supabase نفسه، ونكمل الإقلاع بالبيانات المحفوظة
-      const isNetworkFailure = err instanceof TypeError || err?.name === 'AbortError' || err?.message?.includes('fetch') || !navigator.onLine;
-      if (isNetworkFailure) {
-        try {
-          const raw = localStorage.getItem(`sb-${CONFIG.supabaseUrl.replace(/^https?:\/\//, '').split('.')[0]}-auth-token`);
-          const stored = raw ? JSON.parse(raw) : null;
-          if (stored?.access_token) {
-            Loading.show();
-            await Auth._bootFromSession(stored);
-            return;
-          }
-        } catch {}
+      // أي خطأ غير متوقع — نحاول الإقلاع بالبيانات المحفوظة كخط دفاع أخير
+      const cachedAccount = (() => {
+        try { return JSON.parse(localStorage.getItem('hsb_cached_account') || 'null'); } catch { return null; }
+      })();
+      if (cachedAccount && !navigator.onLine) {
+        Loading.show();
+        await Auth._bootOffline(cachedAccount);
+        return;
       }
       Loading.hide();
       Auth._showLogin();
@@ -109,6 +119,58 @@ export const Auth = {
         btn.disabled  = false;
         btn.innerHTML = '<i class="ti ti-login" style="vertical-align:-2px;margin-left:5px;"></i> دخول';
       }
+    }
+  },
+
+  // ── إقلاع بدون شبكة — يستخدم بيانات الحساب المحفوظة محلياً من آخر جلسة ناجحة ──
+  // هذا المسار لا يستدعي أي طلب شبكي على الإطلاق، يقلع الموقع كاملاً بالبيانات المحفوظة
+  // محلياً (مخزون، فواتير، زبائن — كلها بـcache الموقع المحلي). البيع والإضافة تعمل فوراً
+  // وتُزامَن لاحقاً عند رجوع النت، نفس فلسفة Optimistic UI التي بنيناها بكل أجزاء الموقع
+  async _bootOffline(cachedAccount) {
+    try {
+      if (!cachedAccount?.is_active) {
+        Loading.hide();
+        Auth._showLogin();
+        Auth._showError('لا يوجد اتصال. سجّلي دخول مرة واحدة بنت لتفعيل الوصول بدون نت.');
+        return;
+      }
+
+      // تعيين State من البيانات المحفوظة — نفس ما يفعله _bootFromSession بالضبط
+      State.user = {
+        id:               cachedAccount.id,
+        user:             cachedAccount.username,
+        store_name:       cachedAccount.store_name,
+        owner:            cachedAccount.owner_name,
+        role:             cachedAccount.role ?? ROLES.OWNER,
+        is_active:        cachedAccount.is_active,
+        subscription_end: cachedAccount.subscription_end,
+      };
+      State.role = cachedAccount.role;
+
+      // فحص انتهاء الاشتراك بالبيانات المحفوظة
+      const expiry = cachedAccount.subscription_end;
+      if (expiry && new Date(expiry) < new Date()) {
+        Loading.hide();
+        document.getElementById('exp-wrap').style.display = 'flex';
+        return;
+      }
+
+      // إقلاع الواجهة كاملاً بدون أي انتظار شبكي — نفس مسار _bootFromSession العادي
+      const { Store } = await import('../nav/store-boot.js');
+      await Store.boot(State.user);
+
+      Loading.hide();
+
+      // تنبيه بسيط إن الموقع يعمل بوضع بدون نت — لا يمنع العمل، فقط معلومة
+      setTimeout(() => {
+        Notify.warn('📡 وضع بدون نت — البيانات محفوظة محلياً، ستُزامَن تلقائياً عند رجوع النت');
+      }, 1500);
+
+    } catch (err) {
+      console.error('[Auth._bootOffline]', err);
+      Loading.hide();
+      Auth._showLogin();
+      Auth._showError('خطأ في الإقلاع بدون نت: ' + err.message);
     }
   },
 
