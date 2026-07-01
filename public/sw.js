@@ -1,5 +1,5 @@
 // نسخة الكاش — لازم تتغيّر مع كل نشر جديد لضمان وصول التحديثات فوراً
-const CACHE_VERSION = 'hesabat-v79-RACEFIX-' + '20260629v';
+const CACHE_VERSION = 'hesabat-v80-' + '20260629w';
 
 self.addEventListener('install', e => {
   self.skipWaiting(); // فعّل النسخة الجديدة فوراً بدون انتظار إغلاق كل التابات القديمة
