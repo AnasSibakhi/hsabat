@@ -376,7 +376,7 @@ const Invoices = {
 
     _filtered = list;
     Invoices._renderKPI(list);
-    Invoices._renderTable();
+    requestAnimationFrame(() => Invoices._renderTable());
   },
 
   // ── KPI Cards ──
