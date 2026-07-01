@@ -39,6 +39,65 @@ export const Store = {
   // يستدعي نفس الطلبات التي ستستدعيها كل صفحة عند فتحها، بنفس الـparams بالضبط
   // لضمان تطابق مفاتيح الكاش (SWR يبحث بالـhash عن params مطابقة تماماً)
   // الطلبات كلها بالتوازي (Promise.all) — أسرع ما يمكن، وكلها بدون await بالخارج
+  // ── render فوري من State — صفر شبكة ──
+  // كل صفحة تعرض ما في الذاكرة فوراً عند التنقّل إليها
+  // البيانات في الذاكرة تأتي من: (1) preload عند الإقلاع، (2) تحديث دوري كل 3 دقائق
+  _renderPage(page, module = null) {
+    requestAnimationFrame(() => {
+      switch (page) {
+        case 'home':
+          Dashboard.load(); // خفيفة فعلاً — أرقام محسوبة من State
+          break;
+        case 'inventory':
+          if (State.inventory?.length) Inventory._renderList(State.inventory);
+          else Inventory.load();
+          break;
+        case 'customers':
+          if (Customers._allData) {
+            Customers._renderUnified(Customers._allData.customers, Customers._allData.debts);
+          } else Customers.loadUnified();
+          break;
+        case 'debts':
+          if (window._allDebtsCache?.length) {
+            // render من الكاش الداخلي — Debts يحتفظ بـ_allDebts داخلياً
+            Debts._renderStats();
+            Debts._renderList();
+            Debts._renderAging();
+          } else Debts.load();
+          break;
+        case 'invoices':
+          Invoices.applyFilters(); // يعرض من _allInvoices المحفوظة
+          break;
+        case 'sales':
+          Sales.load('day');
+          break;
+        case 'expenses':
+          Expenses.load();
+          break;
+        case 'purchases':
+          if (module) module.load();
+          break;
+      }
+    });
+  },
+
+  // ── تحديث دوري بالخلفية — كل 3 دقائق، لا عند كل تنقّل ──
+  _startPeriodicRefresh() {
+    const refresh = () => {
+      const page = State.currentPage;
+      // نُحدِّث فقط الصفحة النشطة حالياً — لا نهدر شبكة لصفحات مغلقة
+      if (page === 'inventory')  Inventory.loadList().then(() => {
+        if (State.currentPage === 'inventory') requestAnimationFrame(() => Inventory._renderList(State.inventory));
+      }).catch(() => {});
+      if (page === 'customers')  Customers.loadUnified().catch(() => {});
+      if (page === 'debts')      Debts.load().catch(() => {});
+      if (page === 'invoices')   Invoices.load().catch(() => {});
+      if (page === 'home')       Dashboard.load().catch(() => {});
+      if (page === 'expenses')   Expenses.load().catch(() => {});
+    };
+    setInterval(refresh, 3 * 60 * 1000); // كل 3 دقائق
+  },
+
   _preloadAllPages() {
     const wrap = fn => fn().catch(() => {});
     Promise.all([
@@ -97,18 +156,21 @@ export const Store = {
     Store._applyPermissions(State.role);
 
     // Register nav loaders
-    Nav.register('home',      () => Dashboard.load());
+    // ── فصل التنقّل عن التحديث — مبدأ أساسي ──
+    // التنقّل: render فوري من State (الذاكرة) — صفر شبكة، صفر تأخير
+    // التحديث: يحصل بالخلفية كل 3 دقائق، لا عند كل تنقّل
+    Nav.register('home',      () => Store._renderPage('home'));
     Nav.register('quicksale', () => QuickSale.init());
-    Nav.register('customers', () => Customers.loadUnified());
-    Nav.register('debts',     () => Debts.load());
-    Nav.register('invoices',  () => Invoices.load());
-    Nav.register('sales',     () => { Sales.load('day'); Sales.loadDailyReport(); });
-    Nav.register('inventory', () => Inventory.load());
+    Nav.register('customers', () => Store._renderPage('customers'));
+    Nav.register('debts',     () => Store._renderPage('debts'));
+    Nav.register('invoices',  () => Store._renderPage('invoices'));
+    Nav.register('sales',     () => Store._renderPage('sales'));
+    Nav.register('inventory', () => Store._renderPage('inventory'));
     Nav.register('product',   () => {});
-    Nav.register('purchases', async () => { const P = await _loadPurchases(); P.load(); });
+    Nav.register('purchases', async () => { const P = await _loadPurchases(); Store._renderPage('purchases', P); });
     Nav.register('netcards',  async () => { const N = await _loadNetCards();  N.loadStock(); N.loadSales('day'); });
     Nav.register('returns',   async () => { const R = await _loadReturns();   R.load(); });
-    Nav.register('expenses',  () => Expenses.load());
+    Nav.register('expenses',  () => Store._renderPage('expenses'));
     Nav.register('reports',   async () => { const Rp = await _loadReports();  Rp.load('month'); });
 
     // Register realtime handlers
@@ -152,6 +214,7 @@ export const Store = {
     // جاهزة فوراً من SWR بدون أي انتظار شبكي — أول زيارة وكل زيارة تالية كلتيهما فوريتان
     if (navigator.onLine) {
       Store._preloadAllPages();
+      Store._startPeriodicRefresh();
       Notifications.startAutoRefresh();
       Realtime.start();
     } else {
