@@ -364,11 +364,15 @@ export const Auth = {
     } catch {}
 
     // مسح كل كاشات localStorage (SWR cache) — مفاتيح hsb_cache_*
-    // مع إبقاء الطابور المحلي (hsb_offline_sale_queue) والجلسة (hsb_cached_account)
-    const keepKeys = ['hsb_offline_sale_queue', 'hsb_cached_account', 'notif_read_today'];
     Object.keys(localStorage)
       .filter(k => k.startsWith('hsb_cache_'))
       .forEach(k => localStorage.removeItem(k));
+
+    // إعادة ضبط علامة "البيانات جاهزة للمحل X" — يمنع _renderPage من عرض بيانات المحل القديم
+    try {
+      const { Store } = await import('../nav/store-boot.js');
+      Store._loadedForStore = null;
+    } catch {}
 
     const { Realtime } = await import('../nav/realtime.js');
     Realtime.stop();
