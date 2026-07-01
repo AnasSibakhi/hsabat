@@ -40,33 +40,32 @@ export const Store = {
   // لضمان تطابق مفاتيح الكاش (SWR يبحث بالـhash عن params مطابقة تماماً)
   // الطلبات كلها بالتوازي (Promise.all) — أسرع ما يمكن، وكلها بدون await بالخارج
   // ── render فوري من State — صفر شبكة ──
-  // كل صفحة تعرض ما في الذاكرة فوراً عند التنقّل إليها
-  // البيانات في الذاكرة تأتي من: (1) preload عند الإقلاع، (2) تحديث دوري كل 3 دقائق
+  // شرط أساسي: State._loadedForStore يجب أن يطابق المحل الحالي
+  // هذا يمنع عرض بيانات محل قديم عند تسجيل دخول محل جديد
   _renderPage(page, module = null) {
     requestAnimationFrame(() => {
+      // لو البيانات المحفوظة لمحل مختلف عن الحالي — نجلب من السيرفر مباشرة
+      const dataReady = Store._loadedForStore === State.user?.id;
+
       switch (page) {
         case 'home':
-          Dashboard.load(); // خفيفة فعلاً — أرقام محسوبة من State
+          Dashboard.load();
           break;
         case 'inventory':
-          if (State.inventory?.length) Inventory._renderList(State.inventory);
+          if (dataReady && State.inventory?.length) Inventory._renderList(State.inventory);
           else Inventory.load();
           break;
         case 'customers':
-          if (Customers._allData) {
+          if (dataReady && Customers._allData) {
             Customers._renderUnified(Customers._allData.customers, Customers._allData.debts);
           } else Customers.loadUnified();
           break;
         case 'debts':
-          if (window._allDebtsCache?.length) {
-            // render من الكاش الداخلي — Debts يحتفظ بـ_allDebts داخلياً
-            Debts._renderStats();
-            Debts._renderList();
-            Debts._renderAging();
-          } else Debts.load();
+          Debts.load();
           break;
         case 'invoices':
-          Invoices.applyFilters(); // يعرض من _allInvoices المحفوظة
+          if (dataReady) Invoices.applyFilters();
+          else Invoices.load();
           break;
         case 'sales':
           Sales.load('day');
@@ -80,6 +79,8 @@ export const Store = {
       }
     });
   },
+
+  _loadedForStore: null, // ID المحل الذي جُلبت بياناته فعلياً
 
   // ── تحديث دوري بالخلفية — كل 3 دقائق، لا عند كل تنقّل ──
   _startPeriodicRefresh() {
@@ -100,7 +101,7 @@ export const Store = {
 
   _preloadAllPages() {
     const wrap = fn => fn().catch(() => {});
-    Promise.all([
+    return Promise.all([
       // الرئيسية + البيع السريع + المخزون
       wrap(() => Inventory.loadList()),
       // الزبائن + الديون + الفواتير (تحتاج customers)
@@ -213,7 +214,9 @@ export const Store = {
     // هذا يملأ الكاش المحلي (db.js يحفظه تلقائياً) فأي صفحة تُفتَح لاحقاً تجد بياناتها
     // جاهزة فوراً من SWR بدون أي انتظار شبكي — أول زيارة وكل زيارة تالية كلتيهما فوريتان
     if (navigator.onLine) {
-      Store._preloadAllPages();
+      Store._preloadAllPages().then(() => {
+        Store._loadedForStore = State.user?.id;
+      });
       Store._startPeriodicRefresh();
       Notifications.startAutoRefresh();
       Realtime.start();
