@@ -32,17 +32,23 @@ export const Notifications = {
 
     const today = new Date().toISOString().split('T')[0];
 
-    const [notifsRes, debtsRes, inventoryRes, purchasesRes] = await Promise.all([
-      DB.notifications().select('*')
-        .or(`to_store_id.eq.${State.user.id},to_store_id.is.null`)
-        .order('created_at', { ascending: false }).limit(20),
-      DB.debts().select('*, customers(name)')
-        .eq('store_id', State.user.id).eq('archived', false).gt('amount', 0).limit(50),
-      DB.inventory().select('id,name,quantity,low_stock_alert,unit')
-        .eq('store_id', State.user.id),
-      DB.purchases().select('*')
-        .eq('store_id', State.user.id).eq('payment_status', 'defer').gt('remaining', 0),
+    // نجلب فقط ما تدعمه طبقة DB الحالية بدون .or() أو .is() — التنبيهات التلقائية
+    // (مخزون، ديون، موردين) هي الأهم عملياً وكلها تعتمد على هذه الطلبات البسيطة فقط
+    const [debtsRes, inventoryRes, purchasesRes] = await Promise.all([
+      DB.debts().select('id,amount,paid,debt_date,remind_date,archived,customer_id')
+        .eq('archived', false).gt('amount', 0).limit(100),
+      DB.inventory().select('id,name,quantity,low_stock_alert,unit'),
+      DB.purchases().select('id,supplier,remaining,purchase_date,payment_status')
+        .eq('payment_status', 'defer').gt('remaining', 0),
     ]);
+
+    // ربط أسماء الزبائن من الكاش المحلي — صفر طلب شبكي إضافي
+    const debtsList = (debtsRes.data || []).map(d => ({
+      ...d,
+      customers: { name: State.customers?.find(c => c.id === d.customer_id)?.name || 'زبون' }
+    }));
+
+    const notifsRes = { data: [] }; // جدول notifications — سيُفعَّل لاحقاً لما تُضاف .or() للطبقة
 
     const auto = [];
 
@@ -61,7 +67,7 @@ export const Notifications = {
     });
 
     // ٣. ديون الزبائن المتأخرة ⏰
-    (debtsRes.data || []).filter(d => {
+    debtsList.filter(d => {
       const rem  = d.amount - (d.paid || 0);
       const days = Math.floor((new Date(today) - new Date(d.debt_date)) / 86400000);
       return rem > 0 && days >= 2;
@@ -75,7 +81,7 @@ export const Notifications = {
     });
 
     // ٤. موعد سداد اقترب 📅
-    (debtsRes.data || []).filter(d => {
+    debtsList.filter(d => {
       if (!d.remind_date) return false;
       const rem  = d.amount - (d.paid || 0);
       const days = Math.floor((new Date(d.remind_date) - new Date(today)) / 86400000);
