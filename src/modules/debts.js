@@ -29,8 +29,10 @@ const Debts = {
       .limit(200); // أكثر من كافي لأي محل
     _allDebts = data || [];
     Debts._renderStats();
-    Debts._renderList();
-    Debts._renderAging();
+    requestAnimationFrame(() => {
+      Debts._renderList();
+      Debts._renderAging();
+    });
   },
 
   _renderStats() {
