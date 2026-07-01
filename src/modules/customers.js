@@ -38,13 +38,6 @@ export const Customers = {
 
   /** Unified customers + debts page */
   async loadUnified() {
-    // عرض فوري من الكاش المحلي لو موجود (مملوء من preload) — صفر انتظار مرئي
-    if (Customers._allData) {
-      requestAnimationFrame(() => Customers._renderUnified(
-        Customers._allData.customers, Customers._allData.debts
-      ));
-    }
-
     const [custRes, debtsRes] = await Promise.all([
       DB.customers().select('*').order('name'),
       DB.debts().select('*,customers(name,phone)')
