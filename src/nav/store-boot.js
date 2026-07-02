@@ -83,10 +83,17 @@ export const Store = {
   _loadedForStore: null, // ID المحل الذي جُلبت بياناته فعلياً
 
   // ── تحديث دوري بالخلفية — كل 3 دقائق، لا عند كل تنقّل ──
+  // ID محفوظ لإلغائه عند تسجيل الخروج — يمنع تراكم intervals لو تكرّر login/logout
+  _periodicRefreshId: null,
+
   _startPeriodicRefresh() {
+    // إلغاء أي interval سابق قبل بدء جديد — حماية من التراكم
+    if (Store._periodicRefreshId) {
+      clearInterval(Store._periodicRefreshId);
+      Store._periodicRefreshId = null;
+    }
     const refresh = () => {
       const page = State.currentPage;
-      // نُحدِّث فقط الصفحة النشطة حالياً — لا نهدر شبكة لصفحات مغلقة
       if (page === 'inventory')  Inventory.loadList().then(() => {
         if (State.currentPage === 'inventory') requestAnimationFrame(() => Inventory._renderList(State.inventory));
       }).catch(() => {});
@@ -96,7 +103,14 @@ export const Store = {
       if (page === 'home')       Dashboard.load().catch(() => {});
       if (page === 'expenses')   Expenses.load().catch(() => {});
     };
-    setInterval(refresh, 3 * 60 * 1000); // كل 3 دقائق
+    Store._periodicRefreshId = setInterval(refresh, 3 * 60 * 1000);
+  },
+
+  _stopPeriodicRefresh() {
+    if (Store._periodicRefreshId) {
+      clearInterval(Store._periodicRefreshId);
+      Store._periodicRefreshId = null;
+    }
   },
 
   _preloadAllPages() {
