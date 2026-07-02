@@ -79,14 +79,15 @@ const Dashboard = {
 
       const debts = debtsFull.data || [];
 
-      // ٤. إجمالي الديون
-      DOM.setText('hs2', Utils.currency(debts.reduce((s, d) => s + (d.amount - d.paid), 0)));
+      // ٤. إجمالي الديون النشطة فقط (غير مؤرشفة، غير مسدّدة بالكامل)
+      const activeDebts = debts.filter(d => !d.archived && d.amount - (d.paid || 0) > 0);
+      DOM.setText('hs2', Utils.currency(activeDebts.reduce((s, d) => s + (d.amount - (d.paid || 0)), 0)));
 
       // ٥. تنبيهات المخزون
       Dashboard._loadInventoryAlerts(inventory.data || []);
 
-      // ٦. الديون المتأخرة — من نفس البيانات المجلوبة أعلاه، بدون طلب شبكي إضافي
-      Dashboard._renderOverdueDebts(debts);
+      // ٦. الديون المتأخرة — من الديون النشطة فقط، مُجمَّعة بالزبون
+      Dashboard._renderOverdueDebts(activeDebts);
     } catch(err) {
       console.error('[Dashboard.load] ERROR:', err);
     }
@@ -161,17 +162,27 @@ const Dashboard = {
     );
   },
 
-  _overdueRow: (d) => `
+  _overdueRow: (d) => {
+    const name   = Utils.escape(d.customers?.name || '-');
+    const rem    = (d.amount - (d.paid || 0)).toFixed(2);
+    const days   = Utils.daysSince(d.debt_date);
+    // لو مُجمَّع (customer_id موجود، id غير موجود) — نفتح صفحة الزبون مباشرة لتسديد من هناك
+    // لو دين واحد (id موجود) — نفتح موديل التسديد المباشر
+    const btn = d.id
+      ? `<button class="debt-row-v2-btn" onclick="Debts.openPayModal('${d.id}','${name}',${rem})">تسديد</button>`
+      : `<button class="debt-row-v2-btn" onclick="Nav.goTo('customers')">عرض</button>`;
+    return `
     <div class="debt-row-v2">
       <div>
-        <div class="debt-row-v2-name">${Utils.escape(d.customers?.name || '-')}</div>
-        <span class="debt-row-v2-days">${Utils.daysSince(d.debt_date)} يوم متأخر</span>
+        <div class="debt-row-v2-name">${name}</div>
+        <span class="debt-row-v2-days">${days} يوم متأخر</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
-        <span class="debt-row-v2-amount">₪${(d.amount - d.paid).toFixed(2)}</span>
-        <button class="debt-row-v2-btn" onclick="Debts.openPayModal('${d.id}','${Utils.escape(d.customers?.name)}',${d.amount - d.paid})">تسديد</button>
+        <span class="debt-row-v2-amount">₪${rem}</span>
+        ${btn}
       </div>
-    </div>`,
+    </div>`;
+  },
 };
 
 export { Dashboard };
