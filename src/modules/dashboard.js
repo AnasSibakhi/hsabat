@@ -127,15 +127,36 @@ const Dashboard = {
   },
 
   _renderOverdueDebts(debts) {
-    const overdue = (debts || []).filter(d => d.amount - d.paid > 0 && Utils.daysSince(d.debt_date) >= CONFIG.debtLateDays);
+    // فلترة الديون المتأخرة أولاً
+    const raw = (debts || []).filter(d => d.amount - d.paid > 0 && Utils.daysSince(d.debt_date) >= CONFIG.debtLateDays);
+
+    // تجميع بالزبون — زبون واحد قد يكون عنده أكثر من دين متأخر فيظهر مرة واحدة فقط
+    // بإجمالي ديونه وأقدم تاريخ لحساب عدد أيام التأخير الصحيح
+    const byCustomer = {};
+    for (const d of raw) {
+      const key  = d.customer_id || d.customers?.name || 'unknown';
+      const name = d.customers?.name || 'زبون';
+      if (!byCustomer[key]) {
+        byCustomer[key] = { name, totalRem: 0, oldestDate: d.debt_date, customer_id: d.customer_id };
+      }
+      byCustomer[key].totalRem += d.amount - (d.paid || 0);
+      if (d.debt_date < byCustomer[key].oldestDate) byCustomer[key].oldestDate = d.debt_date;
+    }
+    const overdue = Object.values(byCustomer);
 
     DOM.setHTML('halerts', overdue.length
-      ? `<div class="alert ad"><i class="ti ti-alert-triangle"></i><span><strong>تنبيه:</strong> ${overdue.length} زبون متأخر — ${overdue.map(d => Utils.escape(d.customers?.name)).join('، ')}</span></div>`
+      ? `<div class="alert ad"><i class="ti ti-alert-triangle"></i><span><strong>تنبيه:</strong> ${overdue.length} زبون متأخر — ${overdue.map(d => Utils.escape(d.name)).join('، ')}</span></div>`
       : ''
     );
 
     DOM.setHTML('hoverdue', overdue.length
-      ? overdue.map(d => Dashboard._overdueRow(d)).join('')
+      ? overdue.map(d => Dashboard._overdueRow({
+          customers: { name: d.name },
+          debt_date: d.oldestDate,
+          amount: d.totalRem,
+          paid: 0,
+          customer_id: d.customer_id,
+        })).join('')
       : '<div style="padding:1rem;text-align:center;color:var(--s);font-size:13px;font-weight:700;">✅ لا يوجد متأخرون</div>'
     );
   },
