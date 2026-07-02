@@ -358,23 +358,24 @@ export const Auth = {
     // State الأساسية
     State.reset();
 
-    // كاش الوحدات (Module-level variables) — لا تُصفَّر بـState.reset()
-    // يجب مسحها صريحاً لمنع تسرّب بيانات متجر لآخر لو تغيَّر الحساب على نفس الجهاز
-    try {
-      const { Customers } = await import('../modules/customers.js');
-      Customers._allData = null;
-    } catch {}
-    try {
-      const { Invoices } = await import('../modules/invoices.js');
-      Invoices._clearCache?.();
-    } catch {}
+    // ── مسح شامل وقاطع لكل بيانات المحل السابق ──
+    // Module-level variables لا تُصفَّر بـState.reset() — يجب مسحها صريحاً
+    await Promise.allSettled([
+      import('../modules/customers.js').then(m => { m.Customers._allData = null; }),
+      import('../modules/invoices.js').then(m  => { m.resetInvoicesCache?.(); }),
+      import('../modules/debts.js').then(m     => { m.resetDebtsCache?.(); }),
+      import('../modules/quicksale.js').then(m => { m.QuickSale?.clearCart?.(true); }),
+    ]);
 
-    // مسح كل كاشات localStorage (SWR cache) — مفاتيح hsb_cache_*
+    // مسح window globals (pre-imported modules)
+    ['Expenses','Purchases','Returns','Reports'].forEach(k => { delete window[k]; });
+
+    // مسح كل كاشات localStorage (SWR cache)
     Object.keys(localStorage)
       .filter(k => k.startsWith('hsb_cache_'))
       .forEach(k => localStorage.removeItem(k));
 
-    // إيقاف التحديث الدوري + مسح علامة المحل — يمنع interval leak و data leak
+    // إيقاف التحديث الدوري + مسح علامة المحل
     try {
       const { Store } = await import('../nav/store-boot.js');
       Store._stopPeriodicRefresh();
