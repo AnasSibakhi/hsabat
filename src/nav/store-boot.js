@@ -80,7 +80,8 @@ export const Store = {
     });
   },
 
-  _loadedForStore: null, // ID المحل الذي جُلبت بياناته فعلياً
+  _loadedForStore: null,      // ID المحل الذي جُلبت بياناته فعلياً
+  _cacheRefreshHandler: null, // مرجع المستمع — يُحذف قبل إضافة جديد عند login ثانٍ
 
   // ── تحديث دوري بالخلفية — كل 3 دقائق، لا عند كل تنقّل ──
   // ID محفوظ لإلغائه عند تسجيل الخروج — يمنع تراكم intervals لو تكرّر login/logout
@@ -213,17 +214,20 @@ export const Store = {
       if (State.currentPage === 'purchases' && _Purchases) _Purchases.load();
     });
 
-    // ── مستمع تحديث الكاش الخلفي — يُحدِّث الصفحة النشطة فعلياً بصمت لو تغيّرت بياناتها ──
-    // يُطلَق من db.js بعد كل تحديث خلفي ناجح (Stale-While-Revalidate)، نفس فلسفة Realtime
-    // لكن للبيانات غير المشتركة (لا يوجد Realtime مُفعَّل لها بـSupabase)
-    window.addEventListener('hsb:cache-refreshed', ({ detail: { table } }) => {
+    // ── مستمع تحديث الكاش الخلفي ──
+    // نُزيل المستمع القديم قبل إضافة الجديد — يمنع تراكم المستمعين عند تكرار login/logout
+    if (Store._cacheRefreshHandler) {
+      window.removeEventListener('hsb:cache-refreshed', Store._cacheRefreshHandler);
+    }
+    Store._cacheRefreshHandler = ({ detail: { table } }) => {
       const page = State.currentPage;
       if (table === 'inventory'  && (page === 'inventory' || page === 'quicksale')) Inventory.load();
       if (table === 'customers'  && page === 'customers')  Customers.loadTable?.();
       if (table === 'invoices'   && page === 'invoices')   Invoices.load();
       if (table === 'sales'      && page === 'sales')      Sales.load?.('day');
       if (table === 'expenses'   && page === 'expenses')   Expenses.load?.();
-    });
+    };
+    window.addEventListener('hsb:cache-refreshed', Store._cacheRefreshHandler);
 
     // ── الإقلاع الفوري مع Pre-load ذكي ──
     // الواجهة تفتح فوراً (بدون await)، ثم نجلب بيانات كل الصفحات بالخلفية دفعة واحدة.
