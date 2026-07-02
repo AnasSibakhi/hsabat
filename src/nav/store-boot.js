@@ -104,12 +104,14 @@ export const Store = {
     return Promise.all([
       // الرئيسية + البيع السريع + المخزون
       wrap(() => Inventory.loadList()),
-      // الزبائن + الديون + الفواتير (تحتاج customers)
+      // الزبائن
       wrap(() => Customers.loadAll()),
       // الديون
       wrap(() => Debts.loadBadge()),
       // الرئيسية
       wrap(() => Dashboard.load()),
+      // الفواتير — تحتاج 3 طلبات (invoices + returns + debts) فنُحمّلها مسبقاً
+      wrap(() => Invoices.load()),
     ]);
     // صفحات ثانوية — نُحمّل ملفاتها JS مسبقاً بعد ثانيتين (بدون تشغيل load)
     // هذا يحذف تأخير "تحميل ملف JS" عند أول دخول للصفحة، ويُبقي أولوية للصفحات الرئيسية
