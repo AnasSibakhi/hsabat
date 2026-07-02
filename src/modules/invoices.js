@@ -22,6 +22,17 @@ let _period       = 'all';
 let _page         = 1;
 let _totalCount   = 0;
 let _serverPage   = 1;  // صفحة السيرفر
+
+// تُستدعى عند logout لمسح كل بيانات المحل السابق
+export function resetInvoicesCache() {
+  _allInvoices     = [];
+  _debtsByCustomer = {};
+  _filtered        = [];
+  _period          = 'all';
+  _page            = 1;
+  _totalCount      = 0;
+  _serverPage      = 1;
+}
 const PAGE_SIZE   = 50; // عدد الفواتير لكل طلب من السيرفر
 const UI_SIZE     = 20; // عدد الفواتير لكل صفحة في الـ UI
 
