@@ -1,5 +1,5 @@
 const CACHE_VERSION = 'hesabat-v88-PRECACHE-' + '20260629ae';
-const CACHE_VERSION = 'hesabat-v97-STORECHECK-' + '20260629an';
+const CACHE_VERSION = 'hesabat-v98-DEDUP-' + '20260629ao';
 // ── Install: pre-cache الصفحة الرئيسية فقط (index.html) ──
 // هذا يحل مشكلة Safari "can't open page" عند فتح الاختصار بدون نت — Safari يحتاج
 // استجابة حقيقية (200 OK) لطلب navigate، و503 أو undefined يعرض شاشته الخاصة بدل
