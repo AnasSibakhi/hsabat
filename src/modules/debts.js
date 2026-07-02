@@ -20,6 +20,14 @@ let _showArchive = false;
 let _remindDays  = 0;
 let _newCustName = null;
 
+export function resetDebtsCache() {
+  _allDebts    = [];
+  _sortMode    = 'date';
+  _showArchive = false;
+  _remindDays  = 0;
+  _newCustName = null;
+}
+
 const Debts = {
 
   async load() {
