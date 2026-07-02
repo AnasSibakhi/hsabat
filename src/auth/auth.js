@@ -74,13 +74,19 @@ export const Auth = {
       Auth._showLogin();
     }
 
-    sb.auth.onAuthStateChange((event) => {
+    sb.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT') {
         State.reset();
         // مسح كاشات localStorage عند أي حدث خروج (تلقائي أو يدوي)
         Object.keys(localStorage)
           .filter(k => k.startsWith('hsb_cache_'))
           .forEach(k => localStorage.removeItem(k));
+        // إيقاف التحديث الدوري + مسح علامة المحل — يمنع interval leak و data leak
+        try {
+          const { Store } = await import('../nav/store-boot.js');
+          Store._stopPeriodicRefresh();
+          Store._loadedForStore = null;
+        } catch {}
         Loading.hide();
         Auth._showLogin();
       }
@@ -368,9 +374,10 @@ export const Auth = {
       .filter(k => k.startsWith('hsb_cache_'))
       .forEach(k => localStorage.removeItem(k));
 
-    // إعادة ضبط علامة "البيانات جاهزة للمحل X" — يمنع _renderPage من عرض بيانات المحل القديم
+    // إيقاف التحديث الدوري + مسح علامة المحل — يمنع interval leak و data leak
     try {
       const { Store } = await import('../nav/store-boot.js');
+      Store._stopPeriodicRefresh();
       Store._loadedForStore = null;
     } catch {}
 
