@@ -1,5 +1,5 @@
 const CACHE_VERSION = 'hesabat-v88-PRECACHE-' + '20260629ae';
-const CACHE_VERSION = 'hesabat-v99-INVOICEPRELOAD-' + '20260629ap';
+const CACHE_VERSION = 'hesabat-v100-DASHBOARD-' + '20260629aq';
 // ── Install: pre-cache الصفحة الرئيسية فقط (index.html) ──
 // هذا يحل مشكلة Safari "can't open page" عند فتح الاختصار بدون نت — Safari يحتاج
 // استجابة حقيقية (200 OK) لطلب navigate، و503 أو undefined يعرض شاشته الخاصة بدل
