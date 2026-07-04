@@ -17,7 +17,7 @@ let _raf     = null;
 let _flashOn = false;
 let _handler = null;
 
-const DEBOUNCE = 1200;
+const DEBOUNCE = 600; // 600ms — سريع بما يكفي لمسح نفس المنتج مرتين، طويل بما يكفي لمنع التكرار
 
 // ── الطبقة 1: تحقق checksum رياضي حقيقي — EAN-8, EAN-13, UPC-A ──
 // هذا الفحص الرياضي وحده موثوق به بنسبة عالية جداً (يكتشف أي خطأ برقم واحد، وأغلب
@@ -191,7 +191,7 @@ export const BarcodeScanner = {
     const mean = sum / n;
     const variance = (sumSq / n) - (mean * mean);
 
-    return variance > 250; // معايَرة بدقة على عينة 48×27 — أعلى من نطاق الإطارات الضبابية بشكل حقيقي
+    return variance > 180; // عتبة معايَرة — تقبل الواضح وترفض الضبابي الحقيقي
   },
 
   // ── Native BarcodeDetector loop ──
@@ -203,7 +203,7 @@ export const BarcodeScanner = {
     // الأضعف بشكل ملحوظ، بينما 10 محاولات بالثانية كافية تماماً لمسح ناجح وسريع عملياً (نفس
     // فلسفة Quagga2 المُستخدَمة على iOS بـ frequency:20 — هنا أخف، تحفّظاً أكبر لتنوع أجهزة Android)
     let lastCheck = 0;
-    const CHECK_INTERVAL = 100; // مللي ثانية — يعادل 10 فحوصات بالثانية
+    const CHECK_INTERVAL = 80; // 12 فحص/ثانية — توازن سرعة/أداء
     const loop = async (timestamp) => {
       if (!_active) return;
       if (timestamp - lastCheck >= CHECK_INTERVAL) {
@@ -248,8 +248,8 @@ export const BarcodeScanner = {
           target: el,
           constraints: {
             facingMode: 'environment',
-            width:  { ideal: 1920 },
-            height: { ideal: 1080 },
+            width:  { ideal: 1280 },
+            height: { ideal: 720 },
           },
           area: {
             top:    '25%',
